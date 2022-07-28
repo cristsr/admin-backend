@@ -9,5 +9,16 @@
     {
       "path": "./tsconfig.spec.json"
     }
-  ]
+  ],
+  "compilerOptions": {
+    "paths": {
+      // Copy and paste from tsconfig.app.json
+      "@admin-back/utils": ["libs/utils/src/index.ts"],
+
+      // Gateway paths
+      "env": ["apps/gateway/src/env"],
+      "domain/*": ["apps/gateway/src/domain/*"]
+    }
+  }
+
 }
