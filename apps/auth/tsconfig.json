@@ -1,0 +1,25 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ],
+
+  "compilerOptions": {
+    "paths": {
+      "@admin-back/utils": ["libs/utils/src/index.ts"],
+      "@admin-back/shared": ["libs/shared/src/index.ts"],
+      "env": ["apps/auth/src/env"],
+      "auth/*": ["apps/auth/src/auth/*"],
+      "database/*": ["apps/auth/src/database/*"],
+      "core/*": ["apps/auth/src/core/*"]
+    }
+  }
+
+}

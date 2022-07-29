@@ -17,7 +17,8 @@ export function configValidator(config: object, type: Type) {
       .map((constraints) => Object.values(constraints))
       .forEach(([v]) => logger.error(v));
 
-    throw new TypeError('Invalid environment configuration');
+    // throw new TypeError('Invalid environment configuration');
+    return config;
   }
 
   return validatedConfig;

@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { CreateAuthInput } from 'domain/auth/dto';
-import { UpdateAuthInput } from 'domain/auth/dto';
-import { Auth } from 'domain/auth/entities';
+import { CreateAuthInput } from 'domain/auth2/dto';
+import { UpdateAuthInput } from 'domain/auth2/dto';
+import { Auth } from 'domain/auth2/entities';
 
 @Injectable()
 export class AuthService {

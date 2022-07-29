@@ -7,9 +7,9 @@ import {
   ResolveField,
   Parent,
 } from '@nestjs/graphql';
-import { AuthService } from 'domain/auth/services';
-import { Auth } from 'domain/auth/entities';
-import { CreateAuthInput, UpdateAuthInput } from 'domain/auth/dto';
+import { AuthService } from 'domain/auth2/services';
+import { Auth } from 'domain/auth2/entities';
+import { CreateAuthInput, UpdateAuthInput } from 'domain/auth2/dto';
 
 @Resolver(() => Auth)
 export class AuthResolver {

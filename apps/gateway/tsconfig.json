@@ -12,13 +12,12 @@
   ],
   "compilerOptions": {
     "paths": {
-      // Copy and paste from tsconfig.app.json
       "@admin-back/utils": ["libs/utils/src/index.ts"],
-
-      // Gateway paths
+      "@admin-back/shared": ["libs/shared/src/index.ts"],
       "env": ["apps/gateway/src/env"],
-      "domain/*": ["apps/gateway/src/domain/*"]
+      "domain/*": ["apps/gateway/src/domain/*"],
+      "app/*": ["apps/gateway/src/app/*"],
+      "core/*": ["apps/gateway/src/core/*"]
     }
-  }
-
+  },
 }

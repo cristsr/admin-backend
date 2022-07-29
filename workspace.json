@@ -1,7 +1,9 @@
 {
   "version": 2,
   "projects": {
+    "auth": "apps/auth",
     "gateway": "apps/gateway",
+    "shared": "libs/shared",
     "utils": "libs/utils"
   }
 }
