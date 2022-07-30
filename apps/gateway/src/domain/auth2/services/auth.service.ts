@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CreateAuthInput } from 'domain/auth2/dto';
-import { UpdateAuthInput } from 'domain/auth2/dto';
+import { CreateAuthInput, UpdateAuthInput } from 'domain/auth2/dto';
 import { Auth } from 'domain/auth2/entities';
 
 @Injectable()
@@ -14,9 +13,7 @@ export class AuthService {
   }
 
   findOne(id: number) {
-    const auth = new Auth();
-    auth.exampleField = +id;
-    return auth;
+    return new Auth();
   }
 
   update(id: number, updateAuthInput: UpdateAuthInput) {

@@ -1,6 +1,7 @@
 import {
   Inject,
   Injectable,
+  InternalServerErrorException,
   Logger,
   UnauthorizedException,
 } from '@nestjs/common';
@@ -106,10 +107,10 @@ export class AuthService {
       })
       .catch((err) => {
         this.#logger.error(err.message);
-        throw new RpcException(err.message);
+        throw new InternalServerErrorException(err.message);
       });
 
-    return this.userRepository.findOneOrFail({
+    return this.userRepository.findOne({
       where: { id: decodedToken.iss },
     });
   }

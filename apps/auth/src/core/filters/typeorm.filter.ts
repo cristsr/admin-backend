@@ -7,7 +7,6 @@ import {
   NotFoundException,
   UnprocessableEntityException,
 } from '@nestjs/common';
-import { Response } from 'express';
 import { TypeORMError } from 'typeorm';
 
 @Catch(TypeORMError)
@@ -17,13 +16,13 @@ export class TypeormFilter implements ExceptionFilter {
   catch(exception: TypeORMError, host: ArgumentsHost) {
     this.#logger.error(`${exception.name}: ${exception.message}`);
 
-    const ctx = host.switchToHttp();
-    const response = ctx.getResponse<Response>();
+    const ctx = host.switchToRpc();
+    const response = ctx.getContext();
 
     const errorMap = {
-      EntityNotFoundError: new NotFoundException(),
-      QueryFailedError: new UnprocessableEntityException(),
-      Default: new InternalServerErrorException(),
+      EntityNotFoundError: NotFoundException,
+      QueryFailedError: UnprocessableEntityException,
+      Default: InternalServerErrorException,
     };
 
     const error = errorMap[exception.name] || errorMap.Default;

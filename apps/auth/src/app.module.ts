@@ -1,12 +1,14 @@
 import { CacheModule, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
-import { configValidator } from '@admin-back/utils';
+import {
+  configValidator,
+  HttpExceptionFilter,
+  RequestInterceptor,
+} from '@admin-back/shared';
 import { Environment } from 'env';
 import { DatabaseModule } from 'database/database.module';
 import { AuthModule } from 'auth/auth.module';
-import { AllExceptionsFilter, RpcFilter, TypeormFilter } from 'core/filters';
-import { RequestInterceptor } from 'core/interceptors';
 
 @Module({
   imports: [
@@ -23,15 +25,7 @@ import { RequestInterceptor } from 'core/interceptors';
   providers: [
     {
       provide: APP_FILTER,
-      useClass: TypeormFilter,
-    },
-    // {
-    //   provide: APP_FILTER,
-    //   useClass: RpcFilter,
-    // },
-    {
-      provide: APP_FILTER,
-      useClass: AllExceptionsFilter,
+      useClass: HttpExceptionFilter,
     },
     {
       provide: APP_INTERCEPTOR,

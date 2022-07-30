@@ -59,17 +59,7 @@ export class LocalService implements AuthStrategy {
     if (!isValid) {
       const message = 'Invalid password';
       this.#logger.error(`${message} for ${user.email}`);
-
-      // const error = new RpcException({
-      //   // code: HttpStatus.FORBIDDEN,
-      //   code: 1,
-      //   message: {
-      //     status: HttpStatus.FORBIDDEN,
-      //     message,
-      //   },
-      // });
       throw new ForbiddenException(message);
-      // throw error;
     }
 
     return user;

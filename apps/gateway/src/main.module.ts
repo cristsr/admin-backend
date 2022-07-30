@@ -1,14 +1,17 @@
 import { CacheModule, Module } from '@nestjs/common';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver } from '@nestjs/apollo';
-import { configValidator } from '@admin-back/utils';
+import {
+  configValidator,
+  AllExceptionFilter,
+  RequestInterceptor,
+} from '@admin-back/shared';
 import { AppController } from './app.controller';
 import { Environment } from 'env';
 import { AuthgraphModule } from 'domain/auth2/authgraph.module';
 import { AuthModule } from 'app/auth';
-import { APP_FILTER } from '@nestjs/core';
-import { AllExceptionsFilter, RpcFilter } from 'core/filters';
 
 @Module({
   imports: [
@@ -29,13 +32,13 @@ import { AllExceptionsFilter, RpcFilter } from 'core/filters';
     AuthgraphModule,
   ],
   providers: [
-    // {
-    //   provide: APP_FILTER,
-    //   useClass: RpcFilter,
-    // },
     {
       provide: APP_FILTER,
-      useClass: AllExceptionsFilter,
+      useClass: AllExceptionFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RequestInterceptor,
     },
   ],
   controllers: [AppController],

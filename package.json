@@ -4,6 +4,7 @@
   "license": "MIT",
   "scripts": {
     "start": "nx serve",
+    "dev": "nx serve --watch",
     "build": "nx build",
     "test": "nx test"
   },
@@ -29,6 +30,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.13.2",
     "graphql": "^16.5.0",
+    "grpc": "^1.24.11",
     "luxon": "^3.0.1",
     "nats": "^2.7.1",
     "pg": "^8.7.3",

@@ -5,8 +5,9 @@ import {
   Injectable,
   Logger,
   UnauthorizedException,
+  UnprocessableEntityException,
 } from '@nestjs/common';
-import { catchError, map, Observable, of, tap } from 'rxjs';
+import { catchError, map, tap } from 'rxjs';
 import { Reflector } from '@nestjs/core';
 import { AUTH_SERVICE, IS_PUBLIC } from 'app/auth/const';
 import { AuthService } from '@admin-back/shared';
@@ -54,11 +55,10 @@ export class AuthGuard implements CanActivate {
 
     return this.authService.getUserFromToken({ token }).pipe(
       tap((user) => (request.user = user)),
-      tap((user) => console.log(user)),
+      tap((user) => this.#logger.log(user)),
       map((user) => !!user),
       catchError((err) => {
-        this.#logger.error(err);
-        return of(false);
+        throw new UnprocessableEntityException(err.details);
       })
     );
   }

@@ -1,37 +1,71 @@
 import {
   ArgumentsHost,
   Catch,
+  ExceptionFilter,
   HttpException,
+  HttpStatus,
+  InternalServerErrorException,
   Logger,
   RpcExceptionFilter,
 } from '@nestjs/common';
 import { BaseRpcExceptionFilter, RpcException } from '@nestjs/microservices';
 import { Observable, throwError } from 'rxjs';
+import { HttpAdapterHost } from '@nestjs/core';
 
 @Catch(RpcException)
 export class RpcFilter implements RpcExceptionFilter<RpcException> {
   #logger = new Logger(RpcFilter.name);
 
   catch(exception: RpcException, host: ArgumentsHost): Observable<any> {
-    throw new HttpException(exception.getError(), 500);
+    // throw new HttpException(exception.getError(), 500);
 
-    return throwError(() => {
+    return throwError((error) => {
       this.#logger.error(exception.getError());
-      return new HttpException(exception.getError(), 500);
+      return error.getError();
     });
   }
 }
 
-export class AllExceptionsFilter extends BaseRpcExceptionFilter {
+@Catch()
+export class AllExceptionsFilter implements ExceptionFilter {
   #logger = new Logger(AllExceptionsFilter.name);
 
-  catch(exception: any, host: ArgumentsHost) {
-    this.#logger.error('AllExceptionsFilter', exception);
-    console.error('AllExceptionsFilter', exception.code);
-    console.error('AllExceptionsFilter', exception.details);
+  constructor(private readonly host: HttpAdapterHost) {}
 
-    throw new HttpException(exception.details, 500);
+  catch(exception: any, host: ArgumentsHost): void {
+    const ctx = host.switchToHttp();
 
-    return super.catch(exception, host);
+    console.error('AllExceptionsFilter gateway', exception);
+
+    console.error(exception.message);
+    console.error(exception.code);
+    console.error(exception.details);
+    console.error(exception.metadata.get('statusCode'));
+
+    if (exception instanceof BaseRpcExceptionFilter) {
+      console.log('AllExceptionsFilter', exception);
+      console.log('AllExceptionsFilter', exception);
+    }
+
+    const httpStatus =
+      exception instanceof HttpException
+        ? exception.getStatus()
+        : HttpStatus.INTERNAL_SERVER_ERROR;
+
+    const message =
+      exception instanceof HttpException
+        ? exception.message
+        : exception.details
+        ? exception.details
+        : 'Internal server error';
+
+    const responseBody = {
+      statusCode: httpStatus,
+      timestamp: new Date().toISOString(),
+      message,
+      path: this.host.httpAdapter.getRequestUrl(ctx.getRequest()),
+    };
+
+    this.host.httpAdapter.reply(ctx.getResponse(), responseBody, httpStatus);
   }
 }

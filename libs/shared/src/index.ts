@@ -1,2 +1,5 @@
-export * from './grpc/auth';
-export * from './grpc/status.enum';
+export * from './grpc';
+export * from './config';
+export * from './exceptions';
+export * from './filters';
+export * from './interceptors';

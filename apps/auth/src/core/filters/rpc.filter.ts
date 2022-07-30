@@ -1,15 +1,16 @@
 import {
   ArgumentsHost,
   Catch,
+  ExceptionFilter,
   HttpException,
+  HttpStatus,
   Logger,
   RpcExceptionFilter,
 } from '@nestjs/common';
-import { BaseRpcExceptionFilter, RpcException } from '@nestjs/microservices';
-import { BaseExceptionFilter } from '@nestjs/core';
+import { RpcException } from '@nestjs/microservices';
 import { Observable, throwError } from 'rxjs';
 import { serialize } from 'class-transformer';
-import { Status } from '@admin-back/shared';
+import { Metadata } from '@grpc/grpc-js';
 
 @Catch(RpcException)
 export class RpcFilter implements RpcExceptionFilter<RpcException> {
@@ -33,15 +34,38 @@ export class RpcFilter implements RpcExceptionFilter<RpcException> {
   }
 }
 
-export class AllExceptionsFilter extends BaseExceptionFilter {
+export class AllExceptionsFilter implements ExceptionFilter {
   catch(exception: any, host: ArgumentsHost) {
+    const metadata = new Metadata();
+
     if (exception instanceof HttpException) {
       console.log('AllExceptionsFilter', exception.getResponse());
 
+      metadata.add('statusCode', exception.getStatus().toString());
+      metadata.add('message', exception.message);
+
+      console.log(metadata);
+
       throw new RpcException({
-        code: Status.INTERNAL,
-        message: serialize(exception.getResponse()),
+        code: 1,
+        message: exception.message,
+        metadata: {
+          statusCode: exception.getStatus(),
+          message: exception.message,
+        },
+        // details: metadata,
       });
     }
+
+    metadata.add('statusCode', HttpStatus.INTERNAL_SERVER_ERROR.toString());
+    metadata.add('message', exception.message);
+
+    console.log(metadata);
+
+    throw new RpcException({
+      code: 1,
+      message: exception.message,
+      details: metadata,
+    });
   }
 }
