@@ -1,14 +1,14 @@
 import { IsNumber, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { mapEnvironmentKeys } from '@admin-back/utils';
+import { mapEnvironmentKeys } from '@admin-back/shared';
 
 export class Environment {
   @IsString()
-  ENV: string = null;
+  ENV: string;
 
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => +value)
   @IsNumber()
-  PORT: number = null;
+  PORT: number;
 }
 
-export const ENV = mapEnvironmentKeys<Environment>(Environment);
+export const ENV = mapEnvironmentKeys(Environment);

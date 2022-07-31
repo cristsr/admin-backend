@@ -23,6 +23,8 @@ export class UserDto {
   verified: string;
 }
 
-export class LoginReq extends PickType(UserDto, ['email', 'password']) {}
+export class LoginReq extends PickType(UserDto, ['email', 'password']) {
+  type: string;
+}
 
 export class RecoveryReq extends PickType(UserDto, ['email']) {}

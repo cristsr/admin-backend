@@ -10,6 +10,7 @@ import {
 import { join } from 'path';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from 'app/auth/guards';
+import { AuthResolver } from 'app/auth/resolvers';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { AuthGuard } from 'app/auth/guards';
       provide: APP_GUARD,
       useClass: AuthGuard,
     },
+    AuthResolver,
   ],
   controllers: [AuthController],
   exports: [AUTH_SERVICE],

@@ -1,44 +1,44 @@
 import { IsBoolean, IsNumber, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
-import { mapEnvironmentKeys } from '@admin-back/utils';
+import { mapEnvironmentKeys } from '@admin-back/shared';
 
 export class Environment {
   @IsString()
-  ENV: string = null;
+  ENV: string;
 
   @Transform(({ value }) => Number(value))
   @IsNumber()
-  PORT: number = null;
+  PORT: number;
 
   // DB Config
   @IsString()
-  DB_TYPE: string = null;
+  DB_TYPE: string;
 
   @IsString()
-  DB_URI: string = null;
+  DB_URI: string;
 
   @Transform(({ value }) => value === 'true')
   @IsBoolean()
-  DB_SYNCHRONIZE = null;
+  DB_SYNCHRONIZE: boolean;
 
   // JWT Config
   @IsString()
-  JWT_SECRET = null;
+  JWT_SECRET: string;
 
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => +value)
   @IsNumber()
-  JWT_EXPIRATION = null;
+  JWT_EXPIRATION: number;
 
   @IsString()
-  JWT_REFRESH_SECRET = null;
+  JWT_REFRESH_SECRET: string;
 
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => +value)
   @IsNumber()
-  JWT_REFRESH_EXPIRATION = null;
+  JWT_REFRESH_EXPIRATION: number;
 
-  @Transform(({ value }) => Number(value))
+  @Transform(({ value }) => +value)
   @IsNumber()
-  HASH_ROUNDS = null;
+  HASH_ROUNDS: string;
 }
 
-export const ENV = mapEnvironmentKeys<Environment>(Environment);
+export const ENV = mapEnvironmentKeys(Environment);

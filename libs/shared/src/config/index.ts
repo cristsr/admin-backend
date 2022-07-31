@@ -1,6 +1,10 @@
 import { Logger, Type } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
-import { validateSync } from 'class-validator';
+import { getMetadataStorage, validateSync } from 'class-validator';
+
+export type Keys<T> = Readonly<{
+  [key in keyof T]: key;
+}>;
 
 export function configValidator(config: object, type: Type) {
   const logger = new Logger(configValidator.name);
@@ -15,21 +19,28 @@ export function configValidator(config: object, type: Type) {
     errors
       .map((error) => error.constraints)
       .map((constraints) => Object.values(constraints))
-      .forEach(([v]) => logger.error(v));
+      .forEach(([v]) => logger.warn(v));
 
-    // throw new TypeError('Invalid environment configuration');
     return config;
   }
 
   return validatedConfig;
 }
 
-export function mapEnvironmentKeys<T>(type: Type<T>): Readonly<{
-  [key in keyof T]: string;
-}> {
-  const keys = Object.keys(new type()) as (keyof T)[];
+export function mapEnvironmentKeys<T>(type: Type<T>): Keys<T> {
+  const metadataStorage = getMetadataStorage();
 
-  const entries: (keyof T)[][] = keys.map((key) => [key, key]);
+  const targetMetadata = metadataStorage.getTargetValidationMetadatas(
+    type,
+    null,
+    false,
+    false
+  );
+
+  const entries = targetMetadata.map(({ propertyName }) => [
+    propertyName,
+    propertyName,
+  ]);
 
   return Object.freeze(Object.fromEntries(entries));
 }

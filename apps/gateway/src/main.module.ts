@@ -10,7 +10,6 @@ import {
 } from '@admin-back/shared';
 import { AppController } from './app.controller';
 import { Environment } from 'env';
-import { AuthgraphModule } from 'domain/auth2/authgraph.module';
 import { AuthModule } from 'app/auth';
 
 @Module({
@@ -29,7 +28,6 @@ import { AuthModule } from 'app/auth';
       isGlobal: true,
     }),
     AuthModule,
-    AuthgraphModule,
   ],
   providers: [
     {

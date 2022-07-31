@@ -10,6 +10,7 @@ export interface AuthService {
 export interface LoginReq {
   email: string;
   password: string;
+  type: string;
 }
 
 export interface LoginRes {

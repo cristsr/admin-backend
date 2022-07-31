@@ -19,7 +19,7 @@ export class AllExceptionFilter extends BaseExceptionFilter {
       return super.catch(exception, host);
     }
 
-    this.#logger.error(exception.details + exception.code);
+    this.#logger.error(exception.details);
 
     const Exception =
       GrpcToHttpExceptionMap[exception.code] ?? InternalServerErrorException;

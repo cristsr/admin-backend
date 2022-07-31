@@ -1,11 +1,16 @@
-import { Resolver, Query } from '@nestjs/graphql';
-import { Auth } from 'domain/auth2/entities';
+import { Resolver, Query, Args } from '@nestjs/graphql';
 import { Public } from 'core/decorators';
-import { UnauthorizedException } from '@nestjs/common';
+import { Login2Req, LoginRes } from 'app/auth2/dto';
+import { Inject, Logger } from '@nestjs/common';
+import { AUTH_SERVICE } from 'app/auth/const';
+import { AuthService } from '@admin-back/shared';
 
-@Resolver(() => Auth)
+@Resolver()
 export class AuthResolver {
-  // constructor(private readonly authService: AuthService) {}
+  #logger = new Logger(AuthResolver.name);
+
+  @Inject(AUTH_SERVICE)
+  private authService: AuthService;
 
   // @Mutation(() => Auth)
   // createAuth(@Args('createAuthInput') createAuthInput: CreateAuthInput) {
@@ -13,16 +18,15 @@ export class AuthResolver {
   // }
 
   @Public()
-  @Query(() => Auth)
-  findAll() {
-    throw new UnauthorizedException();
+  @Query(() => LoginRes)
+  login(@Args('data') data: Login2Req) {
+    this.#logger.debug(data);
 
-    const auth = new Auth();
-    auth.email = 'fake@gmail.com';
-    auth.password = 'fake';
-    auth.type = 'local';
-
-    return auth;
+    return this.authService.login({
+      email: data.email,
+      password: data.password,
+      type: 'local',
+    });
   }
 
   // @Query(() => Auth, { name: 'auth' })
