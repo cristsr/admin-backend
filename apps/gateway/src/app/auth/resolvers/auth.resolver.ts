@@ -1,9 +1,10 @@
-import { Resolver, Query, Args } from '@nestjs/graphql';
-import { Public } from 'core/decorators';
-import { Login2Req, LoginRes } from 'app/auth2/dto';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Inject, Logger } from '@nestjs/common';
+import { Public } from 'core/decorators';
+import { AuthService, RegisterType } from '@admin-back/shared';
 import { AUTH_SERVICE } from 'app/auth/const';
-import { AuthService } from '@admin-back/shared';
+import { LoginInput, LoginRes, RegisterInput } from 'app/auth/dto';
+import { User } from 'app/shared/dto';
 
 @Resolver()
 export class AuthResolver {
@@ -12,20 +13,21 @@ export class AuthResolver {
   @Inject(AUTH_SERVICE)
   private authService: AuthService;
 
-  // @Mutation(() => Auth)
-  // createAuth(@Args('createAuthInput') createAuthInput: CreateAuthInput) {
-  //   return this.authService.create(createAuthInput);
-  // }
+  @Public()
+  @Mutation(() => User)
+  register(@Args('data') data: RegisterInput) {
+    this.#logger.debug(data);
+    return this.authService.register(data);
+  }
 
   @Public()
   @Query(() => LoginRes)
-  login(@Args('data') data: Login2Req) {
+  login(@Args('data') data: LoginInput) {
     this.#logger.debug(data);
-
     return this.authService.login({
       email: data.email,
       password: data.password,
-      type: 'local',
+      type: RegisterType.Local,
     });
   }
 

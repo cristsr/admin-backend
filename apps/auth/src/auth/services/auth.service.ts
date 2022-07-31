@@ -3,7 +3,6 @@ import {
   Injectable,
   InternalServerErrorException,
   Logger,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { RegisterReq, LoginReq, RecoveryReq } from 'auth/dto';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -16,7 +15,6 @@ import { ENV } from 'env';
 import { UserEntity } from 'auth/entities';
 import { AUTH_STRATEGIES } from 'auth/types';
 import { AuthStrategies, AuthStrategy } from 'auth/strategies';
-import { RpcException } from '@nestjs/microservices';
 
 @Injectable()
 export class AuthService {

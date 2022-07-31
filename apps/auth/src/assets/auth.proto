@@ -3,8 +3,25 @@ syntax = "proto3";
 package auth;
 
 service Auth {
+  rpc Register(RegisterReq) returns (stream User) {}
   rpc Login (LoginReq) returns (stream LoginRes) {}
   rpc GetUserFromToken (AccessToken) returns (stream User) {}
+}
+
+message User {
+  int32 id = 1;
+  string name = 2;
+  string username = 3;
+  string email = 4;
+  string verified = 6;
+}
+
+message RegisterReq {
+  string name = 1;
+  string username = 2;
+  string email = 3;
+  string password = 4;
+  string type = 5;
 }
 
 message LoginReq {
@@ -16,14 +33,6 @@ message LoginReq {
 message LoginRes {
   User user = 1;
   Credentials credentials = 2;
-}
-
-message User {
-  int32 id = 1;
-  string name = 2;
-  string username = 3;
-  string email = 4;
-  string verified = 6;
 }
 
 message Credentials {

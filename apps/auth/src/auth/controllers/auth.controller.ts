@@ -1,18 +1,20 @@
-import { Controller } from '@nestjs/common';
+import { Controller, Logger } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { AccessToken } from '@admin-back/shared';
+import { AccessToken, LoginReq, RegisterReq } from '@admin-back/shared';
 import { AuthService } from 'auth/services';
-import { LoginReq, RecoveryReq, RegisterReq } from 'auth/dto';
 import { UserEntity } from 'auth/entities';
 
 @Controller()
 export class Auth {
+  #logger = new Logger(Auth.name);
+
   constructor(private readonly authService: AuthService) {}
 
-  // @Post('register')
-  // register(@Body() data: RegisterReq) {
-  //   return this.authService.register(data);
-  // }
+  @GrpcMethod()
+  register(data: RegisterReq) {
+    this.#logger.debug(data);
+    return this.authService.register(data);
+  }
 
   @GrpcMethod()
   login(data: LoginReq) {

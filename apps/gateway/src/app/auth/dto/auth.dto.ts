@@ -1,5 +1,14 @@
-import { Field, Int, ObjectType } from '@nestjs/graphql';
+import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
 import { User } from 'app/shared/dto';
+
+@InputType()
+export class LoginInput {
+  @Field(() => String)
+  email: string;
+
+  @Field(() => String)
+  password: string;
+}
 
 @ObjectType()
 export class Credential {

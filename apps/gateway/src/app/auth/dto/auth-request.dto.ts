@@ -1,5 +1,6 @@
 import { IsBoolean, IsEmail, IsString } from 'class-validator';
 import { PickType } from '@nestjs/mapped-types';
+import { RegisterType } from '@admin-back/shared';
 
 export class UserDto {
   id: number;
@@ -14,7 +15,7 @@ export class UserDto {
   password: string;
 
   @IsString()
-  type: string;
+  type: any;
 
   @IsString()
   name: string;
@@ -24,7 +25,7 @@ export class UserDto {
 }
 
 export class LoginReq extends PickType(UserDto, ['email', 'password']) {
-  type: string;
+  type: RegisterType;
 }
 
 export class RecoveryReq extends PickType(UserDto, ['email']) {}
