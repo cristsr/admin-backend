@@ -34,19 +34,21 @@ export class AuthGuard implements CanActivate {
       return true;
     }
 
-    const contextType = context.getType();
+    const request = this.getRequest(context);
+    return this.validateUser(request);
+  }
 
+  private getRequest(context: ExecutionContext) {
     const contextTypeMap = {
       http: () => context.switchToHttp().getRequest(),
       graphql: () => GqlExecutionContext.create(context).getContext().req,
     };
 
-    const request = contextTypeMap[contextType]();
-
-    return this.validateUser(request);
+    const contextType = context.getType();
+    return contextTypeMap[contextType]();
   }
 
-  validateUser(request) {
+  private validateUser(request) {
     const token = request.headers.authorization;
 
     if (!token) {

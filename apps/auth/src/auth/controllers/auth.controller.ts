@@ -12,17 +12,19 @@ export class Auth {
 
   @GrpcMethod()
   register(data: RegisterReq) {
-    this.#logger.debug(data);
+    this.#logger.debug('Register', data);
     return this.authService.register(data);
   }
 
   @GrpcMethod()
   login(data: LoginReq) {
+    this.#logger.debug('Login', data);
     return this.authService.login(data);
   }
 
   @GrpcMethod()
   getUserFromToken(data: AccessToken): Promise<UserEntity> {
+    this.#logger.debug('Get user', data);
     return this.authService.getUserFromToken(data);
   }
 

@@ -13,6 +13,8 @@ export class AllExceptionFilter extends BaseExceptionFilter {
   #logger = new Logger(AllExceptionFilter.name);
 
   catch(exception: any, host: ArgumentsHost) {
+    this.#logger.debug('Host type: ' + host.getType());
+
     // Handling http exception
     if (exception instanceof HttpException) {
       this.#logger.error(exception.message);
