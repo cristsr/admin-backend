@@ -49,3 +49,7 @@ export interface Credential {
 export interface AccessToken {
   token: string;
 }
+
+export interface UserId {
+  id: number;
+}

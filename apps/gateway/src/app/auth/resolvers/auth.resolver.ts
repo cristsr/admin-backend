@@ -1,6 +1,6 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Inject, Logger } from '@nestjs/common';
-import { Public } from 'core/decorators';
+import { CurrentUser, Public } from 'core/decorators';
 import { AuthService, RegisterType } from '@admin-back/shared';
 import { AUTH_SERVICE } from 'app/auth/const';
 import { LoginInput, LoginRes, RegisterInput } from 'app/auth/dto';
@@ -14,13 +14,6 @@ export class AuthResolver {
   private authService: AuthService;
 
   @Public()
-  @Mutation(() => User)
-  register(@Args('data') data: RegisterInput) {
-    this.#logger.debug(data);
-    return this.authService.register(data);
-  }
-
-  @Public()
   @Query(() => LoginRes)
   login(@Args('data') data: LoginInput) {
     this.#logger.debug(data);
@@ -29,6 +22,19 @@ export class AuthResolver {
       password: data.password,
       type: RegisterType.Local,
     });
+  }
+
+  @Query(() => User)
+  profile(@CurrentUser() user: User) {
+    this.#logger.debug(user);
+    return user;
+  }
+
+  @Public()
+  @Mutation(() => User)
+  register(@Args('data') data: RegisterInput) {
+    this.#logger.debug(data);
+    return this.authService.register(data);
   }
 
   // @Query(() => Auth, { name: 'auth' })

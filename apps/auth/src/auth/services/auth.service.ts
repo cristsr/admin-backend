@@ -13,7 +13,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { AccessToken, Credential } from '@admin-back/shared';
+import { AccessToken, Credential, UserId } from '@admin-back/shared';
 import { Repository } from 'typeorm';
 import { DateTime } from 'luxon';
 import { compare, genSalt, hash } from 'bcrypt';
@@ -80,6 +80,11 @@ export class AuthService {
     };
   }
 
+  async logout(id: UserId) {
+    this.cache.del(id + '_access_token');
+    return true;
+  }
+
   recovery(data: RecoveryReq) {
     return `This action returns a #${data.email} auth`;
   }
@@ -116,9 +121,7 @@ export class AuthService {
     const jwtExpiration = this.config.get(ENV.JWT_EXPIRATION);
 
     const expires = DateTime.utc()
-      .plus({
-        minutes: jwtExpiration,
-      })
+      .plus({ minutes: jwtExpiration })
       .toUnixInteger();
 
     const payload = {
@@ -143,9 +146,7 @@ export class AuthService {
 
   private genRefreshToken(user: UserEntity): Credential {
     const expires = DateTime.utc()
-      .plus({
-        minutes: this.config.get(ENV.JWT_REFRESH_EXPIRATION),
-      })
+      .plus({ minutes: this.config.get(ENV.JWT_REFRESH_EXPIRATION) })
       .toUnixInteger();
 
     const payload = {
