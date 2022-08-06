@@ -13,11 +13,11 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { AccessToken, Credential, UserId } from '@admin-back/shared';
 import { Repository } from 'typeorm';
 import { DateTime } from 'luxon';
 import { compare, genSalt, hash } from 'bcrypt';
 import { ENV } from 'env';
+import { AccessToken, Credential, UserId } from '@admin-back/shared';
 import { RegisterReq, LoginReq, RecoveryReq } from 'auth/dto';
 import { UserEntity } from 'auth/entities';
 
@@ -33,6 +33,7 @@ export class AuthService {
     private cache: CacheStore,
 
     private jwt: JwtService,
+
     private config: ConfigService
   ) {}
 

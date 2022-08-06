@@ -6,11 +6,10 @@ import {
   AUTH_SERVICE,
   AUTH_SERVICE_NAME,
 } from 'app/auth/const';
-
-import { join } from 'path';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthGuard } from 'app/auth/guards';
 import { AuthResolver } from 'app/auth/resolvers';
+import { AuthConfig } from '@admin-back/grpc';
 
 @Module({
   imports: [
@@ -18,10 +17,11 @@ import { AuthResolver } from 'app/auth/resolvers';
       {
         name: AUTH_GRPC_CLIENT,
         transport: Transport.GRPC,
-        options: {
-          package: 'auth',
-          protoPath: join(__dirname, 'assets/auth.proto'),
-        },
+        // options: {
+        //   package: 'auth',
+        //   protoPath: join(__dirname, 'assets/auth.proto'),
+        // },
+        options: AuthConfig,
       },
     ]),
   ],

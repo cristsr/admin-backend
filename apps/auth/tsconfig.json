@@ -15,6 +15,7 @@
     "paths": {
       "@admin-back/utils": ["libs/utils/src/index.ts"],
       "@admin-back/shared": ["libs/shared/src/index.ts"],
+      "@admin-back/grpc": ["libs/grpc/src/index.ts"],
       "env": ["apps/auth/src/env"],
       "auth/*": ["apps/auth/src/auth/*"],
       "database/*": ["apps/auth/src/database/*"],

@@ -3,6 +3,7 @@
   "projects": {
     "auth": "apps/auth",
     "gateway": "apps/gateway",
+    "grpc": "libs/grpc",
     "shared": "libs/shared",
     "utils": "libs/utils"
   }
