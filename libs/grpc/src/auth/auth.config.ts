@@ -1,6 +1,6 @@
-import { join } from 'path';
+import { resolveProto } from '../tools';
 
 export const AuthConfig = {
   package: 'auth',
-  protoPath: join(__dirname, 'assets/auth.proto'),
+  protoPath: resolveProto('auth'),
 };

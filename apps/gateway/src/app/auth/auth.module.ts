@@ -1,15 +1,15 @@
 import { Module } from '@nestjs/common';
 import { ClientGrpc, ClientsModule, Transport } from '@nestjs/microservices';
-import { AuthController } from 'app/auth/controllers';
+import { APP_GUARD } from '@nestjs/core';
+import { AuthConfig } from '@admin-back/grpc';
 import {
   AUTH_GRPC_CLIENT,
   AUTH_SERVICE,
   AUTH_SERVICE_NAME,
 } from 'app/auth/const';
-import { APP_GUARD } from '@nestjs/core';
+import { AuthController } from 'app/auth/controllers';
 import { AuthGuard } from 'app/auth/guards';
 import { AuthResolver } from 'app/auth/resolvers';
-import { AuthConfig } from '@admin-back/grpc';
 
 @Module({
   imports: [
@@ -17,10 +17,6 @@ import { AuthConfig } from '@admin-back/grpc';
       {
         name: AUTH_GRPC_CLIENT,
         transport: Transport.GRPC,
-        // options: {
-        //   package: 'auth',
-        //   protoPath: join(__dirname, 'assets/auth.proto'),
-        // },
         options: AuthConfig,
       },
     ]),

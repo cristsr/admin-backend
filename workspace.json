@@ -2,9 +2,9 @@
   "version": 2,
   "projects": {
     "auth": "apps/auth",
+    "finances": "apps/finances",
     "gateway": "apps/gateway",
     "grpc": "libs/grpc",
-    "shared": "libs/shared",
-    "utils": "libs/utils"
+    "shared": "libs/shared"
   }
 }

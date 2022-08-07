@@ -16,8 +16,7 @@
     "baseUrl": ".",
     "paths": {
       "@admin-back/grpc": ["libs/grpc/src/index.ts"],
-      "@admin-back/shared": ["libs/shared/src/index.ts"],
-      "@admin-back/utils": ["libs/utils/src/index.ts"]
+      "@admin-back/shared": ["libs/shared/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
