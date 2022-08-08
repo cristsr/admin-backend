@@ -11,6 +11,7 @@ import {
 import { AppController } from './app.controller';
 import { Environment } from 'env';
 import { AuthModule } from 'app/auth';
+import { FinancesModule } from 'app/finances/finances.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { AuthModule } from 'app/auth';
       isGlobal: true,
     }),
     AuthModule,
+    FinancesModule,
   ],
   providers: [
     {

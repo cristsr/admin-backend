@@ -10,7 +10,6 @@
       "path": "./tsconfig.spec.json"
     }
   ],
-
   "compilerOptions": {
     "paths": {
       "@admin-back/shared": ["libs/shared/src/index.ts"],

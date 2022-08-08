@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package subcategory;
+
+service SubcategoryService {
+  rpc createSubcategory() returns () {}
+  rpc findSubcategory() returns () {}
+  rpc findSubcategories() returns () {}
+  rpc updateSubcategory() returns () {}
+  rpc removeSubcategory() returns () {}
+}
+

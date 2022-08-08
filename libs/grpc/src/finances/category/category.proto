@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+import "google/protobuf/empty.proto";
+
+package category;
+
+service CategoryService {
+  rpc create(CreateCategory) returns (stream Category) {}
+  rpc createMany(stream Category) returns (stream Category) {}
+  rpc findOne(CategoryId) returns (stream Category) {}
+  rpc findAll(google.protobuf.Empty) returns (stream Category) {}
+  rpc update(UpdateCategory) returns (stream Category) {}
+  rpc remove(CategoryId) returns (Category) {}
+  rpc removeAll(google.protobuf.Empty) returns (Category) {}
+}
+
+message Category {
+  string id = 1;
+  string name = 2;
+  string icon = 3;
+  string color = 4;
+  string subcategories = 5;
+}
+
+message CreateCategory {
+  string name = 1;
+  string icon = 2;
+  string color = 3;
+  string subcategories = 4;
+}
+
+message CreateCategories {
+  repeated Category categories = 1;
+}
+
+message UpdateCategory {
+  string id = 1;
+  string name = 2;
+  string icon = 3;
+  string color = 4;
+  string subcategories = 5;
+}
+
+message CategoryId {
+  string id = 1;
+}
