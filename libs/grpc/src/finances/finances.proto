@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-//import "category/category.proto";
-
 package finances;
 
-service FinancesService {}
+import "category/category.proto";
+
+service CategoryService {}
 
 message None {}
