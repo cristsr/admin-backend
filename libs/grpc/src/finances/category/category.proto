@@ -2,11 +2,11 @@ syntax = "proto3";
 
 import "google/protobuf/empty.proto";
 
-package category;
+package finances.category;
 
 service CategoryService {
   rpc create(CreateCategory) returns (stream Category) {}
-  rpc createMany(stream Category) returns (stream Category) {}
+  rpc createMany(stream CreateCategory) returns (stream Category) {}
   rpc findOne(CategoryId) returns (stream Category) {}
   rpc findAll(google.protobuf.Empty) returns (stream Category) {}
   rpc update(UpdateCategory) returns (stream Category) {}

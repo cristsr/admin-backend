@@ -1,3 +1,1 @@
 export const FINANCES_GRPC_CLIENT = 'FINANCES_GRPC_CLIENT';
-export const FINANCES_SERVICE_NAME = 'FinancesService';
-export const FINANCES_SERVICE = 'FINANCES_SERVICE';

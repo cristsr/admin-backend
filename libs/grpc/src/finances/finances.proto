@@ -2,8 +2,6 @@ syntax = "proto3";
 
 package finances;
 
-import "category/category.proto";
+import public "category/category.proto";
+import public "subcategory/subcategory.proto";
 
-service CategoryService {}
-
-message None {}

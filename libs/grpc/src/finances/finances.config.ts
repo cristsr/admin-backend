@@ -1,6 +1,12 @@
-import { resolveProto } from '../tools';
+import { join } from 'path';
+
+const packages = ['finances.category', 'finances.subcategory'];
 
 export const FinancesConfig = {
-  package: 'finances',
-  resolveProto: resolveProto('finances', 'finances'),
+  package: packages,
+  protoPath: 'finances.proto',
+  loader: {
+    includeDirs: [join(__dirname, 'assets', 'finances')],
+    keepCase: true,
+  },
 };

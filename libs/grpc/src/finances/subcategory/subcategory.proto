@@ -1,12 +1,31 @@
 syntax = "proto3";
 
-package subcategory;
+package finances.subcategory;
+
+import "category/category.proto";
 
 service SubcategoryService {
-  rpc createSubcategory() returns () {}
-  rpc findSubcategory() returns () {}
-  rpc findSubcategories() returns () {}
-  rpc updateSubcategory() returns () {}
-  rpc removeSubcategory() returns () {}
+  rpc create(CreateSubcategory) returns (stream Subcategory) {}
+  rpc find(SubcategoryId) returns (stream Subcategory) {}
+  rpc findAllByCategory(CategoryId) returns (stream Subcategory) {}
+  rpc update(UpdateSubcategory) returns (stream Subcategory) {}
+  rpc remove(SubcategoryId) returns (stream Subcategory) {}
 }
 
+message Subcategory {
+  int32 id = 1;
+  string name = 2;
+}
+
+message SubcategoryId {
+  int32 id = 1;
+}
+
+message CreateSubcategory {
+  string name = 1;
+}
+
+message UpdateSubcategory {
+  int32 id = 1;
+  string name = 2;
+}

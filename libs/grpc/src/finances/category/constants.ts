@@ -1,3 +1,2 @@
-export const CATEGORY_GRPC_CLIENT = 'CATEGORY_GRPC_CLIENT';
 export const CATEGORY_SERVICE = 'CATEGORY_SERVICE';
 export const CATEGORY_SERVICE_NAME = 'CategoryService';

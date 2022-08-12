@@ -10,7 +10,7 @@ export function resolveProto(folder: string, name: string) {
     console.log(files);
   });*/
 
-  return join(__dirname, 'assets', folder, name + '.proto');
+  return;
 }
 
 export function resolveManyProto(folder, names: string[]) {
