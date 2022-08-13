@@ -1,15 +1,17 @@
 import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
-import { FinancesService } from './finances.service';
-import { Finance } from './entities/finance.entity';
-import { CreateFinanceInput } from './dto/create-finance.input';
-import { UpdateFinanceInput } from './dto/update-finance.input';
+import { FinancesService } from '../services/finances.service';
+import { Finance } from '../entities/finance.entity';
+import { CreateFinanceInput } from '../dto/create-finance.input';
+import { UpdateFinanceInput } from '../dto/update-finance.input';
 
 @Resolver(() => Finance)
 export class FinancesResolver {
   constructor(private readonly financesService: FinancesService) {}
 
   @Mutation(() => Finance)
-  createFinance(@Args('createFinanceInput') createFinanceInput: CreateFinanceInput) {
+  createFinance(
+    @Args('createFinanceInput') createFinanceInput: CreateFinanceInput
+  ) {
     return this.financesService.create(createFinanceInput);
   }
 
@@ -24,8 +26,13 @@ export class FinancesResolver {
   }
 
   @Mutation(() => Finance)
-  updateFinance(@Args('updateFinanceInput') updateFinanceInput: UpdateFinanceInput) {
-    return this.financesService.update(updateFinanceInput.id, updateFinanceInput);
+  updateFinance(
+    @Args('updateFinanceInput') updateFinanceInput: UpdateFinanceInput
+  ) {
+    return this.financesService.update(
+      updateFinanceInput.id,
+      updateFinanceInput
+    );
   }
 
   @Mutation(() => Finance)

@@ -10,7 +10,7 @@ import {
 import { catchError, map, tap } from 'rxjs';
 import { Reflector } from '@nestjs/core';
 import { AUTH_SERVICE, IS_PUBLIC } from 'app/auth/const';
-import { AuthService } from '@admin-back/shared';
+import { AuthService } from '@admin-back/grpc';
 import { GqlExecutionContext } from '@nestjs/graphql';
 
 @Injectable()

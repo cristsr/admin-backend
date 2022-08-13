@@ -1,8 +1,5 @@
 import { Observable } from 'rxjs';
-import {
-  CreateSubcategory,
-  Subcategory,
-} from '../subcategory/subcategory.service';
+import { CreateSubcategory, Subcategory } from '../subcategory';
 
 export interface CategoryService {
   create(data: CreateCategory): Observable<Category>;

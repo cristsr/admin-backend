@@ -2,11 +2,15 @@ syntax = "proto3";
 
 package finances.budget;
 
+import "google/protobuf/empty.proto";
 import "category/category.proto";
 
 service BudgetService {
-  rpc create()
-
+  rpc create(CreateBudget) returns (stream Budget);
+  rpc findOne(BudgetId) returns (stream Budget);
+  rpc findAll(google.protobuf.Empty) returns (stream Budget);
+  rpc update(UpdateBudget) returns (stream Budget);
+  rpc remove(BudgetId) returns (stream google.protobuf.Empty);
 }
 
 message Budget {
@@ -24,10 +28,21 @@ message Budget {
 
 message CreateBudget {
   string name = 1;
-  int32 amount = 4;
-  int32 category = 5;
-  bool repeat = 6;
-  bool active = 7;
+  int32 amount = 2;
+  int32 category = 3;
+  bool repeat = 4;
+  bool active = 5;
+}
 
+message UpdateBudget {
+  int32 id = 1;
+  optional string name = 2;
+  optional int32 amount = 3;
+  optional int32 category = 4;
+  optional bool repeat = 5;
+  optional bool active = 6;
+}
 
+message BudgetId {
+  int32 id = 1;
 }

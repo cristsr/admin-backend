@@ -1,6 +1,6 @@
 import { IsBoolean, IsEmail, IsString } from 'class-validator';
 import { PickType } from '@nestjs/mapped-types';
-import { RegisterType } from '@admin-back/shared';
+import { RegisterType } from '@admin-back/grpc';
 
 export class UserDto {
   id: number;
