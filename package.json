@@ -6,7 +6,8 @@
     "start": "nx serve",
     "dev": "nx serve --watch",
     "build": "nx build",
-    "test": "nx test"
+    "test": "nx test",
+    "proto:gen": "npx proto-loader-gen-types --grpcLib=@grpc/grpc-js --outDir=libs/grpc/src/proto libs/grpc/src/finances/category/category.proto"
   },
   "private": true,
   "dependencies": {

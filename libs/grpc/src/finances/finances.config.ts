@@ -1,6 +1,10 @@
 import { join } from 'path';
 
-const packages = ['finances.category', 'finances.subcategory'];
+const packages = [
+  'finances.category',
+  'finances.subcategory',
+  'finances.budget',
+];
 
 export const FinancesConfig = {
   package: packages,

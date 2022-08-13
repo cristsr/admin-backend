@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 import { Category } from '@admin-back/grpc';
 
-export interface BudgetService {
+export interface BudgetDefinition {
   create(): Observable<Budget>;
 }
 

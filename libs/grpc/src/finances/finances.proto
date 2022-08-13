@@ -4,4 +4,5 @@ package finances;
 
 import public "category/category.proto";
 import public "subcategory/subcategory.proto";
+import public "budget/budget.proto";
 

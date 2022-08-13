@@ -1,8 +1,9 @@
 syntax = "proto3";
 
-import "google/protobuf/empty.proto";
-
 package finances.category;
+
+import "google/protobuf/empty.proto";
+import "subcategory/subcategory.proto";
 
 service CategoryService {
   rpc create(CreateCategory) returns (stream Category) {}
@@ -19,7 +20,7 @@ message Category {
   string name = 2;
   string icon = 3;
   string color = 4;
-  string subcategories = 5;
+  optional Subcategory subcategories = 5;
 }
 
 message CreateCategory {

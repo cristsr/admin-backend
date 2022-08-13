@@ -1,10 +1,10 @@
 import { Controller, Logger } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import { AccessToken, LoginReq, RegisterReq } from '@admin-back/shared';
 import { AuthService } from 'auth/services';
 import { UserEntity } from 'auth/entities';
 
-@Controller()
+@GrpcService()
 export class Auth {
   #logger = new Logger(Auth.name);
 
