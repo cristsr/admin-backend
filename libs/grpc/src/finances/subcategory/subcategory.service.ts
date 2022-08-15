@@ -4,7 +4,7 @@ import { CategoryId } from '@admin-back/grpc';
 export interface SubcategoryService {
   create(data: CreateSubcategory): Observable<Subcategory>;
   findOne(id: SubcategoryId): Observable<Subcategory>;
-  findAllByCategory(id: CategoryId): Observable<Subcategory[]>;
+  findByCategory(id: CategoryId): Observable<Subcategory[]>;
   update(data: UpdateSubcategory): Observable<Subcategory>;
   remove(id: SubcategoryId): Observable<SubcategoryId>;
 }

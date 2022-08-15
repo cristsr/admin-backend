@@ -4,5 +4,8 @@ package finances;
 
 import public "category/category.proto";
 import public "subcategory/subcategory.proto";
+import public "movement/movement.proto";
+import public "summary/summary.proto";
 import public "budget/budget.proto";
+import public "scheduled/scheduled.proto";
 

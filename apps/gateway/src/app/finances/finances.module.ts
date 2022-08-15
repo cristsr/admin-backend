@@ -12,6 +12,12 @@ import {
   BUDGET_SERVICE_NAME,
   FinancesConfig,
   GrpcProvider,
+  MOVEMENT_SERVICE,
+  MOVEMENT_SERVICE_NAME,
+  SUMMARY_SERVICE,
+  SUMMARY_SERVICE_NAME,
+  SCHEDULED_SERVICE,
+  SCHEDULED_SERVICE_NAME,
 } from '@admin-back/grpc';
 import { CategoryService } from './services/category/category.service';
 import { CategoryResolver } from './resolvers/category/category.resolver';
@@ -38,8 +44,23 @@ import { CategoryResolver } from './resolvers/category/category.resolver';
       client: FINANCES_GRPC_CLIENT,
     }),
     GrpcProvider({
+      provide: MOVEMENT_SERVICE,
+      service: MOVEMENT_SERVICE_NAME,
+      client: FINANCES_GRPC_CLIENT,
+    }),
+    GrpcProvider({
+      provide: SUMMARY_SERVICE,
+      service: SUMMARY_SERVICE_NAME,
+      client: FINANCES_GRPC_CLIENT,
+    }),
+    GrpcProvider({
       provide: BUDGET_SERVICE,
       service: BUDGET_SERVICE_NAME,
+      client: FINANCES_GRPC_CLIENT,
+    }),
+    GrpcProvider({
+      provide: SCHEDULED_SERVICE,
+      service: SCHEDULED_SERVICE_NAME,
       client: FINANCES_GRPC_CLIENT,
     }),
     FinancesResolver,

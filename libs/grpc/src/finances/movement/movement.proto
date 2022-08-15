@@ -1,0 +1,57 @@
+syntax = "proto3";
+
+package finances.movement;
+
+import "google/protobuf/empty.proto";
+import "category/category.proto";
+import "subcategory/subcategory.proto";
+
+service MovementService {
+  rpc create(CreateMovement) returns (stream Movement) {}
+  rpc findAll(MovementQuery) returns (stream Movement) {}
+  rpc findOne(MovementId) returns (stream Movement) {}
+  rpc update(UpdateMovement) returns (stream Movement) {}
+  rpc delete(MovementId) returns (stream google.protobuf.Empty) {}
+  rpc removeAll(google.protobuf.Empty) returns (stream google.protobuf.Empty) {}
+}
+
+message Movement {
+  int32 id = 1;
+  string date = 2;
+  string type = 3;
+  string description = 4;
+  int32 amount = 5;
+  Category category = 6;
+  Subcategory subcategory = 7;
+  string createdAt = 8;
+}
+
+message CreateMovement {
+  string date = 1;
+  string type = 2;
+  string description = 3;
+  int32 amount = 4;
+  int32 category = 5;
+  int32 subcategory = 6;
+}
+
+message UpdateMovement {
+  int32 id = 1;
+  optional string date = 2;
+  optional string type = 3;
+  optional string description = 4;
+  optional int32 amount = 5;
+  optional int32 category = 6;
+  optional int32 subcategory = 7;
+}
+
+message MovementId {
+  int32 id = 1;
+}
+
+message MovementQuery {
+  string period = 1;
+  string date = 2;
+  optional int32 category = 3;
+  optional string type = 4;
+}

@@ -2,12 +2,13 @@ syntax = "proto3";
 
 package finances.subcategory;
 
+import "google/protobuf/empty.proto";
 import "category/category.proto";
 
 service SubcategoryService {
   rpc create(CreateSubcategory) returns (stream Subcategory) {}
-  rpc find(SubcategoryId) returns (stream Subcategory) {}
-  rpc findAllByCategory(CategoryId) returns (stream Subcategory) {}
+  rpc findOne(SubcategoryId) returns (stream Subcategory) {}
+  rpc findByCategory(CategoryId) returns (stream Subcategory) {}
   rpc update(UpdateSubcategory) returns (stream Subcategory) {}
   rpc remove(SubcategoryId) returns (stream Subcategory) {}
 }

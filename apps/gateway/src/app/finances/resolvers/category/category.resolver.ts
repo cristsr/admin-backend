@@ -1,4 +1,4 @@
-import { Resolver } from '@nestjs/graphql';
+import { Query, Resolver } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
 import { CATEGORY_SERVICE, CategoryService } from '@admin-back/grpc';
 

@@ -1,10 +1,8 @@
 import { Controller, Get } from '@nestjs/common';
 import { SummaryService } from 'app/summary/services';
-import { ApiTags } from '@nestjs/swagger';
 import { ClientDate } from 'core/decorators';
 import { DateTime } from 'luxon';
 
-@ApiTags('Summary')
 @Controller({
   path: 'summary',
   version: '1',

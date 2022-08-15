@@ -3,7 +3,10 @@ import { join } from 'path';
 const packages = [
   'finances.category',
   'finances.subcategory',
+  'finances.movement',
+  'finances.summary',
   'finances.budget',
+  'finances.scheduled',
 ];
 
 export const FinancesConfig = {
