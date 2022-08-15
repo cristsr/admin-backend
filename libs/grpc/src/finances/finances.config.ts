@@ -10,6 +10,7 @@ const packages = [
 ];
 
 export const FinancesConfig = {
+  url: 'localhost:5003',
   package: packages,
   protoPath: 'finances.proto',
   loader: {

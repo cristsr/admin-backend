@@ -1,15 +1,15 @@
 import { Module, ValidationPipe } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CategoryHandler } from 'app/category/handlers';
 import { CategoryService } from 'app/category/services';
-import { CategoryController } from 'app/category/controllers';
 import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
 
 const entities = TypeOrmModule.forFeature([CategoryEntity, SubcategoryEntity]);
 
 @Module({
   imports: [entities],
-  controllers: [CategoryController],
-  providers: [ValidationPipe, CategoryService],
+  controllers: [CategoryService],
+  providers: [ValidationPipe, CategoryHandler],
   exports: [entities],
 })
 export class CategoryModule {}

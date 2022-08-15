@@ -17,7 +17,7 @@ import { Repository } from 'typeorm';
 import { DateTime } from 'luxon';
 import { compare, genSalt, hash } from 'bcrypt';
 import { ENV } from 'env';
-import { AccessToken, Credential, UserId } from '@admin-back/shared';
+import { AccessToken, Credential, UserId } from '@admin-back/grpc';
 import { RegisterReq, LoginReq, RecoveryReq } from 'auth/dto';
 import { UserEntity } from 'auth/entities';
 

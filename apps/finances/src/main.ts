@@ -1,12 +1,17 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { ENV } from 'apps/finances/src/env';
+import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { FinancesConfig } from '@admin-back/grpc';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
-  const configService = app.get(ConfigService);
+  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
+    AppModule,
+    {
+      transport: Transport.GRPC,
+      options: FinancesConfig,
+    }
+  );
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -14,17 +19,8 @@ async function bootstrap() {
     })
   );
 
-  app.enableCors();
+  await app.listen();
 
-  app.setGlobalPrefix('api');
-
-  app.enableVersioning();
-
-  const port = configService.get(ENV.PORT);
-  const env = configService.get(ENV.ENV);
-
-  await app.listen(port);
-
-  Logger.log(`App running on port ${port} in ${env} env `, 'Bootstrap');
+  Logger.log(`🚀 Finances microservice is running`);
 }
 bootstrap();

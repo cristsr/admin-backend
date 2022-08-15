@@ -1,17 +1,10 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
+import { Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
 import { BillService } from '../services/bill.service';
 import { CreateBillDto } from '../dto/create-bill.dto';
 import { UpdateBillDto } from '../dto/update-bill.dto';
+import { GrpcService } from '@nestjs/microservices';
 
-@Controller('bill')
+@GrpcService('bill')
 export class BillController {
   constructor(private readonly billService: BillService) {}
 

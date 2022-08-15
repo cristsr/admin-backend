@@ -1,23 +1,15 @@
 import { Observable } from 'rxjs';
-import { CategoryId } from '@admin-back/grpc';
+import {
+  CreateSubcategory,
+  Subcategory,
+  UpdateSubcategory,
+} from '@admin-back/grpc';
+import { Empty, Id } from '../../types';
 
 export interface SubcategoryService {
   create(data: CreateSubcategory): Observable<Subcategory>;
-  findOne(id: SubcategoryId): Observable<Subcategory>;
-  findByCategory(id: CategoryId): Observable<Subcategory[]>;
+  findOne(id: Id): Observable<Subcategory>;
+  findByCategory(id: Id): Observable<Subcategory[]>;
   update(data: UpdateSubcategory): Observable<Subcategory>;
-  remove(id: SubcategoryId): Observable<SubcategoryId>;
+  remove(id: Id): Observable<Empty>;
 }
-
-export interface Subcategory {
-  id: number;
-  name: string;
-}
-
-export interface SubcategoryId {
-  id: number;
-}
-
-export type CreateSubcategory = Omit<Subcategory, 'id'>;
-
-export type UpdateSubcategory = Partial<Subcategory>;

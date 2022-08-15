@@ -1,144 +1,108 @@
 import {
-  Injectable,
-  InternalServerErrorException,
-  NotFoundException,
+  Get,
+  Post,
+  Body,
+  Param,
+  Delete,
+  Put,
+  ParseIntPipe,
 } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { CategoryHandler } from 'app/category/handlers';
+import { CreateSubcategoryPipe } from 'app/category/pipes';
+import { CreateSubcategoryDto, UpdateCategoryDto } from 'app/category/dto';
+import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import {
-  CreateCategoryDto,
-  CreateSubcategoryDto,
-  UpdateCategoryDto,
-  UpdateSubcategoryDto,
-} from 'app/category/dto';
-import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
+  Empty,
+  Id,
+  Categories,
+  Category,
+  CreateCategories,
+  CreateCategory,
+  UpdateCategory,
+} from '@admin-back/grpc';
 
-@Injectable()
+@GrpcService('finances')
 export class CategoryService {
-  constructor(
-    @InjectRepository(CategoryEntity)
-    private categoryRepository: Repository<CategoryEntity>,
+  constructor(private readonly categoryHandler: CategoryHandler) {}
 
-    @InjectRepository(SubcategoryEntity)
-    private subcategoryRepository: Repository<SubcategoryEntity>
-  ) {}
-
-  async create({ name, color, icon, subcategories }: CreateCategoryDto) {
-    const category = await this.categoryRepository
-      .save({ name, icon, color })
-      .catch((err) => {
-        throw new InternalServerErrorException(err);
-      });
-
-    if (!subcategories?.length) {
-      return category;
-    }
-
-    category.subcategories = await this.subcategoryRepository
-      .save(
-        subcategories.map((v) => {
-          return this.subcategoryRepository.create({ ...v, category });
-        })
-      )
-      .catch((err) => {
-        throw new InternalServerErrorException(err);
-      });
-
-    return category;
+  @GrpcMethod()
+  create(data: CreateCategory) {
+    return this.categoryHandler.create(data);
   }
 
-  async createMany(categoriesDto: CreateCategoryDto[]) {
-    for (const category of categoriesDto) {
-      await this.create(category);
-    }
-
-    return {
-      message: 'Categories created successfully',
-    };
+  @GrpcMethod()
+  createMany({ data }: CreateCategories): Promise<any> {
+    return this.categoryHandler.createMany(data);
   }
 
-  findAll() {
-    return this.categoryRepository
-      .find({ relations: ['subcategories'] })
-      .catch((err) => {
-        throw new InternalServerErrorException(err.message);
-      });
+  @GrpcMethod()
+  async findAll(): Promise<Categories> {
+    return this.categoryHandler.findAll();
   }
 
-  findOne(id: number) {
-    return this.categoryRepository
-      .findOneOrFail({ relations: ['subcategories'], where: { id } })
-      .catch(() => {
-        throw new NotFoundException('Category not found');
-      });
+  @GrpcMethod()
+  findOne({ id }): Promise<Category> {
+    return this.categoryHandler.findOne(id);
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto): any {
-    return this.categoryRepository.update(id, updateCategoryDto).catch(() => {
-      throw new NotFoundException('Category not found');
-    });
+  @GrpcMethod()
+  update(data: UpdateCategory): Promise<Category> {
+    return this.categoryHandler.update(data.id, data);
   }
 
-  remove(id: number): any {
-    return this.categoryRepository.delete(id).catch((e) => {
-      throw new InternalServerErrorException(e.message);
-    });
+  @GrpcMethod()
+  remove({ id }: Id): Promise<Empty> {
+    return this.categoryHandler.remove(id);
   }
 
-  async removeAll() {
-    await this.categoryRepository.delete({});
-
-    return {
-      message: 'Categories removed successfully',
-    };
+  @GrpcMethod()
+  removeAll(): Promise<any> {
+    return this.categoryHandler.removeAll();
   }
 
-  async createSubcategory(category: number, subcategory: CreateSubcategoryDto) {
-    return this.subcategoryRepository.save({
-      ...subcategory,
-      category: { id: category },
-    });
-  }
-
-  async createSubcategories(
-    category: number,
-    subcategories: CreateSubcategoryDto[]
+  @Post('/:id/subcategories')
+  createSubcategory(
+    @Param('id', ParseIntPipe) category: number,
+    @Body(CreateSubcategoryPipe)
+    createSubcategoryDto: CreateSubcategoryDto[]
   ) {
-    await this.subcategoryRepository.insert(
-      subcategories.map((v) => ({
-        ...v,
-        category: { id: category },
-      }))
+    return this.categoryHandler.createSubcategories(
+      category,
+      createSubcategoryDto
     );
   }
 
-  findSubcategories(category: number) {
-    return this.subcategoryRepository.find({
-      where: { category: { id: category } },
-    });
+  @Get(':id/subcategories')
+  findSubcategories(@Param('id', ParseIntPipe) id: number) {
+    return this.categoryHandler.findSubcategories(id);
   }
 
-  findSubcategory(category: number, subcategory: number) {
-    return this.subcategoryRepository.findOne({
-      where: { category: { id: category }, id: subcategory },
-    });
-  }
-
-  updateSubcategory(
-    category: number,
-    subcategory: number,
-    updateSubcategoryDto: UpdateSubcategoryDto
+  @Get(':id/subcategories/:idSub')
+  findSubcategory(
+    @Param('id', ParseIntPipe) category: number,
+    @Param('idSub', ParseIntPipe) subcategory: number
   ) {
-    return this.subcategoryRepository.update(
-      { category: { id: category }, id: subcategory },
+    return this.categoryHandler.findSubcategory(category, subcategory);
+  }
+
+  @Put(':id/subcategories/:idSub')
+  updateSubcategory(
+    @Param('id', ParseIntPipe) category: number,
+    @Param('idSub', ParseIntPipe) subcategory: number,
+    @Body() updateSubcategoryDto: UpdateCategoryDto
+  ) {
+    return this.categoryHandler.updateSubcategory(
+      category,
+      subcategory,
       updateSubcategoryDto
     );
   }
 
-  removeSubcategory(category: number, subcategory: number) {
-    return this.subcategoryRepository.delete({
-      category: { id: category },
-      id: subcategory,
-    });
+  @Delete(':id/subcategories/:idSub')
+  removeSubcategory(
+    @Param('id', ParseIntPipe) category: number,
+    @Param('idSub', ParseIntPipe) subcategory: number
+  ) {
+    return this.categoryHandler.removeSubcategory(category, subcategory);
   }
 }

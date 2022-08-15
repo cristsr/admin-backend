@@ -1,11 +1,9 @@
-import { Controller, Get, HttpCode, HttpStatus, Logger } from '@nestjs/common';
+import { Controller, Logger } from '@nestjs/common';
 
-@Controller('health')
+@Controller()
 export class AppController {
   private readonly logger = new Logger(AppController.name);
 
-  @Get()
-  @HttpCode(HttpStatus.ACCEPTED)
   health() {
     this.logger.log('Health check success');
   }

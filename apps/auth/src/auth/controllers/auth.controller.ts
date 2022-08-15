@@ -1,6 +1,6 @@
-import { Controller, Logger } from '@nestjs/common';
+import { Logger } from '@nestjs/common';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { AccessToken, LoginReq, RegisterReq } from '@admin-back/shared';
+import { AccessToken, LoginReq, RegisterReq } from '@admin-back/grpc';
 import { AuthService } from 'auth/services';
 import { UserEntity } from 'auth/entities';
 

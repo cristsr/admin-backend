@@ -13,7 +13,7 @@ export class ScheduledEntity {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
-  @Column()
+  @Column({ type: 'varchar' })
   type: MovementType;
 
   @Column({

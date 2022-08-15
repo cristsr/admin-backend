@@ -22,7 +22,7 @@ export class MovementEntity {
   })
   date: string;
 
-  @Column({ nullable: true })
+  @Column({ nullable: true, type: 'varchar' })
   type: MovementType;
 
   @Column()

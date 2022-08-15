@@ -15,7 +15,7 @@
           {
             "glob": "**/*.proto",
             "input": "libs/grpc/src/auth",
-            "output": "assets"
+            "output": "assets/auth"
           }
         ]
       },

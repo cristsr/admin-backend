@@ -10,7 +10,14 @@
         "outputPath": "dist/apps/finances",
         "main": "apps/finances/src/main.ts",
         "tsConfig": "apps/finances/tsconfig.app.json",
-        "assets": ["apps/finances/src/assets"]
+        "assets": [
+          "apps/finances/src/assets",
+          {
+            "glob": "**/*.proto",
+            "input": "libs/grpc/src/finances",
+            "output": "assets/finances"
+          }
+        ]
       },
       "configurations": {
         "production": {
