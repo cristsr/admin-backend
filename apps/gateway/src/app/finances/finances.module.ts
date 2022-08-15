@@ -19,7 +19,6 @@ import {
   SCHEDULED_SERVICE,
   SCHEDULED_SERVICE_NAME,
 } from '@admin-back/grpc';
-import { CategoryService } from './services/category/category.service';
 import { CategoryResolver } from './resolvers/category/category.resolver';
 
 @Module({
@@ -66,7 +65,6 @@ import { CategoryResolver } from './resolvers/category/category.resolver';
     FinancesResolver,
     CategoryResolver,
     FinancesService,
-    CategoryService,
   ],
 })
 export class FinancesModule {}

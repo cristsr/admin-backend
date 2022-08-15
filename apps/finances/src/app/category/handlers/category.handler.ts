@@ -34,6 +34,8 @@ export class CategoryHandler {
       return category;
     }
 
+    console.log(subcategories);
+
     category.subcategories = await this.subcategoryRepository
       .save(
         subcategories.map((v) => {

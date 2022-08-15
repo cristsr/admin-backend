@@ -27,6 +27,7 @@ export class CategoryService {
 
   @GrpcMethod()
   create(data: CreateCategory) {
+    console.log(data);
     return this.categoryHandler.create(data);
   }
 

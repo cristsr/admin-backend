@@ -27,7 +27,7 @@ message CreateCategory {
   string name = 1;
   string icon = 2;
   string color = 3;
-  string subcategory = 4;
+  repeated CreateSubcategory subcategories = 4;
 }
 
 message CreateCategories {
