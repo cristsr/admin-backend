@@ -5,13 +5,15 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  CreateSubcategoryDto,
-  UpdateCategoryDto,
-  UpdateSubcategoryDto,
-} from 'app/category/dto';
+import { CreateSubcategoryDto, UpdateSubcategoryDto } from 'app/category/dto';
 import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
-import { Categories, Category, CreateCategory } from '@admin-back/grpc';
+import {
+  Categories,
+  Category,
+  CreateCategory,
+  Status,
+  UpdateCategory,
+} from '@admin-back/grpc';
 
 @Injectable()
 export class CategoryHandler {
@@ -47,53 +49,67 @@ export class CategoryHandler {
     return category;
   }
 
-  async createMany(categoriesDto: CreateCategory[]) {
-    for (const category of categoriesDto) {
-      await this.create(category);
+  async createMany(categoriesDto: CreateCategory[]): Promise<Status> {
+    try {
+      for (const category of categoriesDto) {
+        await this.create(category);
+      }
+      return {
+        status: true,
+      };
+    } catch (e) {
+      return {
+        status: false,
+      };
     }
-
-    return {
-      message: 'Categories created successfully',
-    };
   }
 
-  findAll(): Promise<Categories> {
-    return this.categoryRepository
-      .find({ relations: ['subcategories'] })
-      .then((categories) => ({
-        data: categories,
-      }))
-      .catch((err) => {
-        throw new InternalServerErrorException(err.message);
-      });
+  async findAll(): Promise<Categories> {
+    const categories = await this.categoryRepository.find({
+      relations: ['subcategories'],
+    });
+
+    return {
+      data: categories,
+    };
   }
 
   findOne(id: number): Promise<Category> {
     return this.categoryRepository
-      .findOneOrFail({ relations: ['subcategories'], where: { id } })
+      .findOneOrFail({
+        relations: ['subcategories'],
+        where: { id },
+      })
       .catch(() => {
         throw new NotFoundException('Category not found');
       });
   }
 
-  update(id: number, updateCategoryDto: UpdateCategoryDto): any {
-    return this.categoryRepository.update(id, updateCategoryDto).catch(() => {
+  update(data: UpdateCategory): Promise<Category> {
+    if (!this.categoryRepository.findOneByOrFail({ id: data.id })) {
       throw new NotFoundException('Category not found');
-    });
+    }
+
+    return this.categoryRepository.save(data);
   }
 
-  remove(id: number): any {
-    return this.categoryRepository.delete(id).catch((e) => {
-      throw new InternalServerErrorException(e.message);
-    });
+  remove(id: number): Promise<Status> {
+    return this.categoryRepository.delete(id).then((result) => ({
+      status: !!result.affected,
+    }));
   }
 
-  async removeAll() {
-    await this.categoryRepository.delete({});
-
-    return {
-      message: 'Categories removed successfully',
-    };
+  async removeAll(): Promise<Status> {
+    try {
+      await this.categoryRepository.delete({});
+      return {
+        status: true,
+      };
+    } catch (e) {
+      return {
+        status: false,
+      };
+    }
   }
 
   async createSubcategory(category: number, subcategory: CreateSubcategoryDto) {

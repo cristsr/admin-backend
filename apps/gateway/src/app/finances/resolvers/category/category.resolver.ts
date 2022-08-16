@@ -4,7 +4,10 @@ import {
   Category,
   CATEGORY_SERVICE,
   CategoryService,
+  CreateCategories,
   CreateCategory,
+  Status,
+  UpdateCategory,
 } from '@admin-back/grpc';
 import { map, Observable } from 'rxjs';
 
@@ -25,9 +28,30 @@ export class CategoryResolver {
 
   @Mutation(() => Category)
   createCategory(
-    @Args('category') category: CreateCategory
+    @Args('category')
+    category: CreateCategory
   ): Observable<Category> {
-    console.log(category);
     return this.categoryService.create(category);
+  }
+
+  @Mutation(() => Status)
+  createCategories(
+    @Args('categories')
+    categories: CreateCategories
+  ): Observable<Status> {
+    return this.categoryService.createMany(categories);
+  }
+
+  @Mutation(() => Category)
+  updateCategory(
+    @Args('category')
+    category: UpdateCategory
+  ): Observable<Category> {
+    return this.categoryService.update(category);
+  }
+
+  @Mutation(() => Status)
+  removeCategory(@Args('id') id: number): Observable<Status> {
+    return this.categoryService.remove({ id: +id });
   }
 }

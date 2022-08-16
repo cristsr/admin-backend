@@ -21,6 +21,11 @@
           },
           {
             "glob": "**/*.proto",
+            "input": "libs/grpc/src/shared",
+            "output": "assets/shared"
+          },
+          {
+            "glob": "**/*.proto",
             "input": "libs/grpc/src/finances",
             "output": "assets/finances"
           }

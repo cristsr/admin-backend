@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package finances.budget;
 
-import "google/protobuf/empty.proto";
+import public "google/protobuf/empty.proto";
 import "category/category.proto";
 
 service BudgetService {

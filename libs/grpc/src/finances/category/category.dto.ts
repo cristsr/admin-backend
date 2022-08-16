@@ -1,6 +1,11 @@
 import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
 import { CreateSubcategory, Subcategory } from '@admin-back/grpc';
-import { List, OmitInputType, PartialInputType } from '@admin-back/shared';
+import {
+  ListInput,
+  ListObject,
+  OmitInputType,
+  PartialInputType,
+} from '@admin-back/shared';
 
 @ObjectType()
 export class Category {
@@ -36,7 +41,7 @@ export class UpdateCategory extends PartialInputType(CreateCategory) {
 }
 
 @ObjectType()
-export class Categories extends List(Category) {}
+export class Categories extends ListObject(Category) {}
 
 @InputType()
-export class CreateCategories extends List(CreateCategory) {}
+export class CreateCategories extends ListInput(CreateCategory) {}

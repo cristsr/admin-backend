@@ -12,13 +12,13 @@ import { CreateSubcategoryPipe } from 'app/category/pipes';
 import { CreateSubcategoryDto, UpdateCategoryDto } from 'app/category/dto';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import {
-  Empty,
   Id,
   Categories,
   Category,
   CreateCategories,
   CreateCategory,
   UpdateCategory,
+  Status,
 } from '@admin-back/grpc';
 
 @GrpcService('finances')
@@ -31,7 +31,7 @@ export class CategoryService {
   }
 
   @GrpcMethod()
-  createMany({ data }: CreateCategories): Promise<any> {
+  createMany({ data }: CreateCategories): Promise<Status> {
     return this.categoryHandler.createMany(data);
   }
 
@@ -47,16 +47,16 @@ export class CategoryService {
 
   @GrpcMethod()
   update(data: UpdateCategory): Promise<Category> {
-    return this.categoryHandler.update(data.id, data);
+    return this.categoryHandler.update(data);
   }
 
   @GrpcMethod()
-  remove({ id }: Id): Promise<Empty> {
+  remove({ id }: Id): Promise<Status> {
     return this.categoryHandler.remove(id);
   }
 
   @GrpcMethod()
-  removeAll(): Promise<any> {
+  removeAll(): Promise<Status> {
     return this.categoryHandler.removeAll();
   }
 

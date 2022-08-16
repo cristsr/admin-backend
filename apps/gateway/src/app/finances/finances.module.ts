@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { FinancesService } from './services/finances.service';
-import { FinancesResolver } from './resolvers/finances.resolver';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import {
+  FinancesConfig,
+  GrpcProvider,
   CATEGORY_SERVICE,
   CATEGORY_SERVICE_NAME,
   FINANCES_GRPC_CLIENT,
@@ -10,8 +10,6 @@ import {
   SUBCATEGORY_SERVICE_NAME,
   BUDGET_SERVICE,
   BUDGET_SERVICE_NAME,
-  FinancesConfig,
-  GrpcProvider,
   MOVEMENT_SERVICE,
   MOVEMENT_SERVICE_NAME,
   SUMMARY_SERVICE,
@@ -19,7 +17,7 @@ import {
   SCHEDULED_SERVICE,
   SCHEDULED_SERVICE_NAME,
 } from '@admin-back/grpc';
-import { CategoryResolver } from './resolvers/category/category.resolver';
+import { CategoryResolver } from 'app/finances/resolvers';
 
 @Module({
   imports: [
@@ -62,9 +60,7 @@ import { CategoryResolver } from './resolvers/category/category.resolver';
       service: SCHEDULED_SERVICE_NAME,
       client: FINANCES_GRPC_CLIENT,
     }),
-    FinancesResolver,
     CategoryResolver,
-    FinancesService,
   ],
 })
 export class FinancesModule {}

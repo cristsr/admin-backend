@@ -1,11 +1,21 @@
 import { Type } from '@nestjs/common';
-import { Field, ObjectType } from '@nestjs/graphql';
+import { Field, InputType, ObjectType } from '@nestjs/graphql';
 
-interface ListMixin<T> {
+export interface ListMixin<T> {
   data: T[];
 }
 
-export function List<T>(classRef: Type<T>): Type<ListMixin<T>> {
+export function ListInput<T>(classRef: Type<T>): Type<ListMixin<T>> {
+  @InputType({ isAbstract: true })
+  class BaseList {
+    @Field(() => [classRef])
+    data: T[];
+  }
+
+  return BaseList;
+}
+
+export function ListObject<T>(classRef: Type<T>): Type<ListMixin<T>> {
   @ObjectType({ isAbstract: true })
   class BaseList {
     @Field(() => [classRef])
