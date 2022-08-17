@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
-import { ClientGrpc, ClientsModule, Transport } from '@nestjs/microservices';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { APP_GUARD } from '@nestjs/core';
-import { AuthConfig } from '@admin-back/grpc';
 import {
   AUTH_GRPC_CLIENT,
   AUTH_SERVICE,
   AUTH_SERVICE_NAME,
-} from 'app/auth/const';
+  AuthConfig,
+  GrpcProvider,
+} from '@admin-back/grpc';
 import { AuthController } from 'app/auth/controllers';
 import { AuthGuard } from 'app/auth/guards';
 import { AuthResolver } from 'app/auth/resolvers';
@@ -22,11 +23,11 @@ import { AuthResolver } from 'app/auth/resolvers';
     ]),
   ],
   providers: [
-    {
+    GrpcProvider({
       provide: AUTH_SERVICE,
-      useFactory: (client: ClientGrpc) => client.getService(AUTH_SERVICE_NAME),
-      inject: [AUTH_GRPC_CLIENT],
-    },
+      service: AUTH_SERVICE_NAME,
+      client: AUTH_GRPC_CLIENT,
+    }),
     {
       provide: APP_GUARD,
       useClass: AuthGuard,

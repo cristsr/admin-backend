@@ -9,8 +9,8 @@ import {
 } from '@nestjs/common';
 import { catchError, map, tap } from 'rxjs';
 import { Reflector } from '@nestjs/core';
-import { AUTH_SERVICE, IS_PUBLIC } from 'app/auth/const';
-import { AuthService } from '@admin-back/grpc';
+import { IS_PUBLIC } from 'app/auth/const';
+import { AUTH_SERVICE, AuthGrpc } from '@admin-back/grpc';
 import { GqlExecutionContext } from '@nestjs/graphql';
 
 @Injectable()
@@ -19,7 +19,7 @@ export class AuthGuard implements CanActivate {
 
   constructor(
     @Inject(AUTH_SERVICE)
-    private authService: AuthService,
+    private authService: AuthGrpc,
 
     private reflector: Reflector
   ) {}

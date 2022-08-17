@@ -1,14 +1,13 @@
 import { Body, Controller, Get, Inject, Post } from '@nestjs/common';
-import { AuthService } from '@admin-back/grpc';
+import { AUTH_SERVICE, AuthGrpc } from '@admin-back/grpc';
 import { LoginReq, RecoveryReq, UserDto } from 'app/auth/dto';
-import { AUTH_SERVICE } from 'app/auth/const';
 import { Public, CurrentUser } from 'core/decorators';
 
 @Controller('auth')
 export class AuthController {
   constructor(
     @Inject(AUTH_SERVICE)
-    private authService: AuthService
+    private authService: AuthGrpc
   ) {}
 
   @Post('register')
