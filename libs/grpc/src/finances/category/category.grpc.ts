@@ -4,9 +4,10 @@ import {
   CreateCategories,
   CreateCategory,
   UpdateCategory,
-} from './category.dto';
-import { Id, List } from '../../types';
-import { Status } from '../../shared';
+  Status,
+  Id,
+  List,
+} from '@admin-back/grpc';
 
 export interface CategoryGrpc {
   create(data: CreateCategory): Observable<Category>;

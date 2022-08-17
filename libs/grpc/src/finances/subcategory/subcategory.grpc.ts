@@ -6,8 +6,8 @@ import {
   Subcategories,
   Subcategory,
   UpdateSubcategory,
+  Id,
 } from '@admin-back/grpc';
-import { Id } from '../../types';
 
 export interface SubcategoryGrpc {
   create(subcategory: CreateSubcategory): Observable<Subcategory>;

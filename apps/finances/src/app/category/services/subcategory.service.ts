@@ -1,4 +1,5 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
+import { Observable } from 'rxjs';
 import { SubcategoryHandler } from 'app/category/handlers';
 import {
   SubcategoryGrpc,
@@ -10,7 +11,6 @@ import {
   Subcategories,
   Id,
 } from '@admin-back/grpc';
-import { Observable } from 'rxjs';
 
 @GrpcService('finances')
 export class SubcategoryService implements SubcategoryGrpc {
