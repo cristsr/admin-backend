@@ -1,5 +1,5 @@
 import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
-import { OmitInputType, PartialInputType } from '@admin-back/shared';
+import { ListInput, ListObject, OmitInputType } from '@admin-back/shared';
 
 @ObjectType()
 export class Subcategory {
@@ -11,7 +11,22 @@ export class Subcategory {
 }
 
 @InputType()
-export class CreateSubcategory extends OmitInputType(Subcategory, ['id']) {}
+export class CreateSubcategory extends OmitInputType(Subcategory, ['id']) {
+  @Field()
+  category: number;
+}
 
 @InputType()
-export class UpdateSubcategory extends PartialInputType(Subcategory) {}
+export class UpdateSubcategory extends OmitInputType(Subcategory, []) {}
+// export class UpdateSubcategory extends Subcategory {}
+
+@ObjectType()
+export class Subcategories extends ListObject(Subcategory) {}
+
+@InputType()
+export class CreateSubcategories extends ListInput(
+  OmitInputType(Subcategory, ['id'])
+) {
+  @Field()
+  category: number;
+}

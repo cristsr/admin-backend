@@ -35,7 +35,9 @@ export class CreateCategory extends OmitInputType(Category, [
 }
 
 @InputType()
-export class UpdateCategory extends PartialInputType(CreateCategory) {
+export class UpdateCategory extends PartialInputType(
+  OmitInputType(Category, ['subcategories'])
+) {
   @Field(() => Int)
   id: number;
 }

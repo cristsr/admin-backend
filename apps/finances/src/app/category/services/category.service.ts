@@ -1,16 +1,5 @@
-import {
-  Get,
-  Post,
-  Body,
-  Param,
-  Delete,
-  Put,
-  ParseIntPipe,
-} from '@nestjs/common';
-import { CategoryHandler } from 'app/category/handlers';
-import { CreateSubcategoryPipe } from 'app/category/pipes';
-import { CreateSubcategoryDto, UpdateCategoryDto } from 'app/category/dto';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
+import { CategoryHandler } from 'app/category/handlers';
 import {
   Id,
   Categories,
@@ -23,7 +12,7 @@ import {
 
 @GrpcService('finances')
 export class CategoryService {
-  constructor(private readonly categoryHandler: CategoryHandler) {}
+  constructor(private categoryHandler: CategoryHandler) {}
 
   @GrpcMethod()
   create(data: CreateCategory) {
@@ -31,8 +20,8 @@ export class CategoryService {
   }
 
   @GrpcMethod()
-  createMany({ data }: CreateCategories): Promise<Status> {
-    return this.categoryHandler.createMany(data);
+  createMany(categories: CreateCategories): Promise<Status> {
+    return this.categoryHandler.createMany(categories.data);
   }
 
   @GrpcMethod()
@@ -41,68 +30,22 @@ export class CategoryService {
   }
 
   @GrpcMethod()
-  findOne({ id }): Promise<Category> {
-    return this.categoryHandler.findOne(id);
+  findOne(category: Id): Promise<Category> {
+    return this.categoryHandler.findOne(category.id);
   }
 
   @GrpcMethod()
-  update(data: UpdateCategory): Promise<Category> {
-    return this.categoryHandler.update(data);
+  update(category: UpdateCategory): Promise<Category> {
+    return this.categoryHandler.update(category);
   }
 
   @GrpcMethod()
-  remove({ id }: Id): Promise<Status> {
-    return this.categoryHandler.remove(id);
+  remove(category: Id): Promise<Status> {
+    return this.categoryHandler.remove(category.id);
   }
 
   @GrpcMethod()
   removeAll(): Promise<Status> {
     return this.categoryHandler.removeAll();
-  }
-
-  @Post('/:id/subcategories')
-  createSubcategory(
-    @Param('id', ParseIntPipe) category: number,
-    @Body(CreateSubcategoryPipe)
-    createSubcategoryDto: CreateSubcategoryDto[]
-  ) {
-    return this.categoryHandler.createSubcategories(
-      category,
-      createSubcategoryDto
-    );
-  }
-
-  @Get(':id/subcategories')
-  findSubcategories(@Param('id', ParseIntPipe) id: number) {
-    return this.categoryHandler.findSubcategories(id);
-  }
-
-  @Get(':id/subcategories/:idSub')
-  findSubcategory(
-    @Param('id', ParseIntPipe) category: number,
-    @Param('idSub', ParseIntPipe) subcategory: number
-  ) {
-    return this.categoryHandler.findSubcategory(category, subcategory);
-  }
-
-  @Put(':id/subcategories/:idSub')
-  updateSubcategory(
-    @Param('id', ParseIntPipe) category: number,
-    @Param('idSub', ParseIntPipe) subcategory: number,
-    @Body() updateSubcategoryDto: UpdateCategoryDto
-  ) {
-    return this.categoryHandler.updateSubcategory(
-      category,
-      subcategory,
-      updateSubcategoryDto
-    );
-  }
-
-  @Delete(':id/subcategories/:idSub')
-  removeSubcategory(
-    @Param('id', ParseIntPipe) category: number,
-    @Param('idSub', ParseIntPipe) subcategory: number
-  ) {
-    return this.categoryHandler.removeSubcategory(category, subcategory);
   }
 }

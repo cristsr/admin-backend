@@ -5,7 +5,6 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateSubcategoryDto, UpdateSubcategoryDto } from 'app/category/dto';
 import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
 import {
   Categories,
@@ -110,54 +109,5 @@ export class CategoryHandler {
         status: false,
       };
     }
-  }
-
-  async createSubcategory(category: number, subcategory: CreateSubcategoryDto) {
-    return this.subcategoryRepository.save({
-      ...subcategory,
-      category: { id: category },
-    });
-  }
-
-  async createSubcategories(
-    category: number,
-    subcategories: CreateSubcategoryDto[]
-  ) {
-    await this.subcategoryRepository.insert(
-      subcategories.map((v) => ({
-        ...v,
-        category: { id: category },
-      }))
-    );
-  }
-
-  findSubcategories(category: number) {
-    return this.subcategoryRepository.find({
-      where: { category: { id: category } },
-    });
-  }
-
-  findSubcategory(category: number, subcategory: number) {
-    return this.subcategoryRepository.findOne({
-      where: { category: { id: category }, id: subcategory },
-    });
-  }
-
-  updateSubcategory(
-    category: number,
-    subcategory: number,
-    updateSubcategoryDto: UpdateSubcategoryDto
-  ) {
-    return this.subcategoryRepository.update(
-      { category: { id: category }, id: subcategory },
-      updateSubcategoryDto
-    );
-  }
-
-  removeSubcategory(category: number, subcategory: number) {
-    return this.subcategoryRepository.delete({
-      category: { id: category },
-      id: subcategory,
-    });
   }
 }

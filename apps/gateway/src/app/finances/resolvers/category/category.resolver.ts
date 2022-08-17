@@ -1,5 +1,6 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
+import { map, Observable } from 'rxjs';
 import {
   Category,
   CATEGORY_SERVICE,
@@ -9,7 +10,6 @@ import {
   Status,
   UpdateCategory,
 } from '@admin-back/grpc';
-import { map, Observable } from 'rxjs';
 
 @Resolver()
 export class CategoryResolver {
