@@ -13,6 +13,15 @@ import {
   Status,
   UpdateCategory,
 } from '@admin-back/grpc';
+import {
+  catchError,
+  forkJoin,
+  from,
+  map,
+  Observable,
+  of,
+  switchMap,
+} from 'rxjs';
 
 @Injectable()
 export class CategoryHandler {
@@ -24,90 +33,86 @@ export class CategoryHandler {
     private subcategoryRepository: Repository<SubcategoryEntity>
   ) {}
 
-  async create({ name, color, icon, subcategories }: CreateCategory) {
-    const category = await this.categoryRepository
-      .save({ name, icon, color })
+  create(data: CreateCategory): Observable<Category> {
+    const category = this.categoryRepository
+      .save({
+        name: data.name,
+        icon: data.icon,
+        color: data.color,
+      })
       .catch((err) => {
         throw new InternalServerErrorException(err);
       });
 
-    if (!subcategories?.length) {
-      return category;
+    if (!data.subcategories?.length) {
+      return from(category);
     }
 
-    category.subcategories = await this.subcategoryRepository
-      .save(
-        subcategories.map((v) => {
-          return this.subcategoryRepository.create({ ...v, category });
-        })
-      )
-      .catch((err) => {
-        throw new InternalServerErrorException(err);
-      });
+    return from(category).pipe(
+      switchMap((category) => {
+        const records = data.subcategories.map((v) => {
+          return this.subcategoryRepository.create({
+            ...v,
+            category,
+          });
+        });
 
-    return category;
+        return from(this.subcategoryRepository.save(records)).pipe(
+          map((subcategories) => ({
+            ...category,
+            subcategories,
+          }))
+        );
+      })
+    );
   }
 
-  async createMany(categoriesDto: CreateCategory[]): Promise<Status> {
-    try {
-      for (const category of categoriesDto) {
-        await this.create(category);
-      }
-      return {
-        status: true,
-      };
-    } catch (e) {
-      return {
-        status: false,
-      };
-    }
+  createMany(categories: CreateCategory[]): Observable<Status> {
+    const query = categories.map((category) => this.create(category));
+
+    return forkJoin(query).pipe(
+      map(() => ({ status: true })),
+      catchError(() => of({ status: false }))
+    );
   }
 
-  async findAll(): Promise<Categories> {
-    const categories = await this.categoryRepository.find({
+  findAll(): Observable<Categories> {
+    const categories = this.categoryRepository.find({
       relations: ['subcategories'],
     });
 
-    return {
-      data: categories,
-    };
+    return from(categories).pipe(map((data) => ({ data })));
   }
 
-  findOne(id: number): Promise<Category> {
-    return this.categoryRepository
-      .findOneOrFail({
-        relations: ['subcategories'],
-        where: { id },
-      })
-      .catch(() => {
-        throw new NotFoundException('Category not found');
-      });
+  findOne(id: number): Observable<Category> {
+    const category = this.categoryRepository.findOneOrFail({
+      relations: ['subcategories'],
+      where: { id },
+    });
+
+    return from(category);
   }
 
-  update(data: UpdateCategory): Promise<Category> {
+  update(data: UpdateCategory): Observable<Category> {
     if (!this.categoryRepository.findOneByOrFail({ id: data.id })) {
       throw new NotFoundException('Category not found');
     }
 
-    return this.categoryRepository.save(data);
+    return from(this.categoryRepository.save(data));
   }
 
-  remove(id: number): Promise<Status> {
-    return this.categoryRepository.delete(id).then((result) => ({
+  remove(id: number): Observable<Status> {
+    const query = this.categoryRepository.delete(id).then((result) => ({
       status: !!result.affected,
     }));
+
+    return from(query);
   }
 
-  async removeAll(): Promise<Status> {
-    try {
-      await this.categoryRepository.delete({});
-      return {
-        status: true,
-      };
-    } catch (e) {
-      return {
-        status: false,
-      };
-    }
+  removeAll(): Observable<Status> {
+    return from(this.categoryRepository.delete({})).pipe(
+      map(() => ({ status: true })),
+      catchError(() => of({ status: false }))
+    );
   }
 }

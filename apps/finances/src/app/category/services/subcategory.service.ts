@@ -1,6 +1,7 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import { SubcategoryHandler } from 'app/category/handlers';
 import {
+  SubcategoryGrpc,
   CreateSubcategory,
   CreateSubcategories,
   Status,
@@ -9,38 +10,39 @@ import {
   Subcategories,
   Id,
 } from '@admin-back/grpc';
+import { Observable } from 'rxjs';
 
 @GrpcService('finances')
-export class SubcategoryService {
+export class SubcategoryService implements SubcategoryGrpc {
   constructor(private subcategoryHandler: SubcategoryHandler) {}
 
   @GrpcMethod()
-  create(data: CreateSubcategory) {
+  create(data: CreateSubcategory): Observable<Subcategory> {
     return this.subcategoryHandler.create(data);
   }
 
   @GrpcMethod()
-  createMany(data: CreateSubcategories): Promise<Status> {
+  createMany(data: CreateSubcategories): Observable<Status> {
     return this.subcategoryHandler.createMany(data);
   }
 
   @GrpcMethod()
-  async findAll(category: Id): Promise<Subcategories> {
+  findByCategory(category: Id): Observable<Subcategories> {
     return this.subcategoryHandler.findAll(category.id);
   }
 
   @GrpcMethod()
-  findOne(subcategory: Id): Promise<Subcategory> {
+  findOne(subcategory: Id): Observable<Subcategory> {
     return this.subcategoryHandler.findOne(subcategory.id);
   }
 
   @GrpcMethod()
-  update(data: UpdateSubcategory): Promise<Subcategory> {
+  update(data: UpdateSubcategory): Observable<Subcategory> {
     return this.subcategoryHandler.update(data);
   }
 
   @GrpcMethod()
-  async remove(subcategory: Id): Promise<Status> {
+  remove(subcategory: Id): Observable<Status> {
     return this.subcategoryHandler.remove(subcategory.id);
   }
 }

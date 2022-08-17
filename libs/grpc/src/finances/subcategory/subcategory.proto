@@ -9,7 +9,7 @@ service SubcategoryService {
   rpc Create(CreateSubcategory) returns (stream Subcategory) {}
   rpc CreateMany(CreateSubcategory) returns (stream Subcategory) {}
   rpc FindOne(SubcategoryId) returns (stream Subcategory) {}
-  rpc FindByCategory(CategoryId) returns (stream Subcategory) {}
+  rpc FindByCategory(CategoryId) returns (stream Subcategories) {}
   rpc Update(UpdateSubcategory) returns (stream Subcategory) {}
   rpc Remove(SubcategoryId) returns (stream Subcategory) {}
 }
@@ -17,6 +17,10 @@ service SubcategoryService {
 message Subcategory {
   int32 id = 1;
   string name = 2;
+}
+
+message Subcategories {
+  repeated Subcategory data = 1;
 }
 
 message SubcategoryId {
@@ -31,4 +35,8 @@ message CreateSubcategory {
 message UpdateSubcategory {
   int32 id = 1;
   string name = 2;
+}
+
+message Status {
+  bool status = 1;
 }

@@ -4,7 +4,7 @@ import { map, Observable } from 'rxjs';
 import {
   Category,
   CATEGORY_SERVICE,
-  CategoryService,
+  CategoryGrpc,
   CreateCategories,
   CreateCategory,
   Status,
@@ -14,7 +14,7 @@ import {
 @Resolver()
 export class CategoryResolver {
   @Inject(CATEGORY_SERVICE)
-  private categoryService: CategoryService;
+  private categoryService: CategoryGrpc;
 
   @Query(() => Category)
   getCategory(@Args('id') id: number) {

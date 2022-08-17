@@ -12,7 +12,7 @@ export class Subcategory {
 
 @InputType()
 export class CreateSubcategory extends OmitInputType(Subcategory, ['id']) {
-  @Field()
+  @Field({ nullable: true })
   category: number;
 }
 

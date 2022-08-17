@@ -30,8 +30,10 @@ export class CreateCategory extends OmitInputType(Category, [
   'id',
   'subcategories',
 ]) {
-  @Field(() => [CreateSubcategory], { nullable: true })
-  subcategories?: CreateSubcategory[];
+  @Field(() => [CreateSubcategory], {
+    nullable: true,
+  })
+  subcategories?: Omit<CreateSubcategory, 'category'>[];
 }
 
 @InputType()

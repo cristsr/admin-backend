@@ -36,24 +36,4 @@ export class AuthResolver {
     this.#logger.debug(data);
     return this.authService.register(data);
   }
-
-  // @Query(() => Auth, { name: 'auth' })
-  // findOne(@Args('id', { type: () => Int }) id: number) {
-  //   return this.authService.findOne(id);
-  // }
-  //
-  // @Mutation(() => Auth)
-  // updateAuth(@Args('updateAuthInput') updateAuthInput: UpdateAuthInput) {
-  //   return this.authService.update(updateAuthInput.id, updateAuthInput);
-  // }
-  //
-  // @Mutation(() => Auth)
-  // removeAuth(@Args('id', { type: () => Int }) id: number) {
-  //   return this.authService.remove(id);
-  // }
-  //
-  // @ResolveField(() => String, { name: 'name', nullable: true })
-  // exampleField(@Parent() auth: Auth) {
-  //   return 'Cristian pro';
-  // }
 }
