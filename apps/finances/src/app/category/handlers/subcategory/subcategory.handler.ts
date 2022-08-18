@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { SubcategoryEntity } from 'app/category/entities';
@@ -64,7 +64,7 @@ export class SubcategoryHandler {
   }
 
   findOne(subcategory: number): Observable<Subcategory> {
-    const query = this.subcategoryRepository.findOne({
+    const query = this.subcategoryRepository.findOneOrFail({
       where: {
         id: subcategory,
       },

@@ -1,112 +1,133 @@
-import { status } from '@grpc/grpc-js';
+import { Metadata, status } from '@grpc/grpc-js';
+
+type RpcError = string | Record<string, any>;
 
 export class GrpcException extends Error {
-  public readonly message: string;
+  status: number;
+  response: string | object;
 
-  public constructor(
-    public readonly code: number,
-    private readonly error: string | object
-  ) {
+  constructor(readonly code: number, private readonly error: RpcError) {
     super();
-    this.message = error.toString();
   }
-  public getError() {
+
+  getError() {
     return this.error;
+  }
+
+  getResponse() {
+    const metadata = new Metadata();
+    metadata.add('exception', this.constructor.name);
+
+    const message = !this.error
+      ? ''
+      : typeof this.error === 'string'
+      ? this.error
+      : this.error.message;
+
+    return {
+      code: this.code,
+      message,
+      metadata,
+    };
+  }
+
+  getStatus(): number {
+    return this.status;
   }
 }
 
 export class GrpcCanceledException extends GrpcException {
-  public constructor(error: string | object) {
+  constructor(error: RpcError) {
     super(status.CANCELLED, error);
   }
 }
 
 export class GrpcUnkownException extends GrpcException {
-  public constructor(error: string | object) {
+  constructor(error: RpcError) {
     super(status.UNKNOWN, error);
   }
 }
 
 export class GrpcInvalidArgumentException extends GrpcException {
-  public constructor(error: string | object) {
+  constructor(error: RpcError) {
     super(status.INVALID_ARGUMENT, error);
   }
 }
 
 export class GrpcDeadlineExceededException extends GrpcException {
-  public constructor(error: string | object) {
+  constructor(error: RpcError) {
     super(status.DEADLINE_EXCEEDED, error);
   }
 }
 
 export class GrpcNotFoundException extends GrpcException {
-  public constructor(error: string | object) {
+  constructor(error: RpcError) {
     super(status.NOT_FOUND, error);
   }
 }
 
 export class GrpcAlreadyExistException extends GrpcException {
-  public constructor(error: string | object) {
+  constructor(error: RpcError) {
     super(status.ALREADY_EXISTS, error);
   }
 }
 
 export class GrpcPermissionDeniedException extends GrpcException {
-  public constructor(error: string | object) {
+  constructor(error: RpcError) {
     super(status.PERMISSION_DENIED, error);
   }
 }
 
 export class GrpcUnauthenticatedException extends GrpcException {
-  public constructor(error: string | object) {
+  constructor(error: RpcError) {
     super(status.UNAUTHENTICATED, error);
   }
 }
 
 export class GrpcRessourceExhaustedException extends GrpcException {
-  public constructor(error: string | object) {
+  constructor(error: RpcError) {
     super(status.RESOURCE_EXHAUSTED, error);
   }
 }
 
 export class GrpcFailedPreconditionException extends GrpcException {
-  public constructor(error: string | object) {
+  constructor(error: RpcError) {
     super(status.FAILED_PRECONDITION, error);
   }
 }
 
 export class GrpcAbortedException extends GrpcException {
-  public constructor(error: string | object) {
+  constructor(error: RpcError) {
     super(status.ABORTED, error);
   }
 }
 
 export class GrpcOutOfRangeException extends GrpcException {
-  public constructor(error: string | object) {
+  constructor(error: RpcError) {
     super(status.OUT_OF_RANGE, error);
   }
 }
 
 export class GrpcUnimplementedException extends GrpcException {
-  public constructor(error: string | object) {
+  constructor(error: RpcError) {
     super(status.UNIMPLEMENTED, error);
   }
 }
 
-export class GrpcInternalException extends GrpcException {
-  public constructor(error: string | object) {
-    super(status.CANCELLED, error);
-  }
-}
-
 export class GrpcUnavailableException extends GrpcException {
-  public constructor(error: string | object) {
+  constructor(error: RpcError) {
     super(status.UNAVAILABLE, error);
   }
 }
 
 export class GrpcDataLossException extends GrpcException {
-  public constructor(error: string | object) {
+  constructor(error: RpcError) {
     super(status.DATA_LOSS, error);
+  }
+}
+
+export class GrpcInternalException extends GrpcException {
+  constructor(error: RpcError) {
+    super(status.CANCELLED, error);
   }
 }

@@ -17,13 +17,8 @@ export class SubcategoryService implements SubcategoryGrpc {
   constructor(private subcategoryHandler: SubcategoryHandler) {}
 
   @GrpcMethod()
-  create(data: CreateSubcategory): Observable<Subcategory> {
-    return this.subcategoryHandler.create(data);
-  }
-
-  @GrpcMethod()
-  createMany(data: CreateSubcategories): Observable<Status> {
-    return this.subcategoryHandler.createMany(data);
+  findOne(subcategory: Id): Observable<Subcategory> {
+    return this.subcategoryHandler.findOne(subcategory.id);
   }
 
   @GrpcMethod()
@@ -32,8 +27,13 @@ export class SubcategoryService implements SubcategoryGrpc {
   }
 
   @GrpcMethod()
-  findOne(subcategory: Id): Observable<Subcategory> {
-    return this.subcategoryHandler.findOne(subcategory.id);
+  create(data: CreateSubcategory): Observable<Subcategory> {
+    return this.subcategoryHandler.create(data);
+  }
+
+  @GrpcMethod()
+  createMany(data: CreateSubcategories): Observable<Status> {
+    return this.subcategoryHandler.createMany(data);
   }
 
   @GrpcMethod()

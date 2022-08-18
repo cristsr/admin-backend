@@ -24,6 +24,7 @@ import { FinancesModule } from 'app/finances/finances.module';
       autoSchemaFile: true,
       debug: true,
       playground: true,
+      context: ({ req }) => ({ req }),
     }),
     CacheModule.register({
       isGlobal: true,

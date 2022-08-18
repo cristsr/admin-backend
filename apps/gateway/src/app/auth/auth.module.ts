@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import { APP_GUARD } from '@nestjs/core';
+import { ClientsModule, Transport } from '@nestjs/microservices';
+import { PassportModule } from '@nestjs/passport';
 import {
   AUTH_GRPC_CLIENT,
   AUTH_SERVICE,
@@ -8,12 +9,14 @@ import {
   AuthConfig,
   GrpcProvider,
 } from '@admin-back/grpc';
-import { AuthController } from 'app/auth/controllers';
-import { AuthGuard } from 'app/auth/guards';
+import { JwtGuard } from 'app/auth/guards';
+import { JwtStrategy } from 'app/auth/strategies';
 import { AuthResolver } from 'app/auth/resolvers';
+import { AuthController } from 'app/auth/controllers';
 
 @Module({
   imports: [
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     ClientsModule.register([
       {
         name: AUTH_GRPC_CLIENT,
@@ -30,9 +33,10 @@ import { AuthResolver } from 'app/auth/resolvers';
     }),
     {
       provide: APP_GUARD,
-      useClass: AuthGuard,
+      useClass: JwtGuard,
     },
     AuthResolver,
+    JwtStrategy,
   ],
   controllers: [AuthController],
   exports: [AUTH_SERVICE],

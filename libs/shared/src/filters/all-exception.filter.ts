@@ -22,6 +22,7 @@ export class AllExceptionFilter extends BaseExceptionFilter {
     }
 
     this.#logger.error(exception.details);
+    this.#logger.error(exception.metadata.get('exception'));
 
     const Exception =
       GrpcToHttpExceptionMap[exception.code] ?? InternalServerErrorException;

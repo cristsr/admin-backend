@@ -54,4 +54,9 @@ export class CategoryResolver {
   removeCategory(@Args('id') id: number): Observable<Status> {
     return this.categoryService.remove({ id: +id });
   }
+
+  @Mutation(() => Status)
+  removeCategories(): Observable<Status> {
+    return this.categoryService.removeAll();
+  }
 }

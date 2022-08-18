@@ -17,13 +17,8 @@ export class CategoryService implements CategoryGrpc {
   constructor(private categoryHandler: CategoryHandler) {}
 
   @GrpcMethod()
-  create(data: CreateCategory): Observable<Category> {
-    return this.categoryHandler.create(data);
-  }
-
-  @GrpcMethod()
-  createMany(categories: CreateCategories): Observable<Status> {
-    return this.categoryHandler.createMany(categories.data);
+  findOne(category: Id): Observable<Category> {
+    return this.categoryHandler.findOne(category.id);
   }
 
   @GrpcMethod()
@@ -32,8 +27,13 @@ export class CategoryService implements CategoryGrpc {
   }
 
   @GrpcMethod()
-  findOne(category: Id): Observable<Category> {
-    return this.categoryHandler.findOne(category.id);
+  create(data: CreateCategory): Observable<Category> {
+    return this.categoryHandler.create(data);
+  }
+
+  @GrpcMethod()
+  createMany(categories: CreateCategories): Observable<Status> {
+    return this.categoryHandler.createMany(categories.data);
   }
 
   @GrpcMethod()

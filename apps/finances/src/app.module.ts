@@ -1,7 +1,7 @@
 import { CacheModule, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER } from '@nestjs/core';
-import { configValidator } from '@admin-back/shared';
+import { configValidator, TypeormFilter } from '@admin-back/shared';
 import { Environment } from 'env';
 import { DatabaseModule } from 'database/database.module';
 import { CategoryModule } from 'app/category/category.module';
@@ -10,7 +10,6 @@ import { SummaryModule } from 'app/summary/summary.module';
 import { BudgetModule } from 'app/budget/budget.module';
 import { BillModule } from 'app/bill/bill.module';
 import { ScheduledModule } from 'app/scheduled/scheduled.module';
-import { TypeormFilter } from 'core/filters';
 import { AppController } from './app.controller';
 
 @Module({

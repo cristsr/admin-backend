@@ -20,6 +20,7 @@ import { ENV } from 'env';
 import { AccessToken, Credential, UserId } from '@admin-back/grpc';
 import { RegisterReq, LoginReq, RecoveryReq } from 'auth/dto';
 import { UserEntity } from 'auth/entities';
+import { GrpcCanceledException } from '@admin-back/shared';
 
 @Injectable()
 export class AuthService {
@@ -39,7 +40,7 @@ export class AuthService {
 
   async register(data: RegisterReq) {
     if (await this.userRepository.findOneBy({ email: data.email })) {
-      throw new UnprocessableEntityException('Email already exists');
+      throw new GrpcCanceledException('Email already exists');
     }
 
     data.password = await hash(

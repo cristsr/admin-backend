@@ -9,6 +9,12 @@ export class Environment {
   @Transform(({ value }) => +value)
   @IsNumber()
   PORT: number;
+
+  @IsString()
+  AUTH0_ISSUER;
+
+  @IsString()
+  AUTH0_AUDIENCE;
 }
 
 export const ENV = mapEnvironmentKeys(Environment);
