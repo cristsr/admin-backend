@@ -27,15 +27,4 @@ export class Auth {
     this.#logger.debug('Get user', data);
     return this.authService.getUserFromToken(data);
   }
-
-  // @Post('recovery-account')
-  // recovery(@Body() data: RecoveryReq) {
-  //   return this.authService.recovery(data);
-  // }
-  //
-  // @Get(':id')
-  // profile(@Req() req: Request) {
-  //   console.log(req.cookies);
-  //   return {};
-  // }
 }
