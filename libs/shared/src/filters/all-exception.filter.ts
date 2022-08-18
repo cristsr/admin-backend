@@ -15,14 +15,13 @@ export class AllExceptionFilter extends BaseExceptionFilter {
   catch(exception: any, host: ArgumentsHost) {
     this.#logger.debug('Host type: ' + host.getType());
 
+    this.#logger.debug(exception);
+
     // Handling http exception
     if (exception instanceof HttpException) {
       this.#logger.error(exception.message);
       return super.catch(exception, host);
     }
-
-    this.#logger.error(exception.details);
-    this.#logger.error(exception.metadata.get('exception'));
 
     const Exception =
       GrpcToHttpExceptionMap[exception.code] ?? InternalServerErrorException;

@@ -1,4 +1,4 @@
-import { ExecutionContext, Injectable } from '@nestjs/common';
+import { ExecutionContext, Injectable, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC } from 'app/auth/const';
 import { GqlExecutionContext } from '@nestjs/graphql';
@@ -6,6 +6,8 @@ import { AuthGuard } from '@nestjs/passport';
 
 @Injectable()
 export class JwtGuard extends AuthGuard('jwt') {
+  #logger = new Logger(JwtGuard.name);
+
   constructor(private reflector: Reflector) {
     super();
   }
@@ -31,5 +33,13 @@ export class JwtGuard extends AuthGuard('jwt') {
 
     const type = context.getType();
     return contextTypeMap[type]();
+  }
+
+  handleRequest(err, user, info, context) {
+    if (!user) {
+      this.#logger.error(info);
+    }
+
+    return super.handleRequest(err, user, info, context);
   }
 }

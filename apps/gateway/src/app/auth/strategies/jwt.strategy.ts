@@ -1,32 +1,31 @@
-import { Injectable } from '@nestjs/common';
-import { ExtractJwt, Strategy } from 'passport-jwt';
+import { Injectable, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
+import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { expressJwtSecret } from 'jwks-rsa';
+import { passportJwtSecret } from 'jwks-rsa';
 import { ENV } from 'env';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  #logger = new Logger(JwtStrategy.name);
+
   constructor(private config: ConfigService) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken,
-      secretOrKey: expressJwtSecret({
+      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      secretOrKeyProvider: passportJwtSecret({
         cache: true,
         rateLimit: true,
         jwksRequestsPerMinute: 5,
         jwksUri: config.get(ENV.AUTH0_ISSUER) + '/.well-known/jwks.json',
-        handleSigningKeyError: (err, cb) => {
-          console.log(err.message, err.stack);
-          cb(err);
-        },
       }),
-      // audience: config.get(ENV.AUTH0_AUDIENCE),
+      audience: config.get(ENV.AUTH0_AUDIENCE),
+      issuer: config.get(ENV.AUTH0_ISSUER).concat('/'),
       algorithms: ['RS256'],
     });
   }
 
-  async validate(payload) {
-    console.log(payload);
+  validate(payload) {
+    this.#logger.debug(payload);
     return {
       userId: payload.sub,
       username: payload.username,
