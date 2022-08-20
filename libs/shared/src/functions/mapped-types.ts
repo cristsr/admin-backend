@@ -3,7 +3,7 @@ import { InputType, ObjectType, OmitType, PartialType } from '@nestjs/graphql';
 
 export function OmitInputType<T, K extends keyof T>(
   classRef: Type<T>,
-  keys: readonly K[]
+  keys: readonly K[] = []
 ): Type<Omit<T, typeof keys[number]>> {
   return OmitType(classRef, keys, InputType);
 }

@@ -1,15 +1,14 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
-
-import { CreateScheduled, ScheduledRes } from 'app/scheduled/dto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { ScheduledEntity } from 'app/scheduled/entities';
 import { Repository } from 'typeorm';
+import { CreateScheduled, ScheduledRes } from 'app/scheduled/dto';
+import { ScheduledEntity } from 'app/scheduled/entities';
 import { CategoryEntity } from 'app/category/entities';
 import { SubcategoryEntity } from 'app/subcategory/entities';
 
 @Injectable()
-export class ScheduledService {
-  #logger = new Logger(ScheduledService.name);
+export class ScheduledHandler {
+  #logger = new Logger(ScheduledHandler.name);
 
   constructor(
     @InjectRepository(CategoryEntity)

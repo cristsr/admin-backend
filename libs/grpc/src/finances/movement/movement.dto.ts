@@ -15,6 +15,9 @@ export class Movement {
   @Field()
   id: number;
 
+  @Field(() => String)
+  type: MovementType;
+
   @Field()
   date: string;
 

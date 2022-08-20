@@ -6,28 +6,32 @@ import "google/protobuf/empty.proto";
 import "movement/movement.proto";
 
 service ScheduledService {
-    rpc create(CreateScheduled) returns (stream Scheduled) {};
-    rpc findOne(ScheduledId) returns (stream Scheduled);
-    rpc findAll(google.protobuf.Empty) returns (stream Scheduled);
-    rpc update(UpdateScheduled) returns (stream Scheduled);
-    rpc delete(ScheduledId) returns (google.protobuf.Empty);
+  rpc FindOne(ScheduledId) returns (stream Scheduled);
+  rpc FindAll(google.protobuf.Empty) returns (stream Scheduleds);
+  rpc Create(CreateScheduled) returns (stream Scheduled) {};
+  rpc Update(UpdateScheduled) returns (stream Scheduled);
+  rpc Delete(ScheduledId) returns (google.protobuf.Empty);
 }
 
 message Scheduled {
   extend Movement {}
-  bool recurrent  = 10;
+  bool recurrent = 10;
+}
+
+message Scheduleds {
+  repeated Scheduled data = 1;
 }
 
 message CreateScheduled {
   extend CreateMovement {}
-  bool recurrent  = 10;
+  bool recurrent = 10;
 }
 
 message UpdateScheduled {
   extend UpdateMovement {}
-  optional bool recurrent  = 10;
+  optional bool recurrent = 10;
 }
 
 message ScheduledId {
-  int32 id  = 1;
+  int32 id = 1;
 }

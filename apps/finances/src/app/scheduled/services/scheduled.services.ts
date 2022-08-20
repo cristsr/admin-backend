@@ -1,43 +1,33 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Patch,
-  Param,
-  Delete,
-} from '@nestjs/common';
-import { ScheduledService } from 'app/scheduled/services';
+import { Body, Param } from '@nestjs/common';
+import { GrpcMethod, GrpcService } from '@nestjs/microservices';
+import { ScheduledHandler } from 'app/scheduled/handlers';
 import { CreateScheduled } from 'app/scheduled/dto';
 
-@Controller({
-  path: 'scheduled',
-  version: '1',
-})
-export class ScheduledController {
-  constructor(private scheduledService: ScheduledService) {}
+@GrpcService('finances')
+export class ScheduledServices {
+  constructor(private scheduledService: ScheduledHandler) {}
 
-  @Post()
+  @GrpcMethod()
   create(@Body() data: CreateScheduled) {
     return this.scheduledService.create(data);
   }
 
-  @Get()
+  @GrpcMethod()
   findAll() {
     return this.scheduledService.findAll();
   }
 
-  @Get(':id')
+  @GrpcMethod()
   findOne(@Param('id') id: string) {
     return this.scheduledService.findOne(+id);
   }
 
-  @Patch(':id')
+  @GrpcMethod()
   update(@Param('id') id: string, @Body() data: CreateScheduled) {
     return this.scheduledService.update(+id, data);
   }
 
-  @Delete(':id')
+  @GrpcMethod()
   remove(@Param('id') id: string) {
     return this.scheduledService.remove(+id);
   }
