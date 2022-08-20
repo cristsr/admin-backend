@@ -7,9 +7,9 @@ import "category/category.proto";
 import "movement/movement.proto";
 
 service SummaryService {
-  rpc balance(google.protobuf.Any) returns (stream Balance) {}
-  rpc expenses(google.protobuf.Any) returns (stream Expenses) {}
-  rpc lastMovements(google.protobuf.Any) returns (stream Movement) {}
+  rpc Balance(google.protobuf.Any) returns (stream Balance) {}
+  rpc Expenses(google.protobuf.Any) returns (stream Expenses) {}
+  rpc LastMovements(google.protobuf.Any) returns (stream Movements) {}
 }
 
 message Expense {

@@ -1,10 +1,16 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { CreateScheduled, ScheduledRes } from 'app/scheduled/dto';
 import { ScheduledEntity } from 'app/scheduled/entities';
 import { CategoryEntity } from 'app/category/entities';
 import { SubcategoryEntity } from 'app/subcategory/entities';
+import {
+  CreateScheduled,
+  Scheduled,
+  Scheduleds,
+  Status,
+  UpdateScheduled,
+} from '@admin-back/grpc';
 
 @Injectable()
 export class ScheduledHandler {
@@ -21,14 +27,33 @@ export class ScheduledHandler {
     private scheduledRepository: Repository<ScheduledEntity>
   ) {}
 
-  async create(data: CreateScheduled) {
-    this.#logger.log(`Creating scheduled ${data.description}`);
+  findOne(id: number): Promise<Scheduled> {
+    this.#logger.debug(`Find one scheduled ${id}`);
+
+    return this.scheduledRepository.findOneByOrFail({ id }).catch(() => {
+      const msg = `Scheduled ${id} not found`;
+      this.#logger.error(msg);
+      throw new NotFoundException(msg);
+    });
+  }
+
+  findAll(): Promise<Scheduleds> {
+    this.#logger.debug('Find all scheduled');
+    return this.scheduledRepository
+      .find({
+        relations: ['category', 'subcategory'],
+      })
+      .then((data) => ({ data }));
+  }
+
+  async create(data: CreateScheduled): Promise<Scheduled> {
+    this.#logger.debug(`Creating scheduled ${data.description}`);
 
     const category = await this.categoryRepository
       .findOneByOrFail({ id: data.category })
       .catch(() => {
         const msg = `Category ${data.category} not found`;
-        this.#logger.log(msg);
+        this.#logger.error(msg);
         throw new NotFoundException(msg);
       });
 
@@ -36,7 +61,7 @@ export class ScheduledHandler {
       .findOneByOrFail({ id: data.subcategory })
       .catch(() => {
         const msg = `Subcategory ${data.subcategory} not found`;
-        this.#logger.log(msg);
+        this.#logger.error(msg);
         throw new NotFoundException(msg);
       });
 
@@ -51,35 +76,24 @@ export class ScheduledHandler {
     return scheduled;
   }
 
-  findAll() {
-    this.#logger.log('Find all scheduled');
-    return this.scheduledRepository.find({
-      relations: ['category', 'subcategory'],
-      // where: {
-      //   date: DateTime.local().toSQLDate(),
-      // },
-    });
-  }
+  update(data: UpdateScheduled): Promise<Scheduled> {
+    this.#logger.debug(`Updating scheduled ${data.id}`);
 
-  findOne(id: number) {
-    this.#logger.log(`Find one scheduled ${id}`);
-    return this.scheduledRepository.findOneByOrFail({ id }).catch(() => {
-      const msg = `Scheduled ${id} not found`;
-      this.#logger.log(msg);
-      throw new NotFoundException(msg);
-    });
-  }
-
-  update(id: number, data: ScheduledRes) {
-    this.#logger.log(`Updating scheduled ${id}`);
     return this.scheduledRepository.save({
-      id,
       ...data,
+      category: {
+        id: data.category,
+      },
+      subcategory: {
+        id: data.subcategory,
+      },
     });
   }
 
-  async remove(id: number) {
+  remove(id: number): Promise<Status> {
     this.#logger.log(`Removing scheduled ${id}`);
-    await this.scheduledRepository.delete(id);
+    return this.scheduledRepository
+      .delete(id)
+      .then((res) => ({ status: !!res.affected }));
   }
 }

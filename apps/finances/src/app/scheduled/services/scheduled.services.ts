@@ -1,34 +1,42 @@
-import { Body, Param } from '@nestjs/common';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
+import { from, Observable } from 'rxjs';
 import { ScheduledHandler } from 'app/scheduled/handlers';
-import { CreateScheduled } from 'app/scheduled/dto';
+import {
+  CreateScheduled,
+  Id,
+  Scheduled,
+  ScheduledGrpc,
+  Scheduleds,
+  Status,
+  UpdateScheduled,
+} from '@admin-back/grpc';
 
 @GrpcService('finances')
-export class ScheduledServices {
+export class ScheduledServices implements ScheduledGrpc {
   constructor(private scheduledService: ScheduledHandler) {}
 
   @GrpcMethod()
-  create(@Body() data: CreateScheduled) {
-    return this.scheduledService.create(data);
+  findOne(scheduled: Id): Observable<Scheduled> {
+    return from(this.scheduledService.findOne(scheduled.id));
   }
 
   @GrpcMethod()
-  findAll() {
-    return this.scheduledService.findAll();
+  findAll(): Observable<Scheduleds> {
+    return from(this.scheduledService.findAll());
   }
 
   @GrpcMethod()
-  findOne(@Param('id') id: string) {
-    return this.scheduledService.findOne(+id);
+  create(scheduled: CreateScheduled): Observable<Scheduled> {
+    return from(this.scheduledService.create(scheduled));
   }
 
   @GrpcMethod()
-  update(@Param('id') id: string, @Body() data: CreateScheduled) {
-    return this.scheduledService.update(+id, data);
+  update(scheduled: UpdateScheduled): Observable<Scheduled> {
+    return from(this.scheduledService.update(scheduled));
   }
 
   @GrpcMethod()
-  remove(@Param('id') id: string) {
-    return this.scheduledService.remove(+id);
+  remove(scheduled: Id): Observable<Status> {
+    return from(this.scheduledService.remove(scheduled.id));
   }
 }

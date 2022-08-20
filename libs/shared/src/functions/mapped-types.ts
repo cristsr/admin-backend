@@ -5,7 +5,7 @@ export function OmitInputType<T, K extends keyof T>(
   classRef: Type<T>,
   keys: readonly K[] = []
 ): Type<Omit<T, typeof keys[number]>> {
-  return OmitType(classRef, keys, InputType);
+  return OmitType<T, K>(classRef, keys, InputType);
 }
 
 export function OmitObjectType<T, K extends keyof T>(
@@ -16,9 +16,9 @@ export function OmitObjectType<T, K extends keyof T>(
 }
 
 export function PartialInputType<T>(classRef: Type<T>): Type<Partial<T>> {
-  return PartialType(classRef, InputType);
+  return PartialType<T>(classRef, InputType);
 }
 
 export function PartialObjectType<T>(classRef: Type<T>): Type<Partial<T>> {
-  return PartialType(classRef, ObjectType);
+  return PartialType<T>(classRef, ObjectType);
 }

@@ -2,9 +2,9 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DateTime } from 'luxon';
+import { Balance, Expense, Expenses, Movements } from '@admin-back/grpc';
 import { MovementEntity } from 'app/movement/entities';
 import { BalanceEntity, SummaryEntity } from 'app/summary/entities';
-import { ExpenseDto, ExpensesDto } from 'app/summary/dto';
 
 @Injectable()
 export class SummaryHandler {
@@ -21,11 +21,11 @@ export class SummaryHandler {
     private movementRepository: Repository<MovementEntity>
   ) {}
 
-  balance(): Promise<BalanceEntity> {
+  balance(): Promise<Balance> {
     return this.balanceRepository.findOne({});
   }
 
-  async expenses(date: DateTime): Promise<ExpensesDto> {
+  async expenses(date: DateTime): Promise<Expenses> {
     let where: string;
 
     const today = date.toSQLDate();
@@ -48,7 +48,19 @@ export class SummaryHandler {
     };
   }
 
-  expensesQuery(where: string): Promise<ExpenseDto[]> {
+  lastMovements(): Promise<Movements> {
+    return this.movementRepository
+      .find({
+        relations: ['category', 'subcategory'],
+        order: {
+          date: 'DESC',
+        },
+        take: 5,
+      })
+      .then((data) => ({ data }));
+  }
+
+  private expensesQuery(where: string): Promise<Expense[]> {
     const query = this.movementRepository
       .createQueryBuilder('m')
       .select('SUM(m.amount)::float', 'amount')
@@ -62,7 +74,7 @@ export class SummaryHandler {
     return query.getRawMany().then((data) => {
       const total = data.reduce((acc, cur) => acc + cur.amount, 0);
 
-      return data.map<ExpenseDto>((item) => ({
+      return data.map<Expense>((item) => ({
         amount: item.amount,
         percentage: Math.round((item.amount / total) * 100),
         category: {
@@ -72,16 +84,6 @@ export class SummaryHandler {
           icon: item.c_icon,
         },
       }));
-    });
-  }
-
-  lastMovements(): Promise<MovementEntity[]> {
-    return this.movementRepository.find({
-      relations: ['category', 'subcategory'],
-      order: {
-        date: 'DESC',
-      },
-      take: 5,
     });
   }
 

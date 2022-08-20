@@ -13,13 +13,13 @@ export class Scheduled extends Movement {
 export class Scheduleds extends ListObject(Scheduled) {}
 
 @InputType()
-export class CreateScheduled extends OmitInputType(CreateMovement, []) {
+export class CreateScheduled extends CreateMovement {
   @Field()
   recurrent: string;
 }
 
 @InputType()
-export class UpdateScheduled extends OmitInputType(UpdateMovement, []) {
+export class UpdateScheduled extends UpdateMovement {
   @Field()
   recurrent: string;
 }

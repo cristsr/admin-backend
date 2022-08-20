@@ -1,29 +1,11 @@
 import { Observable } from 'rxjs';
-import { Category, Movement } from '@admin-back/grpc';
-import { Empty } from '../../types';
+import { Metadata } from '@grpc/grpc-js';
+import { Empty, Balance, Expenses, Movements } from '@admin-back/grpc';
 
-export interface SummaryService {
+export interface SummaryGrpc {
   balance(empty: Empty): Observable<Balance>;
-  expenses(empty: Empty): Observable<Expenses>;
-  lastMovements(empty: Empty): Observable<Movement[]>;
-}
 
-export interface Expense {
-  amount: number;
-  percentage: number;
-  category: Category;
-}
+  expenses(empty: Empty, metadata: Metadata): Observable<Expenses>;
 
-export interface Expenses {
-  day: Expense[];
-  week: Expense[];
-  month: Expense[];
-}
-
-export interface Balance {
-  balance: number;
-  incomeMonth: number;
-  expenseMonth: number;
-  incomeYear: number;
-  expenseYear: number;
+  lastMovements(empty: Empty): Observable<Movements>;
 }

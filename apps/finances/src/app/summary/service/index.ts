@@ -1,1 +1,1 @@
-export * from './summary.controller';
+export * from './summary.service';

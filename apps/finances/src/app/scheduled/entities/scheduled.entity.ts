@@ -1,5 +1,6 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
@@ -47,4 +48,10 @@ export class ScheduledEntity {
     name: 'subcategory_id',
   })
   subcategory: SubcategoryEntity;
+
+  @CreateDateColumn({
+    type: 'timestamp',
+    name: 'created_at',
+  })
+  createdAt: string;
 }

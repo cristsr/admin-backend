@@ -22,7 +22,7 @@ export class Category {
   color: string;
 
   @Field(() => [Subcategory], { nullable: true })
-  subcategories: Subcategory[];
+  subcategories?: Subcategory[];
 }
 
 @InputType()
