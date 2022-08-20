@@ -62,7 +62,7 @@ export class UpdateMovement extends PartialInputType(CreateMovement) {
 
 @InputType()
 export class MovementFilter {
-  @Field()
+  @Field(() => String)
   @IsIn(periods)
   period: Period;
 
