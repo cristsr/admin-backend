@@ -48,9 +48,9 @@ export class CreateBudget extends OmitInputType(Budget, [
   'startDate',
   'endDate',
   'spent',
-  'repeat',
   'percentage',
   'category',
+  'active',
 ]) {
   @Field()
   category: number;

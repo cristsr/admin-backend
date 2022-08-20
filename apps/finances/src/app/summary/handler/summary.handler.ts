@@ -22,7 +22,7 @@ export class SummaryHandler {
   ) {}
 
   balance(): Promise<Balance> {
-    return this.balanceRepository.findOne({});
+    return this.balanceRepository.findOneBy({});
   }
 
   async expenses(date: DateTime): Promise<Expenses> {

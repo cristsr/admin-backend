@@ -16,7 +16,8 @@ export class SummaryService implements SummaryGrpc {
 
   @GrpcMethod()
   expenses(_, metadata: Metadata): Observable<Expenses> {
-    const date = DateTime.fromISO(metadata.get('clientDate')[0] as string);
+    const [isoDate] = <string[]>metadata.get('clientDate');
+    const date = DateTime.fromISO(isoDate);
     return from(this.summaryService.expenses(date));
   }
 

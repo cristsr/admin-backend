@@ -1,14 +1,13 @@
 import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
-import { Category } from '../category';
-import { Subcategory } from '../subcategory';
+import { ArrayMaxSize, IsArray, IsIn, IsOptional } from 'class-validator';
 import {
   ListObject,
   OmitInputType,
   PartialInputType,
 } from '@admin-back/shared';
-import { ArrayMaxSize, IsIn } from 'class-validator';
-import { Transform } from 'class-transformer';
-import { MovementType, Period, periods } from './types';
+import { Category } from '../category';
+import { Subcategory } from '../subcategory';
+import { MovementType, movementTypes, Period, periods } from './types';
 
 @ObjectType()
 export class Movement {
@@ -72,10 +71,10 @@ export class MovementFilter {
   @Field(() => Int, { nullable: true })
   category?: number;
 
-  // Todo: validate frontend
   @Field(() => [String], { nullable: true })
-  @Transform(({ value }) => [...new Set(...value)])
-  @IsIn(['income', 'expense'])
+  @IsOptional()
+  @IsArray()
   @ArrayMaxSize(2)
-  type: MovementType[];
+  @IsIn(movementTypes, { each: true })
+  type?: MovementType[];
 }

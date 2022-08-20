@@ -17,7 +17,10 @@ export class CreateSubcategory extends OmitInputType(Subcategory, ['id']) {
 }
 
 @InputType()
-export class UpdateSubcategory extends OmitInputType(Subcategory, []) {}
+export class UpdateSubcategory extends OmitInputType(Subcategory, []) {
+  @Field({ nullable: true })
+  category?: number;
+}
 // export class UpdateSubcategory extends Subcategory {}
 
 @ObjectType()

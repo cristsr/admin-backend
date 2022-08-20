@@ -17,7 +17,7 @@ service MovementService {
 }
 
 message Status {
-  bool success = 1;
+  bool status = 1;
 }
 
 message Movement {
@@ -62,5 +62,5 @@ message MovementFilter {
   string period = 1;
   string date = 2;
   optional int32 category = 3;
-  optional string type = 4;
+  repeated string type = 4;
 }

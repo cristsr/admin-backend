@@ -3,42 +3,42 @@ import { Category } from '@admin-back/grpc';
 
 @ObjectType()
 export class Expense {
-  @Field()
+  @Field({ nullable: true })
   amount: number;
 
-  @Field()
+  @Field({ nullable: true })
   percentage: number;
 
-  @Field(() => Category)
+  @Field(() => Category, { nullable: true })
   category: Category;
 }
 
 @ObjectType()
 export class Expenses {
-  @Field(() => [Expense])
+  @Field(() => [Expense], { nullable: true })
   day: Expense[];
 
-  @Field(() => [Expense])
+  @Field(() => [Expense], { nullable: true })
   week: Expense[];
 
-  @Field(() => [Expense])
+  @Field(() => [Expense], { nullable: true })
   month: Expense[];
 }
 
 @ObjectType()
 export class Balance {
-  @Field()
+  @Field({ nullable: true })
   balance: number;
 
-  @Field()
+  @Field({ nullable: true })
   incomeMonth: number;
 
-  @Field()
+  @Field({ nullable: true })
   expenseMonth: number;
 
-  @Field()
+  @Field({ nullable: true })
   incomeYear: number;
 
-  @Field()
+  @Field({ nullable: true })
   expenseYear: number;
 }

@@ -6,12 +6,12 @@ import "google/protobuf/empty.proto";
 import "category/category.proto";
 
 service SubcategoryService {
-  rpc Create(CreateSubcategory) returns (stream Subcategory) {}
-  rpc CreateMany(CreateSubcategory) returns (stream Subcategory) {}
   rpc FindOne(SubcategoryId) returns (stream Subcategory) {}
   rpc FindByCategory(CategoryId) returns (stream Subcategories) {}
+  rpc Create(CreateSubcategory) returns (stream Subcategory) {}
+  rpc CreateMany(CreateSubcategories) returns (stream Status) {}
   rpc Update(UpdateSubcategory) returns (stream Subcategory) {}
-  rpc Remove(SubcategoryId) returns (stream Subcategory) {}
+  rpc Remove(SubcategoryId) returns (stream Status) {}
 }
 
 message Subcategory {
@@ -32,9 +32,18 @@ message CreateSubcategory {
   string name = 2;
 }
 
+message CreateSubcategories {
+  message Subcategory {
+    string name = 2;
+  }
+  repeated Subcategory data = 1;
+  int32 category = 2;
+}
+
 message UpdateSubcategory {
   int32 id = 1;
   string name = 2;
+  optional int32 category = 3;
 }
 
 message Status {

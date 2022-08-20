@@ -17,7 +17,14 @@ import {
   SCHEDULED_SERVICE,
   SCHEDULED_SERVICE_NAME,
 } from '@admin-back/grpc';
-import { CategoryResolver, SubcategoryResolver } from 'app/finances/resolvers';
+import {
+  CategoryResolver,
+  SubcategoryResolver,
+  MovementResolver,
+  BudgetResolver,
+  ScheduledResolver,
+  SummaryResolver,
+} from 'app/finances/resolvers';
 
 @Module({
   imports: [
@@ -62,6 +69,10 @@ import { CategoryResolver, SubcategoryResolver } from 'app/finances/resolvers';
     }),
     CategoryResolver,
     SubcategoryResolver,
+    MovementResolver,
+    BudgetResolver,
+    ScheduledResolver,
+    SummaryResolver,
   ],
 })
 export class FinancesModule {}

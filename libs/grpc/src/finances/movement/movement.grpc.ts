@@ -12,7 +12,7 @@ import { Observable } from 'rxjs';
 export interface MovementGrpc {
   findOne(id: Id): Observable<Movement>;
 
-  findAll(filter: MovementFilter): Observable<Movements>;
+  findAll(filters: MovementFilter): Observable<Movements>;
 
   create(data: CreateMovement): Observable<Movement>;
 

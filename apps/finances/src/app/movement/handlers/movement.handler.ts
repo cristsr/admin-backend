@@ -199,7 +199,7 @@ export class MovementHandler {
    */
   async remove(id: number): Promise<Status> {
     const result = await this.movementRepository.delete(id).catch((e) => {
-      this.#logger.log(`Error deleting movement: ${e.message}`);
+      this.#logger.error(`Error deleting movement: ${e.message}`);
       throw new InternalServerErrorException(e.message);
     });
 

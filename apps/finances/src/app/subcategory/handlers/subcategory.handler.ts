@@ -74,7 +74,11 @@ export class SubcategoryHandler {
   }
 
   update(data: UpdateSubcategory): Observable<Subcategory> {
-    const query = this.subcategoryRepository.save(data);
+    const query = this.subcategoryRepository.save({
+      ...data,
+      category: data.category && { id: data.category },
+    });
+
     return from(query);
   }
 
