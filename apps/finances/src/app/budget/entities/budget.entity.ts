@@ -7,6 +7,7 @@ import {
 } from 'typeorm';
 import { CategoryEntity } from 'app/category/entities';
 
+// Todo: Review this entity and remove unused fields or refactor it
 @Entity('budgets')
 export class BudgetEntity {
   @PrimaryGeneratedColumn('increment')

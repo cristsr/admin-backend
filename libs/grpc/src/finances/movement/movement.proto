@@ -7,12 +7,17 @@ import "category/category.proto";
 import "subcategory/subcategory.proto";
 
 service MovementService {
-  rpc create(CreateMovement) returns (stream Movement) {}
-  rpc findAll(MovementQuery) returns (stream Movement) {}
-  rpc findOne(MovementId) returns (stream Movement) {}
-  rpc update(UpdateMovement) returns (stream Movement) {}
-  rpc delete(MovementId) returns (stream google.protobuf.Empty) {}
-  rpc removeAll(google.protobuf.Empty) returns (stream google.protobuf.Empty) {}
+  rpc FindOne(Id) returns (stream Movement) {}
+  rpc FindAll(MovementFilter) returns (stream Movements) {}
+  rpc Create(CreateMovement) returns (stream Movement) {}
+  rpc CreateMany(CreateMovement) returns (stream Movement) {}
+  rpc Update(UpdateMovement) returns (stream Movement) {}
+  rpc Remove(Id) returns (stream Status) {}
+  rpc RemoveAll(google.protobuf.Empty) returns (stream Status) {}
+}
+
+message Status {
+  bool success = 1;
 }
 
 message Movement {
@@ -24,6 +29,10 @@ message Movement {
   Category category = 6;
   Subcategory subcategory = 7;
   string createdAt = 8;
+}
+
+message Movements {
+  repeated Movement data = 1;
 }
 
 message CreateMovement {
@@ -45,11 +54,11 @@ message UpdateMovement {
   optional int32 subcategory = 7;
 }
 
-message MovementId {
+message Id {
   int32 id = 1;
 }
 
-message MovementQuery {
+message MovementFilter {
   string period = 1;
   string date = 2;
   optional int32 category = 3;

@@ -4,13 +4,15 @@ package finances.budget;
 
 import public "google/protobuf/empty.proto";
 import "category/category.proto";
+import "movement/movement.proto";
 
 service BudgetService {
-  rpc create(CreateBudget) returns (stream Budget);
-  rpc findOne(BudgetId) returns (stream Budget);
-  rpc findAll(google.protobuf.Empty) returns (stream Budget);
-  rpc update(UpdateBudget) returns (stream Budget);
-  rpc remove(BudgetId) returns (stream google.protobuf.Empty);
+  rpc FindOne(BudgetId) returns (stream Budget);
+  rpc FindAll(google.protobuf.Empty) returns (stream Budgets);
+  rpc FindMovements(BudgetId) returns (stream Movements);
+  rpc Create(CreateBudget) returns (stream Budget);
+  rpc Update(UpdateBudget) returns (stream Budget);
+  rpc Remove(BudgetId) returns (stream Status);
 }
 
 message Budget {
@@ -24,6 +26,10 @@ message Budget {
   bool active = 8;
   int32 percentage = 9;
   Category category = 10;
+}
+
+message Budgets {
+  repeated Budget data = 1;
 }
 
 message CreateBudget {
@@ -45,4 +51,8 @@ message UpdateBudget {
 
 message BudgetId {
   int32 id = 1;
+}
+
+message Status {
+  bool status = 1;
 }

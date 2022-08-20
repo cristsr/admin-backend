@@ -1,13 +1,19 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+
+import { CategoryModule } from 'app/category/category.module';
+import { SubcategoryModule } from 'app/subcategory/subcategory.module';
+
 import { ScheduledService } from 'app/scheduled/services';
 import { ScheduledController } from 'app/scheduled/controllers';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduledEntity } from 'app/scheduled/entities';
-import { CategoryModule } from 'apps/finances/src/app/category/category.module';
+
+const Entities = TypeOrmModule.forFeature([ScheduledEntity]);
 
 @Module({
-  imports: [CategoryModule, TypeOrmModule.forFeature([ScheduledEntity])],
+  imports: [Entities, CategoryModule, SubcategoryModule],
   controllers: [ScheduledController],
   providers: [ScheduledService],
+  exports: [Entities],
 })
 export class ScheduledModule {}

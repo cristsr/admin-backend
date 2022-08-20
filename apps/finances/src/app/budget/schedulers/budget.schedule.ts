@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { BudgetService } from 'app/budget/services';
+import { BudgetHandler } from 'app/budget/handlers';
 
 @Injectable()
 export class BudgetSchedule {
-  constructor(private budgetService: BudgetService) {}
+  constructor(private budgetService: BudgetHandler) {}
 
   @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_NOON, {
     timeZone: 'America/Bogota',

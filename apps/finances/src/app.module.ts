@@ -10,6 +10,7 @@ import { SummaryModule } from 'app/summary/summary.module';
 import { BudgetModule } from 'app/budget/budget.module';
 import { BillModule } from 'app/bill/bill.module';
 import { ScheduledModule } from 'app/scheduled/scheduled.module';
+import { SubcategoryModule } from 'app/subcategory/subcategory.module';
 import { AppController } from './app.controller';
 
 @Module({
@@ -21,6 +22,7 @@ import { AppController } from './app.controller';
     CacheModule.register(),
     DatabaseModule,
     CategoryModule,
+    SubcategoryModule,
     MovementModule,
     SummaryModule,
     BudgetModule,

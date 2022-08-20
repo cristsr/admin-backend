@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { MainModule } from './main.module';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 
 process.on('unhandledRejection', function (err) {
   console.error(err, '[unhandledRejection]');
@@ -15,6 +15,13 @@ process.on('uncaughtException', (err) => {
 
 async function bootstrap() {
   const app = await NestFactory.create(MainModule);
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      // exceptionFactory: (errors) => {}
+    })
+  );
 
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);

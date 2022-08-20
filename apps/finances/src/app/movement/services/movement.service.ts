@@ -1,224 +1,48 @@
+import { MovementHandler } from 'app/movement/handlers';
+import { GrpcMethod, GrpcService } from '@nestjs/microservices';
+import { from, Observable } from 'rxjs';
 import {
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Between, In, Raw, Repository } from 'typeorm';
-import { DateTime, Interval } from 'luxon';
-import { MovementEntity } from 'app/movement/entities';
-import {
-  CreateMovementDto,
-  MovementDto,
-  MovementQueryDto,
-  UpdateMovementDto,
-} from 'app/movement/dto';
-import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
+  CreateMovement,
+  Id,
+  Movement,
+  MovementFilter,
+  MovementGrpc,
+  Movements,
+  Status,
+  UpdateMovement,
+} from '@admin-back/grpc';
 
-@Injectable()
-export class MovementService {
-  readonly #logger = new Logger(MovementService.name);
+@GrpcService('finances')
+export class MovementService implements MovementGrpc {
+  constructor(private readonly movementHandler: MovementHandler) {}
 
-  constructor(
-    @InjectRepository(MovementEntity)
-    private movementRepository: Repository<MovementEntity>,
-
-    @InjectRepository(CategoryEntity)
-    private categoryRepository: Repository<CategoryEntity>,
-
-    @InjectRepository(SubcategoryEntity)
-    private subcategoryRepository: Repository<SubcategoryEntity>
-  ) {}
-
-  /**
-   * It creates a movement
-   * @param {CreateMovementDto} data - CreateMovementDto
-   * @returns MovementEntity
-   */
-  async create(data: CreateMovementDto): Promise<MovementEntity> {
-    const category = await this.categoryRepository.findOneBy({
-      id: data.category,
-    });
-
-    if (!category) {
-      const msg = `Category ${data.category} not found`;
-      this.#logger.log(msg);
-      throw new NotFoundException(msg);
-    }
-
-    const subcategory = await this.subcategoryRepository.findOne({
-      where: {
-        id: data.subcategory,
-        category,
-      },
-    });
-
-    if (!subcategory) {
-      const msg = `Subcategory ${data.subcategory} not found`;
-      this.#logger.log(msg);
-      throw new NotFoundException(msg);
-    }
-
-    const movement = await this.movementRepository.save({
-      ...data,
-      category,
-      subcategory,
-    });
-
-    this.#logger.log(`Movement ${movement.id} created`);
-
-    return movement;
+  @GrpcMethod()
+  create(movement: CreateMovement): Observable<Movement> {
+    return from(this.movementHandler.create(movement));
   }
 
-  /**
-   * It finds all movements that match the given query parameters
-   * @param {MovementQueryDto} params - MovementQueryDto
-   * @returns An array of MovementDto objects
-   */
-  async findAll(params: MovementQueryDto): Promise<MovementDto[]> {
-    // Where conditions
-    const where: any = {};
-
-    // Setup where conditions
-    if (params.period === 'day') {
-      where.date = DateTime.fromISO(params.date).toSQLDate();
-    }
-
-    if (params.period === 'week') {
-      const interval = Interval.fromISO(params.date);
-      where.date = Between(
-        interval.start.toSQLDate(),
-        interval.end.toSQLDate()
-      );
-    }
-
-    if (params.period === 'month') {
-      const date = DateTime.fromISO(params.date).toFormat('yyyy-MM');
-      where.date = Raw((alias) => `to_char(${alias}, 'YYYY-MM') = :date`, {
-        date,
-      });
-    }
-
-    if (params.period === 'year') {
-      const date = DateTime.fromISO(params.date).toFormat('yyyy');
-      where.date = Raw((alias) => `to_char(${alias}, 'YYYY') = :date`, {
-        date,
-      });
-    }
-
-    if (params.category) {
-      where.category = await this.categoryRepository
-        .findOneByOrFail({ id: params.category })
-        .catch(() => {
-          const msg = `Category ${params.category} not found`;
-          this.#logger.log(msg);
-          throw new NotFoundException(msg);
-        });
-    }
-
-    if (params.type?.length) {
-      where.type = In(params.type);
-    }
-
-    // Execute query
-    return await this.movementRepository.find({
-      relations: ['category', 'subcategory'],
-      where,
-      order: { date: 'DESC', createdAt: 'DESC' },
-    });
+  @GrpcMethod()
+  findOne(movement: Id): Observable<Movement> {
+    return from(this.movementHandler.findOne(movement.id));
   }
 
-  /**
-   * It finds a movement by id, and if it doesn't find it, it throws a NotFoundException
-   * @param {number} id - number - the id of the movement we want to find
-   * @returns A promise of a MovementEntity
-   */
-  findOne(id: number): Promise<MovementEntity> {
-    return this.movementRepository
-      .findOneOrFail({
-        relations: ['category', 'subcategory'],
-        where: { id },
-      })
-      .catch(() => {
-        const msg = `Movement ${id} not found`;
-        this.#logger.log(msg);
-        throw new NotFoundException(msg);
-      });
+  @GrpcMethod()
+  findAll(filters: MovementFilter): Observable<Movements> {
+    return from(this.movementHandler.findAll(filters));
   }
 
-  /**
-   * It updates a movement entity with the given data, and returns the updated entity
-   * @param {number} id - number - the id of the movement to update
-   * @param {UpdateMovementDto} data - UpdateMovementDto
-   * @returns The updated movement entity
-   */
-  async update(id: number, data: UpdateMovementDto): Promise<MovementEntity> {
-    const partialEntity: any = { id, ...data };
-
-    if (data.category) {
-      partialEntity.category = await this.categoryRepository
-        .findOneByOrFail({ id: data.category })
-        .catch(() => {
-          const msg = `Category ${data.category} not found`;
-          this.#logger.log(msg);
-          throw new NotFoundException(msg);
-        });
-    }
-
-    if (data.subcategory) {
-      partialEntity.subcategory = await this.subcategoryRepository
-        .findOneByOrFail({ id: data.subcategory })
-        .catch(() => {
-          const msg = `Subcategory ${data.subcategory} not found`;
-          this.#logger.log(msg);
-          throw new NotFoundException(msg);
-        });
-    }
-
-    const movementEntity = await this.movementRepository
-      .save(partialEntity)
-      .catch((e) => {
-        this.#logger.log(`Error updating movement: ${e.message}`);
-        throw new InternalServerErrorException(e.message);
-      });
-
-    this.#logger.log(`Movement ${movementEntity.id} updated`);
-
-    return movementEntity;
+  @GrpcMethod()
+  update(movement: UpdateMovement): Observable<Movement> {
+    return from(this.movementHandler.update(movement));
   }
 
-  /**
-   * It deletes a movement from the database
-   * @param {number} id - number - The id of the movement to delete
-   * @returns A promise that resolves to an object with a message property.
-   */
-  async remove(id: number): Promise<Record<string, string>> {
-    const result = await this.movementRepository.delete(id).catch((e) => {
-      this.#logger.log(`Error deleting movement: ${e.message}`);
-      throw new InternalServerErrorException(e.message);
-    });
-
-    if (!result.affected) {
-      const msg = `Movement ${id} not found`;
-      this.#logger.log(msg);
-      throw new NotFoundException(msg);
-    }
-
-    this.#logger.log(`Movement ${id} deleted`);
-
-    return {
-      message: 'Movement deleted successfully',
-    };
+  @GrpcMethod()
+  remove(movement: Id): Observable<Status> {
+    return from(this.movementHandler.remove(movement.id));
   }
 
-  async removeAll(): Promise<Record<string, string>> {
-    await this.movementRepository.clear().catch((e) => {
-      throw new InternalServerErrorException(e.message);
-    });
-
-    return {
-      message: 'All movements deleted successfully',
-    };
+  @GrpcMethod()
+  removeAll() {
+    return from(this.movementHandler.removeAll());
   }
 }

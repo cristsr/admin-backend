@@ -4,7 +4,8 @@ import { CreateScheduled, ScheduledRes } from 'app/scheduled/dto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ScheduledEntity } from 'app/scheduled/entities';
 import { Repository } from 'typeorm';
-import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
+import { CategoryEntity } from 'app/category/entities';
+import { SubcategoryEntity } from 'app/subcategory/entities';
 
 @Injectable()
 export class ScheduledService {

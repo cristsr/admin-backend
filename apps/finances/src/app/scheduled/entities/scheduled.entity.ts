@@ -5,8 +5,9 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
-import { MovementType } from 'app/movement/types';
+import { MovementType } from '@admin-back/grpc';
+import { CategoryEntity } from 'app/category/entities';
+import { SubcategoryEntity } from 'app/subcategory/entities';
 
 @Entity('scheduled')
 export class ScheduledEntity {

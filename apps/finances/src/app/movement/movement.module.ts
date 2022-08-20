@@ -1,16 +1,19 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MovementService } from 'app/movement/services';
-import { MovementController } from 'app/movement/controllers';
-import { MovementEntity } from 'app/movement/entities';
-import { CategoryModule } from 'apps/finances/src/app/category/category.module';
 
-const entities = TypeOrmModule.forFeature([MovementEntity]);
+import { CategoryModule } from 'app/category/category.module';
+import { SubcategoryModule } from 'app/subcategory/subcategory.module';
+
+import { MovementService } from 'app/movement/services';
+import { MovementHandler } from 'app/movement/handlers';
+import { MovementEntity } from 'app/movement/entities';
+
+const Entities = TypeOrmModule.forFeature([MovementEntity]);
 
 @Module({
-  imports: [entities, CategoryModule],
-  controllers: [MovementController],
-  providers: [MovementService],
-  exports: [entities],
+  imports: [Entities, CategoryModule, SubcategoryModule],
+  controllers: [MovementService],
+  providers: [MovementHandler],
+  exports: [Entities],
 })
 export class MovementModule {}

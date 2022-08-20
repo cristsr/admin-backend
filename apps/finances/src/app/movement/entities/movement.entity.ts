@@ -6,10 +6,11 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { CategoryEntity, SubcategoryEntity } from 'app/category/entities';
 import { DateTime } from 'luxon';
-import { MovementType } from 'app/movement/types';
+import { MovementType } from '@admin-back/grpc';
 import { optTransformer } from 'database/utils';
+import { CategoryEntity } from 'app/category/entities';
+import { SubcategoryEntity } from 'app/subcategory/entities';
 
 @Entity('movements')
 export class MovementEntity {
@@ -56,5 +57,5 @@ export class MovementEntity {
       },
     }),
   })
-  createdAt: Date;
+  createdAt: string;
 }

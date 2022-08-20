@@ -12,6 +12,10 @@ export class JwtGuard extends AuthGuard('jwt') {
     super();
   }
 
+  /**
+   * @override
+   * @param context
+   */
   canActivate(context: ExecutionContext) {
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC, [
       context.getClass(),
@@ -25,6 +29,10 @@ export class JwtGuard extends AuthGuard('jwt') {
     return super.canActivate(context);
   }
 
+  /**
+   * @override
+   * @param context
+   */
   getRequest(context: ExecutionContext) {
     const contextTypeMap = {
       http: () => context.switchToHttp().getRequest(),
@@ -35,6 +43,13 @@ export class JwtGuard extends AuthGuard('jwt') {
     return contextTypeMap[type]();
   }
 
+  /**
+   * @override
+   * @param err
+   * @param user
+   * @param info
+   * @param context
+   */
   handleRequest(err, user, info, context) {
     if (!user) {
       this.#logger.error(info);

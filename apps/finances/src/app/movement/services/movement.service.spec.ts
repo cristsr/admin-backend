@@ -1,18 +1,20 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { MovementService } from './movement.service';
+import { MovementHandler } from '../handlers/movement.handler';
 
-describe('MovementService', () => {
-  let service: MovementService;
+describe('MovementController', () => {
+  let controller: MovementService;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
-      providers: [MovementService],
+      controllers: [MovementService],
+      providers: [MovementHandler],
     }).compile();
 
-    service = module.get<MovementService>(MovementService);
+    controller = module.get<MovementService>(MovementService);
   });
 
   it('should be defined', () => {
-    expect(service).toBeDefined();
+    expect(controller).toBeDefined();
   });
 });

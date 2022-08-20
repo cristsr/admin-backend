@@ -1,5 +1,4 @@
 import { IsNumber } from 'class-validator';
-import { CategoryDto } from 'app/category/dto';
 
 export class SummaryDto {
   @IsNumber()
@@ -19,7 +18,7 @@ export class ExpenseDto {
   @IsNumber()
   percentage: number;
 
-  category: CategoryDto;
+  category: any;
 }
 
 export class ExpensesDto {
