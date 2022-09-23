@@ -19,7 +19,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         jwksUri: config.get(ENV.AUTH0_ISSUER) + '/.well-known/jwks.json',
       }),
       audience: config.get(ENV.AUTH0_AUDIENCE),
-      issuer: config.get(ENV.AUTH0_ISSUER).concat('/'),
+      issuer: config.get(ENV.AUTH0_ISSUER) + '/',
       algorithms: ['RS256'],
     });
   }

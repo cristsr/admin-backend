@@ -1,1 +1,1 @@
-export * from './scheduled.services';
+export * from './scheduled.service';

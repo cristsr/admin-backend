@@ -8,7 +8,7 @@ export const CurrentUser = createParamDecorator(
       return request.user;
     }
 
-    if (ctx.getType<any>() === 'graphql') {
+    if (ctx.getType<string>() === 'graphql') {
       const request = GqlExecutionContext.create(ctx).getContext().req;
       return request.user;
     }

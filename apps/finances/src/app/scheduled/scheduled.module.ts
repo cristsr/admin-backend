@@ -5,14 +5,14 @@ import { CategoryModule } from 'app/category/category.module';
 import { SubcategoryModule } from 'app/subcategory/subcategory.module';
 
 import { ScheduledHandler } from 'app/scheduled/handlers';
-import { ScheduledServices } from 'app/scheduled/services';
+import { ScheduledService } from 'app/scheduled/services';
 import { ScheduledEntity } from 'app/scheduled/entities';
 
 const Entities = TypeOrmModule.forFeature([ScheduledEntity]);
 
 @Module({
   imports: [Entities, CategoryModule, SubcategoryModule],
-  controllers: [ScheduledServices],
+  controllers: [ScheduledService],
   providers: [ScheduledHandler],
   exports: [Entities],
 })

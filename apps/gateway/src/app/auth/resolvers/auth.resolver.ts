@@ -1,5 +1,5 @@
 import { Query, Resolver } from '@nestjs/graphql';
-import { CurrentUser } from 'core/decorators';
+import { CurrentUser } from '@admin-back/shared';
 import { User } from 'app/shared/dto';
 
 @Resolver()

@@ -16,5 +16,7 @@ export const FinancesConfig = {
   loader: {
     includeDirs: [join(__dirname, 'assets', 'finances')],
     keepCase: true,
+    oneofs: true,
+    arrays: true,
   },
 };

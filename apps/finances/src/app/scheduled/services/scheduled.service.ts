@@ -1,5 +1,5 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { from, Observable } from 'rxjs';
+import { from, Observable, tap } from 'rxjs';
 import { ScheduledHandler } from 'app/scheduled/handlers';
 import {
   CreateScheduled,
@@ -12,7 +12,7 @@ import {
 } from '@admin-back/grpc';
 
 @GrpcService('finances')
-export class ScheduledServices implements ScheduledGrpc {
+export class ScheduledService implements ScheduledGrpc {
   constructor(private scheduledService: ScheduledHandler) {}
 
   @GrpcMethod()
@@ -22,7 +22,8 @@ export class ScheduledServices implements ScheduledGrpc {
 
   @GrpcMethod()
   findAll(): Observable<Scheduleds> {
-    return from(this.scheduledService.findAll());
+    console.log('called');
+    return from(this.scheduledService.findAll()).pipe(tap(console.log));
   }
 
   @GrpcMethod()

@@ -3,15 +3,15 @@ import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver } from '@nestjs/apollo';
+import { Environment } from 'env';
 import {
   configValidator,
   AllExceptionFilter,
   RequestInterceptor,
 } from '@admin-back/shared';
-import { AppController } from './app.controller';
-import { Environment } from 'env';
 import { AuthModule } from 'app/auth';
-import { FinancesModule } from 'app/finances/finances.module';
+import { FinancesModule } from 'app/finances';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [

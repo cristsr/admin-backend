@@ -1,7 +1,11 @@
 import { CacheModule, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER } from '@nestjs/core';
-import { configValidator, TypeormFilter } from '@admin-back/shared';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import {
+  configValidator,
+  RequestInterceptor,
+  TypeormFilter,
+} from '@admin-back/shared';
 import { Environment } from 'env';
 import { DatabaseModule } from 'database/database.module';
 import { CategoryModule } from 'app/category/category.module';
@@ -34,6 +38,10 @@ import { AppController } from './app.controller';
     {
       provide: APP_FILTER,
       useClass: TypeormFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: RequestInterceptor,
     },
   ],
 })

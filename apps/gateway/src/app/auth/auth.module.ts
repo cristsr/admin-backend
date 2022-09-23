@@ -16,7 +16,7 @@ import { AuthController } from 'app/auth/controllers';
 
 @Module({
   imports: [
-    PassportModule.register({ defaultStrategy: 'jwt' }),
+    PassportModule.register({}),
     ClientsModule.register([
       {
         name: AUTH_GRPC_CLIENT,

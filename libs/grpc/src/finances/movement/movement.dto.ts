@@ -71,6 +71,9 @@ export class MovementFilter {
   @Field(() => Int, { nullable: true })
   category?: number;
 
+  @Field(() => String, { nullable: true })
+  order?: string;
+
   @Field(() => [String], { nullable: true })
   @IsOptional()
   @IsArray()

@@ -14,7 +14,14 @@ service ScheduledService {
 }
 
 message Scheduled {
-  extend Movement {}
+  int32 id = 1;
+  string date = 2;
+  string type = 3;
+  string description = 4;
+  int32 amount = 5;
+  Category category = 6;
+  Subcategory subcategory = 7;
+  string createdAt = 8;
   bool recurrent = 10;
 }
 
@@ -23,12 +30,23 @@ message Scheduleds {
 }
 
 message CreateScheduled {
-  extend CreateMovement {}
+  string date = 1;
+  string type = 2;
+  string description = 3;
+  int32 amount = 4;
+  int32 category = 5;
+  int32 subcategory = 6;
   bool recurrent = 10;
 }
 
 message UpdateScheduled {
-  extend UpdateMovement {}
+  int32 id = 1;
+  optional string date = 2;
+  optional string type = 3;
+  optional string description = 4;
+  optional int32 amount = 5;
+  optional int32 category = 6;
+  optional int32 subcategory = 7;
   optional bool recurrent = 10;
 }
 
