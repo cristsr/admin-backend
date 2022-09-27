@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package user;
+
+import "google/protobuf/empty.proto";
+
+import public "rol/rol.proto";
+
+service UserService {
+  rpc FindAll(google.protobuf.Empty) returns (stream Users) {}
+  rpc FindOne(UserId) returns (stream User) {}
+  rpc Create(CreateUser) returns (stream User) {}
+  rpc Update(UpdateUser) returns (stream User) {}
+  rpc Remove(UserId) returns (stream Status) {}
+}
+
+message User {
+  int32 id = 1;
+  string name = 2;
+  string lastname = 3;
+  string email = 4;
+  string createdAt = 5;
+  string updatedAt = 6;
+}
+
+message Users {
+  repeated User data = 1;
+}
+
+message CreateUser {
+  string name = 2;
+  string lastname = 3;
+  string email = 4;
+  string createdAt = 5;
+  string updatedAt = 6;
+}
+
+message UpdateUser {
+  int32 id = 1;
+  optional string name = 2;
+  optional string lastname = 3;
+  optional string email = 4;
+  optional string createdAt = 5;
+  optional string updatedAt = 6;
+}
+
+message UserId {
+  int32 id = 1;
+}
+
+message Status {
+  bool status = 1;
+}

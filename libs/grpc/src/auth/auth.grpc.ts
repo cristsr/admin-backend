@@ -1,6 +1,6 @@
 import { Observable } from 'rxjs';
 import {
-  User,
+  User2,
   RegisterReq,
   LoginReq,
   LoginRes,
@@ -8,11 +8,11 @@ import {
 } from './auth.types';
 
 export interface AuthGrpc {
-  register(data: RegisterReq): Observable<User>;
+  register(data: RegisterReq): Observable<User2>;
 
   login(data: LoginReq): Observable<LoginRes>;
 
-  getUserFromToken(accessToken: AccessToken): Observable<User>;
+  getUserFromToken(accessToken: AccessToken): Observable<User2>;
 
   recovery(data: any): any;
 }

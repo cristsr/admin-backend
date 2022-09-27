@@ -28,6 +28,11 @@
             "glob": "**/*.proto",
             "input": "libs/grpc/src/finances",
             "output": "assets/finances"
+          },
+          {
+            "glob": "**/*.proto",
+            "input": "libs/grpc/src/user",
+            "output": "assets/user"
           }
         ]
       },

@@ -11,6 +11,7 @@ import {
 } from '@admin-back/shared';
 import { AuthModule } from 'app/auth';
 import { FinancesModule } from 'app/finances';
+import { UsersModule } from 'app/users';
 import { AppController } from './app.controller';
 
 @Module({
@@ -31,6 +32,7 @@ import { AppController } from './app.controller';
     }),
     AuthModule,
     FinancesModule,
+    UsersModule,
   ],
   providers: [
     {

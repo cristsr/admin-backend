@@ -14,9 +14,10 @@
     "paths": {
       "@admin-back/shared": ["libs/shared/src/index.ts"],
       "@admin-back/grpc": ["libs/grpc/src/index.ts"],
-      "env": ["apps/finances/src/env"],
-      "app/*": ["apps/finances/src/app/*"],
-      "database/*": ["apps/finances/src/database/*"]
+      "env": ["apps/users/src/env"],
+      "app/*": ["apps/users/src/app/*"],
+      "database/*": ["apps/users/src/database/*"],
+      "core/*": ["apps/users/src/core/*"]
     }
   }
 }

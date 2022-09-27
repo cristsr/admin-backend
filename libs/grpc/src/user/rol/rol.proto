@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package user.rol;
+
+import "google/protobuf/empty.proto";
+
+service RolService {
+  rpc FindAll(google.protobuf.Empty) returns (stream Roles) {}
+  rpc FindOne(RolId) returns (stream Rol) {}
+  rpc Create(CreateRol) returns (stream Rol) {}
+  rpc Update(UpdateRol) returns (stream Rol) {}
+  rpc Remove(RolId) returns (stream Status) {}
+}
+
+message Rol {
+  int32 id = 1;
+  string name = 2;
+  bool active = 3;
+  string createdAt = 4;
+  string updatedAt = 5;
+}
+
+message Roles {
+  repeated Rol data = 1;
+}
+
+message CreateRol {
+  string name = 1;
+  bool active = 2;
+}
+
+message UpdateRol {
+  int32 id = 1;
+  optional string name = 2;
+  optional bool active = 3;
+}
+
+message RolId {
+  int32 id = 1;
+}
+
+message Status {
+  bool status = 1;
+}

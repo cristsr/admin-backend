@@ -1,6 +1,6 @@
 import { Query, Resolver } from '@nestjs/graphql';
 import { CurrentUser } from '@admin-back/shared';
-import { User } from 'app/shared/dto';
+import { User } from '@admin-back/grpc';
 
 @Resolver()
 export class AuthResolver {

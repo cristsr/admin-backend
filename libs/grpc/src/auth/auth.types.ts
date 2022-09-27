@@ -1,4 +1,4 @@
-export interface User {
+export interface User2 {
   id: number;
   name: string;
   username: string;
@@ -15,7 +15,7 @@ export enum RegisterType {
 /**
  * Register
  */
-export interface RegisterReq extends Omit<User, 'id' | 'verified'> {
+export interface RegisterReq extends Omit<User2, 'id' | 'verified'> {
   password: string;
   type: RegisterType;
 }
@@ -32,7 +32,7 @@ export interface LoginReq {
 }
 
 export interface LoginRes {
-  user: User;
+  user: User2;
   credentials: Credentials;
 }
 
