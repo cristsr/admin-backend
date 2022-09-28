@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package finances.account;
+
+import "google/protobuf/empty.proto";
+
+service AccountService {
+  rpc FindAll(google.protobuf.Empty) returns (stream Accounts);
+  rpc FindOne(AccountId) returns (stream Account);
+  rpc FindByUser(UserId) returns (stream Accounts);
+  rpc FindActiveBalance(AccountId) returns (stream Balance);
+  rpc Create(CreateAccount) returns (stream Account);
+  rpc Update(UpdateAccount) returns (stream Account);
+  rpc Remove(AccountId) returns (stream Status);
+}
+
+message Balance {
+  int32 id = 1;
+  int32 balance = 2;
+  bool active = 3;
+  string createdAt= 4;
+  Account account = 5;
+}
+
+message Account {
+  int32 id = 1;
+  string name = 2;
+  Balance balance = 3;
+  bool active = 4;
+  string createdAt = 5;
+  optional string updatedAt = 6;
+  optional string closedAt = 7;
+}
+
+message Accounts {
+  repeated Account data = 1;
+}
+
+message CreateAccount {
+  string name = 1;
+  int32 balance = 2;
+  int32 user = 3;
+}
+
+message UpdateAccount {
+  int32 id = 1;
+  optional string name = 2;
+  optional int32 balance = 3;
+  optional int32 user = 4;
+}
+
+message AccountId {
+  int32 id = 1;
+}
+
+message UserId {
+  int32 id = 1;
+}
+
+message Status {
+  bool status = 1;
+}
+
+

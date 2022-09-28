@@ -4,8 +4,6 @@ package user;
 
 import "google/protobuf/empty.proto";
 
-import public "rol/rol.proto";
-
 service UserService {
   rpc FindAll(google.protobuf.Empty) returns (stream Users) {}
   rpc FindOne(UserId) returns (stream User) {}

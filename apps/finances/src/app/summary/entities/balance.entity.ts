@@ -3,11 +3,11 @@ import { ViewEntity, ViewColumn } from 'typeorm';
 @ViewEntity({
   name: 'balance',
   expression: `
-    select 
-      cast(coalesce(income - expense, 0) as real) as balance, 
-      cast(income_month as real), 
-      cast(expense_month as real), 
-      cast(income_year as real), 
+    select
+      cast(coalesce(income - expense, 0) as real) as balance,
+      cast(income_month as real),
+      cast(expense_month as real),
+      cast(income_year as real),
       cast(expense_year as real)
     from (
       select

@@ -5,13 +5,14 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { map, Observable, tap } from 'rxjs';
-import { isArray, isEmpty } from 'lodash-es';
+import { classToPlain } from 'class-transformer';
 
 @Injectable()
-export class RequestInterceptor implements NestInterceptor {
+export class ResponseInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
-      map((result) => (!isArray(result) && isEmpty(result) ? null : result)),
+      map((result) => (!result ? {} : result)),
+      map(<any>classToPlain),
       tap(console.log)
     );
   }

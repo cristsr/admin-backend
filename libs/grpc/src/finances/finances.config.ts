@@ -1,6 +1,7 @@
 import { join } from 'path';
 
 const packages = [
+  'finances.account',
   'finances.category',
   'finances.subcategory',
   'finances.movement',

@@ -2,7 +2,7 @@ import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import { Metadata } from '@grpc/grpc-js';
 import { DateTime } from 'luxon';
 import { from, Observable } from 'rxjs';
-import { Balance, Expenses, Movements, SummaryGrpc } from '@admin-back/grpc';
+import { Balances, Expenses, Movements, SummaryGrpc } from '@admin-back/grpc';
 import { SummaryHandler } from 'app/summary/handler';
 
 @GrpcService('finances')
@@ -10,7 +10,7 @@ export class SummaryService implements SummaryGrpc {
   constructor(private readonly summaryService: SummaryHandler) {}
 
   @GrpcMethod()
-  balance(): Observable<Balance> {
+  balance(): Observable<Balances> {
     return from(this.summaryService.balance());
   }
 

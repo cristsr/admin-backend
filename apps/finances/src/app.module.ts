@@ -3,7 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import {
   configValidator,
-  RequestInterceptor,
+  ResponseInterceptor,
   TypeormFilter,
 } from '@admin-back/shared';
 import { Environment } from 'env';
@@ -16,6 +16,7 @@ import { BillModule } from 'app/bill/bill.module';
 import { ScheduledModule } from 'app/scheduled/scheduled.module';
 import { SubcategoryModule } from 'app/subcategory/subcategory.module';
 import { AppController } from './app.controller';
+import { AccountModule } from 'app/account/account.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AppController } from './app.controller';
     }),
     CacheModule.register(),
     DatabaseModule,
+    AccountModule,
     CategoryModule,
     SubcategoryModule,
     MovementModule,
@@ -41,7 +43,7 @@ import { AppController } from './app.controller';
     },
     {
       provide: APP_INTERCEPTOR,
-      useClass: RequestInterceptor,
+      useClass: ResponseInterceptor,
     },
   ],
 })

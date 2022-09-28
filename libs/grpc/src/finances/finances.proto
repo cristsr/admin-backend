@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package finances;
 
+import public "account/account.proto";
 import public "category/category.proto";
 import public "subcategory/subcategory.proto";
 import public "movement/movement.proto";

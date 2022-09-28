@@ -16,8 +16,11 @@ import {
   SUMMARY_SERVICE_NAME,
   SCHEDULED_SERVICE,
   SCHEDULED_SERVICE_NAME,
+  ACCOUNT_SERVICE,
+  ACCOUNT_SERVICE_NAME,
 } from '@admin-back/grpc';
 import {
+  AccountResolver,
   CategoryResolver,
   SubcategoryResolver,
   MovementResolver,
@@ -37,6 +40,11 @@ import {
     ]),
   ],
   providers: [
+    GrpcProvider({
+      provide: ACCOUNT_SERVICE,
+      service: ACCOUNT_SERVICE_NAME,
+      client: FINANCES_GRPC_CLIENT,
+    }),
     GrpcProvider({
       provide: CATEGORY_SERVICE,
       service: CATEGORY_SERVICE_NAME,
@@ -67,6 +75,7 @@ import {
       service: SCHEDULED_SERVICE_NAME,
       client: FINANCES_GRPC_CLIENT,
     }),
+    AccountResolver,
     CategoryResolver,
     SubcategoryResolver,
     MovementResolver,

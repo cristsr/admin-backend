@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DateTime } from 'luxon';
-import { Balance, Expense, Expenses, Movements } from '@admin-back/grpc';
+import { Balances, Expense, Expenses, Movements } from '@admin-back/grpc';
 import { MovementEntity } from 'app/movement/entities';
 import { BalanceEntity, SummaryEntity } from 'app/summary/entities';
 
@@ -21,7 +21,7 @@ export class SummaryHandler {
     private movementRepository: Repository<MovementEntity>
   ) {}
 
-  balance(): Promise<Balance> {
+  balance(): Promise<Balances> {
     return this.balanceRepository.findOneBy({});
   }
 

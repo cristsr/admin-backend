@@ -26,7 +26,7 @@ export class Expenses {
 }
 
 @ObjectType()
-export class Balance {
+export class Balances {
   @Field({ nullable: true })
   balance: number;
 

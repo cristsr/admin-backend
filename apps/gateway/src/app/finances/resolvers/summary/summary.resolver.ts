@@ -1,7 +1,7 @@
 import { Query, Resolver } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
 import {
-  Balance,
+  Balances,
   Expenses,
   Movement,
   SUMMARY_SERVICE,
@@ -16,8 +16,8 @@ export class SummaryResolver {
   @Inject(SUMMARY_SERVICE)
   private summaryService: SummaryGrpc;
 
-  @Query(() => Balance)
-  getBalance(): Observable<Balance> {
+  @Query(() => Balances)
+  getBalance(): Observable<Balances> {
     return this.summaryService.balance({});
   }
 
