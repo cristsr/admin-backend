@@ -10,7 +10,7 @@ export class User {
   name: string;
 
   @Field()
-  lastname: string;
+  lastName: string;
 
   @Field()
   email: string;
@@ -20,6 +20,9 @@ export class User {
 
   @Field()
   updatedAt: string;
+
+  @Field()
+  auth0Id: string;
 }
 
 @ObjectType()
@@ -37,3 +40,9 @@ export class UpdateUser extends OmitInputType(User, [
   'createdAt',
   'updatedAt',
 ]) {}
+
+export class QueryUser {
+  id?: number;
+  email?: string;
+  auth0Id?: string;
+}

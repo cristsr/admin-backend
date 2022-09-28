@@ -6,7 +6,7 @@ import "google/protobuf/empty.proto";
 
 service UserService {
   rpc FindAll(google.protobuf.Empty) returns (stream Users) {}
-  rpc FindOne(UserId) returns (stream User) {}
+  rpc FindOne(QueryUser) returns (stream User) {}
   rpc Create(CreateUser) returns (stream User) {}
   rpc Update(UpdateUser) returns (stream User) {}
   rpc Remove(UserId) returns (stream Status) {}
@@ -15,28 +15,36 @@ service UserService {
 message User {
   int32 id = 1;
   string name = 2;
-  string lastname = 3;
+  string lastName = 3;
   string email = 4;
   string createdAt = 5;
   string updatedAt = 6;
+  string auth0Id = 7;
 }
 
 message Users {
   repeated User data = 1;
 }
 
+message QueryUser {
+  int32 id = 1;
+  string email = 2;
+  string auth0Id = 3;
+}
+
 message CreateUser {
   string name = 2;
-  string lastname = 3;
+  string lastName = 3;
   string email = 4;
   string createdAt = 5;
   string updatedAt = 6;
+  string auth0Id = 7;
 }
 
 message UpdateUser {
   int32 id = 1;
   optional string name = 2;
-  optional string lastname = 3;
+  optional string lastName = 3;
   optional string email = 4;
   optional string createdAt = 5;
   optional string updatedAt = 6;

@@ -3,6 +3,7 @@ import { from, Observable } from 'rxjs';
 import {
   CreateUser,
   Id,
+  QueryUser,
   Status,
   UpdateUser,
   User,
@@ -10,10 +11,18 @@ import {
   Users,
 } from '@admin-back/grpc';
 import { UserHandler } from 'app/handlers';
+import { InjectRepository } from '@nestjs/typeorm';
+import { UserEntity } from 'app/entities';
+import { Repository } from 'typeorm';
 
 @GrpcService('user')
 export class UserService implements UserGrpc {
-  constructor(private userHandler: UserHandler) {}
+  constructor(
+    @InjectRepository(UserEntity)
+    private userRepository: Repository<UserEntity>,
+
+    private userHandler: UserHandler
+  ) {}
 
   @GrpcMethod()
   findAll(): Observable<Users> {
@@ -21,8 +30,9 @@ export class UserService implements UserGrpc {
   }
 
   @GrpcMethod()
-  findOne({ id }: Id): Observable<User> {
-    return from(this.userHandler.findOne(id));
+  findOne(queryUser: QueryUser): Observable<User> {
+    console.log(queryUser);
+    return from(this.userHandler.findOne(queryUser));
   }
 
   @GrpcMethod()

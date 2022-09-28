@@ -2,6 +2,7 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  Index,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -15,11 +16,16 @@ export class UserEntity implements User {
   @Column()
   name: string;
 
-  @Column()
-  lastname: string;
+  @Column({ name: 'last_name' })
+  lastName: string;
 
-  @Column()
+  @Index()
+  @Column({ unique: true })
   email: string;
+
+  @Index()
+  @Column({ name: 'auth0_id', unique: true })
+  auth0Id: string;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: string;

@@ -1,8 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateUser, Status, UpdateUser, User, Users } from '@admin-back/grpc';
+import {
+  CreateUser,
+  QueryUser,
+  Status,
+  UpdateUser,
+  User,
+  Users,
+} from '@admin-back/grpc';
 import { Repository } from 'typeorm';
 import { UserEntity } from 'app/entities';
+import { GrpcAlreadyExistException } from '@admin-back/shared';
 
 @Injectable()
 export class UserHandler {
@@ -15,12 +23,23 @@ export class UserHandler {
     return this.userRepository.find().then((data) => ({ data }));
   }
 
-  findOne(id: number): Promise<User> {
-    return this.userRepository.findOneBy({ id });
+  findOne(queryUser: QueryUser): Promise<User> {
+    return this.userRepository.findOneBy(queryUser);
   }
 
-  create(user: CreateUser): Promise<User> {
-    return this.userRepository.save(user);
+  async create(data: CreateUser): Promise<User> {
+    const user = await this.userRepository.findOne({
+      where: {
+        email: data.email,
+        auth0Id: data.auth0Id,
+      },
+    });
+
+    if (user) {
+      throw new GrpcAlreadyExistException('');
+    }
+
+    return this.userRepository.save(data);
   }
 
   update(user: UpdateUser): Promise<User> {

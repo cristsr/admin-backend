@@ -21,7 +21,7 @@ export class RolService {
 
   @GrpcMethod()
   findOne({ id }: Id): Observable<User> {
-    return from(this.userHandler.findOne(id));
+    return from(this.userHandler.findOne({ id }));
   }
 
   @GrpcMethod()

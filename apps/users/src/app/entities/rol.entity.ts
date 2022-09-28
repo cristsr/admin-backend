@@ -5,10 +5,9 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { User } from '@admin-back/grpc';
 
-@Entity('users')
-export class RolEntity implements User {
+@Entity('rol')
+export class RolEntity {
   @PrimaryGeneratedColumn()
   id: number;
 
@@ -16,7 +15,7 @@ export class RolEntity implements User {
   name: string;
 
   @Column()
-  lastname: string;
+  lastName: string;
 
   @Column()
   email: string;

@@ -1,15 +1,20 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { passportJwtSecret } from 'jwks-rsa';
 import { ENV } from 'env';
+import { User, USER_SERVICE, UserGrpc } from '@admin-back/grpc';
+import { firstValueFrom, tap } from 'rxjs';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   #logger = new Logger(JwtStrategy.name);
 
-  constructor(private config: ConfigService) {
+  constructor(
+    @Inject(USER_SERVICE) private userService: UserGrpc,
+    private config: ConfigService
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKeyProvider: passportJwtSecret({
@@ -24,11 +29,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload) {
+  validate(payload): Promise<User> {
     this.#logger.debug(payload);
-    return {
-      userId: payload.sub,
-      username: payload.username,
-    };
+
+    const auth0Id = (payload.sub as string).split('|').pop();
+
+    const user$ = this.userService
+      .findOne({ auth0Id })
+      .pipe(tap((user) => this.#logger.debug(user)));
+
+    return firstValueFrom(user$);
   }
 }

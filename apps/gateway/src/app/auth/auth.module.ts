@@ -1,36 +1,15 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { ClientsModule, Transport } from '@nestjs/microservices';
 import { PassportModule } from '@nestjs/passport';
-import {
-  AUTH_GRPC_CLIENT,
-  AUTH_SERVICE,
-  AUTH_SERVICE_NAME,
-  AuthConfig,
-  GrpcProvider,
-} from '@admin-back/grpc';
+import { UsersModule } from 'app/users';
 import { JwtGuard } from 'app/auth/guards';
 import { JwtStrategy } from 'app/auth/strategies';
 import { AuthResolver } from 'app/auth/resolvers';
 import { AuthController } from 'app/auth/controllers';
 
 @Module({
-  imports: [
-    PassportModule.register({}),
-    ClientsModule.register([
-      {
-        name: AUTH_GRPC_CLIENT,
-        transport: Transport.GRPC,
-        options: AuthConfig,
-      },
-    ]),
-  ],
+  imports: [PassportModule.register({}), UsersModule],
   providers: [
-    GrpcProvider({
-      provide: AUTH_SERVICE,
-      service: AUTH_SERVICE_NAME,
-      client: AUTH_GRPC_CLIENT,
-    }),
     {
       provide: APP_GUARD,
       useClass: JwtGuard,
@@ -39,6 +18,6 @@ import { AuthController } from 'app/auth/controllers';
     JwtStrategy,
   ],
   controllers: [AuthController],
-  exports: [AUTH_SERVICE],
+  exports: [],
 })
 export class AuthModule {}

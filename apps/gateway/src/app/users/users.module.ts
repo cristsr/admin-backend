@@ -27,5 +27,6 @@ import {
     }),
     UserResolver,
   ],
+  exports: [USER_SERVICE],
 })
 export class UsersModule {}
