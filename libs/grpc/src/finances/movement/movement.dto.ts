@@ -8,6 +8,7 @@ import {
 import { Category } from '../category';
 import { Subcategory } from '../subcategory';
 import { MovementType, movementTypes, Period, periods } from './types';
+import { Account } from '../account';
 
 @ObjectType()
 export class Movement {
@@ -34,6 +35,10 @@ export class Movement {
 
   @Field()
   createdAt: string;
+
+  account: Account;
+
+  user: number;
 }
 
 @ObjectType()
@@ -45,12 +50,16 @@ export class CreateMovement extends OmitInputType(Movement, [
   'category',
   'subcategory',
   'createdAt',
+  'account',
 ]) {
   @Field()
   category: number;
 
   @Field()
   subcategory: number;
+
+  @Field()
+  account: number;
 }
 
 @InputType()

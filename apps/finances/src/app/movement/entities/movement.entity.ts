@@ -7,14 +7,15 @@ import {
   PrimaryGeneratedColumn,
 } from 'typeorm';
 import { DateTime } from 'luxon';
-import { MovementType } from '@admin-back/grpc';
+import { Movement, MovementType } from '@admin-back/grpc';
 import { optTransformer } from 'database/utils';
 import { CategoryEntity } from 'app/category/entities';
 import { SubcategoryEntity } from 'app/subcategory/entities';
+import { AccountEntity } from 'app/account/entities';
 
 @Entity('movements')
-export class MovementEntity {
-  @PrimaryGeneratedColumn('increment')
+export class MovementEntity implements Movement {
+  @PrimaryGeneratedColumn()
   id: number;
 
   @Column({
@@ -58,4 +59,11 @@ export class MovementEntity {
     }),
   })
   createdAt: string;
+
+  @ManyToOne(() => AccountEntity)
+  @JoinColumn({ name: 'account_id' })
+  account: AccountEntity;
+
+  @Column()
+  user: number;
 }

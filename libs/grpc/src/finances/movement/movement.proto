@@ -42,6 +42,8 @@ message CreateMovement {
   int32 amount = 4;
   int32 category = 5;
   int32 subcategory = 6;
+  int32 account = 9;
+  int32 user = 10;
 }
 
 message UpdateMovement {
@@ -52,6 +54,8 @@ message UpdateMovement {
   optional int32 amount = 5;
   optional int32 category = 6;
   optional int32 subcategory = 7;
+  optional int32 account = 9;
+  int32 user = 10;
 }
 
 message Id {

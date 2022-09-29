@@ -12,12 +12,15 @@ import { CategoryEntity } from 'app/category/entities';
 import { SubcategoryEntity } from 'app/subcategory/entities';
 import {
   CreateMovement,
+  FinancesEvents,
   Movement,
   MovementFilter,
   Movements,
   Status,
   UpdateMovement,
 } from '@admin-back/grpc';
+import { AccountEntity } from 'app/account/entities';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class MovementHandler {
@@ -31,7 +34,12 @@ export class MovementHandler {
     private categoryRepository: Repository<CategoryEntity>,
 
     @InjectRepository(SubcategoryEntity)
-    private subcategoryRepository: Repository<SubcategoryEntity>
+    private subcategoryRepository: Repository<SubcategoryEntity>,
+
+    @InjectRepository(AccountEntity)
+    private accountRepository: Repository<AccountEntity>,
+
+    private eventEmitter: EventEmitter2
   ) {}
 
   /**
@@ -63,13 +71,22 @@ export class MovementHandler {
       throw new NotFoundException(msg);
     }
 
+    const account = await this.accountRepository.findOne({
+      where: {
+        id: data.account,
+      },
+    });
+
     const movement = await this.movementRepository.save({
       ...data,
+      account,
       category,
       subcategory,
     });
 
     this.#logger.log(`Movement ${movement.id} created`);
+
+    this.eventEmitter.emit(FinancesEvents.UpdateBalance, movement);
 
     return movement;
   }
@@ -180,16 +197,26 @@ export class MovementHandler {
         });
     }
 
-    const movementEntity = await this.movementRepository
+    const oldMovement: MovementEntity = await this.movementRepository.findOne({
+      where: {
+        id: data.id,
+      },
+    });
+
+    const movement: MovementEntity = await this.movementRepository
       .save(partialEntity)
       .catch((e) => {
         this.#logger.log(`Error updating movement: ${e.message}`);
         throw new InternalServerErrorException(e.message);
       });
 
-    this.#logger.log(`Movement ${movementEntity.id} updated`);
+    if (oldMovement.amount !== movement.amount) {
+      this.eventEmitter.emit(FinancesEvents.UpdateBalance, movement);
+    }
 
-    return movementEntity;
+    this.#logger.log(`Movement ${movement.id} updated`);
+
+    return movement;
   }
 
   /**

@@ -1,9 +1,9 @@
 import { Observable } from 'rxjs';
 import { Metadata } from '@grpc/grpc-js';
-import { Empty, Balances, Expenses, Movements } from '@admin-back/grpc';
+import { Empty, Balance, Expenses, Movements } from '@admin-back/grpc';
 
 export interface SummaryGrpc {
-  balance(empty: Empty): Observable<Balances>;
+  balance(empty: Empty): Observable<Balance>;
 
   expenses(empty: Empty, metadata: Metadata): Observable<Expenses>;
 

@@ -1,6 +1,5 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { ListObject, OmitInputType } from '@admin-back/shared';
-// Short import to prevent undefined import error
+import { ListObject } from '@admin-back/shared';
 import { Movement, CreateMovement, UpdateMovement } from '../movement';
 
 @ObjectType()

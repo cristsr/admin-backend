@@ -2,9 +2,10 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DateTime } from 'luxon';
-import { Balances, Expense, Expenses, Movements } from '@admin-back/grpc';
+import { Balance, Expense, Expenses, Movements } from '@admin-back/grpc';
 import { MovementEntity } from 'app/movement/entities';
-import { BalanceEntity, SummaryEntity } from 'app/summary/entities';
+import { SummaryEntity } from 'app/summary/entities';
+import { BalanceEntity } from 'app/account/entities';
 
 @Injectable()
 export class SummaryHandler {
@@ -21,7 +22,7 @@ export class SummaryHandler {
     private movementRepository: Repository<MovementEntity>
   ) {}
 
-  balance(): Promise<Balances> {
+  balance(): Promise<Balance> {
     return this.balanceRepository.findOneBy({});
   }
 
@@ -60,7 +61,7 @@ export class SummaryHandler {
       .then((data) => ({ data }));
   }
 
-  private expensesQuery(where: string): Promise<Expense[]> {
+  private async expensesQuery(where: string): Promise<Expense[]> {
     const query = this.movementRepository
       .createQueryBuilder('m')
       .select('SUM(m.amount)::float', 'amount')
@@ -71,20 +72,20 @@ export class SummaryHandler {
       .orderBy('amount', 'DESC')
       .limit(5);
 
-    return query.getRawMany().then((data) => {
-      const total = data.reduce((acc, cur) => acc + cur.amount, 0);
+    const data = await query.getRawMany();
 
-      return data.map<Expense>((item) => ({
-        amount: item.amount,
-        percentage: Math.round((item.amount / total) * 100),
-        category: {
-          id: item.c_id,
-          name: item.c_name,
-          color: item.c_color,
-          icon: item.c_icon,
-        },
-      }));
-    });
+    const total = data.reduce((acc, cur) => acc + cur.amount, 0);
+
+    return data.map<Expense>((item) => ({
+      amount: item.amount,
+      percentage: Math.round((item.amount / total) * 100),
+      category: {
+        id: item.c_id,
+        name: item.c_name,
+        color: item.c_color,
+        icon: item.c_icon,
+      },
+    }));
   }
 
   // TODO: review this method or delete it

@@ -1,19 +1,19 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
+import { InjectRepository } from '@nestjs/typeorm';
+import { from, Observable } from 'rxjs';
+import { Repository } from 'typeorm';
 import {
   Account,
   AccountGrpc,
   Accounts,
   Balance,
-  Balances,
   CreateAccount,
   Empty,
   Id,
+  QueryBalance,
   Status,
 } from '@admin-back/grpc';
-import { from, Observable, switchMap } from 'rxjs';
-import { InjectRepository } from '@nestjs/typeorm';
 import { AccountEntity, BalanceEntity } from 'app/account/entities';
-import { Repository } from 'typeorm';
 
 @GrpcService('finances')
 export class AccountService implements AccountGrpc {
@@ -58,14 +58,9 @@ export class AccountService implements AccountGrpc {
   }
 
   @GrpcMethod()
-  findActiveBalance(account: Id): Observable<Balance> {
+  findBalance(query: QueryBalance): Observable<Balance> {
     const balance$ = this.balanceRepository.findOne({
-      where: {
-        account: {
-          id: account.id,
-        },
-        active: true,
-      },
+      where: query,
     });
 
     return from(balance$);
@@ -76,18 +71,10 @@ export class AccountService implements AccountGrpc {
     const account$ = this.accountRepository.save({
       name: data.name,
       user: data.user,
+      initialBalance: data.initialBalance,
     });
 
-    return from(account$).pipe(
-      switchMap((account) => {
-        return this.balanceRepository
-          .save({
-            balance: data.balance,
-            account,
-          })
-          .then(() => account);
-      })
-    );
+    return from(account$);
   }
 
   @GrpcMethod()

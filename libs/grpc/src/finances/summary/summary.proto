@@ -7,27 +7,18 @@ import "category/category.proto";
 import "movement/movement.proto";
 
 service SummaryService {
-  rpc Balance(google.protobuf.Any) returns (stream Balance) {}
-  rpc Expenses(google.protobuf.Any) returns (stream Expenses) {}
+  rpc Expenses(google.protobuf.Any)      returns (stream Expenses) {}
   rpc LastMovements(google.protobuf.Any) returns (stream Movements) {}
 }
 
 message Expense {
-  float amount = 1;
-  float percentage = 2;
-  Category category = 3;
+  float    amount     = 10;
+  float    percentage = 20;
+  Category category   = 30;
 }
 
 message Expenses {
-  repeated Expense day = 1;
-  repeated Expense week = 2;
-  repeated Expense month = 3;
-}
-
-message Balance {
-  float balance = 1;
-  float incomeMonth = 2;
-  float expenseMonth = 3;
-  float incomeYear = 4;
-  float expenseYear = 5;
+  repeated Expense day   = 10;
+  repeated Expense week  = 20;
+  repeated Expense month = 30;
 }

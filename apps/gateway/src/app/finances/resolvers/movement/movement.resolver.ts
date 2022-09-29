@@ -1,6 +1,6 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
-import { Observable, pluck } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import {
   CreateMovement,
   Movement,
@@ -9,7 +9,9 @@ import {
   MovementGrpc,
   Status,
   UpdateMovement,
+  User,
 } from '@admin-back/grpc';
+import { CurrentUser } from '@admin-back/shared';
 
 @Resolver()
 export class MovementResolver {
@@ -25,13 +27,15 @@ export class MovementResolver {
   getMovements(
     @Args('filters') filters: MovementFilter
   ): Observable<Movement[]> {
-    return this.movementService.findAll(filters).pipe(pluck('data'));
+    return this.movementService.findAll(filters).pipe(map((res) => res.data));
   }
 
   @Mutation(() => Movement)
   createMovement(
+    @CurrentUser() user: User,
     @Args('movement') movement: CreateMovement
   ): Observable<Movement> {
+    movement.user = user.id;
     return this.movementService.create(movement);
   }
 

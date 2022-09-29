@@ -2,12 +2,10 @@ import {
   Column,
   CreateDateColumn,
   Entity,
-  OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Account } from '@admin-back/grpc';
-import { BalanceEntity } from './balance.entity';
 
 @Entity('accounts')
 export class AccountEntity implements Account {
@@ -17,8 +15,8 @@ export class AccountEntity implements Account {
   @Column()
   name: string;
 
-  @OneToMany(() => BalanceEntity, (b) => b.account)
-  balance: BalanceEntity;
+  @Column({ name: 'initial_balance' })
+  initialBalance: number;
 
   @Column({ default: true })
   active: boolean;
@@ -30,7 +28,6 @@ export class AccountEntity implements Account {
     name: 'updated_at',
     type: 'timestamp',
     nullable: true,
-    default: null,
   })
   updatedAt: string;
 

@@ -6,12 +6,13 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { MovementType } from '@admin-back/grpc';
+import { MovementType, Scheduled } from '@admin-back/grpc';
 import { CategoryEntity } from 'app/category/entities';
 import { SubcategoryEntity } from 'app/subcategory/entities';
+import { AccountEntity } from 'app/account/entities';
 
 @Entity('scheduled')
-export class ScheduledEntity {
+export class ScheduledEntity implements Scheduled {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
@@ -54,4 +55,11 @@ export class ScheduledEntity {
     name: 'created_at',
   })
   createdAt: string;
+
+  @ManyToOne(() => AccountEntity)
+  @JoinColumn({ name: 'account_id' })
+  account: AccountEntity;
+
+  @Column()
+  user: number;
 }

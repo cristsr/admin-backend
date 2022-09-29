@@ -1,6 +1,6 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { Relation } from 'typeorm';
 import { ListObject } from '@admin-back/shared';
+import { Relation } from 'typeorm';
 
 @ObjectType()
 export class Account {
@@ -11,7 +11,10 @@ export class Account {
   name: string;
 
   @Field(() => Balance)
-  balance: Relation<Balance>;
+  balance?: Relation<Balance>;
+
+  @Field()
+  initialBalance: number;
 
   @Field()
   active: boolean;
@@ -28,23 +31,6 @@ export class Account {
   user: number;
 }
 
-@ObjectType()
-export class Balance {
-  @Field()
-  id: number;
-
-  @Field()
-  balance: number;
-
-  @Field()
-  active: boolean;
-
-  @Field()
-  createdAt: string;
-
-  account: Account;
-}
-
 export class Accounts extends ListObject(Account) {}
 
 @InputType()
@@ -53,13 +39,60 @@ export class CreateAccount {
   name: string;
 
   @Field()
-  balance: number;
+  initialBalance: number;
 
   user: number;
 }
 
 @InputType()
-export class UpdateAccount extends CreateAccount {
+export class UpdateAccount {
   @Field()
   id: number;
+
+  @Field()
+  name: string;
+
+  user: number;
+}
+
+@ObjectType()
+export class Balance {
+  user: number;
+
+  account: number;
+
+  @Field()
+  dailyBalance: number;
+
+  @Field()
+  dailyIncomes: number;
+
+  @Field()
+  dailyExpenses: number;
+
+  @Field()
+  monthlyBalance: number;
+
+  @Field()
+  monthlyIncomes: number;
+
+  @Field()
+  monthlyExpenses: number;
+
+  @Field()
+  annualBalance: number;
+
+  @Field()
+  annualIncomes: number;
+
+  @Field()
+  annualExpenses: number;
+}
+
+@InputType()
+export class QueryBalance {
+  @Field()
+  account: number;
+
+  user: number;
 }

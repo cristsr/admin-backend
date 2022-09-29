@@ -11,6 +11,7 @@ import {
   Status,
   UpdateScheduled,
 } from '@admin-back/grpc';
+import { AccountEntity } from 'app/account/entities';
 
 @Injectable()
 export class ScheduledHandler {
@@ -24,7 +25,10 @@ export class ScheduledHandler {
     private subcategoryRepository: Repository<SubcategoryEntity>,
 
     @InjectRepository(ScheduledEntity)
-    private scheduledRepository: Repository<ScheduledEntity>
+    private scheduledRepository: Repository<ScheduledEntity>,
+
+    @InjectRepository(AccountEntity)
+    private accountRepository: Repository<AccountEntity>
   ) {}
 
   findOne(id: number): Promise<Scheduled> {
@@ -65,8 +69,21 @@ export class ScheduledHandler {
         throw new NotFoundException(msg);
       });
 
+    const account = await this.accountRepository
+      .findOneOrFail({
+        where: {
+          id: data.account,
+        },
+      })
+      .catch(() => {
+        const msg = `Account ${data.subcategory} not found`;
+        this.#logger.error(msg);
+        throw new NotFoundException(msg);
+      });
+
     const scheduled = await this.scheduledRepository.save({
       ...data,
+      account,
       category,
       subcategory,
     });
@@ -86,6 +103,9 @@ export class ScheduledHandler {
       },
       subcategory: {
         id: data.subcategory,
+      },
+      account: {
+        id: data.account,
       },
     });
   }

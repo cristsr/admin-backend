@@ -58,6 +58,7 @@ export class CategoryHandler {
           });
         });
 
+        // TODO: refactor in order to return promise instead of observable
         return from(this.subcategoryRepository.save(records)).pipe(
           map((subcategories) => ({
             ...category,

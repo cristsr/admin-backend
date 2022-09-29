@@ -1,24 +1,37 @@
-import { Query, Resolver } from '@nestjs/graphql';
+import { Args, Query, Resolver } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
 import {
-  Balances,
+  ACCOUNT_SERVICE,
+  AccountGrpc,
+  Balance,
   Expenses,
   Movement,
   SUMMARY_SERVICE,
   SummaryGrpc,
+  User,
 } from '@admin-back/grpc';
 import { Observable, pluck } from 'rxjs';
 import { Metadata } from '@grpc/grpc-js';
 import { DateTime } from 'luxon';
+import { CurrentUser } from '@admin-back/shared';
 
 @Resolver()
 export class SummaryResolver {
   @Inject(SUMMARY_SERVICE)
   private summaryService: SummaryGrpc;
 
-  @Query(() => Balances)
-  getBalance(): Observable<Balances> {
-    return this.summaryService.balance({});
+  @Inject(ACCOUNT_SERVICE)
+  private accountService: AccountGrpc;
+
+  @Query(() => Balance, { nullable: true })
+  getBalance(
+    @CurrentUser() user: User,
+    @Args('account') account: number
+  ): Observable<Balance> {
+    return this.accountService.findBalance({
+      user: user.id,
+      account,
+    });
   }
 
   @Query(() => Expenses)
