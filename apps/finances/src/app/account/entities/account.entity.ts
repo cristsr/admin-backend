@@ -24,20 +24,12 @@ export class AccountEntity implements Account {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: string;
 
-  @UpdateDateColumn({
-    name: 'updated_at',
-    type: 'timestamp',
-    nullable: true,
-  })
+  @UpdateDateColumn({ name: 'updated_at', nullable: true })
   updatedAt: string;
 
-  @Column({
-    name: 'closed_at',
-    type: 'timestamp',
-    nullable: true,
-  })
+  @Column({ name: 'closed_at', type: 'timestamp', nullable: true })
   closedAt: string;
 
-  @Column()
+  @Column({ name: 'user_id' })
   user: number;
 }

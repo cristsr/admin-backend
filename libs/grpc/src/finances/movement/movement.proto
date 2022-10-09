@@ -48,13 +48,13 @@ message CreateMovement {
 
 message UpdateMovement {
   int32 id = 1;
-  optional string date = 2;
-  optional string type = 3;
-  optional string description = 4;
-  optional int32 amount = 5;
-  optional int32 category = 6;
-  optional int32 subcategory = 7;
-  optional int32 account = 9;
+  string date = 2;
+  string type = 3;
+  string description = 4;
+  int32 amount = 5;
+  int32 category = 6;
+  int32 subcategory = 7;
+  int32 account = 9;
   int32 user = 10;
 }
 
@@ -63,8 +63,9 @@ message Id {
 }
 
 message MovementFilter {
-  string period = 1;
-  string date = 2;
-  optional int32 category = 3;
-  repeated string type = 4;
+  string          period   = 1;
+  string          date     = 2;
+  int32           category = 3;
+  repeated string type     = 4;
+  string          order    = 5;
 }

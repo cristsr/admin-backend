@@ -35,8 +35,10 @@ export class MovementResolver {
     @CurrentUser() user: User,
     @Args('movement') movement: CreateMovement
   ): Observable<Movement> {
-    movement.user = user.id;
-    return this.movementService.create(movement);
+    return this.movementService.create({
+      ...movement,
+      user: user.id,
+    });
   }
 
   @Mutation(() => Movement)

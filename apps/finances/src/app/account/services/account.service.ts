@@ -13,7 +13,8 @@ import {
   QueryBalance,
   Status,
 } from '@admin-back/grpc';
-import { AccountEntity, BalanceEntity } from 'app/account/entities';
+import { AccountEntity } from 'app/account/entities';
+import { BalanceHandler } from 'app/account/handlers/balance.handler';
 
 @GrpcService('finances')
 export class AccountService implements AccountGrpc {
@@ -21,8 +22,7 @@ export class AccountService implements AccountGrpc {
     @InjectRepository(AccountEntity)
     private accountRepository: Repository<AccountEntity>,
 
-    @InjectRepository(BalanceEntity)
-    private balanceRepository: Repository<BalanceEntity>
+    private balanceHandler: BalanceHandler
   ) {}
 
   @GrpcMethod()
@@ -59,11 +59,7 @@ export class AccountService implements AccountGrpc {
 
   @GrpcMethod()
   findBalance(query: QueryBalance): Observable<Balance> {
-    const balance$ = this.balanceRepository.findOne({
-      where: query,
-    });
-
-    return from(balance$);
+    return from(this.balanceHandler.findBalance(query));
   }
 
   @GrpcMethod()

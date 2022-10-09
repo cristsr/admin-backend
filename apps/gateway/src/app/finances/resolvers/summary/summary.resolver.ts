@@ -6,6 +6,7 @@ import {
   Balance,
   Expenses,
   Movement,
+  QueryBalance,
   SUMMARY_SERVICE,
   SummaryGrpc,
   User,
@@ -23,14 +24,14 @@ export class SummaryResolver {
   @Inject(ACCOUNT_SERVICE)
   private accountService: AccountGrpc;
 
-  @Query(() => Balance, { nullable: true })
+  @Query(() => Balance)
   getBalance(
     @CurrentUser() user: User,
-    @Args('account') account: number
+    @Args('query') query: QueryBalance
   ): Observable<Balance> {
     return this.accountService.findBalance({
+      ...query,
       user: user.id,
-      account,
     });
   }
 
@@ -38,7 +39,6 @@ export class SummaryResolver {
   getExpenses(): Observable<Expenses> {
     const metadata = new Metadata();
     metadata.set('clientDate', DateTime.utc().toISO());
-
     return this.summaryService.expenses({}, metadata);
   }
 

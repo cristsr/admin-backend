@@ -5,22 +5,24 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Between, In, Raw, Repository } from 'typeorm';
 import { DateTime, Interval } from 'luxon';
-import { MovementEntity } from 'app/movement/entities';
-import { CategoryEntity } from 'app/category/entities';
-import { SubcategoryEntity } from 'app/subcategory/entities';
 import {
   CreateMovement,
-  FinancesEvents,
   Movement,
+  MovementCreated,
   MovementFilter,
   Movements,
+  MovementUpdated,
   Status,
   UpdateMovement,
 } from '@admin-back/grpc';
+import { EntityEvent } from '@admin-back/shared';
+import { MovementEntity } from 'app/movement/entities';
+import { CategoryEntity } from 'app/category/entities';
+import { SubcategoryEntity } from 'app/subcategory/entities';
 import { AccountEntity } from 'app/account/entities';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class MovementHandler {
@@ -43,55 +45,6 @@ export class MovementHandler {
   ) {}
 
   /**
-   * It creates a movement
-   * @param {CreateMovement} data - CreateMovementDto
-   * @returns MovementEntity
-   */
-  async create(data: CreateMovement): Promise<Movement> {
-    const category = await this.categoryRepository.findOneBy({
-      id: data.category,
-    });
-
-    if (!category) {
-      const msg = `Category ${data.category} not found`;
-      this.#logger.log(msg);
-      throw new NotFoundException(msg);
-    }
-
-    const subcategory = await this.subcategoryRepository.findOne({
-      where: {
-        id: data.subcategory,
-        category,
-      },
-    });
-
-    if (!subcategory) {
-      const msg = `Subcategory ${data.subcategory} not found`;
-      this.#logger.log(msg);
-      throw new NotFoundException(msg);
-    }
-
-    const account = await this.accountRepository.findOne({
-      where: {
-        id: data.account,
-      },
-    });
-
-    const movement = await this.movementRepository.save({
-      ...data,
-      account,
-      category,
-      subcategory,
-    });
-
-    this.#logger.log(`Movement ${movement.id} created`);
-
-    this.eventEmitter.emit(FinancesEvents.UpdateBalance, movement);
-
-    return movement;
-  }
-
-  /**
    * It finds all movements that match the given query parameters
    * @param {MovementFilter} filters - MovementQueryDto
    * @returns An array of MovementDto objects
@@ -101,11 +54,11 @@ export class MovementHandler {
     const where: any = {};
 
     // Setup where conditions
-    if (filters.period === 'day') {
+    if (filters.period === 'daily') {
       where.date = DateTime.fromISO(filters.date).toSQLDate();
     }
 
-    if (filters.period === 'week') {
+    if (filters.period === 'weekly') {
       const interval = Interval.fromISO(filters.date);
       where.date = Between(
         interval.start.toSQLDate(),
@@ -113,14 +66,14 @@ export class MovementHandler {
       );
     }
 
-    if (filters.period === 'month') {
+    if (filters.period === 'monthly') {
       const date = DateTime.fromISO(filters.date).toFormat('yyyy-MM');
       where.date = Raw((alias) => `to_char(${alias}, 'YYYY-MM') = :date`, {
         date,
       });
     }
 
-    if (filters.period === 'year') {
+    if (filters.period === 'yearly') {
       const date = DateTime.fromISO(filters.date).toFormat('yyyy');
       where.date = Raw((alias) => `to_char(${alias}, 'YYYY') = :date`, {
         date,
@@ -170,11 +123,70 @@ export class MovementHandler {
   }
 
   /**
+   * It creates a movement
+   * @param {CreateMovement} data - CreateMovementDto
+   * @returns MovementEntity
+   */
+  async create(data: CreateMovement): Promise<Movement> {
+    const category = await this.categoryRepository.findOneBy({
+      id: data.category,
+    });
+
+    if (!category) {
+      const msg = `Category ${data.category} not found`;
+      this.#logger.log(msg);
+      throw new NotFoundException(msg);
+    }
+
+    const subcategory = await this.subcategoryRepository.findOne({
+      where: {
+        id: data.subcategory,
+        category,
+      },
+    });
+
+    if (!subcategory) {
+      const msg = `Subcategory ${data.subcategory} not found`;
+      this.#logger.log(msg);
+      throw new NotFoundException(msg);
+    }
+
+    const account = await this.accountRepository.findOne({
+      where: {
+        id: data.account,
+      },
+    });
+
+    const movement = await this.movementRepository.save({
+      ...data,
+      account,
+      category,
+      subcategory,
+    });
+
+    this.#logger.log(`Movement ${movement.id} created`);
+
+    this.eventEmitter.emit(MovementCreated, <EntityEvent>{ entity: movement });
+
+    return movement;
+  }
+
+  /**
    * It updates a movement entity with the given data, and returns the updated entity
    * @param {UpdateMovement} data - UpdateMovementDto
    * @returns The updated movement entity
    */
   async update(data: UpdateMovement): Promise<Movement> {
+    const movementEntity = await this.movementRepository.findOne({
+      where: {
+        id: data.id,
+      },
+    });
+
+    if (!movementEntity) {
+      throw new NotFoundException('Entity not found');
+    }
+
     const partialEntity: any = { ...data };
 
     if (data.category) {
@@ -197,22 +209,20 @@ export class MovementHandler {
         });
     }
 
-    const oldMovement: MovementEntity = await this.movementRepository.findOne({
-      where: {
-        id: data.id,
-      },
-    });
-
     const movement: MovementEntity = await this.movementRepository
-      .save(partialEntity)
+      .save({
+        ...movementEntity,
+        ...partialEntity,
+      })
       .catch((e) => {
-        this.#logger.log(`Error updating movement: ${e.message}`);
+        this.#logger.error(`Error updating movement: ${e.message}`);
         throw new InternalServerErrorException(e.message);
       });
 
-    if (oldMovement.amount !== movement.amount) {
-      this.eventEmitter.emit(FinancesEvents.UpdateBalance, movement);
-    }
+    this.eventEmitter.emit(MovementUpdated, <EntityEvent>{
+      entity: movement,
+      databaseEntity: movementEntity,
+    });
 
     this.#logger.log(`Movement ${movement.id} updated`);
 

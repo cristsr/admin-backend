@@ -7,8 +7,9 @@ import {
 } from '@admin-back/shared';
 import { Category } from '../category';
 import { Subcategory } from '../subcategory';
-import { MovementType, movementTypes, Period, periods } from './types';
 import { Account } from '../account';
+import { MovementType, movementTypes } from './types';
+import { Period, periods } from '../finances.types';
 
 @ObjectType()
 export class Movement {

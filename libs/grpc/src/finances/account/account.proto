@@ -9,6 +9,7 @@ service AccountService {
   rpc FindOne(AccountId)             returns (stream Account);
   rpc FindByUser(UserId)             returns (stream Accounts);
   rpc FindBalance(QueryBalance)      returns (stream Balance);
+  rpc FindBalances(QueryBalance)      returns (stream Balances);
   rpc Create(CreateAccount)          returns (stream Account);
   rpc Update(UpdateAccount)          returns (stream Account);
   rpc Remove(AccountId)              returns (stream Status);
@@ -17,7 +18,6 @@ service AccountService {
 message Account {
   int32   id             = 10;
   string  name           = 20;
-  Balance balance        = 30;
   int32   initialBalance = 80;
   bool    active         = 40;
   string  createdAt      = 50;
@@ -53,21 +53,36 @@ message Status {
   bool status = 1;
 }
 
+//message Balance {
+//  int32 dailyBalance    = 10;
+//  int32 dailyIncomes    = 20;
+//  int32 dailyExpenses   = 30;
+//  int32 monthlyBalance  = 40;
+//  int32 monthlyIncomes  = 50;
+//  int32 monthlyExpenses = 60;
+//  int32 annualBalance   = 70;
+//  int32 annualIncomes   = 80;
+//  int32 annualExpenses  = 90;
+//}
+
 message Balance {
-  int32 dailyBalance    = 10;
-  int32 dailyIncomes    = 20;
-  int32 dailyExpenses   = 30;
-  int32 monthlyBalance  = 40;
-  int32 monthlyIncomes  = 50;
-  int32 monthlyExpenses = 60;
-  int32 annualBalance   = 70;
-  int32 annualIncomes   = 80;
-  int32 annualExpenses  = 90;
+  int32  id         = 50;
+  int32  balance    = 10;
+  int32  incomes    = 20;
+  int32  expenses   = 30;
+  string date       = 40;
+  bool   active     = 60;
+}
+
+message Balances {
+  repeated Balance data = 10;
 }
 
 message QueryBalance {
-  int32 account = 10;
-  int32 user    = 20;
+  int32  account = 10;
+  int32  user    = 20;
+  string period  = 30;
+  string date    = 40;
 }
 
 

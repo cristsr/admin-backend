@@ -13,6 +13,7 @@ import {
   AccountGrpc,
   Balance,
   CreateAccount,
+  Period,
   User,
 } from '@admin-back/grpc';
 import { map, Observable } from 'rxjs';
@@ -23,7 +24,7 @@ export class AccountResolver {
   @Inject(ACCOUNT_SERVICE)
   private accountService: AccountGrpc;
 
-  @Query(() => [Account], { nullable: true })
+  @Query(() => [Account])
   userAccounts(@CurrentUser() user: User): Observable<Account[]> {
     return this.accountService
       .findByUser({ id: user.id })
@@ -39,14 +40,18 @@ export class AccountResolver {
     return this.accountService.create(data);
   }
 
-  @ResolveField(() => Balance)
+  // TODO: Fix period type
+  @ResolveField()
   balance(
     @CurrentUser() user: User,
-    @Parent() account: Account
+    @Parent() account: Account,
+    @Args('period', { nullable: true }) period: string
   ): Observable<Balance> {
     return this.accountService.findBalance({
       user: user.id,
       account: account.id,
+      period: period as Period,
+      date: '',
     });
   }
 }

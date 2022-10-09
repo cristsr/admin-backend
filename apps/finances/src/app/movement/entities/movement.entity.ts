@@ -60,10 +60,10 @@ export class MovementEntity implements Movement {
   })
   createdAt: string;
 
-  @ManyToOne(() => AccountEntity)
+  @ManyToOne(() => AccountEntity, { eager: true })
   @JoinColumn({ name: 'account_id' })
   account: AccountEntity;
 
-  @Column()
+  @Column({ name: 'user_id' })
   user: number;
 }
