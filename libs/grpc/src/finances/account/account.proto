@@ -23,6 +23,7 @@ message Account {
   string  createdAt      = 50;
   string  updatedAt      = 60;
   string  closedAt       = 70;
+  int32   user           = 90;
 }
 
 message Accounts {

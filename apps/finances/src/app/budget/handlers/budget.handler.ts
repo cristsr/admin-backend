@@ -120,7 +120,6 @@ export class BudgetHandler {
     });
 
     if (!category) {
-      this.#logger.log(`Category ${data.category} not found`);
       throw new NotFoundException('Category not found');
     }
 
@@ -139,8 +138,6 @@ export class BudgetHandler {
       .catch((error) => {
         throw new InternalServerErrorException(error.message);
       });
-
-    this.#logger.log(`Budget ${budget.name} created`);
 
     return {
       ...budget,

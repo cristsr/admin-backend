@@ -38,9 +38,9 @@ export class Budget {
   @Field(() => Category)
   category: Category;
 
-  account: Account;
-
   categoryId: number;
+
+  account: Account;
 
   user: number;
 }

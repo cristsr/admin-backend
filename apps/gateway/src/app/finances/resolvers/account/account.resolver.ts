@@ -36,8 +36,10 @@ export class AccountResolver {
     @CurrentUser() user: User,
     @Args('data') data: CreateAccount
   ): Observable<Account> {
-    data.user = user.id;
-    return this.accountService.create(data);
+    return this.accountService.create({
+      ...data,
+      user: user.id,
+    });
   }
 
   @ResolveField()

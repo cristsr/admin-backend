@@ -78,7 +78,9 @@ export class BudgetResolver {
   }
 
   @ResolveField()
-  category(@Parent() budget: Budget): Observable<Category> {
+  category(@Parent() budget: Budget): Observable<Category> | Category {
+    if (budget.category) return budget.category;
+
     return this.categoryService.findOne({
       id: budget.categoryId,
     });
