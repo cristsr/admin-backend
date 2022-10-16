@@ -15,6 +15,7 @@ import {
   CreateCategories,
   CreateCategory,
   Status,
+  Subcategory,
   SUBCATEGORY_SERVICE,
   SubcategoryGrpc,
   UpdateCategory,
@@ -22,11 +23,13 @@ import {
 
 @Resolver(Category)
 export class CategoryResolver {
-  @Inject(CATEGORY_SERVICE)
-  private categoryService: CategoryGrpc;
+  constructor(
+    @Inject(CATEGORY_SERVICE)
+    private categoryService: CategoryGrpc,
 
-  @Inject(SUBCATEGORY_SERVICE)
-  private subcategoryService: SubcategoryGrpc;
+    @Inject(SUBCATEGORY_SERVICE)
+    private subcategoryService: SubcategoryGrpc
+  ) {}
 
   @Query(() => Category)
   getCategory(@Args('id') id: number) {
@@ -72,8 +75,8 @@ export class CategoryResolver {
     return this.categoryService.removeAll();
   }
 
-  @ResolveField()
-  subcategories(@Parent() category: Category) {
+  @ResolveField(() => [Subcategory])
+  subcategories(@Parent() category: Category): Observable<Subcategory[]> {
     return this.subcategoryService
       .findByCategory({ id: category.id })
       .pipe(map((res) => res.data));
