@@ -35,66 +35,49 @@ export class BudgetHandler {
   ) {}
 
   async findOne(id: number): Promise<Budget> {
-    const budget = await this.budgetRepository
-      .findOneOrFail({ relations: ['category'], where: { id } })
-      .catch(() => {
-        throw new NotFoundException('Budget not found');
-      });
+    const budget = await this.budgetRepository.findOne({
+      where: {
+        id,
+      },
+    });
 
-    const spent = await this.movementRepository
-      .createQueryBuilder()
-      .select('sum(amount)', 'spent')
-      .where({
-        category: budget.category.id,
-        date: Between(budget.startDate, budget.endDate),
-      })
-      .getRawOne()
-      .then((result) => +result.spent)
-      .catch(() => 0);
+    if (!budget) {
+      throw new NotFoundException('Budget not found');
+    }
+
+    const spent = await this.getSpent(budget);
+    const percentage = this.getPercentage(spent, budget.amount);
 
     return {
       ...budget,
       spent,
-      percentage: Math.floor((spent / budget.amount) * 100),
+      percentage,
     };
   }
 
   async findAll(): Promise<Budgets> {
-    this.#logger.log('Fetching budgets');
-
-    const budgets = await this.budgetRepository
-      .find({
-        relations: ['category'],
-        where: { active: true },
-      })
-      .catch((e) => {
-        throw new InternalServerErrorException(e.message);
-      });
+    const budgets = await this.budgetRepository.find({
+      where: {
+        active: true,
+      },
+    });
 
     const data: Budget[] = [];
 
     for (const budget of budgets) {
-      const spent = await this.movementRepository
-        .createQueryBuilder()
-        .select('sum(amount)', 'spent')
-        .where({
-          category: budget.category.id,
-          date: Between(budget.startDate, budget.endDate),
-        })
-        .getRawOne()
-        .then((result) => +result.spent)
-        .catch(() => 0);
+      const spent = await this.getSpent(budget);
+      const percentage = this.getPercentage(spent, budget.amount);
 
       data.push({
         ...budget,
         spent,
-        percentage: Math.floor((spent / budget.amount) * 100),
+        percentage,
       });
     }
 
-    this.#logger.log('Budgets fetched');
-
-    return { data };
+    return {
+      data,
+    };
   }
 
   async findMovements(budgetId: number): Promise<Movements> {
@@ -220,5 +203,22 @@ export class BudgetHandler {
     }
 
     this.#logger.log('Budgets generated');
+  }
+
+  private getSpent(budget: BudgetEntity): Promise<number> {
+    return this.movementRepository
+      .createQueryBuilder()
+      .select('sum(amount)', 'spent')
+      .where({
+        category: budget.categoryId,
+        date: Between(budget.startDate, budget.endDate),
+      })
+      .getRawOne()
+      .then((result) => +result.spent)
+      .catch(() => 0);
+  }
+
+  private getPercentage(value: number, total: number): number {
+    return Math.floor((value / total) * 100);
   }
 }

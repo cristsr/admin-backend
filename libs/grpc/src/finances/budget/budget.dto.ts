@@ -15,13 +15,13 @@ export class Budget {
   name: string;
 
   @Field()
+  amount: number;
+
+  @Field()
   startDate: string;
 
   @Field()
   endDate: string;
-
-  @Field()
-  amount: number;
 
   @Field()
   spent: number;
@@ -37,6 +37,8 @@ export class Budget {
 
   @Field(() => Category)
   category: Category;
+
+  categoryId: number;
 }
 
 @InputType()

@@ -25,7 +25,7 @@ message Budget {
   bool repeat = 7;
   bool active = 8;
   int32 percentage = 9;
-  Category category = 10;
+  int32 categoryId = 10;
 }
 
 message Budgets {

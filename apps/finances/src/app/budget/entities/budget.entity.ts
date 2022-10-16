@@ -4,6 +4,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  RelationId,
 } from 'typeorm';
 import { CategoryEntity } from 'app/category/entities';
 
@@ -31,11 +32,14 @@ export class BudgetEntity {
   @Column({ default: true })
   active: boolean;
 
-  @ManyToOne(() => CategoryEntity, (e) => e.id, {
+  @ManyToOne(() => CategoryEntity, {
     onDelete: 'SET NULL',
   })
   @JoinColumn({ name: 'category_id' })
   category: CategoryEntity;
+
+  @RelationId('category')
+  categoryId: number;
 
   @Column({ name: 'user_id' })
   user: number;
