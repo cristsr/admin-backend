@@ -91,7 +91,6 @@ export class MovementHandler {
     // Execute query
     return await this.movementRepository
       .find({
-        relations: ['category', 'subcategory'],
         where,
         order: { date: 'DESC', createdAt: 'DESC' },
       })
@@ -106,7 +105,6 @@ export class MovementHandler {
   findOne(id: number): Promise<MovementEntity> {
     return this.movementRepository
       .findOneOrFail({
-        relations: ['category', 'subcategory'],
         where: { id },
       })
       .catch(() => {

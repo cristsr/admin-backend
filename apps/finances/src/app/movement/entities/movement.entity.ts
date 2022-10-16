@@ -5,6 +5,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  RelationId,
 } from 'typeorm';
 import { DateTime } from 'luxon';
 import { Movement, MovementType } from '@admin-back/grpc';
@@ -18,10 +19,7 @@ export class MovementEntity implements Movement {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({
-    type: 'date',
-    nullable: true,
-  })
+  @Column({ type: 'date', nullable: true })
   date: string;
 
   @Column({ nullable: true, type: 'varchar' })
@@ -33,21 +31,19 @@ export class MovementEntity implements Movement {
   @Column()
   amount: number;
 
-  @ManyToOne(() => CategoryEntity, (t: CategoryEntity) => t.id, {
-    onDelete: 'SET NULL',
-  })
-  @JoinColumn({
-    name: 'category_id',
-  })
+  @ManyToOne(() => CategoryEntity, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'category_id' })
   category: CategoryEntity;
 
-  @ManyToOne(() => SubcategoryEntity, (t: SubcategoryEntity) => t.id, {
-    onDelete: 'SET NULL',
-  })
-  @JoinColumn({
-    name: 'subcategory_id',
-  })
+  @RelationId('category')
+  categoryId: number;
+
+  @ManyToOne(() => SubcategoryEntity, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'subcategory_id' })
   subcategory: SubcategoryEntity;
+
+  @RelationId('subcategory')
+  subcategoryId: number;
 
   @CreateDateColumn({
     name: 'created_at',

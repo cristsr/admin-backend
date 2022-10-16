@@ -31,8 +31,12 @@ export class Movement {
   @Field()
   category: Category;
 
+  categoryId: number;
+
   @Field()
   subcategory: Subcategory;
+
+  subcategoryId: number;
 
   @Field()
   createdAt: string;

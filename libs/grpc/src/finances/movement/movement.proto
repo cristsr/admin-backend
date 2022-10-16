@@ -21,14 +21,16 @@ message Status {
 }
 
 message Movement {
-  int32 id = 1;
-  string date = 2;
-  string type = 3;
-  string description = 4;
-  int32 amount = 5;
-  Category category = 6;
-  Subcategory subcategory = 7;
-  string createdAt = 8;
+  int32       id            = 1;
+  string      date          = 2;
+  string      type          = 3;
+  string      description   = 4;
+  int32       amount        = 5;
+  Category    category      = 51;
+  int32       categoryId    = 6;
+  Subcategory subcategory   = 61;
+  int32       subcategoryId = 7;
+  string      createdAt     = 8;
 }
 
 message Movements {

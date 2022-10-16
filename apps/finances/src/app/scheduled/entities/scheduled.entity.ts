@@ -5,6 +5,7 @@ import {
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
+  RelationId,
 } from 'typeorm';
 import { MovementType, Scheduled } from '@admin-back/grpc';
 import { CategoryEntity } from 'app/category/entities';
@@ -34,21 +35,19 @@ export class ScheduledEntity implements Scheduled {
   @Column({})
   recurrent: string;
 
-  @ManyToOne(() => CategoryEntity, (e) => e.id, {
-    onDelete: 'SET NULL',
-  })
-  @JoinColumn({
-    name: 'category_id',
-  })
+  @ManyToOne(() => CategoryEntity, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'category_id' })
   category: CategoryEntity;
 
-  @ManyToOne(() => SubcategoryEntity, (t: SubcategoryEntity) => t.id, {
-    onDelete: 'SET NULL',
-  })
-  @JoinColumn({
-    name: 'subcategory_id',
-  })
+  @RelationId('category')
+  categoryId: number;
+
+  @ManyToOne(() => SubcategoryEntity, { onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'subcategory_id' })
   subcategory: SubcategoryEntity;
+
+  @RelationId('subcategory')
+  subcategoryId: number;
 
   @CreateDateColumn({
     type: 'timestamp',
