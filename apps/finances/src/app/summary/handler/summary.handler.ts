@@ -2,29 +2,21 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { DateTime } from 'luxon';
-import { Balance, Expense, Expenses, Movements } from '@admin-back/grpc';
+import { Expense, Expenses, Movements } from '@admin-back/grpc';
 import { MovementEntity } from 'app/movement/entities';
 import { SummaryEntity } from 'app/summary/entities';
-import { BalanceEntity } from 'app/account/entities';
 
 @Injectable()
 export class SummaryHandler {
   #logger = new Logger(SummaryHandler.name);
 
   constructor(
-    @InjectRepository(BalanceEntity)
-    private balanceRepository: Repository<BalanceEntity>,
-
     @InjectRepository(SummaryEntity)
     private summaryRepository: Repository<SummaryEntity>,
 
     @InjectRepository(MovementEntity)
     private movementRepository: Repository<MovementEntity>
   ) {}
-
-  balance(): Promise<Balance> {
-    return this.balanceRepository.findOneBy({});
-  }
 
   async expenses(date: DateTime): Promise<Expenses> {
     let where: string;
@@ -86,42 +78,5 @@ export class SummaryHandler {
         icon: item.c_icon,
       },
     }));
-  }
-
-  // TODO: review this method or delete it
-  async generateExpensesByWeek(): Promise<any> {
-    const today = DateTime.local();
-
-    const days = new Array(7).fill(0).map((_, i: number) => ({
-      locale: today.minus({ days: i }).toLocaleString({ weekday: 'short' }),
-      format: today.minus({ days: i }).toFormat('yyyy-MM-dd'),
-    }));
-
-    const result = [];
-
-    for (const day of days) {
-      const query = this.summaryRepository
-        .createQueryBuilder()
-        .select('cast(SUM(amount) as real)', 'amount')
-        .where(`date = :date`, { date: day.format });
-
-      try {
-        const record = await query.getRawOne();
-
-        result.push({
-          day: day.locale,
-          amount: record?.amount ?? 0,
-        });
-      } catch (e) {
-        this.#logger.error(`Error generating bar stats: ${e.message}`);
-
-        result.push({
-          day: day.locale,
-          amount: 0,
-        });
-      }
-    }
-
-    return result;
   }
 }

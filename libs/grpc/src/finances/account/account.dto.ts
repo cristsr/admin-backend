@@ -76,15 +76,15 @@ export class Balances extends ListObject(Balance) {}
 
 @InputType()
 export class QueryBalance {
-  @Field()
-  account: number;
-
   @Field(() => String)
   @IsIn(periods)
   period: Period;
 
   @Field()
   date: string;
+
+  @Field({ nullable: true })
+  account: number;
 
   user: number;
 }

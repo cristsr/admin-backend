@@ -5,20 +5,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Between, In, Raw, Repository } from 'typeorm';
 import { DateTime, Interval } from 'luxon';
 import {
   CreateMovement,
   Movement,
-  MovementCreated,
   MovementFilter,
   Movements,
-  MovementUpdated,
   Status,
   UpdateMovement,
 } from '@admin-back/grpc';
-import { EntityEvent } from '@admin-back/shared';
 import { MovementEntity } from 'app/movement/entities';
 import { CategoryEntity } from 'app/category/entities';
 import { SubcategoryEntity } from 'app/subcategory/entities';
@@ -39,9 +35,7 @@ export class MovementHandler {
     private subcategoryRepository: Repository<SubcategoryEntity>,
 
     @InjectRepository(AccountEntity)
-    private accountRepository: Repository<AccountEntity>,
-
-    private eventEmitter: EventEmitter2
+    private accountRepository: Repository<AccountEntity>
   ) {}
 
   /**
@@ -166,8 +160,6 @@ export class MovementHandler {
 
     this.#logger.log(`Movement ${movement.id} created`);
 
-    this.eventEmitter.emit(MovementCreated, <EntityEvent>{ entity: movement });
-
     return movement;
   }
 
@@ -218,11 +210,6 @@ export class MovementHandler {
         this.#logger.error(`Error updating movement: ${e.message}`);
         throw new InternalServerErrorException(e.message);
       });
-
-    this.eventEmitter.emit(MovementUpdated, <EntityEvent>{
-      entity: movement,
-      databaseEntity: movementEntity,
-    });
 
     this.#logger.log(`Movement ${movement.id} updated`);
 
