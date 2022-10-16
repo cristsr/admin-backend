@@ -15,8 +15,9 @@ import { BudgetModule } from 'app/budget/budget.module';
 import { BillModule } from 'app/bill/bill.module';
 import { ScheduledModule } from 'app/scheduled/scheduled.module';
 import { SubcategoryModule } from 'app/subcategory/subcategory.module';
-import { AppController } from './app.controller';
 import { AccountModule } from 'app/account/account.module';
+import { AppController } from './app.controller';
+import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -25,6 +26,8 @@ import { AccountModule } from 'app/account/account.module';
       validate: (config: object) => configValidator(config, Environment),
     }),
     CacheModule.register(),
+    ScheduleModule.forRoot(),
+    // EventEmitterModule.forRoot({}),
     DatabaseModule,
     AccountModule,
     CategoryModule,

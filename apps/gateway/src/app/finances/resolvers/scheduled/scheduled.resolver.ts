@@ -1,21 +1,44 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Mutation,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
 import {
+  Category,
+  CATEGORY_SERVICE,
+  CategoryGrpc,
   CreateScheduled,
   Scheduled,
   SCHEDULED_SERVICE,
   ScheduledGrpc,
   Status,
+  Subcategory,
+  SUBCATEGORY_SERVICE,
+  SubcategoryGrpc,
   UpdateScheduled,
+  User,
 } from '@admin-back/grpc';
 import { Observable, pluck } from 'rxjs';
+import { CurrentUser } from '@admin-back/shared';
 
-@Resolver()
+@Resolver(Scheduled)
 export class ScheduledResolver {
-  @Inject(SCHEDULED_SERVICE)
-  private scheduledService: ScheduledGrpc;
+  constructor(
+    @Inject(SCHEDULED_SERVICE)
+    private scheduledService: ScheduledGrpc,
 
-  @Query(() => Scheduled)
+    @Inject(CATEGORY_SERVICE)
+    private categoryService: CategoryGrpc,
+
+    @Inject(SUBCATEGORY_SERVICE)
+    private subcategoryService: SubcategoryGrpc
+  ) {}
+
+  @Query(() => Scheduled, { nullable: true })
   getScheduled(@Args('id') id: number): Observable<Scheduled> {
     return this.scheduledService.findOne({ id });
   }
@@ -27,9 +50,13 @@ export class ScheduledResolver {
 
   @Mutation(() => Scheduled)
   createScheduled(
+    @CurrentUser() user: User,
     @Args('scheduled') scheduled: CreateScheduled
   ): Observable<Scheduled> {
-    return this.scheduledService.create(scheduled);
+    return this.scheduledService.create({
+      ...scheduled,
+      user: user.id,
+    });
   }
 
   @Mutation(() => Scheduled)
@@ -42,5 +69,20 @@ export class ScheduledResolver {
   @Mutation(() => Status)
   removeScheduled(@Args('id') id: number): Observable<Status> {
     return this.scheduledService.remove({ id });
+  }
+
+  @ResolveField(() => Category)
+  category(@Parent() scheduled: Scheduled): Observable<Category> | Category {
+    console.log('resolve category', scheduled);
+    if (scheduled.category) return scheduled.category;
+    return this.categoryService.findOne({ id: scheduled.categoryId });
+  }
+
+  @ResolveField(() => Subcategory)
+  subcategory(
+    @Parent() scheduled: Scheduled
+  ): Observable<Subcategory> | Subcategory {
+    if (scheduled.subcategory) return scheduled.subcategory;
+    return this.subcategoryService.findOne({ id: scheduled.subcategoryId });
   }
 }

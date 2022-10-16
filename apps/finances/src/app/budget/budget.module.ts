@@ -1,7 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ScheduleModule } from '@nestjs/schedule';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 import { BudgetService } from 'app/budget/services';
 import { BudgetHandler } from 'app/budget/handlers';
 import { BudgetEntity } from 'app/budget/entities';
@@ -13,13 +11,7 @@ const Entities = TypeOrmModule.forFeature([BudgetEntity]);
 
 @Module({
   controllers: [BudgetService],
-  imports: [
-    Entities,
-    ScheduleModule.forRoot(),
-    EventEmitterModule.forRoot(),
-    CategoryModule,
-    MovementModule,
-  ],
+  imports: [Entities, CategoryModule, MovementModule],
   providers: [BudgetHandler, BudgetSchedule],
   exports: [Entities],
 })

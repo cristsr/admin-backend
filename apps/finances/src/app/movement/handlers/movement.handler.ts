@@ -7,9 +7,6 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, Raw, Repository } from 'typeorm';
 import { DateTime, Interval } from 'luxon';
-import { MovementEntity } from 'app/movement/entities';
-import { CategoryEntity } from 'app/category/entities';
-import { SubcategoryEntity } from 'app/subcategory/entities';
 import {
   CreateMovement,
   Movement,
@@ -18,6 +15,10 @@ import {
   Status,
   UpdateMovement,
 } from '@admin-back/grpc';
+import { MovementEntity } from 'app/movement/entities';
+import { CategoryEntity } from 'app/category/entities';
+import { SubcategoryEntity } from 'app/subcategory/entities';
+import { AccountEntity } from 'app/account/entities';
 
 @Injectable()
 export class MovementHandler {
@@ -31,8 +32,87 @@ export class MovementHandler {
     private categoryRepository: Repository<CategoryEntity>,
 
     @InjectRepository(SubcategoryEntity)
-    private subcategoryRepository: Repository<SubcategoryEntity>
+    private subcategoryRepository: Repository<SubcategoryEntity>,
+
+    @InjectRepository(AccountEntity)
+    private accountRepository: Repository<AccountEntity>
   ) {}
+
+  /**
+   * It finds all movements that match the given query parameters
+   * @param {MovementFilter} filters - MovementQueryDto
+   * @returns An array of MovementDto objects
+   */
+  async findAll(filters: MovementFilter): Promise<Movements> {
+    // Where conditions
+    const where: any = {};
+
+    // Setup where conditions
+    if (filters.period === 'daily') {
+      where.date = DateTime.fromISO(filters.date).toSQLDate();
+    }
+
+    if (filters.period === 'weekly') {
+      const interval = Interval.fromISO(filters.date);
+      where.date = Between(
+        interval.start.toSQLDate(),
+        interval.end.toSQLDate()
+      );
+    }
+
+    if (filters.period === 'monthly') {
+      const date = DateTime.fromISO(filters.date).toFormat('yyyy-MM');
+      where.date = Raw((alias) => `to_char(${alias}, 'YYYY-MM') = :date`, {
+        date,
+      });
+    }
+
+    if (filters.period === 'yearly') {
+      const date = DateTime.fromISO(filters.date).toFormat('yyyy');
+      where.date = Raw((alias) => `to_char(${alias}, 'YYYY') = :date`, {
+        date,
+      });
+    }
+
+    if (filters.category) {
+      where.category = await this.categoryRepository
+        .findOneByOrFail({ id: filters.category })
+        .catch(() => {
+          const msg = `Category ${filters.category} not found`;
+          this.#logger.log(msg);
+          throw new NotFoundException(msg);
+        });
+    }
+
+    if (filters.type?.length) {
+      where.type = In(filters.type);
+    }
+
+    // Execute query
+    return await this.movementRepository
+      .find({
+        where,
+        order: { date: 'DESC', createdAt: 'DESC' },
+      })
+      .then((data) => ({ data }));
+  }
+
+  /**
+   * It finds a movement by id, and if it doesn't find it, it throws a NotFoundException
+   * @param {number} id - number - the id of the movement we want to find
+   * @returns A promise of a MovementEntity
+   */
+  findOne(id: number): Promise<MovementEntity> {
+    return this.movementRepository
+      .findOneOrFail({
+        where: { id },
+      })
+      .catch(() => {
+        const msg = `Movement ${id} not found`;
+        this.#logger.log(msg);
+        throw new NotFoundException(msg);
+      });
+  }
 
   /**
    * It creates a movement
@@ -63,8 +143,15 @@ export class MovementHandler {
       throw new NotFoundException(msg);
     }
 
+    const account = await this.accountRepository.findOne({
+      where: {
+        id: data.account,
+      },
+    });
+
     const movement = await this.movementRepository.save({
       ...data,
+      account,
       category,
       subcategory,
     });
@@ -75,89 +162,21 @@ export class MovementHandler {
   }
 
   /**
-   * It finds all movements that match the given query parameters
-   * @param {MovementFilter} filters - MovementQueryDto
-   * @returns An array of MovementDto objects
-   */
-  async findAll(filters: MovementFilter): Promise<Movements> {
-    // Where conditions
-    const where: any = {};
-
-    // Setup where conditions
-    if (filters.period === 'day') {
-      where.date = DateTime.fromISO(filters.date).toSQLDate();
-    }
-
-    if (filters.period === 'week') {
-      const interval = Interval.fromISO(filters.date);
-      where.date = Between(
-        interval.start.toSQLDate(),
-        interval.end.toSQLDate()
-      );
-    }
-
-    if (filters.period === 'month') {
-      const date = DateTime.fromISO(filters.date).toFormat('yyyy-MM');
-      where.date = Raw((alias) => `to_char(${alias}, 'YYYY-MM') = :date`, {
-        date,
-      });
-    }
-
-    if (filters.period === 'year') {
-      const date = DateTime.fromISO(filters.date).toFormat('yyyy');
-      where.date = Raw((alias) => `to_char(${alias}, 'YYYY') = :date`, {
-        date,
-      });
-    }
-
-    if (filters.category) {
-      where.category = await this.categoryRepository
-        .findOneByOrFail({ id: filters.category })
-        .catch(() => {
-          const msg = `Category ${filters.category} not found`;
-          this.#logger.log(msg);
-          throw new NotFoundException(msg);
-        });
-    }
-
-    if (filters.type?.length) {
-      where.type = In(filters.type);
-    }
-
-    // Execute query
-    return await this.movementRepository
-      .find({
-        relations: ['category', 'subcategory'],
-        where,
-        order: { date: 'DESC', createdAt: 'DESC' },
-      })
-      .then((data) => ({ data }));
-  }
-
-  /**
-   * It finds a movement by id, and if it doesn't find it, it throws a NotFoundException
-   * @param {number} id - number - the id of the movement we want to find
-   * @returns A promise of a MovementEntity
-   */
-  findOne(id: number): Promise<MovementEntity> {
-    return this.movementRepository
-      .findOneOrFail({
-        relations: ['category', 'subcategory'],
-        where: { id },
-      })
-      .catch(() => {
-        const msg = `Movement ${id} not found`;
-        this.#logger.log(msg);
-        throw new NotFoundException(msg);
-      });
-  }
-
-  /**
    * It updates a movement entity with the given data, and returns the updated entity
    * @param {UpdateMovement} data - UpdateMovementDto
    * @returns The updated movement entity
    */
   async update(data: UpdateMovement): Promise<Movement> {
+    const movementEntity = await this.movementRepository.findOne({
+      where: {
+        id: data.id,
+      },
+    });
+
+    if (!movementEntity) {
+      throw new NotFoundException('Entity not found');
+    }
+
     const partialEntity: any = { ...data };
 
     if (data.category) {
@@ -180,16 +199,19 @@ export class MovementHandler {
         });
     }
 
-    const movementEntity = await this.movementRepository
-      .save(partialEntity)
+    const movement: MovementEntity = await this.movementRepository
+      .save({
+        ...movementEntity,
+        ...partialEntity,
+      })
       .catch((e) => {
-        this.#logger.log(`Error updating movement: ${e.message}`);
+        this.#logger.error(`Error updating movement: ${e.message}`);
         throw new InternalServerErrorException(e.message);
       });
 
-    this.#logger.log(`Movement ${movementEntity.id} updated`);
+    this.#logger.log(`Movement ${movement.id} updated`);
 
-    return movementEntity;
+    return movement;
   }
 
   /**

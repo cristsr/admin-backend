@@ -24,21 +24,3 @@ export class Expenses {
   @Field(() => [Expense], { nullable: true })
   month: Expense[];
 }
-
-@ObjectType()
-export class Balances {
-  @Field({ nullable: true })
-  balance: number;
-
-  @Field({ nullable: true })
-  incomeMonth: number;
-
-  @Field({ nullable: true })
-  expenseMonth: number;
-
-  @Field({ nullable: true })
-  incomeYear: number;
-
-  @Field({ nullable: true })
-  expenseYear: number;
-}

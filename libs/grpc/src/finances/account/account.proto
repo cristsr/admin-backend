@@ -6,59 +6,84 @@ import "google/protobuf/empty.proto";
 
 service AccountService {
   rpc FindAll(google.protobuf.Empty) returns (stream Accounts);
-  rpc FindOne(AccountId) returns (stream Account);
-  rpc FindByUser(UserId) returns (stream Accounts);
-  rpc FindActiveBalance(AccountId) returns (stream Balance);
-  rpc Create(CreateAccount) returns (stream Account);
-  rpc Update(UpdateAccount) returns (stream Account);
-  rpc Remove(AccountId) returns (stream Status);
-}
-
-message Balance {
-  int32 id = 1;
-  int32 balance = 2;
-  bool active = 3;
-  string createdAt= 4;
-  Account account = 5;
+  rpc FindOne(AccountId)             returns (stream Account);
+  rpc FindByUser(UserId)             returns (stream Accounts);
+  rpc FindBalance(QueryBalance)      returns (stream Balance);
+  rpc FindBalances(QueryBalance)      returns (stream Balances);
+  rpc Create(CreateAccount)          returns (stream Account);
+  rpc Update(UpdateAccount)          returns (stream Account);
+  rpc Remove(AccountId)              returns (stream Status);
 }
 
 message Account {
-  int32 id = 1;
-  string name = 2;
-  Balance balance = 3;
-  bool active = 4;
-  string createdAt = 5;
-  optional string updatedAt = 6;
-  optional string closedAt = 7;
+  int32   id             = 10;
+  string  name           = 20;
+  int32   initialBalance = 80;
+  bool    active         = 40;
+  string  createdAt      = 50;
+  string  updatedAt      = 60;
+  string  closedAt       = 70;
+  int32   user           = 90;
 }
 
 message Accounts {
-  repeated Account data = 1;
+  repeated Account data = 10;
 }
 
 message CreateAccount {
-  string name = 1;
-  int32 balance = 2;
-  int32 user = 3;
+  string name           = 10;
+  int32  initialBalance = 20;
+  int32  user           = 30;
 }
 
 message UpdateAccount {
-  int32 id = 1;
-  optional string name = 2;
-  optional int32 balance = 3;
-  optional int32 user = 4;
+  int32           id   = 10;
+  optional string name = 20;
+  optional int32  user = 40;
 }
 
 message AccountId {
-  int32 id = 1;
+  int32 id = 10;
 }
 
 message UserId {
-  int32 id = 1;
+  int32 id = 10;
 }
 
 message Status {
   bool status = 1;
+}
+
+//message Balance {
+//  int32 dailyBalance    = 10;
+//  int32 dailyIncomes    = 20;
+//  int32 dailyExpenses   = 30;
+//  int32 monthlyBalance  = 40;
+//  int32 monthlyIncomes  = 50;
+//  int32 monthlyExpenses = 60;
+//  int32 annualBalance   = 70;
+//  int32 annualIncomes   = 80;
+//  int32 annualExpenses  = 90;
+//}
+
+message Balance {
+  int32  id         = 50;
+  int32  balance    = 10;
+  int32  incomes    = 20;
+  int32  expenses   = 30;
+  string date       = 40;
+  bool   active     = 60;
+}
+
+message Balances {
+  repeated Balance data = 10;
+}
+
+message QueryBalance {
+  int32  account = 10;
+  int32  user    = 20;
+  string period  = 30;
+  string date    = 40;
 }
 
 

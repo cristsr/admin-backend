@@ -13,9 +13,10 @@ import {
   AccountGrpc,
   Balance,
   CreateAccount,
+  QueryBalance,
   User,
 } from '@admin-back/grpc';
-import { Observable, pluck } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { CurrentUser } from '@admin-back/shared';
 
 @Resolver(Account)
@@ -23,22 +24,35 @@ export class AccountResolver {
   @Inject(ACCOUNT_SERVICE)
   private accountService: AccountGrpc;
 
-  @Query(() => [Account], { nullable: true })
-  userAccounts(@CurrentUser() { id }: User): Observable<Account[]> {
-    return this.accountService.findByUser({ id: 1 }).pipe(pluck('data'));
+  @Query(() => [Account])
+  userAccounts(@CurrentUser() user: User): Observable<Account[]> {
+    return this.accountService
+      .findByUser({ id: user.id })
+      .pipe(map((res) => res.data));
   }
 
   @Mutation(() => Account)
   createAccount(
-    @CurrentUser() { id }: User,
+    @CurrentUser() user: User,
     @Args('data') data: CreateAccount
   ): Observable<Account> {
-    data.user = 1; // TODO fix here
-    return this.accountService.create(data);
+    return this.accountService.create({
+      ...data,
+      user: user.id,
+    });
   }
 
-  @ResolveField('balance')
-  balance(@Parent() account: Account): Observable<Balance> {
-    return this.accountService.findActiveBalance({ id: account.id });
+  @ResolveField()
+  balance(
+    @CurrentUser() user: User,
+    @Parent() account: Account,
+    @Args('query') balance: QueryBalance
+  ): Observable<Balance> {
+    return this.accountService.findBalance({
+      user: user.id,
+      account: account.id,
+      period: balance.period,
+      date: balance.date,
+    });
   }
 }

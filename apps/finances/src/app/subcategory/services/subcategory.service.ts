@@ -1,5 +1,5 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { Observable } from 'rxjs';
+import { from, Observable } from 'rxjs';
 import {
   SubcategoryGrpc,
   CreateSubcategory,
@@ -28,7 +28,7 @@ export class SubcategoryService implements SubcategoryGrpc {
 
   @GrpcMethod()
   create(data: CreateSubcategory): Observable<Subcategory> {
-    return this.subcategoryHandler.create(data);
+    return from(this.subcategoryHandler.create(data));
   }
 
   @GrpcMethod()

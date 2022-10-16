@@ -26,90 +26,76 @@ export class BudgetHandler {
   constructor(
     @InjectRepository(BudgetEntity)
     private budgetRepository: Repository<BudgetEntity>,
+
     @InjectRepository(CategoryEntity)
     private categoryRepository: Repository<CategoryEntity>,
+
     @InjectRepository(MovementEntity)
     private movementRepository: Repository<MovementEntity>
   ) {}
 
   async findOne(id: number): Promise<Budget> {
-    const budget = await this.budgetRepository
-      .findOneOrFail({ relations: ['category'], where: { id } })
-      .catch(() => {
-        throw new NotFoundException('Budget not found');
-      });
+    const budget = await this.budgetRepository.findOne({
+      where: {
+        id,
+      },
+    });
 
-    const spent = await this.movementRepository
-      .createQueryBuilder()
-      .select('sum(amount)', 'spent')
-      .where({
-        category: budget.category.id,
-        date: Between(budget.startDate, budget.endDate),
-      })
-      .getRawOne()
-      .then((result) => +result.spent)
-      .catch(() => 0);
+    if (!budget) {
+      return null;
+    }
+
+    const spent = await this.getSpent(budget);
+    const percentage = this.getPercentage(spent, budget.amount);
 
     return {
       ...budget,
       spent,
-      percentage: Math.floor((spent / budget.amount) * 100),
+      percentage,
     };
   }
 
   async findAll(): Promise<Budgets> {
-    this.#logger.log('Fetching budgets');
-
-    const budgets = await this.budgetRepository
-      .find({
-        relations: ['category'],
-        where: { active: true },
-      })
-      .catch((e) => {
-        throw new InternalServerErrorException(e.message);
-      });
+    const budgets = await this.budgetRepository.find({
+      where: {
+        active: true,
+      },
+    });
 
     const data: Budget[] = [];
 
     for (const budget of budgets) {
-      const spent = await this.movementRepository
-        .createQueryBuilder()
-        .select('sum(amount)', 'spent')
-        .where({
-          category: budget.category.id,
-          date: Between(budget.startDate, budget.endDate),
-        })
-        .getRawOne()
-        .then((result) => +result.spent)
-        .catch(() => 0);
+      const spent = await this.getSpent(budget);
+      const percentage = this.getPercentage(spent, budget.amount);
 
       data.push({
         ...budget,
         spent,
-        percentage: Math.floor((spent / budget.amount) * 100),
+        percentage,
       });
     }
 
-    this.#logger.log('Budgets fetched');
-
-    return { data };
+    return {
+      data,
+    };
   }
 
   async findMovements(budgetId: number): Promise<Movements> {
-    const budget = await this.budgetRepository.findOne({
-      relations: ['category'],
+    const budget: BudgetEntity = await this.budgetRepository.findOne({
       where: { id: budgetId },
     });
 
     if (!budget) {
-      throw new NotFoundException('Budget not found');
+      return {
+        data: [],
+      };
     }
 
     return await this.movementRepository
       .find({
-        relations: ['category', 'subcategory'],
         where: {
-          category: budget.category,
+          type: 'expense',
+          category: { id: budget.categoryId },
           date: Between(budget.startDate, budget.endDate),
         },
         order: {
@@ -117,10 +103,7 @@ export class BudgetHandler {
           createdAt: 'DESC',
         },
       })
-      .then((data) => ({ data }))
-      .catch((e) => {
-        throw new InternalServerErrorException(e.message);
-      });
+      .then((data) => ({ data }));
   }
 
   async create(data: CreateBudget): Promise<Budget> {
@@ -130,27 +113,31 @@ export class BudgetHandler {
     const startDate = utc.startOf('month').toFormat('yyyy-MM-dd');
     const endDate = utc.endOf('month').toFormat('yyyy-MM-dd');
 
-    const categoryEntity = await this.categoryRepository.findOneBy({
-      id: data.category,
+    const category = await this.categoryRepository.findOne({
+      where: {
+        id: data.category,
+      },
     });
 
-    if (!categoryEntity) {
-      this.#logger.log(`Category ${data.category} not found`);
+    if (!category) {
       throw new NotFoundException('Category not found');
     }
+
+    const account = {
+      id: data.account,
+    };
 
     const budget = await this.budgetRepository
       .save({
         ...data,
+        account,
         startDate,
         endDate,
-        category: categoryEntity,
+        category,
       })
       .catch((error) => {
         throw new InternalServerErrorException(error.message);
       });
-
-    this.#logger.log(`Budget ${budget.name} created`);
 
     return {
       ...budget,
@@ -160,6 +147,16 @@ export class BudgetHandler {
   }
 
   async update(data: UpdateBudget): Promise<Budget> {
+    const budget = await this.budgetRepository.findOne({
+      where: {
+        id: data.id,
+      },
+    });
+
+    if (!budget) {
+      return null;
+    }
+
     const category = await this.categoryRepository
       .findOneByOrFail({ id: data.category })
       .catch(() => {
@@ -167,7 +164,11 @@ export class BudgetHandler {
       });
 
     await this.budgetRepository.save({
+      ...budget,
       ...data,
+      account: {
+        id: data.account,
+      },
       category,
     });
 
@@ -218,5 +219,22 @@ export class BudgetHandler {
     }
 
     this.#logger.log('Budgets generated');
+  }
+
+  private getSpent(budget: BudgetEntity): Promise<number> {
+    return this.movementRepository
+      .createQueryBuilder()
+      .select('sum(amount)', 'spent')
+      .where({
+        category: budget.categoryId,
+        date: Between(budget.startDate, budget.endDate),
+      })
+      .getRawOne()
+      .then((result) => +result.spent)
+      .catch(() => 0);
+  }
+
+  private getPercentage(value: number, total: number): number {
+    return Math.floor((value / total) * 100);
   }
 }

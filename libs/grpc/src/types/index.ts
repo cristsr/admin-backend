@@ -7,3 +7,7 @@ export interface List<T> {
 export interface Id {
   id: number;
 }
+
+export interface Int {
+  value: number;
+}

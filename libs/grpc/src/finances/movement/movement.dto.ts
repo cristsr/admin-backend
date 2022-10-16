@@ -7,7 +7,9 @@ import {
 } from '@admin-back/shared';
 import { Category } from '../category';
 import { Subcategory } from '../subcategory';
-import { MovementType, movementTypes, Period, periods } from './types';
+import { Account } from '../account';
+import { MovementType, movementTypes } from './types';
+import { Period, periods } from '../finances.types';
 
 @ObjectType()
 export class Movement {
@@ -29,11 +31,19 @@ export class Movement {
   @Field()
   category: Category;
 
+  categoryId: number;
+
   @Field()
   subcategory: Subcategory;
 
+  subcategoryId: number;
+
   @Field()
   createdAt: string;
+
+  account: Account;
+
+  user: number;
 }
 
 @ObjectType()
@@ -45,12 +55,16 @@ export class CreateMovement extends OmitInputType(Movement, [
   'category',
   'subcategory',
   'createdAt',
+  'account',
 ]) {
   @Field()
   category: number;
 
   @Field()
   subcategory: number;
+
+  @Field()
+  account: number;
 }
 
 @InputType()
