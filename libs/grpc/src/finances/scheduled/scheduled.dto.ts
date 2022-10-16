@@ -14,7 +14,7 @@ export class Scheduleds extends ListObject(Scheduled) {}
 @InputType()
 export class CreateScheduled extends CreateMovement {
   @Field()
-  recurrent: string;
+  recurrent: string; // TODO: replace to bool
 }
 
 @InputType()

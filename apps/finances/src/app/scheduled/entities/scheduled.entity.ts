@@ -20,10 +20,7 @@ export class ScheduledEntity implements Scheduled {
   @Column({ type: 'varchar' })
   type: MovementType;
 
-  @Column({
-    type: 'date',
-    name: 'start_date',
-  })
+  @Column({ type: 'date', name: 'start_date' })
   date: string;
 
   @Column()
@@ -49,10 +46,7 @@ export class ScheduledEntity implements Scheduled {
   @RelationId('subcategory')
   subcategoryId: number;
 
-  @CreateDateColumn({
-    type: 'timestamp',
-    name: 'created_at',
-  })
+  @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
   createdAt: string;
 
   @ManyToOne(() => AccountEntity)

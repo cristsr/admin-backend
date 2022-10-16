@@ -20,7 +20,9 @@ message Scheduled {
   string description = 4;
   int32 amount = 5;
   Category category = 6;
+  int32 categoryId = 60;
   Subcategory subcategory = 7;
+  int32 subcategoryId = 70;
   string createdAt = 8;
   bool recurrent = 10;
 }
@@ -37,17 +39,19 @@ message CreateScheduled {
   int32 category = 5;
   int32 subcategory = 6;
   bool recurrent = 10;
+  int32 user = 20;
 }
 
 message UpdateScheduled {
   int32 id = 1;
-  optional string date = 2;
-  optional string type = 3;
-  optional string description = 4;
-  optional int32 amount = 5;
-  optional int32 category = 6;
-  optional int32 subcategory = 7;
-  optional bool recurrent = 10;
+  string date = 2;
+  string type = 3;
+  string description = 4;
+  int32 amount = 5;
+  int32 category = 6;
+  int32 subcategory = 7;
+  int32 account = 80;
+  bool recurrent = 10;
 }
 
 message ScheduledId {

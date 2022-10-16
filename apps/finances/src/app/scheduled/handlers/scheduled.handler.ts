@@ -30,10 +30,7 @@ export class ScheduledHandler {
   ) {}
 
   findOne(id: number): Promise<Scheduled> {
-    return this.scheduledRepository.findOneByOrFail({ id }).catch(() => {
-      const msg = `Scheduled ${id} not found`;
-      throw new NotFoundException(msg);
-    });
+    return this.scheduledRepository.findOneBy({ id });
   }
 
   findAll(): Promise<Scheduleds> {
@@ -82,18 +79,56 @@ export class ScheduledHandler {
     });
   }
 
-  update(data: UpdateScheduled): Promise<Scheduled> {
-    return this.scheduledRepository.save({
-      ...data,
-      category: {
+  async update(data: UpdateScheduled): Promise<Scheduled> {
+    const scheduled = await this.scheduledRepository.findOne({
+      where: {
+        id: data.id,
+      },
+    });
+
+    if (!scheduled) {
+      throw new NotFoundException('Scheduled not found');
+    }
+
+    const category = await this.categoryRepository.findOne({
+      where: {
         id: data.category,
       },
-      subcategory: {
+    });
+
+    if (!category) {
+      const msg = `Category ${data.category} not found`;
+      throw new NotFoundException(msg);
+    }
+
+    const subcategory = await this.subcategoryRepository.findOne({
+      where: {
         id: data.subcategory,
       },
-      account: {
+    });
+
+    if (!subcategory) {
+      const msg = `Subcategory ${data.subcategory} not found`;
+      throw new NotFoundException(msg);
+    }
+
+    const account = await this.accountRepository.findOne({
+      where: {
         id: data.account,
       },
+    });
+
+    if (!account) {
+      const msg = `Account ${data.subcategory} not found`;
+      throw new NotFoundException(msg);
+    }
+
+    return this.scheduledRepository.save({
+      ...scheduled,
+      ...data,
+      category,
+      subcategory,
+      account,
     });
   }
 
