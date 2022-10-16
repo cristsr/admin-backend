@@ -7,7 +7,7 @@ import {
   Resolver,
 } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
-import { map, Observable, pluck } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import {
   Budget,
   BUDGET_SERVICE,
@@ -19,7 +19,9 @@ import {
   Movement,
   Status,
   UpdateBudget,
+  User,
 } from '@admin-back/grpc';
+import { CurrentUser } from '@admin-back/shared';
 
 @Resolver(Budget)
 export class BudgetResolver {
@@ -31,7 +33,7 @@ export class BudgetResolver {
     private categoryService: CategoryGrpc
   ) {}
 
-  @Query(() => Budget)
+  @Query(() => Budget, { nullable: true })
   getBudget(@Args('id') id: number): Observable<Budget> {
     return this.budgetService.findOne({ id });
   }
@@ -43,17 +45,31 @@ export class BudgetResolver {
 
   @Query(() => [Movement])
   getBudgetMovements(@Args('id') id: number): Observable<Movement[]> {
-    return this.budgetService.findMovements({ id }).pipe(pluck('data'));
+    return this.budgetService
+      .findMovements({ id })
+      .pipe(map((res) => res.data));
   }
 
   @Mutation(() => Budget)
-  createBudget(@Args('budget') budget: CreateBudget): Observable<Budget> {
-    return this.budgetService.create(budget);
+  createBudget(
+    @CurrentUser() user: User,
+    @Args('budget') budget: CreateBudget
+  ): Observable<Budget> {
+    return this.budgetService.create({
+      ...budget,
+      user: user.id,
+    });
   }
 
-  @Mutation(() => Budget)
-  updateBudget(@Args('budget') budget: UpdateBudget): Observable<Budget> {
-    return this.budgetService.update(budget);
+  @Mutation(() => Budget, { nullable: true })
+  updateBudget(
+    @CurrentUser() user: User,
+    @Args('budget') budget: UpdateBudget
+  ): Observable<Budget> {
+    return this.budgetService.update({
+      ...budget,
+      user: user.id,
+    });
   }
 
   @Mutation(() => Status)
@@ -66,17 +82,5 @@ export class BudgetResolver {
     return this.categoryService.findOne({
       id: budget.categoryId,
     });
-  }
-
-  @ResolveField()
-  percentage(@Parent() budget: Budget): number {
-    console.log('percentage', budget);
-    return 0;
-  }
-
-  @ResolveField()
-  spent(@Parent() budget: Budget): number {
-    console.log('spent', budget);
-    return 0;
   }
 }

@@ -42,7 +42,7 @@ export class BudgetHandler {
     });
 
     if (!budget) {
-      throw new NotFoundException('Budget not found');
+      return null;
     }
 
     const spent = await this.getSpent(budget);
@@ -81,20 +81,21 @@ export class BudgetHandler {
   }
 
   async findMovements(budgetId: number): Promise<Movements> {
-    const budget = await this.budgetRepository.findOne({
-      relations: ['category'],
+    const budget: BudgetEntity = await this.budgetRepository.findOne({
       where: { id: budgetId },
     });
 
     if (!budget) {
-      throw new NotFoundException('Budget not found');
+      return {
+        data: [],
+      };
     }
 
     return await this.movementRepository
       .find({
-        relations: ['category', 'subcategory'],
         where: {
-          category: budget.category,
+          type: 'expense',
+          category: { id: budget.categoryId },
           date: Between(budget.startDate, budget.endDate),
         },
         order: {
@@ -102,10 +103,7 @@ export class BudgetHandler {
           createdAt: 'DESC',
         },
       })
-      .then((data) => ({ data }))
-      .catch((e) => {
-        throw new InternalServerErrorException(e.message);
-      });
+      .then((data) => ({ data }));
   }
 
   async create(data: CreateBudget): Promise<Budget> {
@@ -115,21 +113,28 @@ export class BudgetHandler {
     const startDate = utc.startOf('month').toFormat('yyyy-MM-dd');
     const endDate = utc.endOf('month').toFormat('yyyy-MM-dd');
 
-    const categoryEntity = await this.categoryRepository.findOneBy({
-      id: data.category,
+    const category = await this.categoryRepository.findOne({
+      where: {
+        id: data.category,
+      },
     });
 
-    if (!categoryEntity) {
+    if (!category) {
       this.#logger.log(`Category ${data.category} not found`);
       throw new NotFoundException('Category not found');
     }
 
+    const account = {
+      id: data.account,
+    };
+
     const budget = await this.budgetRepository
       .save({
         ...data,
+        account,
         startDate,
         endDate,
-        category: categoryEntity,
+        category,
       })
       .catch((error) => {
         throw new InternalServerErrorException(error.message);
@@ -145,6 +150,16 @@ export class BudgetHandler {
   }
 
   async update(data: UpdateBudget): Promise<Budget> {
+    const budget = await this.budgetRepository.findOne({
+      where: {
+        id: data.id,
+      },
+    });
+
+    if (!budget) {
+      return null;
+    }
+
     const category = await this.categoryRepository
       .findOneByOrFail({ id: data.category })
       .catch(() => {
@@ -152,7 +167,11 @@ export class BudgetHandler {
       });
 
     await this.budgetRepository.save({
+      ...budget,
       ...data,
+      account: {
+        id: data.account,
+      },
       category,
     });
 

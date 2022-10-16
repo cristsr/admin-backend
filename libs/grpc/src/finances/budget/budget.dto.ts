@@ -1,5 +1,5 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { Category } from '@admin-back/grpc';
+import { Account, Category } from '@admin-back/grpc';
 import {
   ListObject,
   OmitInputType,
@@ -38,7 +38,11 @@ export class Budget {
   @Field(() => Category)
   category: Category;
 
+  account: Account;
+
   categoryId: number;
+
+  user: number;
 }
 
 @InputType()
@@ -53,9 +57,13 @@ export class CreateBudget extends OmitInputType(Budget, [
   'percentage',
   'category',
   'active',
+  'account',
 ]) {
   @Field()
   category: number;
+
+  @Field()
+  account: number;
 }
 
 @InputType()

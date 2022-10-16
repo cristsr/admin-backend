@@ -26,6 +26,8 @@ message Budget {
   bool active = 8;
   int32 percentage = 9;
   int32 categoryId = 10;
+  int32 account = 20;
+  int32 user = 30;
 }
 
 message Budgets {
@@ -38,15 +40,19 @@ message CreateBudget {
   int32 category = 3;
   bool repeat = 4;
   bool active = 5;
+  int32 account = 20;
+  int32 user = 10;
 }
 
 message UpdateBudget {
   int32 id = 1;
-  optional string name = 2;
-  optional int32 amount = 3;
-  optional int32 category = 4;
-  optional bool repeat = 5;
-  optional bool active = 6;
+  string name = 2;
+  int32 amount = 3;
+  int32 category = 4;
+  bool repeat = 5;
+  bool active = 6;
+  int32 account = 20;
+  int32 user = 10;
 }
 
 message BudgetId {

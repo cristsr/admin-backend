@@ -7,6 +7,7 @@ import {
   RelationId,
 } from 'typeorm';
 import { CategoryEntity } from 'app/category/entities';
+import { AccountEntity } from 'app/account/entities';
 
 // Todo: Review this entity and remove unused fields or refactor it
 @Entity('budgets')
@@ -32,14 +33,16 @@ export class BudgetEntity {
   @Column({ default: true })
   active: boolean;
 
-  @ManyToOne(() => CategoryEntity, {
-    onDelete: 'SET NULL',
-  })
+  @ManyToOne(() => CategoryEntity, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'category_id' })
   category: CategoryEntity;
 
   @RelationId('category')
   categoryId: number;
+
+  @ManyToOne(() => AccountEntity)
+  @JoinColumn({ name: 'account_id' })
+  account: AccountEntity;
 
   @Column({ name: 'user_id' })
   user: number;
