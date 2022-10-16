@@ -58,6 +58,7 @@ export class CategoryHandler {
           });
         });
 
+        // TODO: refactor in order to return promise instead of observable
         return from(this.subcategoryRepository.save(records)).pipe(
           map((subcategories) => ({
             ...category,
@@ -78,16 +79,12 @@ export class CategoryHandler {
   }
 
   findAll(): Observable<Categories> {
-    const categories = this.categoryRepository.find({
-      relations: ['subcategories'],
-    });
-
+    const categories = this.categoryRepository.find();
     return from(categories).pipe(map((data) => ({ data })));
   }
 
   findOne(id: number): Observable<Category> {
     const category = this.categoryRepository.findOneOrFail({
-      relations: ['subcategories'],
       where: { id },
     });
 

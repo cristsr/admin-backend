@@ -1,6 +1,8 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { Relation } from 'typeorm';
 import { ListObject } from '@admin-back/shared';
+import { Relation } from 'typeorm';
+import { IsIn } from 'class-validator';
+import { Period, periods } from '../finances.types';
 
 @ObjectType()
 export class Account {
@@ -11,7 +13,13 @@ export class Account {
   name: string;
 
   @Field(() => Balance)
-  balance: Relation<Balance>;
+  balance?: Relation<Balance>;
+
+  @Field(() => [Balance])
+  balances?: Relation<Balance[]>;
+
+  @Field()
+  initialBalance: number;
 
   @Field()
   active: boolean;
@@ -28,23 +36,6 @@ export class Account {
   user: number;
 }
 
-@ObjectType()
-export class Balance {
-  @Field()
-  id: number;
-
-  @Field()
-  balance: number;
-
-  @Field()
-  active: boolean;
-
-  @Field()
-  createdAt: string;
-
-  account: Account;
-}
-
 export class Accounts extends ListObject(Account) {}
 
 @InputType()
@@ -53,13 +44,55 @@ export class CreateAccount {
   name: string;
 
   @Field()
-  balance: number;
+  initialBalance: number;
 
   user: number;
 }
 
 @InputType()
-export class UpdateAccount extends CreateAccount {
+export class UpdateAccount {
   @Field()
   id: number;
+
+  @Field()
+  name: string;
+
+  user: number;
+}
+
+@ObjectType()
+export class Balance {
+  @Field()
+  balance: number;
+
+  @Field()
+  incomes: number;
+
+  @Field()
+  expenses: number;
+}
+
+export class Balances extends ListObject(Balance) {}
+
+@InputType()
+export class QueryBalance {
+  @Field(() => String)
+  @IsIn(periods)
+  period: Period;
+
+  @Field()
+  date: string;
+
+  @Field({ nullable: true })
+  account: number;
+
+  user: number;
+}
+
+@InputType()
+export class QueryBalances {
+  @Field()
+  account: number;
+
+  user: number;
 }

@@ -7,6 +7,7 @@ import {
   Accounts,
   Status,
   Balance,
+  QueryBalance,
 } from '@admin-back/grpc';
 
 export interface AccountGrpc {
@@ -16,7 +17,7 @@ export interface AccountGrpc {
 
   findByUser(user: Id): Observable<Accounts>;
 
-  findActiveBalance(account: Id): Observable<Balance>;
+  findBalance(queryBalance: QueryBalance): Observable<Balance>;
 
   create(account: CreateAccount): Observable<Account>;
 

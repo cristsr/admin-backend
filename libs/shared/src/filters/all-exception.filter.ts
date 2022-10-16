@@ -1,12 +1,5 @@
-import {
-  ArgumentsHost,
-  Catch,
-  HttpException,
-  InternalServerErrorException,
-  Logger,
-} from '@nestjs/common';
+import { ArgumentsHost, Catch, HttpException, Logger } from '@nestjs/common';
 import { BaseExceptionFilter } from '@nestjs/core';
-import { GrpcToHttpExceptionMap } from '../exceptions';
 
 @Catch()
 export class AllExceptionFilter extends BaseExceptionFilter {
@@ -16,6 +9,7 @@ export class AllExceptionFilter extends BaseExceptionFilter {
     this.#logger.debug('Host type: ' + host.getType());
 
     console.debug(exception);
+    console.debug(exception.constructor);
 
     // Handling http exception
     if (exception instanceof HttpException) {

@@ -17,11 +17,6 @@ export class BudgetService implements BudgetGrpc {
   constructor(private readonly budgetHandler: BudgetHandler) {}
 
   @GrpcMethod()
-  create(budget: CreateBudget): Observable<Budget> {
-    return from(this.budgetHandler.create(budget));
-  }
-
-  @GrpcMethod()
   findOne(budget: Id): Observable<Budget> {
     return from(this.budgetHandler.findOne(budget.id));
   }
@@ -34,6 +29,11 @@ export class BudgetService implements BudgetGrpc {
   @GrpcMethod()
   findMovements(budget: Id): Observable<Movements> {
     return from(this.budgetHandler.findMovements(budget.id));
+  }
+
+  @GrpcMethod()
+  create(budget: CreateBudget): Observable<Budget> {
+    return from(this.budgetHandler.create(budget));
   }
 
   @GrpcMethod()

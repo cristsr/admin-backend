@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ScheduledEntity } from 'app/scheduled/entities';
@@ -11,11 +11,10 @@ import {
   Status,
   UpdateScheduled,
 } from '@admin-back/grpc';
+import { AccountEntity } from 'app/account/entities';
 
 @Injectable()
 export class ScheduledHandler {
-  #logger = new Logger(ScheduledHandler.name);
-
   constructor(
     @InjectRepository(CategoryEntity)
     private categoryRepository: Repository<CategoryEntity>,
@@ -24,74 +23,116 @@ export class ScheduledHandler {
     private subcategoryRepository: Repository<SubcategoryEntity>,
 
     @InjectRepository(ScheduledEntity)
-    private scheduledRepository: Repository<ScheduledEntity>
+    private scheduledRepository: Repository<ScheduledEntity>,
+
+    @InjectRepository(AccountEntity)
+    private accountRepository: Repository<AccountEntity>
   ) {}
 
   findOne(id: number): Promise<Scheduled> {
-    this.#logger.debug(`Find one scheduled ${id}`);
-
-    return this.scheduledRepository.findOneByOrFail({ id }).catch(() => {
-      const msg = `Scheduled ${id} not found`;
-      this.#logger.error(msg);
-      throw new NotFoundException(msg);
-    });
+    return this.scheduledRepository.findOneBy({ id });
   }
 
   findAll(): Promise<Scheduleds> {
-    this.#logger.debug('Find all scheduled');
-    return this.scheduledRepository
-      .find({
-        relations: ['category', 'subcategory'],
-      })
-      .then((data) => ({ data }));
+    return this.scheduledRepository.find().then((data) => ({ data }));
   }
 
   async create(data: CreateScheduled): Promise<Scheduled> {
-    this.#logger.debug(`Creating scheduled ${data.description}`);
+    const category = await this.categoryRepository.findOne({
+      where: {
+        id: data.category,
+      },
+    });
 
-    const category = await this.categoryRepository
-      .findOneByOrFail({ id: data.category })
-      .catch(() => {
-        const msg = `Category ${data.category} not found`;
-        this.#logger.error(msg);
-        throw new NotFoundException(msg);
-      });
+    if (!category) {
+      const msg = `Category ${data.category} not found`;
+      throw new NotFoundException(msg);
+    }
 
-    const subcategory = await this.subcategoryRepository
-      .findOneByOrFail({ id: data.subcategory })
-      .catch(() => {
-        const msg = `Subcategory ${data.subcategory} not found`;
-        this.#logger.error(msg);
-        throw new NotFoundException(msg);
-      });
+    const subcategory = await this.subcategoryRepository.findOne({
+      where: {
+        id: data.subcategory,
+      },
+    });
 
-    const scheduled = await this.scheduledRepository.save({
+    if (!subcategory) {
+      const msg = `Subcategory ${data.subcategory} not found`;
+      throw new NotFoundException(msg);
+    }
+
+    const account = await this.accountRepository.findOne({
+      where: {
+        id: data.account,
+      },
+    });
+
+    if (!account) {
+      const msg = `Account ${data.subcategory} not found`;
+      throw new NotFoundException(msg);
+    }
+
+    return await this.scheduledRepository.save({
       ...data,
+      account,
       category,
       subcategory,
     });
-
-    this.#logger.log(`Scheduled ${scheduled.description} created`);
-
-    return scheduled;
   }
 
-  update(data: UpdateScheduled): Promise<Scheduled> {
-    this.#logger.debug(`Updating scheduled ${data.id}`);
+  async update(data: UpdateScheduled): Promise<Scheduled> {
+    const scheduled = await this.scheduledRepository.findOne({
+      where: {
+        id: data.id,
+      },
+    });
 
-    return this.scheduledRepository.save({
-      ...data,
-      category: {
+    if (!scheduled) {
+      throw new NotFoundException('Scheduled not found');
+    }
+
+    const category = await this.categoryRepository.findOne({
+      where: {
         id: data.category,
       },
-      subcategory: {
+    });
+
+    if (!category) {
+      const msg = `Category ${data.category} not found`;
+      throw new NotFoundException(msg);
+    }
+
+    const subcategory = await this.subcategoryRepository.findOne({
+      where: {
         id: data.subcategory,
       },
+    });
+
+    if (!subcategory) {
+      const msg = `Subcategory ${data.subcategory} not found`;
+      throw new NotFoundException(msg);
+    }
+
+    const account = await this.accountRepository.findOne({
+      where: {
+        id: data.account,
+      },
+    });
+
+    if (!account) {
+      const msg = `Account ${data.subcategory} not found`;
+      throw new NotFoundException(msg);
+    }
+
+    return this.scheduledRepository.save({
+      ...scheduled,
+      ...data,
+      category,
+      subcategory,
+      account,
     });
   }
 
   remove(id: number): Promise<Status> {
-    this.#logger.log(`Removing scheduled ${id}`);
     return this.scheduledRepository
       .delete(id)
       .then((res) => ({ status: !!res.affected }));
