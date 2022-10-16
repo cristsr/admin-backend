@@ -21,7 +21,7 @@ export class Category {
   @Field()
   color: string;
 
-  @Field(() => [Subcategory], { nullable: true })
+  @Field(() => [Subcategory])
   subcategories?: Subcategory[];
 }
 

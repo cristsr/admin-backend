@@ -79,16 +79,12 @@ export class CategoryHandler {
   }
 
   findAll(): Observable<Categories> {
-    const categories = this.categoryRepository.find({
-      relations: ['subcategories'],
-    });
-
+    const categories = this.categoryRepository.find();
     return from(categories).pipe(map((data) => ({ data })));
   }
 
   findOne(id: number): Observable<Category> {
     const category = this.categoryRepository.findOneOrFail({
-      relations: ['subcategories'],
       where: { id },
     });
 

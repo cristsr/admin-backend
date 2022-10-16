@@ -36,4 +36,7 @@ export class BudgetEntity {
   })
   @JoinColumn({ name: 'category_id' })
   category: CategoryEntity;
+
+  @Column({ name: 'user_id' })
+  user: number;
 }
