@@ -15,9 +15,6 @@ export class Account {
   @Field(() => Balance)
   balance?: Relation<Balance>;
 
-  @Field(() => [Balance])
-  balances?: Relation<Balance[]>;
-
   @Field()
   initialBalance: number;
 

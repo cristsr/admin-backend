@@ -1,20 +1,8 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, Repository } from 'typeorm';
 import { DateTime } from 'luxon';
-import {
-  Budget,
-  Budgets,
-  CreateBudget,
-  Movements,
-  Status,
-  UpdateBudget,
-} from '@admin-back/grpc';
+import { Budget, Budgets, Status, UpdateBudget } from '@admin-back/grpc';
 import { BudgetEntity } from 'app/budget/entities';
 import { CategoryEntity } from 'app/category/entities';
 import { MovementEntity } from 'app/movement/entities';
@@ -77,72 +65,6 @@ export class BudgetHandler {
 
     return {
       data,
-    };
-  }
-
-  async findMovements(budgetId: number): Promise<Movements> {
-    const budget: BudgetEntity = await this.budgetRepository.findOne({
-      where: { id: budgetId },
-    });
-
-    if (!budget) {
-      return {
-        data: [],
-      };
-    }
-
-    return await this.movementRepository
-      .find({
-        where: {
-          type: 'expense',
-          category: { id: budget.categoryId },
-          date: Between(budget.startDate, budget.endDate),
-        },
-        order: {
-          date: 'DESC',
-          createdAt: 'DESC',
-        },
-      })
-      .then((data) => ({ data }));
-  }
-
-  async create(data: CreateBudget): Promise<Budget> {
-    this.#logger.log(`Creating budget ${data.name}`);
-
-    const utc = DateTime.utc();
-    const startDate = utc.startOf('month').toFormat('yyyy-MM-dd');
-    const endDate = utc.endOf('month').toFormat('yyyy-MM-dd');
-
-    const category = await this.categoryRepository.findOne({
-      where: {
-        id: data.category,
-      },
-    });
-
-    if (!category) {
-      throw new NotFoundException('Category not found');
-    }
-
-    const account = {
-      id: data.account,
-    };
-
-    const budget = await this.budgetRepository
-      .save({
-        ...data,
-        account,
-        startDate,
-        endDate,
-        category,
-      })
-      .catch((error) => {
-        throw new InternalServerErrorException(error.message);
-      });
-
-    return {
-      ...budget,
-      spent: 0,
-      percentage: 0,
     };
   }
 
