@@ -1,6 +1,6 @@
 import { MovementHandler } from 'app/movement/handlers';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { forkJoin, from, Observable, switchMap } from 'rxjs';
+import { forkJoin, from, map, Observable, switchMap } from 'rxjs';
 import {
   CreateMovement,
   Id,
@@ -15,9 +15,10 @@ import { NotFoundException } from '@nestjs/common';
 import { CategoryEntity } from 'app/category/entities';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MovementEntity } from 'app/movement/entities';
-import { Repository } from 'typeorm';
+import { Between, DeleteResult, In, Raw, Repository } from 'typeorm';
 import { SubcategoryEntity } from 'app/subcategory/entities';
 import { AccountEntity } from 'app/account/entities';
+import { DateTime, Interval } from 'luxon';
 
 @GrpcService('finances')
 export class MovementService implements MovementGrpc {
@@ -39,12 +40,52 @@ export class MovementService implements MovementGrpc {
 
   @GrpcMethod()
   findAll(filters: MovementFilter): Observable<Movements> {
-    return from(this.movementHandler.findAll(filters));
+    const dateMap = {
+      daily: () => DateTime.fromISO(filters.date).toSQLDate(),
+
+      weekly: () => {
+        const interval = Interval.fromISO(filters.date);
+        return Between(interval.start.toSQLDate(), interval.end.toSQLDate());
+      },
+
+      monthly: () => {
+        const date = DateTime.fromISO(filters.date).toFormat('yyyy-MM');
+        return Raw((alias) => `to_char(${alias}, 'YYYY-MM') = :date`, { date });
+      },
+
+      yearly: () => {
+        const date = DateTime.fromISO(filters.date).toFormat('yyyy');
+        return Raw((alias) => `to_char(${alias}, 'YYYY') = :date`, { date });
+      },
+    };
+
+    // Execute query
+    const movements: Promise<MovementEntity[]> = this.movementRepository.find({
+      where: {
+        date: dateMap[filters.period](),
+        category: { id: filters.category },
+        type: filters.type?.length ? In(filters.type) : null,
+      },
+      order: {
+        date: 'DESC',
+        createdAt: 'DESC',
+      },
+    });
+
+    return from(movements).pipe(
+      map((data: MovementEntity[]) => ({
+        data,
+      }))
+    );
   }
 
   @GrpcMethod()
-  findOne(movement: Id): Observable<Movement> {
-    return from(this.movementHandler.findOne(movement.id));
+  findOne(movementId: Id): Observable<Movement> {
+    const movement: Promise<MovementEntity> = this.movementRepository.findOne({
+      where: movementId,
+    });
+
+    return from(movement);
   }
 
   @GrpcMethod()
@@ -59,7 +100,7 @@ export class MovementService implements MovementGrpc {
         throw new NotFoundException(`Category not found`);
       });
 
-    const subcategory = this.subcategoryRepository
+    const subcategory: Promise<SubcategoryEntity> = this.subcategoryRepository
       .findOneOrFail({
         where: {
           id: data.subcategory,
@@ -72,7 +113,7 @@ export class MovementService implements MovementGrpc {
         throw new NotFoundException(`Subcategory not found`);
       });
 
-    const account = this.accountRepository
+    const account: Promise<AccountEntity> = this.accountRepository
       .findOneOrFail({
         where: {
           id: data.account,
@@ -102,17 +143,29 @@ export class MovementService implements MovementGrpc {
   }
 
   @GrpcMethod()
-  update(movement: UpdateMovement): Observable<Movement> {
-    return from(this.movementHandler.update(movement));
+  update(data: UpdateMovement): Observable<Movement> {
+    return from(this.movementHandler.update(data));
   }
 
   @GrpcMethod()
   remove(movement: Id): Observable<Status> {
-    return from(this.movementHandler.remove(movement.id));
+    const result: Promise<DeleteResult> = this.movementRepository.delete(
+      movement.id
+    );
+
+    return from(result).pipe(
+      map((data: DeleteResult) => ({
+        status: !!data.affected,
+      }))
+    );
   }
 
   @GrpcMethod()
   removeAll() {
-    return from(this.movementHandler.removeAll());
+    return from(this.movementRepository.clear()).pipe(
+      map(() => ({
+        status: true,
+      }))
+    );
   }
 }

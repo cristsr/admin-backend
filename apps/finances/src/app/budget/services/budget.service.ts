@@ -118,14 +118,20 @@ export class BudgetService implements BudgetGrpc {
     const endDate = utc.endOf('month').toFormat('yyyy-MM-dd');
 
     const category: Promise<CategoryEntity> = this.categoryRepository
-      .findOneOrFail({ where: { id: data.category } })
+      .findOneOrFail({
+        where: {
+          id: data.category,
+        },
+      })
       .catch(() => {
         throw new NotFoundException('Category not found');
       });
 
     const account: Promise<AccountEntity> = this.accountRepository
-      .findOneByOrFail({
-        id: data.account,
+      .findOneOrFail({
+        where: {
+          id: data.account,
+        },
       })
       .catch(() => {
         throw new NotFoundException('Account not found');

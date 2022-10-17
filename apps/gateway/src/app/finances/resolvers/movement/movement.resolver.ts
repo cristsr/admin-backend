@@ -39,7 +39,7 @@ export class MovementResolver {
     private subcategoryService: SubcategoryGrpc
   ) {}
 
-  @Query(() => Movement)
+  @Query(() => Movement, { nullable: true })
   getMovement(@Args('id') id: number): Observable<Movement> {
     return this.movementService.findOne({ id });
   }
