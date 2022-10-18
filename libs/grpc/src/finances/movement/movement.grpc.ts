@@ -3,7 +3,7 @@ import {
   Movement,
   Movements,
   MovementFilter,
-  CreateMovement,
+  MovementInput,
   UpdateMovement,
   Status,
 } from '@admin-back/grpc';
@@ -14,7 +14,7 @@ export interface MovementGrpc {
 
   findAll(filters: MovementFilter): Observable<Movements>;
 
-  create(data: CreateMovement): Observable<Movement>;
+  save(data: MovementInput): Observable<Movement>;
 
   update(data: UpdateMovement): Observable<Movement>;
 

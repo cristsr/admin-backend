@@ -12,7 +12,7 @@ import {
   Category,
   CATEGORY_SERVICE,
   CategoryGrpc,
-  CreateMovement,
+  MovementInput,
   Movement,
   MOVEMENT_SERVICE,
   MovementFilter,
@@ -52,11 +52,11 @@ export class MovementResolver {
   }
 
   @Mutation(() => Movement)
-  createMovement(
+  saveMovement(
     @CurrentUser() user: User,
-    @Args('movement') movement: CreateMovement
+    @Args('movement') movement: MovementInput
   ): Observable<Movement> {
-    return this.movementService.create({
+    return this.movementService.save({
       ...movement,
       user: user.id,
     });

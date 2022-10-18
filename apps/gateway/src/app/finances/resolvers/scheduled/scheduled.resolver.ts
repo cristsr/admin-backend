@@ -14,6 +14,7 @@ import {
   CreateScheduled,
   Scheduled,
   SCHEDULED_SERVICE,
+  ScheduledFilter,
   ScheduledGrpc,
   Status,
   Subcategory,
@@ -22,7 +23,7 @@ import {
   UpdateScheduled,
   User,
 } from '@admin-back/grpc';
-import { Observable, pluck } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { CurrentUser } from '@admin-back/shared';
 
 @Resolver(Scheduled)
@@ -44,8 +45,10 @@ export class ScheduledResolver {
   }
 
   @Query(() => [Scheduled])
-  getScheduleds(): Observable<Scheduled[]> {
-    return this.scheduledService.findAll({}).pipe(pluck('data'));
+  getScheduleds(
+    @Args('filters') filters: ScheduledFilter
+  ): Observable<Scheduled[]> {
+    return this.scheduledService.findAll(filters).pipe(map((res) => res.data));
   }
 
   @Mutation(() => Scheduled)

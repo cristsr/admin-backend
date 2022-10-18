@@ -1,11 +1,11 @@
 import { NotFoundException } from '@nestjs/common';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { forkJoin, from, map, Observable, switchMap } from 'rxjs';
+import { forkJoin, from, map, Observable, of, switchMap } from 'rxjs';
 import { Between, DeleteResult, In, Raw, Repository } from 'typeorm';
 import { Interval } from 'luxon';
 import {
-  CreateMovement,
+  MovementInput,
   Id,
   Movement,
   MovementFilter,
@@ -14,7 +14,6 @@ import {
   Status,
   UpdateMovement,
 } from '@admin-back/grpc';
-import { MovementHandler } from 'app/movement/handlers';
 import { CategoryEntity } from 'app/category/entities';
 import { MovementEntity } from 'app/movement/entities';
 import { SubcategoryEntity } from 'app/subcategory/entities';
@@ -33,9 +32,7 @@ export class MovementService implements MovementGrpc {
     private subcategoryRepository: Repository<SubcategoryEntity>,
 
     @InjectRepository(AccountEntity)
-    private accountRepository: Repository<AccountEntity>,
-
-    private readonly movementHandler: MovementHandler
+    private accountRepository: Repository<AccountEntity>
   ) {}
 
   @GrpcMethod()
@@ -90,7 +87,7 @@ export class MovementService implements MovementGrpc {
   }
 
   @GrpcMethod()
-  create(data: CreateMovement): Observable<Movement> {
+  save(data: MovementInput): Observable<Movement> {
     const category: Promise<CategoryEntity> = this.categoryRepository
       .findOneOrFail({
         where: {
@@ -124,20 +121,33 @@ export class MovementService implements MovementGrpc {
         throw new NotFoundException(`Account not found`);
       });
 
+    // Conditional execution
+    const movement: Promise<MovementEntity> = this.movementRepository
+      .findOneOrFail({
+        where: {
+          id: data.id,
+        },
+      })
+      .catch(() => {
+        throw new NotFoundException(`Movement not found`);
+      });
+
     // Do search in parallel
     const source$ = forkJoin({
+      movement: data.id ? movement : of(null),
       category,
       subcategory,
       account,
     });
 
-    return source$.pipe(
-      switchMap(({ category, subcategory, account }) => {
+    return from(source$).pipe(
+      switchMap((entities) => {
         return this.movementRepository.save({
+          ...entities.movement,
           ...data,
-          category,
-          subcategory,
-          account,
+          category: entities.category,
+          subcategory: entities.subcategory,
+          account: entities.account,
         });
       })
     );
@@ -145,7 +155,7 @@ export class MovementService implements MovementGrpc {
 
   @GrpcMethod()
   update(data: UpdateMovement): Observable<Movement> {
-    return from(this.movementHandler.update(data));
+    throw new Error('');
   }
 
   @GrpcMethod()

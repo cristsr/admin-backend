@@ -9,8 +9,8 @@ import "subcategory/subcategory.proto";
 service MovementService {
   rpc FindOne(Id) returns (stream Movement) {}
   rpc FindAll(MovementFilter) returns (stream Movements) {}
-  rpc Create(CreateMovement) returns (stream Movement) {}
-  rpc CreateMany(CreateMovement) returns (stream Movement) {}
+  rpc Save(MovementInput) returns (stream Movement) {}
+  rpc CreateMany(MovementInput) returns (stream Movement) {}
   rpc Update(UpdateMovement) returns (stream Movement) {}
   rpc Remove(Id) returns (stream Status) {}
   rpc RemoveAll(google.protobuf.Empty) returns (stream Status) {}
@@ -37,15 +37,16 @@ message Movements {
   repeated Movement data = 1;
 }
 
-message CreateMovement {
-  string date = 1;
-  string type = 2;
-  string description = 3;
-  int32 amount = 4;
-  int32 category = 5;
-  int32 subcategory = 6;
-  int32 account = 9;
-  int32 user = 10;
+message MovementInput {
+  int32   id          = 20;
+  string  date        = 1;
+  string  type        = 2;
+  string  description = 3;
+  int32   amount      = 4;
+  int32   category    = 5;
+  int32   subcategory = 6;
+  int32   account     = 9;
+  int32   user        = 10;
 }
 
 message UpdateMovement {

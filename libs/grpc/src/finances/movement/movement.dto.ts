@@ -50,13 +50,16 @@ export class Movement {
 export class Movements extends ListObject(Movement) {}
 
 @InputType()
-export class CreateMovement extends OmitInputType(Movement, [
+export class MovementInput extends OmitInputType(Movement, [
   'id',
   'category',
   'subcategory',
   'createdAt',
   'account',
 ]) {
+  @Field({ nullable: true })
+  id: number;
+
   @Field()
   category: number;
 
@@ -68,7 +71,7 @@ export class CreateMovement extends OmitInputType(Movement, [
 }
 
 @InputType()
-export class UpdateMovement extends PartialInputType(CreateMovement) {
+export class UpdateMovement extends PartialInputType(MovementInput) {
   @Field()
   id: number;
 }

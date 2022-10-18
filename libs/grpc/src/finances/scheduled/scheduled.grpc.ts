@@ -4,6 +4,7 @@ import {
   Empty,
   Id,
   Scheduled,
+  ScheduledFilter,
   Scheduleds,
   Status,
   UpdateScheduled,
@@ -12,7 +13,7 @@ import {
 export interface ScheduledGrpc {
   findOne(id: Id): Observable<Scheduled>;
 
-  findAll(empty: Empty): Observable<Scheduleds>;
+  findAll(filters: ScheduledFilter): Observable<Scheduleds>;
 
   create(data: CreateScheduled): Observable<Scheduled>;
 
