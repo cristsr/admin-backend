@@ -82,6 +82,9 @@ export class MovementFilter {
   @Field()
   date: string;
 
+  @Field({ nullable: true })
+  account: number;
+
   @Field(() => Int, { nullable: true })
   category?: number;
 

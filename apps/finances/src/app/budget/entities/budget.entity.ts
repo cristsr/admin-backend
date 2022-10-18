@@ -40,7 +40,7 @@ export class BudgetEntity {
   @RelationId('category')
   categoryId: number;
 
-  @ManyToOne(() => AccountEntity)
+  @ManyToOne(() => AccountEntity, { eager: true })
   @JoinColumn({ name: 'account_id' })
   account: AccountEntity;
 

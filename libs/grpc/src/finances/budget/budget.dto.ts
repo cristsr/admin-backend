@@ -71,3 +71,9 @@ export class UpdateBudget extends PartialInputType(CreateBudget) {
   @Field()
   id: number;
 }
+
+@InputType()
+export class BudgetFilter {
+  @Field()
+  account: number;
+}

@@ -1,6 +1,9 @@
-import { MovementHandler } from 'app/movement/handlers';
+import { NotFoundException } from '@nestjs/common';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
+import { InjectRepository } from '@nestjs/typeorm';
 import { forkJoin, from, map, Observable, switchMap } from 'rxjs';
+import { Between, DeleteResult, In, Raw, Repository } from 'typeorm';
+import { Interval } from 'luxon';
 import {
   CreateMovement,
   Id,
@@ -11,14 +14,11 @@ import {
   Status,
   UpdateMovement,
 } from '@admin-back/grpc';
-import { NotFoundException } from '@nestjs/common';
+import { MovementHandler } from 'app/movement/handlers';
 import { CategoryEntity } from 'app/category/entities';
-import { InjectRepository } from '@nestjs/typeorm';
 import { MovementEntity } from 'app/movement/entities';
-import { Between, DeleteResult, In, Raw, Repository } from 'typeorm';
 import { SubcategoryEntity } from 'app/subcategory/entities';
 import { AccountEntity } from 'app/account/entities';
-import { DateTime, Interval } from 'luxon';
 
 @GrpcService('finances')
 export class MovementService implements MovementGrpc {
@@ -40,8 +40,8 @@ export class MovementService implements MovementGrpc {
 
   @GrpcMethod()
   findAll(filters: MovementFilter): Observable<Movements> {
-    const dateMap = {
-      daily: () => DateTime.fromISO(filters.date).toSQLDate(),
+    const dateMap: Record<string, any> = {
+      daily: () => filters.date,
 
       weekly: () => {
         const interval = Interval.fromISO(filters.date);
@@ -49,13 +49,15 @@ export class MovementService implements MovementGrpc {
       },
 
       monthly: () => {
-        const date = DateTime.fromISO(filters.date).toFormat('yyyy-MM');
-        return Raw((alias) => `to_char(${alias}, 'YYYY-MM') = :date`, { date });
+        return Raw((alias) => `to_char(${alias}, 'YYYY-MM') = :date`, {
+          date: filters.date,
+        });
       },
 
       yearly: () => {
-        const date = DateTime.fromISO(filters.date).toFormat('yyyy');
-        return Raw((alias) => `to_char(${alias}, 'YYYY') = :date`, { date });
+        return Raw((alias) => `to_char(${alias}, 'YYYY') = :date`, {
+          date: filters.date,
+        });
       },
     };
 
@@ -64,25 +66,24 @@ export class MovementService implements MovementGrpc {
       where: {
         date: dateMap[filters.period](),
         category: { id: filters.category },
+        account: { id: filters.account },
         type: filters.type?.length ? In(filters.type) : null,
       },
       order: {
         date: 'DESC',
         createdAt: 'DESC',
       },
+      relations: ['category', 'subcategory'],
     });
 
-    return from(movements).pipe(
-      map((data: MovementEntity[]) => ({
-        data,
-      }))
-    );
+    return from(movements).pipe(map((data: MovementEntity[]) => ({ data })));
   }
 
   @GrpcMethod()
   findOne(movementId: Id): Observable<Movement> {
     const movement: Promise<MovementEntity> = this.movementRepository.findOne({
       where: movementId,
+      relations: ['category', 'subcategory'],
     });
 
     return from(movement);

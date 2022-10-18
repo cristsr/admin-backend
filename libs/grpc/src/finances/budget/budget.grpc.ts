@@ -7,12 +7,13 @@ import {
   UpdateBudget,
   Movements,
   Status,
+  BudgetFilter,
 } from '@admin-back/grpc';
 
 export interface BudgetGrpc {
   findOne(id: Id): Observable<Budget>;
 
-  findAll(): Observable<Budgets>;
+  findAll(filters: BudgetFilter): Observable<Budgets>;
 
   findMovements(id: Id): Observable<Movements>;
 

@@ -9,6 +9,7 @@ import {
   Movements,
   UpdateBudget,
   Status,
+  BudgetFilter,
 } from '@admin-back/grpc';
 import { BudgetHandler } from 'app/budget/handlers';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -42,6 +43,7 @@ export class BudgetService implements BudgetGrpc {
   findOne(budgetId: Id): Observable<Budget> {
     const budget$: Promise<BudgetEntity> = this.budgetRepository.findOne({
       where: budgetId,
+      relations: ['category'],
     });
 
     return from(budget$).pipe(
@@ -60,15 +62,23 @@ export class BudgetService implements BudgetGrpc {
   }
 
   @GrpcMethod()
-  findAll(): Observable<Budgets> {
+  findAll(filters: BudgetFilter): Observable<Budgets> {
     const budgets$: Promise<BudgetEntity[]> = this.budgetRepository.find({
       where: {
+        account: {
+          id: filters.account,
+        },
         active: true,
       },
+      relations: ['category'],
     });
 
     return from(budgets$).pipe(
       switchMap((budgets: BudgetEntity[]) => {
+        if (!budgets.length) {
+          return of([]);
+        }
+
         const sources$ = budgets.map((budget: BudgetEntity) => {
           return from(this.getSpent(budget)).pipe(
             map((spent: number) => ({
@@ -105,6 +115,7 @@ export class BudgetService implements BudgetGrpc {
             date: 'DESC',
             createdAt: 'DESC',
           },
+          relations: ['category', 'subcategory'],
         });
       }),
       map((data) => ({ data }))

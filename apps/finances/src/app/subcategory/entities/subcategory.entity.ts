@@ -4,15 +4,13 @@ import { CategoryEntity } from 'app/category/entities';
 
 @Entity('subcategories')
 export class SubcategoryEntity {
-  @PrimaryGeneratedColumn('increment')
+  @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
   name: string;
 
-  @ManyToOne(() => CategoryEntity, (t: CategoryEntity) => t.id, {
-    onDelete: 'CASCADE',
-  })
-  @JoinColumn()
+  @ManyToOne(() => CategoryEntity, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'category_id' })
   category: CategoryEntity;
 }

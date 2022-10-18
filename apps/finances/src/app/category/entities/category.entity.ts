@@ -3,7 +3,7 @@ import { SubcategoryEntity } from 'app/subcategory/entities';
 
 @Entity('categories')
 export class CategoryEntity {
-  @PrimaryGeneratedColumn('increment')
+  @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
@@ -15,6 +15,6 @@ export class CategoryEntity {
   @Column()
   color: string;
 
-  @OneToMany(() => SubcategoryEntity, (x: SubcategoryEntity) => x.category)
+  @OneToMany(() => SubcategoryEntity, (t: SubcategoryEntity) => t.category)
   subcategories: SubcategoryEntity[];
 }

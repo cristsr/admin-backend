@@ -1,5 +1,5 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { from, Observable } from 'rxjs';
+import { from, map, Observable, switchMap } from 'rxjs';
 import {
   SubcategoryGrpc,
   CreateSubcategory,
@@ -10,39 +10,102 @@ import {
   Subcategories,
   Id,
 } from '@admin-back/grpc';
-import { SubcategoryHandler } from 'app/subcategory/handlers';
+import { InjectRepository } from '@nestjs/typeorm';
+import { CategoryEntity } from 'app/category/entities';
+import { Repository } from 'typeorm';
+import { SubcategoryEntity } from 'app/subcategory/entities';
+import { NotFoundException } from '@nestjs/common';
 
 @GrpcService('finances')
 export class SubcategoryService implements SubcategoryGrpc {
-  constructor(private subcategoryHandler: SubcategoryHandler) {}
+  constructor(
+    @InjectRepository(CategoryEntity)
+    private categoryRepository: Repository<CategoryEntity>,
+
+    @InjectRepository(SubcategoryEntity)
+    private subcategoryRepository: Repository<SubcategoryEntity>
+  ) {}
 
   @GrpcMethod()
-  findOne(subcategory: Id): Observable<Subcategory> {
-    return this.subcategoryHandler.findOne(subcategory.id);
+  findOne(subcategoryId: Id): Observable<Subcategory> {
+    const query = this.subcategoryRepository.findOne({
+      where: subcategoryId,
+    });
+
+    return from(query);
   }
 
   @GrpcMethod()
-  findByCategory(category: Id): Observable<Subcategories> {
-    return this.subcategoryHandler.findAll(category.id);
+  findByCategory(categoryId: Id): Observable<Subcategories> {
+    const query$ = this.subcategoryRepository.find({
+      where: {
+        category: categoryId,
+      },
+    });
+
+    return from(query$).pipe(map((data) => ({ data })));
   }
 
   @GrpcMethod()
   create(data: CreateSubcategory): Observable<Subcategory> {
-    return from(this.subcategoryHandler.create(data));
+    const category$ = this.categoryRepository
+      .findOneOrFail({
+        where: {
+          id: data.category,
+        },
+      })
+      .catch(() => {
+        throw new NotFoundException('Category not found');
+      });
+
+    return from(category$).pipe(
+      switchMap((category) => {
+        return this.subcategoryRepository.save({
+          ...data,
+          category,
+        });
+      })
+    );
   }
 
   @GrpcMethod()
   createMany(data: CreateSubcategories): Observable<Status> {
-    return this.subcategoryHandler.createMany(data);
+    const records = data.data.map((subcategory) => ({
+      ...subcategory,
+      category: { id: data.category },
+    }));
+
+    const query$ = this.subcategoryRepository.insert(records);
+
+    return from(query$).pipe(map(() => ({ status: true })));
   }
 
   @GrpcMethod()
   update(data: UpdateSubcategory): Observable<Subcategory> {
-    return this.subcategoryHandler.update(data);
+    const query$ = this.subcategoryRepository.save({
+      ...data,
+      category: { id: data.category },
+    });
+
+    return from(query$);
   }
 
   @GrpcMethod()
-  remove(subcategory: Id): Observable<Status> {
-    return this.subcategoryHandler.remove(subcategory.id);
+  remove(subcategoryId: Id): Observable<Status> {
+    const query$ = this.subcategoryRepository
+      .delete(subcategoryId)
+      .then((res) => {
+        if (res.affected) {
+          return {
+            status: true,
+          };
+        }
+
+        return {
+          status: false,
+        };
+      });
+
+    return from(query$);
   }
 }

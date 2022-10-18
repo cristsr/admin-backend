@@ -11,6 +11,7 @@ import { map, Observable } from 'rxjs';
 import {
   Budget,
   BUDGET_SERVICE,
+  BudgetFilter,
   BudgetGrpc,
   Category,
   CATEGORY_SERVICE,
@@ -39,8 +40,8 @@ export class BudgetResolver {
   }
 
   @Query(() => [Budget])
-  getBudgets(): Observable<Budget[]> {
-    return this.budgetService.findAll().pipe(map((res) => res.data));
+  getBudgets(@Args('filters') filters: BudgetFilter): Observable<Budget[]> {
+    return this.budgetService.findAll(filters).pipe(map((res) => res.data));
   }
 
   @Query(() => [Movement])

@@ -8,7 +8,7 @@ import "movement/movement.proto";
 
 service BudgetService {
   rpc FindOne(BudgetId) returns (stream Budget);
-  rpc FindAll(google.protobuf.Empty) returns (stream Budgets);
+  rpc FindAll(BudgetFilter) returns (stream Budgets);
   rpc FindMovements(BudgetId) returns (stream Movements);
   rpc Create(CreateBudget) returns (stream Budget);
   rpc Update(UpdateBudget) returns (stream Budget);
@@ -62,4 +62,8 @@ message BudgetId {
 
 message Status {
   bool status = 1;
+}
+
+message BudgetFilter {
+  int32 account = 10;
 }

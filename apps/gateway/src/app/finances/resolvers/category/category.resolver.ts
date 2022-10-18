@@ -76,7 +76,13 @@ export class CategoryResolver {
   }
 
   @ResolveField(() => [Subcategory])
-  subcategories(@Parent() category: Category): Observable<Subcategory[]> {
+  subcategories(
+    @Parent() category: Category
+  ): Observable<Subcategory[]> | Subcategory[] {
+    if (category.subcategories.length) {
+      return category.subcategories;
+    }
+
     return this.subcategoryService
       .findByCategory({ id: category.id })
       .pipe(map((res) => res.data));

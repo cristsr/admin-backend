@@ -70,4 +70,5 @@ message MovementFilter {
   int32           category = 3;
   repeated string type     = 4;
   string          order    = 5;
+  int32           account  = 6;
 }

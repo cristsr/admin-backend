@@ -30,11 +30,6 @@ export class MovementHandler {
     private accountRepository: Repository<AccountEntity>
   ) {}
 
-  /**
-   * It updates a movement entity with the given data, and returns the updated entity
-   * @param {UpdateMovement} data - UpdateMovementDto
-   * @returns The updated movement entity
-   */
   async update(data: UpdateMovement): Promise<Movement> {
     const movementEntity = await this.movementRepository.findOne({
       where: {
