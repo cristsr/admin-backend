@@ -18,6 +18,8 @@ import { ENV } from 'env';
         },
         synchronize: configService.get(ENV.DB_SYNCHRONIZE),
         autoLoadEntities: true,
+        debug: true,
+        logging: true,
       }),
       inject: [ConfigService],
     }),

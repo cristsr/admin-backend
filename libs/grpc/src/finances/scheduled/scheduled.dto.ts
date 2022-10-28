@@ -1,6 +1,6 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { ListObject } from '@admin-back/shared';
-import { Movement, MovementInput, UpdateMovement } from '../movement';
+import { Movement, MovementInput } from '../movement';
 
 @ObjectType()
 export class Scheduled extends Movement {
@@ -12,13 +12,13 @@ export class Scheduled extends Movement {
 export class Scheduleds extends ListObject(Scheduled) {}
 
 @InputType()
-export class CreateScheduled extends MovementInput {
+export class ScheduledInput extends MovementInput {
   @Field()
   recurrent: string; // TODO: replace to bool
 }
 
 @InputType()
-export class UpdateScheduled extends UpdateMovement {
+export class UpdateScheduled extends ScheduledInput {
   @Field()
   recurrent: string;
 }

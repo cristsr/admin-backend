@@ -1,10 +1,6 @@
 import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
 import { ArrayMaxSize, IsArray, IsIn, IsOptional } from 'class-validator';
-import {
-  ListObject,
-  OmitInputType,
-  PartialInputType,
-} from '@admin-back/shared';
+import { ListObject, OmitInputType } from '@admin-back/shared';
 import { Category } from '../category';
 import { Subcategory } from '../subcategory';
 import { Account } from '../account';
@@ -68,12 +64,6 @@ export class MovementInput extends OmitInputType(Movement, [
 
   @Field()
   account: number;
-}
-
-@InputType()
-export class UpdateMovement extends PartialInputType(MovementInput) {
-  @Field()
-  id: number;
 }
 
 @InputType()

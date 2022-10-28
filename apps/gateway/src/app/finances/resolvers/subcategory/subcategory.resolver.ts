@@ -2,14 +2,13 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
 import {
   CreateSubcategories,
-  CreateSubcategory,
+  SubcategoryInput,
   Status,
   Subcategory,
   SUBCATEGORY_SERVICE,
   SubcategoryGrpc,
-  UpdateSubcategory,
 } from '@admin-back/grpc';
-import { Observable, pluck } from 'rxjs';
+import { map, Observable } from 'rxjs';
 
 @Resolver()
 export class SubcategoryResolver {
@@ -17,40 +16,31 @@ export class SubcategoryResolver {
   private subcategoryService: SubcategoryGrpc;
 
   @Query(() => Subcategory)
-  getSubcategory(@Args('id') id: number): Observable<Subcategory> {
+  subcategory(@Args('id') id: number): Observable<Subcategory> {
     return this.subcategoryService.findOne({ id });
   }
 
   @Query(() => [Subcategory])
-  getSubcategories(
-    @Args('category') category: number
-  ): Observable<Subcategory[]> {
+  subcategories(@Args('category') category: number): Observable<Subcategory[]> {
     return this.subcategoryService
       .findByCategory({ id: category })
-      .pipe(pluck('data'));
+      .pipe(map((res) => res.data));
   }
 
   @Mutation(() => Subcategory)
-  createSubcategory(
+  saveSubcategory(
     @Args('subcategory')
-    subcategory: CreateSubcategory
+    subcategory: SubcategoryInput
   ): Observable<Subcategory> {
-    return this.subcategoryService.create(subcategory);
+    return this.subcategoryService.save(subcategory);
   }
 
   @Mutation(() => Status)
-  createSubcategories(
+  saveSubcategories(
     @Args('subcategories')
     subcategories: CreateSubcategories
   ): Observable<Status> {
-    return this.subcategoryService.createMany(subcategories);
-  }
-
-  @Mutation(() => Subcategory)
-  updateSubcategory(
-    @Args('subcategory') subcategory: UpdateSubcategory
-  ): Observable<Subcategory> {
-    return this.subcategoryService.update(subcategory);
+    return this.subcategoryService.saveMany(subcategories);
   }
 
   @Mutation(() => Status)

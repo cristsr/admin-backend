@@ -1,7 +1,7 @@
 import { NotFoundException } from '@nestjs/common';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { forkJoin, from, map, Observable, of, switchMap } from 'rxjs';
+import { defer, forkJoin, map, Observable, of, switchMap, tap } from 'rxjs';
 import { Between, DeleteResult, In, Raw, Repository } from 'typeorm';
 import { Interval } from 'luxon';
 import {
@@ -12,7 +12,6 @@ import {
   MovementGrpc,
   Movements,
   Status,
-  UpdateMovement,
 } from '@admin-back/grpc';
 import { CategoryEntity } from 'app/category/entities';
 import { MovementEntity } from 'app/movement/entities';
@@ -59,47 +58,55 @@ export class MovementService implements MovementGrpc {
     };
 
     // Execute query
-    const movements: Promise<MovementEntity[]> = this.movementRepository.find({
-      where: {
-        date: dateMap[filters.period](),
-        category: { id: filters.category },
-        account: { id: filters.account },
-        type: filters.type?.length ? In(filters.type) : null,
-      },
-      order: {
-        date: 'DESC',
-        createdAt: 'DESC',
-      },
-      relations: ['category', 'subcategory'],
-    });
+    const movements = defer(() =>
+      this.movementRepository.find({
+        where: {
+          date: dateMap[filters.period](),
+          category: { id: filters.category },
+          account: { id: filters.account },
+          type: filters.type?.length ? In(filters.type) : null,
+        },
+        order: {
+          date: 'DESC',
+          createdAt: 'DESC',
+        },
+        relations: ['category', 'subcategory'],
+      })
+    );
 
-    return from(movements).pipe(map((data: MovementEntity[]) => ({ data })));
+    return movements.pipe(map((data: MovementEntity[]) => ({ data })));
   }
 
   @GrpcMethod()
   findOne(movementId: Id): Observable<Movement> {
-    const movement: Promise<MovementEntity> = this.movementRepository.findOne({
-      where: movementId,
-      relations: ['category', 'subcategory'],
-    });
-
-    return from(movement);
+    return defer(() =>
+      this.movementRepository.findOne({
+        where: movementId,
+        relations: ['category', 'subcategory'],
+      })
+    );
   }
 
   @GrpcMethod()
   save(data: MovementInput): Observable<Movement> {
-    const category: Promise<CategoryEntity> = this.categoryRepository
-      .findOneOrFail({
+    const movement = defer(() =>
+      this.movementRepository.findOne({
+        where: {
+          id: data.id,
+        },
+      })
+    );
+
+    const category = defer(() =>
+      this.categoryRepository.findOne({
         where: {
           id: data.category,
         },
       })
-      .catch(() => {
-        throw new NotFoundException(`Category not found`);
-      });
+    );
 
-    const subcategory: Promise<SubcategoryEntity> = this.subcategoryRepository
-      .findOneOrFail({
+    const subcategory = defer(() =>
+      this.subcategoryRepository.findOne({
         where: {
           id: data.subcategory,
           category: {
@@ -107,30 +114,15 @@ export class MovementService implements MovementGrpc {
           },
         },
       })
-      .catch(() => {
-        throw new NotFoundException(`Subcategory not found`);
-      });
+    );
 
-    const account: Promise<AccountEntity> = this.accountRepository
-      .findOneOrFail({
+    const account = defer(() =>
+      this.accountRepository.findOne({
         where: {
           id: data.account,
         },
       })
-      .catch(() => {
-        throw new NotFoundException(`Account not found`);
-      });
-
-    // Conditional execution
-    const movement: Promise<MovementEntity> = this.movementRepository
-      .findOneOrFail({
-        where: {
-          id: data.id,
-        },
-      })
-      .catch(() => {
-        throw new NotFoundException(`Movement not found`);
-      });
+    );
 
     // Do search in parallel
     const source$ = forkJoin({
@@ -140,31 +132,39 @@ export class MovementService implements MovementGrpc {
       account,
     });
 
-    return from(source$).pipe(
-      switchMap((entities) => {
-        return this.movementRepository.save({
-          ...entities.movement,
-          ...data,
-          category: entities.category,
-          subcategory: entities.subcategory,
-          account: entities.account,
-        });
-      })
-    );
-  }
+    return source$.pipe(
+      tap((e) => {
+        if (data.id && !e.movement) {
+          throw new NotFoundException(`Movement not found`);
+        }
 
-  @GrpcMethod()
-  update(data: UpdateMovement): Observable<Movement> {
-    throw new Error('');
+        if (!e.category) {
+          throw new NotFoundException(`Category not found`);
+        }
+
+        if (!e.subcategory) {
+          throw new NotFoundException(`Subcategory not found`);
+        }
+
+        if (!e.account) {
+          throw new NotFoundException(`Account not found`);
+        }
+      }),
+      switchMap((e) =>
+        this.movementRepository.save({
+          ...e.movement,
+          ...data,
+          category: e.category,
+          subcategory: e.subcategory,
+          account: e.account,
+        })
+      )
+    );
   }
 
   @GrpcMethod()
   remove(movement: Id): Observable<Status> {
-    const result: Promise<DeleteResult> = this.movementRepository.delete(
-      movement.id
-    );
-
-    return from(result).pipe(
+    return defer(() => this.movementRepository.delete(movement.id)).pipe(
       map((data: DeleteResult) => ({
         status: !!data.affected,
       }))
@@ -173,7 +173,7 @@ export class MovementService implements MovementGrpc {
 
   @GrpcMethod()
   removeAll() {
-    return from(this.movementRepository.clear()).pipe(
+    return defer(() => this.movementRepository.clear()).pipe(
       map(() => ({
         status: true,
       }))

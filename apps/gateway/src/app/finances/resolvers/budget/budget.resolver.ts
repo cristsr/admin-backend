@@ -1,11 +1,4 @@
-import {
-  Args,
-  Mutation,
-  Parent,
-  Query,
-  ResolveField,
-  Resolver,
-} from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
 import { map, Observable } from 'rxjs';
 import {
@@ -13,13 +6,9 @@ import {
   BUDGET_SERVICE,
   BudgetFilter,
   BudgetGrpc,
-  Category,
-  CATEGORY_SERVICE,
-  CategoryGrpc,
-  CreateBudget,
+  BudgetInput,
   Movement,
   Status,
-  UpdateBudget,
   User,
 } from '@admin-back/grpc';
 import { CurrentUser } from '@admin-back/shared';
@@ -28,62 +17,41 @@ import { CurrentUser } from '@admin-back/shared';
 export class BudgetResolver {
   constructor(
     @Inject(BUDGET_SERVICE)
-    private budgetService: BudgetGrpc,
-
-    @Inject(CATEGORY_SERVICE)
-    private categoryService: CategoryGrpc
+    private budgetService: BudgetGrpc
   ) {}
 
   @Query(() => Budget, { nullable: true })
-  getBudget(@Args('id') id: number): Observable<Budget> {
+  budget(@Args('id') id: number): Observable<Budget> {
     return this.budgetService.findOne({ id });
   }
 
   @Query(() => [Budget])
-  getBudgets(@Args('filters') filters: BudgetFilter): Observable<Budget[]> {
-    return this.budgetService.findAll(filters).pipe(map((res) => res.data));
+  budgets(
+    @CurrentUser() user: User,
+    @Args('filters') filters: BudgetFilter
+  ): Observable<Budget[]> {
+    return this.budgetService
+      .findAll({ account: filters.account, user: user.id })
+      .pipe(map((res) => res.data));
   }
 
   @Query(() => [Movement])
-  getBudgetMovements(@Args('id') id: number): Observable<Movement[]> {
+  budgetMovements(@Args('id') id: number): Observable<Movement[]> {
     return this.budgetService
       .findMovements({ id })
       .pipe(map((res) => res.data));
   }
 
   @Mutation(() => Budget)
-  createBudget(
+  saveBudget(
     @CurrentUser() user: User,
-    @Args('budget') budget: CreateBudget
+    @Args('budget') budget: BudgetInput
   ): Observable<Budget> {
-    return this.budgetService.create({
-      ...budget,
-      user: user.id,
-    });
-  }
-
-  @Mutation(() => Budget, { nullable: true })
-  updateBudget(
-    @CurrentUser() user: User,
-    @Args('budget') budget: UpdateBudget
-  ): Observable<Budget> {
-    return this.budgetService.update({
-      ...budget,
-      user: user.id,
-    });
+    return this.budgetService.save({ ...budget, user: user.id });
   }
 
   @Mutation(() => Status)
   removeBudget(@Args('id') id: number): Observable<Status> {
     return this.budgetService.remove({ id });
-  }
-
-  @ResolveField()
-  category(@Parent() budget: Budget): Observable<Category> | Category {
-    if (budget.category) return budget.category;
-
-    return this.categoryService.findOne({
-      id: budget.categoryId,
-    });
   }
 }

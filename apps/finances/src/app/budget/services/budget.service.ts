@@ -1,28 +1,39 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { forkJoin, from, map, Observable, of, switchMap } from 'rxjs';
+import {
+  defer,
+  forkJoin,
+  from,
+  map,
+  Observable,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 import {
   Id,
   BudgetGrpc,
   Budget,
   Budgets,
-  CreateBudget,
+  BudgetInput,
   Movements,
-  UpdateBudget,
   Status,
   BudgetFilter,
+  GenerateBudgets,
 } from '@admin-back/grpc';
-import { BudgetHandler } from 'app/budget/handlers';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BudgetEntity } from 'app/budget/entities';
 import { Between, Repository } from 'typeorm';
 import { MovementEntity } from 'app/movement/entities';
 import { DateTime } from 'luxon';
-import { NotFoundException } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { CategoryEntity } from 'app/category/entities';
 import { AccountEntity } from 'app/account/entities';
+import { OnEvent } from '@nestjs/event-emitter';
 
 @GrpcService('finances')
 export class BudgetService implements BudgetGrpc {
+  #logger = new Logger(BudgetService.name);
+
   constructor(
     @InjectRepository(BudgetEntity)
     private budgetRepository: Repository<BudgetEntity>,
@@ -34,23 +45,23 @@ export class BudgetService implements BudgetGrpc {
     private movementRepository: Repository<MovementEntity>,
 
     @InjectRepository(AccountEntity)
-    private accountRepository: Repository<AccountEntity>,
-
-    private readonly budgetHandler: BudgetHandler
+    private accountRepository: Repository<AccountEntity>
   ) {}
 
   @GrpcMethod()
   findOne(budgetId: Id): Observable<Budget> {
-    const budget$: Promise<BudgetEntity> = this.budgetRepository.findOne({
-      where: budgetId,
-      relations: ['category'],
-    });
+    const budget$ = defer(() =>
+      this.budgetRepository.findOne({
+        where: budgetId,
+        relations: ['category'],
+      })
+    );
 
-    return from(budget$).pipe(
+    return budget$.pipe(
       switchMap((budget: BudgetEntity) => {
         if (!budget) return of(null);
 
-        return from(this.getSpent(budget)).pipe(
+        return this.getSpent(budget).pipe(
           map((spent: number) => ({
             ...budget,
             spent,
@@ -63,33 +74,36 @@ export class BudgetService implements BudgetGrpc {
 
   @GrpcMethod()
   findAll(filters: BudgetFilter): Observable<Budgets> {
-    const budgets$: Promise<BudgetEntity[]> = this.budgetRepository.find({
-      where: {
-        account: {
-          id: filters.account,
+    const budgets$ = defer(() =>
+      this.budgetRepository.find({
+        where: {
+          account: {
+            id: filters.account,
+          },
+          user: filters.user,
+          active: true,
         },
-        active: true,
-      },
-      relations: ['category'],
-    });
+        relations: ['category'],
+      })
+    );
 
-    return from(budgets$).pipe(
+    return budgets$.pipe(
       switchMap((budgets: BudgetEntity[]) => {
         if (!budgets.length) {
           return of([]);
         }
 
-        const sources$ = budgets.map((budget: BudgetEntity) => {
-          return from(this.getSpent(budget)).pipe(
-            map((spent: number) => ({
-              ...budget,
-              spent,
-              percentage: this.getPercentage(spent, budget.amount),
-            }))
-          );
-        });
-
-        return forkJoin(sources$);
+        return forkJoin(
+          budgets.map((budget: BudgetEntity) =>
+            this.getSpent(budget).pipe(
+              map((spent: number) => ({
+                ...budget,
+                spent,
+                percentage: this.getPercentage(spent, budget.amount),
+              }))
+            )
+          )
+        );
       }),
       map((data) => ({ data }))
     );
@@ -97,11 +111,13 @@ export class BudgetService implements BudgetGrpc {
 
   @GrpcMethod()
   findMovements(budgetId: Id): Observable<Movements> {
-    const budget$: Promise<BudgetEntity> = this.budgetRepository.findOne({
-      where: budgetId,
-    });
+    const budget$ = defer(() =>
+      this.budgetRepository.findOne({
+        where: budgetId,
+      })
+    );
 
-    return from(budget$).pipe(
+    return budget$.pipe(
       switchMap((budget: BudgetEntity) => {
         if (!budget) return of([]);
 
@@ -123,47 +139,65 @@ export class BudgetService implements BudgetGrpc {
   }
 
   @GrpcMethod()
-  create(data: CreateBudget): Observable<Budget> {
+  save(data: BudgetInput): Observable<Budget> {
     const utc = DateTime.utc();
     const startDate = utc.startOf('month').toFormat('yyyy-MM-dd');
     const endDate = utc.endOf('month').toFormat('yyyy-MM-dd');
 
-    const category: Promise<CategoryEntity> = this.categoryRepository
-      .findOneOrFail({
+    const budget = defer(() =>
+      this.budgetRepository.findOne({
+        where: {
+          id: data.id,
+        },
+      })
+    );
+
+    const category = defer(() =>
+      this.categoryRepository.findOneOrFail({
         where: {
           id: data.category,
         },
       })
-      .catch(() => {
-        throw new NotFoundException('Category not found');
-      });
+    );
 
-    const account: Promise<AccountEntity> = this.accountRepository
-      .findOneOrFail({
+    const account = defer(() =>
+      this.accountRepository.findOneOrFail({
         where: {
           id: data.account,
         },
       })
-      .catch(() => {
-        throw new NotFoundException('Account not found');
-      });
+    );
 
     // Do search in parallel
     const source$ = forkJoin({
+      budget: data.id ? budget : of(null),
       category,
       account,
     });
 
     return source$.pipe(
-      switchMap((entities) => {
-        return this.budgetRepository.save({
+      tap((e) => {
+        if (data.id && !e.budget) {
+          throw new NotFoundException('Budget not found');
+        }
+
+        if (!e.category) {
+          throw new NotFoundException('Category not found');
+        }
+
+        if (!e.account) {
+          throw new NotFoundException('Account not found');
+        }
+      }),
+      switchMap((entities) =>
+        this.budgetRepository.save({
           ...data,
           startDate,
           endDate,
           account: entities.account,
           category: entities.category,
-        });
-      }),
+        })
+      ),
       map((budget) => ({
         ...budget,
         spent: 0,
@@ -172,32 +206,69 @@ export class BudgetService implements BudgetGrpc {
     );
   }
 
-  // TODO: try to unify update with create method
-  @GrpcMethod()
-  update(budget: UpdateBudget): Observable<Budget> {
-    return from(this.budgetHandler.update(budget));
-  }
-
   @GrpcMethod()
   remove(budget: Id): Observable<Status> {
-    return from(this.budgetRepository.delete(budget.id)).pipe(
+    return defer(() => this.budgetRepository.delete(budget.id)).pipe(
       map((result) => ({
         status: !!result.affected,
       }))
     );
   }
 
-  private getSpent(budget: BudgetEntity): Promise<number> {
-    return this.movementRepository
-      .createQueryBuilder()
-      .select('sum(amount)', 'spent')
-      .where({
-        category: budget.categoryId,
-        date: Between(budget.startDate, budget.endDate),
-      })
-      .getRawOne()
-      .then((result) => +result.spent)
-      .catch(() => 0);
+  @OnEvent(GenerateBudgets)
+  async generateBudgets(): Promise<void> {
+    this.#logger.log('Generating budgets');
+
+    const budgets = await this.budgetRepository.find({
+      where: {
+        active: true,
+        repeat: true,
+      },
+    });
+
+    const utc = DateTime.utc();
+    const startDate = utc.startOf('month').toFormat('yyyy-MM-dd');
+    const endDate = utc.endOf('month').toFormat('yyyy-MM-dd');
+
+    this.#logger.log(`Generating budgets for ${startDate} to ${endDate}`);
+
+    for (const budget of budgets) {
+      // Create Budget for the month
+      await this.budgetRepository
+        .save({
+          name: budget.name,
+          amount: budget.amount,
+          category: budget.category,
+          repeat: budget.repeat,
+          startDate,
+          endDate,
+        })
+        .catch((error) => {
+          this.#logger.error(`Error creating budget ${error.message}`);
+        });
+
+      // Set current month as inactive
+      await this.budgetRepository.update(budget.id, {
+        active: false,
+      });
+    }
+
+    this.#logger.log('Budgets generated');
+  }
+
+  private getSpent(budget: BudgetEntity): Observable<number> {
+    return defer(() =>
+      this.movementRepository
+        .createQueryBuilder()
+        .select('sum(amount)', 'spent')
+        .where({
+          category: budget.categoryId,
+          date: Between(budget.startDate, budget.endDate),
+        })
+        .getRawOne()
+        .then((result) => +result.spent)
+        .catch(() => 0)
+    );
   }
 
   private getPercentage(value: number, total: number): number {

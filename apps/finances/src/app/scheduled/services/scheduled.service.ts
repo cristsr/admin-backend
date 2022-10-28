@@ -1,15 +1,22 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { forkJoin, from, map, Observable, switchMap } from 'rxjs';
-import { ScheduledHandler } from 'app/scheduled/handlers';
 import {
-  CreateScheduled,
+  defer,
+  forkJoin,
+  from,
+  map,
+  Observable,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
+import {
+  ScheduledInput,
   Id,
   Scheduled,
   ScheduledFilter,
   ScheduledGrpc,
   Scheduleds,
   Status,
-  UpdateScheduled,
 } from '@admin-back/grpc';
 import { NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -32,9 +39,7 @@ export class ScheduledService implements ScheduledGrpc {
     private scheduledRepository: Repository<ScheduledEntity>,
 
     @InjectRepository(AccountEntity)
-    private accountRepository: Repository<AccountEntity>,
-
-    private scheduledService: ScheduledHandler
+    private accountRepository: Repository<AccountEntity>
   ) {}
 
   @GrpcMethod()
@@ -54,58 +59,73 @@ export class ScheduledService implements ScheduledGrpc {
   }
 
   @GrpcMethod()
-  create(data: CreateScheduled): Observable<Scheduled> {
-    const category = this.categoryRepository
-      .findOneOrFail({
+  save(data: ScheduledInput): Observable<Scheduled> {
+    const scheduled = defer(() =>
+      this.scheduledRepository.findOneOrFail({
+        where: {
+          id: data.id,
+        },
+      })
+    );
+
+    const category = defer(() =>
+      this.categoryRepository.findOneOrFail({
         where: {
           id: data.category,
         },
       })
-      .catch(() => {
-        throw new NotFoundException(`Category not found`);
-      });
+    );
 
-    const subcategory = this.subcategoryRepository
-      .findOneOrFail({
+    const subcategory = defer(() =>
+      this.subcategoryRepository.findOneOrFail({
         where: {
           id: data.subcategory,
         },
       })
-      .catch(() => {
-        throw new NotFoundException(`Subcategory not found`);
-      });
+    );
 
-    const account = this.accountRepository
-      .findOneOrFail({
+    const account = defer(() =>
+      this.accountRepository.findOneOrFail({
         where: {
           id: data.account,
         },
       })
-      .catch(() => {
-        throw new NotFoundException(`Account not found`);
-      });
+    );
 
     const source$ = forkJoin({
+      scheduled: data.id ? scheduled : of(null),
       category,
       subcategory,
       account,
     });
 
     return source$.pipe(
-      switchMap((entities) => {
-        return this.scheduledRepository.save({
-          ...data,
-          account: entities.account,
-          category: entities.category,
-          subcategory: entities.subcategory,
-        });
-      })
-    );
-  }
+      tap((e) => {
+        if (data.id && !e.scheduled) {
+          throw new NotFoundException(`Scheduled not found`);
+        }
 
-  @GrpcMethod()
-  update(scheduled: UpdateScheduled): Observable<Scheduled> {
-    return from(this.scheduledService.update(scheduled));
+        if (!e.category) {
+          throw new NotFoundException(`Category not found`);
+        }
+
+        if (!e.subcategory) {
+          throw new NotFoundException(`Subcategory not found`);
+        }
+
+        if (!e.account) {
+          throw new NotFoundException(`Account not found`);
+        }
+      }),
+      switchMap((e) =>
+        this.scheduledRepository.save({
+          ...data,
+          account: e.account,
+          category: e.category,
+          subcategory: e.subcategory,
+        })
+      )
+    );
   }
 
   @GrpcMethod()

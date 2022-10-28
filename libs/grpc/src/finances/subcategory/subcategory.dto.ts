@@ -11,7 +11,10 @@ export class Subcategory {
 }
 
 @InputType()
-export class CreateSubcategory {
+export class SubcategoryInput {
+  @Field({ nullable: true })
+  id: number;
+
   @Field()
   name: string;
 

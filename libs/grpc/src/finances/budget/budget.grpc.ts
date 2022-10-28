@@ -3,8 +3,7 @@ import {
   Id,
   Budget,
   Budgets,
-  CreateBudget,
-  UpdateBudget,
+  BudgetInput,
   Movements,
   Status,
   BudgetFilter,
@@ -17,9 +16,7 @@ export interface BudgetGrpc {
 
   findMovements(id: Id): Observable<Movements>;
 
-  create(budget: CreateBudget): Observable<Budget>;
-
-  update(budget: UpdateBudget): Observable<Budget>;
+  save(budget: BudgetInput): Observable<Budget>;
 
   remove(id: Id): Observable<Status>;
 }

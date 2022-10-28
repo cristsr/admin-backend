@@ -1,68 +1,46 @@
-import {
-  Args,
-  Mutation,
-  Parent,
-  Query,
-  ResolveField,
-  Resolver,
-} from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
 import { map, Observable } from 'rxjs';
 import {
   Category,
   CATEGORY_SERVICE,
   CategoryGrpc,
-  CreateCategories,
-  CreateCategory,
+  CategoriesInput,
+  CategoryInput,
   Status,
-  Subcategory,
-  SUBCATEGORY_SERVICE,
-  SubcategoryGrpc,
-  UpdateCategory,
 } from '@admin-back/grpc';
 
 @Resolver(Category)
 export class CategoryResolver {
   constructor(
     @Inject(CATEGORY_SERVICE)
-    private categoryService: CategoryGrpc,
-
-    @Inject(SUBCATEGORY_SERVICE)
-    private subcategoryService: SubcategoryGrpc
+    private categoryService: CategoryGrpc
   ) {}
 
   @Query(() => Category)
-  getCategory(@Args('id') id: number) {
+  category(@Args('id') id: number) {
     return this.categoryService.findOne({ id: +id });
   }
 
   @Query(() => [Category])
-  getCategories(): Observable<Category[]> {
+  categories(): Observable<Category[]> {
     return this.categoryService.findAll().pipe(map((res) => res.data));
   }
 
   @Mutation(() => Category)
-  createCategory(
+  saveCategory(
     @Args('category')
-    category: CreateCategory
+    category: CategoryInput
   ): Observable<Category> {
-    return this.categoryService.create(category);
+    return this.categoryService.save(category);
   }
 
   @Mutation(() => Status)
-  createCategories(
+  saveCategories(
     @Args('categories')
-    categories: CreateCategories
+    categories: CategoriesInput
   ): Observable<Status> {
-    return this.categoryService.createMany(categories);
-  }
-
-  @Mutation(() => Category)
-  updateCategory(
-    @Args('category')
-    category: UpdateCategory
-  ): Observable<Category> {
-    return this.categoryService.update(category);
+    return this.categoryService.saveMany(categories);
   }
 
   @Mutation(() => Status)
@@ -73,18 +51,5 @@ export class CategoryResolver {
   @Mutation(() => Status)
   removeCategories(): Observable<Status> {
     return this.categoryService.removeAll();
-  }
-
-  @ResolveField(() => [Subcategory])
-  subcategories(
-    @Parent() category: Category
-  ): Observable<Subcategory[]> | Subcategory[] {
-    if (category.subcategories.length) {
-      return category.subcategories;
-    }
-
-    return this.subcategoryService
-      .findByCategory({ id: category.id })
-      .pipe(map((res) => res.data));
   }
 }

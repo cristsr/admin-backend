@@ -1,10 +1,6 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { Account, Category } from '@admin-back/grpc';
-import {
-  ListObject,
-  OmitInputType,
-  PartialInputType,
-} from '@admin-back/shared';
+import { ListObject, PartialInputType } from '@admin-back/shared';
 
 @ObjectType()
 export class Budget {
@@ -49,31 +45,33 @@ export class Budget {
 export class Budgets extends ListObject(Budget) {}
 
 @InputType()
-export class CreateBudget extends OmitInputType(Budget, [
-  'id',
-  'startDate',
-  'endDate',
-  'spent',
-  'percentage',
-  'category',
-  'active',
-  'account',
-]) {
+export class BudgetInput {
+  @Field({ nullable: true })
+  id: number;
+
+  @Field()
+  name: string;
+
+  @Field()
+  amount: number;
+
+  @Field()
+  repeat: boolean;
+
   @Field()
   category: number;
 
   @Field()
   account: number;
-}
 
-@InputType()
-export class UpdateBudget extends PartialInputType(CreateBudget) {
-  @Field()
-  id: number;
+  user: number;
 }
 
 @InputType()
 export class BudgetFilter {
   @Field()
   account: number;
+
+  @Field()
+  user: number;
 }

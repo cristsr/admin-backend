@@ -1,5 +1,7 @@
 import { CacheModule, Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import {
   configValidator,
@@ -17,7 +19,6 @@ import { ScheduledModule } from 'app/scheduled/scheduled.module';
 import { SubcategoryModule } from 'app/subcategory/subcategory.module';
 import { AccountModule } from 'app/account/account.module';
 import { AppController } from './app.controller';
-import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
   imports: [
@@ -27,7 +28,7 @@ import { ScheduleModule } from '@nestjs/schedule';
     }),
     CacheModule.register(),
     ScheduleModule.forRoot(),
-    // EventEmitterModule.forRoot({}),
+    EventEmitterModule.forRoot({}),
     DatabaseModule,
     AccountModule,
     CategoryModule,

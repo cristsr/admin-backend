@@ -6,11 +6,10 @@ import "google/protobuf/empty.proto";
 import "subcategory/subcategory.proto";
 
 service CategoryService {
-  rpc Create(CreateCategory) returns (stream Category) {}
-  rpc CreateMany(CreateCategories) returns (stream Status) {}
   rpc FindOne(CategoryId) returns (stream Category) {}
   rpc FindAll(google.protobuf.Empty) returns (stream Categories) {}
-  rpc Update(UpdateCategory) returns (stream Category) {}
+  rpc Save(CategoryInput) returns (stream Category) {}
+  rpc SaveMany(CategoriesInput) returns (stream Status) {}
   rpc Remove(CategoryId) returns (stream Status) {}
   rpc RemoveAll(google.protobuf.Empty) returns (stream Status) {}
 }
@@ -23,30 +22,24 @@ message Category {
   repeated Subcategory subcategories = 5;
 }
 
-message CreateCategory {
-  string name = 1;
-  string icon = 2;
-  string color = 3;
-  repeated CreateSubcategory subcategories = 4;
+message CategoryInput {
+  int32     id = 5;
+  string    name = 1;
+  string    icon = 2;
+  string    color = 3;
+  repeated  SubcategoryInput subcategories = 4;
 }
 
-message CreateCategories {
-  repeated Category data = 1;
-}
-
-message UpdateCategory {
-  int32 id = 1;
-  optional string name = 2;
-  optional string icon = 3;
-  optional string color = 4;
-}
-
-message CategoryId {
-  int32 id = 1;
+message CategoriesInput {
+  repeated CategoryInput data = 1;
 }
 
 message Categories {
   repeated Category data = 1;
+}
+
+message CategoryId {
+  int32 id = 1;
 }
 
 message Status {

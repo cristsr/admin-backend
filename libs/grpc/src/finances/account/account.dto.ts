@@ -69,8 +69,6 @@ export class Balance {
   expenses: number;
 }
 
-export class Balances extends ListObject(Balance) {}
-
 @InputType()
 export class QueryBalance {
   @Field(() => String)

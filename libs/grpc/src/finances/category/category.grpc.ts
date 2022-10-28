@@ -1,24 +1,21 @@
 import { Observable } from 'rxjs';
 import {
   Category,
-  CreateCategories,
-  CreateCategory,
-  UpdateCategory,
+  CategoriesInput,
+  CategoryInput,
   Status,
   Id,
   List,
 } from '@admin-back/grpc';
 
 export interface CategoryGrpc {
-  create(data: CreateCategory): Observable<Category>;
-
-  createMany(data: CreateCategories): Observable<Status>;
-
   findOne(id: Id): Observable<Category>;
 
   findAll(): Observable<List<Category>>;
 
-  update(data: UpdateCategory): Observable<Category>;
+  save(data: CategoryInput): Observable<Category>;
+
+  saveMany(data: CategoriesInput): Observable<Status>;
 
   remove(id: Id): Observable<Status>;
 

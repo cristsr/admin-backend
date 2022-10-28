@@ -1,6 +1,6 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { forkJoin, from, map, Observable } from 'rxjs';
+import { defer, forkJoin, from, map, Observable } from 'rxjs';
 import { Repository } from 'typeorm';
 import {
   Account,
@@ -29,9 +29,7 @@ export class AccountService implements AccountGrpc {
 
   @GrpcMethod()
   findAll(): Observable<Accounts> {
-    const account$: Promise<AccountEntity[]> = this.accountRepository.find();
-
-    return from(account$).pipe(
+    return defer(() => this.accountRepository.find()).pipe(
       map((data) => ({
         data,
       }))
@@ -40,33 +38,31 @@ export class AccountService implements AccountGrpc {
 
   @GrpcMethod()
   findOne({ id }: Id): Observable<Account> {
-    const account$: Promise<AccountEntity> = this.accountRepository.findOne({
-      where: {
-        id,
-      },
-    });
-
-    return from(account$);
-  }
-
-  @GrpcMethod()
-  findByUser(user: Id): Observable<Accounts> {
-    const account$: Promise<AccountEntity[]> = this.accountRepository.find({
-      where: {
-        user: user.id,
-      },
-    });
-
-    return from(account$).pipe(
-      map((data) => ({
-        data,
-      }))
+    return defer(() =>
+      this.accountRepository.findOne({
+        where: {
+          id,
+        },
+      })
     );
   }
 
   @GrpcMethod()
+  findByUser(user: Id): Observable<Accounts> {
+    const account = defer(() =>
+      this.accountRepository.find({
+        where: {
+          user: user.id,
+        },
+      })
+    );
+
+    return account.pipe(map((data) => ({ data })));
+  }
+
+  @GrpcMethod()
   findBalance(query: QueryBalance): Observable<Balance> {
-    const balanceMap = {
+    const balanceMap: Record<string, any> = {
       daily: () => ({
         query: "to_char(date, 'YYYY-MM-DD') <= :date",
         params: { date: query.date },
@@ -88,7 +84,7 @@ export class AccountService implements AccountGrpc {
       }),
     };
 
-    const movementMap = {
+    const movementMap: Record<string, any> = {
       daily: () => ({
         query: "to_char(date, 'YYYY-MM-DD') = :date",
         params: { date: query.date },
@@ -133,11 +129,13 @@ export class AccountService implements AccountGrpc {
     const balanceOpts = balanceMap[query.period]();
     const movementOpts = movementMap[query.period]();
 
-    const account: Promise<AccountEntity> = this.accountRepository.findOne({
-      where: {
-        id: query.account,
-      },
-    });
+    const account = defer(() =>
+      this.accountRepository.findOne({
+        where: {
+          id: query.account,
+        },
+      })
+    );
 
     const source$ = forkJoin({
       account,
@@ -160,13 +158,13 @@ export class AccountService implements AccountGrpc {
 
   @GrpcMethod()
   create(data: CreateAccount): Observable<Account> {
-    const account$ = this.accountRepository.save({
-      name: data.name,
-      user: data.user,
-      initialBalance: data.initialBalance,
-    });
-
-    return from(account$);
+    return defer(() =>
+      this.accountRepository.save({
+        name: data.name,
+        user: data.user,
+        initialBalance: data.initialBalance,
+      })
+    );
   }
 
   @GrpcMethod()

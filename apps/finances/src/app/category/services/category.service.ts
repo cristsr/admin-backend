@@ -1,28 +1,29 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import {
-  CategoryGrpc,
-  Categories,
-  Category,
-  CreateCategories,
-  CreateCategory,
-  UpdateCategory,
-  Status,
-  Id,
-} from '@admin-back/grpc';
+import { NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { DataSource, Repository } from 'typeorm';
 import {
   catchError,
-  forkJoin,
+  defer,
+  finalize,
   from,
   map,
   Observable,
   of,
   switchMap,
+  tap,
 } from 'rxjs';
-import { InjectRepository } from '@nestjs/typeorm';
+import {
+  CategoryGrpc,
+  Categories,
+  Category,
+  CategoriesInput,
+  CategoryInput,
+  Status,
+  Id,
+} from '@admin-back/grpc';
 import { CategoryEntity } from 'app/category/entities';
-import { Repository } from 'typeorm';
 import { SubcategoryEntity } from 'app/subcategory/entities';
-import { NotFoundException } from '@nestjs/common';
 
 @GrpcService('finances')
 export class CategoryService implements CategoryGrpc {
@@ -31,82 +32,125 @@ export class CategoryService implements CategoryGrpc {
     private categoryRepository: Repository<CategoryEntity>,
 
     @InjectRepository(SubcategoryEntity)
-    private subcategoryRepository: Repository<SubcategoryEntity>
+    private subcategoryRepository: Repository<SubcategoryEntity>,
+
+    private dataSource: DataSource
   ) {}
 
   @GrpcMethod()
   findOne(categoryId: Id): Observable<Category> {
-    const category = this.categoryRepository.findOneOrFail({
-      where: categoryId,
-    });
-
-    return from(category);
+    return defer(() => this.categoryRepository.findOne({ where: categoryId }));
   }
 
   @GrpcMethod()
   findAll(): Observable<Categories> {
-    const categories = this.categoryRepository.find({
-      relations: ['subcategories'],
-    });
+    const categories$ = defer(() =>
+      this.categoryRepository.find({
+        relations: ['subcategories'],
+      })
+    );
 
-    return from(categories).pipe(map((data) => ({ data })));
+    return categories$.pipe(map((data) => ({ data })));
   }
 
   @GrpcMethod()
-  create(data: CreateCategory): Observable<Category> {
-    const category = this.categoryRepository.save({
-      name: data.name,
-      icon: data.icon,
-      color: data.color,
-    });
+  save(data: CategoryInput): Observable<Category> {
+    const category$ = defer(() =>
+      this.categoryRepository.findOneOrFail({
+        where: {
+          id: data.id,
+        },
+        relations: ['subcategories'],
+      })
+    );
 
-    if (!data.subcategories?.length) {
-      return from(category);
-    }
+    const source$ = data.id ? category$ : of(null);
 
-    return from(category).pipe(
-      switchMap((category) => {
-        const records = data.subcategories.map((v) => {
-          return this.subcategoryRepository.create({
-            ...v,
-            category,
-          });
-        });
+    return source$.pipe(
+      tap((category) => {
+        if (!category) {
+          throw new NotFoundException('Category not found');
+        }
+      }),
+      switchMap((category: CategoryEntity) =>
+        this.categoryRepository.save({
+          ...category,
+          name: data.name,
+          icon: data.icon,
+          color: data.color,
+        })
+      ),
+      switchMap((category: CategoryEntity) => {
+        if (data.id) {
+          return of(category);
+        }
 
-        return from(this.subcategoryRepository.save(records)).pipe(
-          map((subcategories: SubcategoryEntity[]) => ({
+        if (!data.subcategories?.length) {
+          return of(category);
+        }
+
+        // Save subcategories
+        const records = data.subcategories.map((v) => ({
+          ...v,
+          category,
+        }));
+
+        return this.subcategoryRepository
+          .save(records)
+          .then((subcategories) => ({
             ...category,
             subcategories,
-          }))
-        );
+          }));
       })
     );
   }
 
   @GrpcMethod()
-  createMany(categories: CreateCategories): Observable<Status> {
-    const source$ = categories.data.map((category) => this.create(category));
+  saveMany({ data }: CategoriesInput): Observable<Status> {
+    const queryRunner = this.dataSource.createQueryRunner();
 
-    return forkJoin(source$).pipe(
+    return defer(() => queryRunner.connect()).pipe(
+      switchMap(() => queryRunner.startTransaction()),
+      switchMap(() =>
+        queryRunner.manager.save(
+          data.map((v) =>
+            this.categoryRepository.create({
+              name: v.name,
+              icon: v.icon,
+              color: v.color,
+            })
+          )
+        )
+      ),
+      switchMap((categories) =>
+        queryRunner.manager.save(
+          data
+            .map((d) => d.subcategories)
+            .map((s, i) =>
+              s.map((v) =>
+                this.subcategoryRepository.create({
+                  name: v.name,
+                  category: categories[i],
+                })
+              )
+            )
+            .flat()
+        )
+      ),
+      switchMap(() => queryRunner.commitTransaction()),
       map(() => ({ status: true })),
-      catchError(() => of({ status: false }))
+      catchError(() =>
+        from(queryRunner.rollbackTransaction()).pipe(
+          map(() => ({ status: false }))
+        )
+      ),
+      finalize(() => queryRunner.release())
     );
   }
 
   @GrpcMethod()
-  update(data: UpdateCategory): Observable<Category> {
-    this.categoryRepository.findOneByOrFail({ id: data.id }).catch(() => {
-      throw new NotFoundException('Category not found');
-    });
-
-    return from(this.categoryRepository.save(data));
-  }
-
-  @GrpcMethod()
   remove(category: Id): Observable<Status> {
-    const query = this.categoryRepository.delete(category.id);
-
-    return from(query).pipe(
+    return defer(() => this.categoryRepository.delete(category.id)).pipe(
       map((result) => ({
         status: !!result.affected,
       }))
@@ -115,7 +159,7 @@ export class CategoryService implements CategoryGrpc {
 
   @GrpcMethod()
   removeAll(): Observable<Status> {
-    return from(this.categoryRepository.clear()).pipe(
+    return defer(() => this.categoryRepository.clear()).pipe(
       map(() => ({ status: true })),
       catchError(() => of({ status: false }))
     );

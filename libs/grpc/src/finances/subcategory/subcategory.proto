@@ -8,7 +8,7 @@ import "category/category.proto";
 service SubcategoryService {
   rpc FindOne(SubcategoryId) returns (stream Subcategory) {}
   rpc FindByCategory(CategoryId) returns (stream Subcategories) {}
-  rpc Create(CreateSubcategory) returns (stream Subcategory) {}
+  rpc Save(SubcategoryInput) returns (stream Subcategory) {}
   rpc CreateMany(CreateSubcategories) returns (stream Status) {}
   rpc Update(UpdateSubcategory) returns (stream Subcategory) {}
   rpc Remove(SubcategoryId) returns (stream Status) {}
@@ -27,9 +27,10 @@ message SubcategoryId {
   int32 id = 1;
 }
 
-message CreateSubcategory {
-  int32 category = 1;
-  string name = 2;
+message SubcategoryInput {
+  int32   id        = 3;
+  int32   category  = 1;
+  string  name      = 2;
 }
 
 message CreateSubcategories {

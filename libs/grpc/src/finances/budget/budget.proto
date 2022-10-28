@@ -10,8 +10,7 @@ service BudgetService {
   rpc FindOne(BudgetId) returns (stream Budget);
   rpc FindAll(BudgetFilter) returns (stream Budgets);
   rpc FindMovements(BudgetId) returns (stream Movements);
-  rpc Create(CreateBudget) returns (stream Budget);
-  rpc Update(UpdateBudget) returns (stream Budget);
+  rpc Save(BudgetInput) returns (stream Budget);
   rpc Remove(BudgetId) returns (stream Status);
 }
 
@@ -35,7 +34,8 @@ message Budgets {
   repeated Budget data = 1;
 }
 
-message CreateBudget {
+message BudgetInput {
+  int32   id        = 30;
   string  name      = 1;
   int32   amount    = 2;
   int32   category  = 3;
@@ -43,17 +43,6 @@ message CreateBudget {
   bool    active    = 5;
   int32   account   = 20;
   int32   user      = 10;
-}
-
-message UpdateBudget {
-  int32     id        = 1;
-  string    name      = 2;
-  int32     amount    = 3;
-  int32     category  = 4;
-  bool      repeat    = 5;
-  bool      active    = 6;
-  int32     account   = 20;
-  int32     user      = 10;
 }
 
 message BudgetId {
@@ -66,4 +55,5 @@ message Status {
 
 message BudgetFilter {
   int32 account = 10;
+  int32 user    = 20;
 }

@@ -1,13 +1,11 @@
 import { Observable } from 'rxjs';
 import {
-  CreateScheduled,
-  Empty,
+  ScheduledInput,
   Id,
   Scheduled,
   ScheduledFilter,
   Scheduleds,
   Status,
-  UpdateScheduled,
 } from '@admin-back/grpc';
 
 export interface ScheduledGrpc {
@@ -15,9 +13,7 @@ export interface ScheduledGrpc {
 
   findAll(filters: ScheduledFilter): Observable<Scheduleds>;
 
-  create(data: CreateScheduled): Observable<Scheduled>;
-
-  update(data: UpdateScheduled): Observable<Scheduled>;
+  save(data: ScheduledInput): Observable<Scheduled>;
 
   remove(id: Id): Observable<Status>;
 }
