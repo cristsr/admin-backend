@@ -12,7 +12,7 @@ export class ResponseInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
       tap(console.log),
-      map((res) => (res ? res : {})),
+      map((res) => res || {}), // return always an object to send via grpc
       map((res) => instanceToPlain(res))
     );
   }
