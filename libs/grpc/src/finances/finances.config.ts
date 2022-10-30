@@ -1,21 +1,21 @@
 import { join } from 'path';
 
 const packages = [
-  'finances.account',
-  'finances.category',
-  'finances.subcategory',
-  'finances.movement',
-  'finances.summary',
-  'finances.budget',
-  'finances.scheduled',
+  'admin.shared',
+  'admin.finances.account',
+  'admin.finances.category',
+  'admin.finances.subcategory',
+  'admin.finances.movement',
+  'admin.finances.summary',
+  'admin.finances.budget',
+  'admin.finances.scheduled',
 ];
 
 export const FinancesConfig = {
   url: 'localhost:5003',
   package: packages,
-  protoPath: 'finances.proto',
+  protoPath: join(__dirname, 'assets', 'grpc', 'admin.proto'),
   loader: {
-    includeDirs: [join(__dirname, 'assets', 'finances')],
     keepCase: true,
     oneofs: true,
     arrays: true,

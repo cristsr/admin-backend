@@ -1,6 +1,6 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { defer, forkJoin, from, map, Observable } from 'rxjs';
+import { defer, forkJoin, map, Observable } from 'rxjs';
 import { Repository } from 'typeorm';
 import {
   Account,

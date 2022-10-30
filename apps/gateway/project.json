@@ -16,23 +16,8 @@
           "apps/gateway/src/assets",
           {
             "glob": "**/*.proto",
-            "input": "libs/grpc/src/auth",
-            "output": "assets/auth"
-          },
-          {
-            "glob": "**/*.proto",
-            "input": "libs/grpc/src/shared",
-            "output": "assets/shared"
-          },
-          {
-            "glob": "**/*.proto",
-            "input": "libs/grpc/src/finances",
-            "output": "assets/finances"
-          },
-          {
-            "glob": "**/*.proto",
-            "input": "libs/grpc/src/user",
-            "output": "assets/user"
+            "input": "libs/grpc/src",
+            "output": "assets/grpc"
           }
         ]
       },

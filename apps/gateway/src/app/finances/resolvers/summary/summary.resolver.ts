@@ -1,15 +1,14 @@
 import { Args, Query, Resolver } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
 import { map, Observable } from 'rxjs';
-import { DateTime } from 'luxon';
-import { Metadata } from '@grpc/grpc-js';
 import {
   ACCOUNT_SERVICE,
   AccountGrpc,
   Balance,
-  Expenses,
+  Expense,
   Movement,
   QueryBalance,
+  ExpenseFilter,
   SUMMARY_SERVICE,
   SummaryGrpc,
   User,
@@ -32,11 +31,9 @@ export class SummaryResolver {
     return this.accountService.findBalance({ ...query, user: user.id });
   }
 
-  @Query(() => Expenses)
-  expenses(): Observable<Expenses> {
-    const metadata = new Metadata();
-    metadata.set('clientDate', DateTime.utc().toISO());
-    return this.summaryService.expenses({}, metadata);
+  @Query(() => [Expense])
+  expenses(@Args('filter') filter: ExpenseFilter): Observable<Expense[]> {
+    return this.summaryService.expenses(filter).pipe(map((res) => res.data));
   }
 
   @Query(() => [Movement])

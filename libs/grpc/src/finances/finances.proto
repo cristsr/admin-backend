@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package finances;
+package admin.finances;
 
 import public "account/account.proto";
 import public "category/category.proto";

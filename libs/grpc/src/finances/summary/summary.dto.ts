@@ -1,6 +1,7 @@
-import { Field, ObjectType } from '@nestjs/graphql';
+import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { Category, Period, periods } from '@admin-back/grpc';
 import { IsIn } from 'class-validator';
+import { ListObject } from '@admin-back/shared';
 
 @ObjectType()
 export class Expense {
@@ -15,19 +16,14 @@ export class Expense {
 }
 
 @ObjectType()
-export class Expenses {
-  @Field(() => [Expense], { nullable: true })
-  day: Expense[];
+export class Expenses extends ListObject(Expense) {}
 
-  @Field(() => [Expense], { nullable: true })
-  week: Expense[];
-
-  @Field(() => [Expense], { nullable: true })
-  month: Expense[];
-}
-
-export class QueryExpense {
+@InputType()
+export class ExpenseFilter {
   @Field(() => String)
   @IsIn(periods)
   period: Period;
+
+  @Field()
+  date: string;
 }

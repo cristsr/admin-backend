@@ -1,8 +1,15 @@
 syntax = "proto3";
 
-package shared;
+package admin.shared;
 
 message Message {
   string message = 1;
 }
 
+message Id {
+  int32 id = 10;
+}
+
+message Status {
+  bool status = 1;
+}

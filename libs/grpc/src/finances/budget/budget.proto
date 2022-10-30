@@ -1,33 +1,31 @@
 syntax = "proto3";
 
-package finances.budget;
+package admin.finances.budget;
 
 import public "google/protobuf/empty.proto";
-import "category/category.proto";
-import "movement/movement.proto";
 
 service BudgetService {
-  rpc FindOne(BudgetId) returns (stream Budget);
-  rpc FindAll(BudgetFilter) returns (stream Budgets);
-  rpc FindMovements(BudgetId) returns (stream Movements);
-  rpc Save(BudgetInput) returns (stream Budget);
-  rpc Remove(BudgetId) returns (stream Status);
+  rpc FindOne(BudgetId)       returns (stream Budget);
+  rpc FindAll(BudgetFilter)   returns (stream Budgets);
+  rpc FindMovements(BudgetId) returns (stream movement.Movements);
+  rpc Save(BudgetInput)       returns (stream Budget);
+  rpc Remove(BudgetId)        returns (stream shared.Status);
 }
 
 message Budget {
-  int32     id          = 1;
-  string    name        = 2;
-  string    startDate   = 3;
-  string    endDate     = 4;
-  int32     amount      = 5;
-  int32     spent       = 6;
-  bool      repeat      = 7;
-  bool      active      = 8;
-  int32     percentage  = 9;
-  Category  category    = 40;
-  int32     categoryId  = 10;
-  int32     accountId   = 20;
-  int32     user        = 30;
+  int32               id          = 1;
+  string              name        = 2;
+  string              startDate   = 3;
+  string              endDate     = 4;
+  int32               amount      = 5;
+  int32               spent       = 6;
+  bool                repeat      = 7;
+  bool                active      = 8;
+  int32               percentage  = 9;
+  category.Category   category    = 40;
+  int32               categoryId  = 10;
+  int32               accountId   = 20;
+  int32               user        = 30;
 }
 
 message Budgets {
@@ -46,11 +44,7 @@ message BudgetInput {
 }
 
 message BudgetId {
-  int32 id = 1;
-}
-
-message Status {
-  bool status = 1;
+  extend shared.Id {}
 }
 
 message BudgetFilter {

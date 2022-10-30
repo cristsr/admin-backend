@@ -1,24 +1,25 @@
 syntax = "proto3";
 
-package finances.summary;
+package admin.finances.summary;
 
 import "google/protobuf/any.proto";
-import "category/category.proto";
-import "movement/movement.proto";
 
 service SummaryService {
-  rpc Expenses(google.protobuf.Any)      returns (stream Expenses) {}
-  rpc LastMovements(google.protobuf.Any) returns (stream Movements) {}
+  rpc Expenses(ExpenseFilter)            returns (stream Expenses) {}
+  rpc LastMovements(google.protobuf.Any) returns (stream movement.Movements) {}
 }
 
 message Expense {
-  float    amount     = 10;
-  float    percentage = 20;
-  Category category   = 30;
+  float             amount     = 10;
+  float             percentage = 20;
+  category.Category category   = 30;
 }
 
 message Expenses {
-  repeated Expense day   = 10;
-  repeated Expense week  = 20;
-  repeated Expense month = 30;
+  repeated Expense data  = 10;
+}
+
+message ExpenseFilter {
+  string    period = 10;
+  string    date   = 20;
 }

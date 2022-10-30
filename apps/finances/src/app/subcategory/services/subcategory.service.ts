@@ -1,15 +1,5 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import {
-  defer,
-  EMPTY,
-  forkJoin,
-  from,
-  map,
-  Observable,
-  of,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { defer, forkJoin, map, Observable, of, switchMap, tap } from 'rxjs';
 import {
   SubcategoryGrpc,
   SubcategoryInput,

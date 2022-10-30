@@ -1,20 +1,16 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DateTime } from 'luxon';
+import { defer, map, Observable } from 'rxjs';
 import { Repository } from 'typeorm';
 import {
-  defer,
-  forkJoin,
-  from,
-  map,
-  Observable,
-  of,
-  reduce,
-  switchMap,
-  toArray,
-} from 'rxjs';
-import { Metadata } from '@grpc/grpc-js';
-import { Expense, Expenses, Movements, SummaryGrpc } from '@admin-back/grpc';
+  Expense,
+  Expenses,
+  Movements,
+  ExpenseFilter,
+  SummaryGrpc,
+  Period,
+} from '@admin-back/grpc';
 import { MovementEntity } from 'app/movement/entities';
 
 @GrpcService('finances')
@@ -25,45 +21,36 @@ export class SummaryService implements SummaryGrpc {
   ) {}
 
   @GrpcMethod()
-  expenses(_, metadata: Metadata): Observable<Expenses> {
-    const [isoDate] = <string[]>metadata.get('clientDate');
-    const date = DateTime.fromISO(isoDate);
+  expenses(filter: ExpenseFilter): Observable<Expenses> {
+    const date = DateTime.utc();
     const today = date.toSQLDate();
     const start = date.startOf('week').toSQLDate();
     const end = date.endOf('week').toSQLDate();
-    const queries = [
-      {
-        period: 'day',
+
+    const queriesMap: Record<Exclude<Period, 'all' | 'custom'>, any> = {
+      daily: () => ({
         query: `m.date = '${today}'`,
-      },
-      {
-        period: 'week',
+        params: { today },
+      }),
+
+      weekly: () => ({
         query: `date BETWEEN '${start}'::date AND '${end}'::date`,
-      },
-      {
-        period: 'month',
+        params: {},
+      }),
+
+      monthly: () => ({
         query: `to_char(m.date, 'YYYY-MM') = to_char('${today}'::date, 'YYYY-MM')`,
-      },
-    ];
+        params: {},
+      }),
 
-    const source$ = forkJoin(
-      queries.map(({ period, query }) =>
-        this.expensesQuery(query).pipe(
-          map((data) => ({
-            period,
-            data,
-          }))
-        )
-      )
-    );
+      yearly: () => ({
+        query: "to_char(date, 'YYYY') = :date",
+        params: { date: filter.date },
+      }),
+    };
 
-    return source$.pipe(
-      map((data) =>
-        data.reduce(
-          (prev, { data, period }) => ((prev[period] = data), prev),
-          <Expenses>{}
-        )
-      )
+    return this.expensesQuery(queriesMap[filter.period]().query).pipe(
+      map((data) => ({ data }))
     );
   }
 

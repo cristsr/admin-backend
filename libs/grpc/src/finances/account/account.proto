@@ -1,18 +1,18 @@
 syntax = "proto3";
 
-package finances.account;
+package admin.finances.account;
 
 import "google/protobuf/empty.proto";
 
 service AccountService {
   rpc FindAll(google.protobuf.Empty) returns (stream Accounts);
   rpc FindOne(AccountId)             returns (stream Account);
-  rpc FindByUser(UserId)             returns (stream Accounts);
+  rpc FindByUser(user.UserId)        returns (stream Accounts);
   rpc FindBalance(QueryBalance)      returns (stream Balance);
-  rpc FindBalances(QueryBalance)      returns (stream Balances);
+  rpc FindBalances(QueryBalance)     returns (stream Balances);
   rpc Create(CreateAccount)          returns (stream Account);
   rpc Update(UpdateAccount)          returns (stream Account);
-  rpc Remove(AccountId)              returns (stream Status);
+  rpc Remove(AccountId)              returns (stream shared.Status);
 }
 
 message Account {
@@ -30,6 +30,10 @@ message Accounts {
   repeated Account data = 10;
 }
 
+message AccountId {
+  extend Id {}
+}
+
 message CreateAccount {
   string name           = 10;
   int32  initialBalance = 20;
@@ -41,30 +45,6 @@ message UpdateAccount {
   optional string name = 20;
   optional int32  user = 40;
 }
-
-message AccountId {
-  int32 id = 10;
-}
-
-message UserId {
-  int32 id = 10;
-}
-
-message Status {
-  bool status = 1;
-}
-
-//message Balance {
-//  int32 dailyBalance    = 10;
-//  int32 dailyIncomes    = 20;
-//  int32 dailyExpenses   = 30;
-//  int32 monthlyBalance  = 40;
-//  int32 monthlyIncomes  = 50;
-//  int32 monthlyExpenses = 60;
-//  int32 annualBalance   = 70;
-//  int32 annualIncomes   = 80;
-//  int32 annualExpenses  = 90;
-//}
 
 message Balance {
   int32  id         = 50;

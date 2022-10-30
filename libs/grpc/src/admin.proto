@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package admin;
+
+
+//
+//import public "grpc/finances/account/account.proto";
+//import public "grpc/finances/category/category.proto";
+//import public "grpc/finances/subcategory/subcategory.proto";
+//import public "grpc/finances/movement/movement.proto";
+//import public "grpc/finances/summary/summary.proto";
+//import public "grpc/finances/budget/budget.proto";
+//import public "grpc/finances/scheduled/scheduled.proto";
+
+import public "shared/shared.proto";
+import public "user/user.proto";
+import public "finances/finances.proto";
+

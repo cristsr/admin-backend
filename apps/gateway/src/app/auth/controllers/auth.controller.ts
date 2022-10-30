@@ -4,7 +4,7 @@ import { CurrentUser } from '@admin-back/shared';
 @Controller('auth')
 export class AuthController {
   @Get('profile')
-  profile(@CurrentUser() user: any) {
+  profile(@CurrentUser() user) {
     return user;
   }
 }

@@ -14,8 +14,8 @@
           "apps/finances/src/assets",
           {
             "glob": "**/*.proto",
-            "input": "libs/grpc/src/finances",
-            "output": "assets/finances"
+            "input": "libs/grpc/src",
+            "output": "assets/grpc"
           }
         ]
       },

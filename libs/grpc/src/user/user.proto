@@ -1,15 +1,15 @@
 syntax = "proto3";
 
-package user;
+package admin.user;
 
 import "google/protobuf/empty.proto";
 
 service UserService {
   rpc FindAll(google.protobuf.Empty) returns (stream Users) {}
-  rpc FindOne(QueryUser) returns (stream User) {}
-  rpc Create(CreateUser) returns (stream User) {}
-  rpc Update(UpdateUser) returns (stream User) {}
-  rpc Remove(UserId) returns (stream Status) {}
+  rpc FindOne(QueryUser)             returns (stream User) {}
+  rpc Create(CreateUser)             returns (stream User) {}
+  rpc Update(UpdateUser)             returns (stream User) {}
+  rpc Remove(UserId)                 returns (stream shared.Status) {}
 }
 
 message User {
@@ -51,9 +51,5 @@ message UpdateUser {
 }
 
 message UserId {
-  int32 id = 1;
-}
-
-message Status {
-  bool status = 1;
+  extend Id {}
 }

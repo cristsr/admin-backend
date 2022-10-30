@@ -1,36 +1,30 @@
 syntax = "proto3";
 
-package finances.movement;
+package admin.finances.movement;
 
 import "google/protobuf/empty.proto";
-import "category/category.proto";
-import "subcategory/subcategory.proto";
 
 service MovementService {
-  rpc FindOne(Id) returns (stream Movement) {}
-  rpc FindAll(MovementFilter) returns (stream Movements) {}
-  rpc Save(MovementInput) returns (stream Movement) {}
-  rpc CreateMany(MovementInput) returns (stream Movement) {}
-  rpc Update(UpdateMovement) returns (stream Movement) {}
-  rpc Remove(Id) returns (stream Status) {}
-  rpc RemoveAll(google.protobuf.Empty) returns (stream Status) {}
-}
-
-message Status {
-  bool status = 1;
+  rpc FindOne(MovementId)              returns (stream Movement) {}
+  rpc FindAll(MovementFilter)          returns (stream Movements) {}
+  rpc Save(MovementInput)              returns (stream Movement) {}
+  rpc CreateMany(MovementInput)        returns (stream Movement) {}
+  rpc Update(UpdateMovement)           returns (stream Movement) {}
+  rpc Remove(MovementId)               returns (stream shared.Status) {}
+  rpc RemoveAll(google.protobuf.Empty) returns (stream shared.Status) {}
 }
 
 message Movement {
-  int32       id            = 1;
-  string      date          = 2;
-  string      type          = 3;
-  string      description   = 4;
-  int32       amount        = 5;
-  Category    category      = 51;
-  int32       categoryId    = 6;
-  Subcategory subcategory   = 61;
-  int32       subcategoryId = 7;
-  string      createdAt     = 8;
+  int32                   id            = 1;
+  string                  date          = 2;
+  string                  type          = 3;
+  string                  description   = 4;
+  int32                   amount        = 5;
+  category.Category       category      = 51;
+  int32                   categoryId    = 6;
+  subcategory.Subcategory subcategory   = 61;
+  int32                   subcategoryId = 7;
+  string                  createdAt     = 8;
 }
 
 message Movements {
@@ -50,19 +44,15 @@ message MovementInput {
 }
 
 message UpdateMovement {
-  int32 id = 1;
-  string date = 2;
-  string type = 3;
+  int32  id          = 1;
+  string date        = 2;
+  string type        = 3;
   string description = 4;
-  int32 amount = 5;
-  int32 category = 6;
-  int32 subcategory = 7;
-  int32 account = 9;
-  int32 user = 10;
-}
-
-message Id {
-  int32 id = 1;
+  int32  amount      = 5;
+  int32  category    = 6;
+  int32  subcategory = 7;
+  int32  account     = 9;
+  int32  user        = 10;
 }
 
 message MovementFilter {
@@ -72,4 +62,8 @@ message MovementFilter {
   repeated string type     = 4;
   string          order    = 5;
   int32           account  = 6;
+}
+
+message MovementId {
+  extend shared.Id {}
 }

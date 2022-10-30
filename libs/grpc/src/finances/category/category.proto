@@ -1,33 +1,32 @@
 syntax = "proto3";
 
-package finances.category;
+package admin.finances.category;
 
 import "google/protobuf/empty.proto";
-import "subcategory/subcategory.proto";
 
 service CategoryService {
-  rpc FindOne(CategoryId) returns (stream Category) {}
-  rpc FindAll(google.protobuf.Empty) returns (stream Categories) {}
-  rpc Save(CategoryInput) returns (stream Category) {}
-  rpc SaveMany(CategoriesInput) returns (stream Status) {}
-  rpc Remove(CategoryId) returns (stream Status) {}
-  rpc RemoveAll(google.protobuf.Empty) returns (stream Status) {}
+  rpc FindOne(CategoryId)              returns (stream Category) {}
+  rpc FindAll(google.protobuf.Empty)   returns (stream Categories) {}
+  rpc Save(CategoryInput)              returns (stream Category) {}
+  rpc SaveMany(CategoriesInput)        returns (stream shared.Status) {}
+  rpc Remove(CategoryId)               returns (stream shared.Status) {}
+  rpc RemoveAll(google.protobuf.Empty) returns (stream shared.Status) {}
 }
 
 message Category {
-  int32 id = 1;
-  string name = 2;
-  string icon = 3;
-  string color = 4;
-  repeated Subcategory subcategories = 5;
+  int32                            id            = 1;
+  string                           name          = 2;
+  string                           icon          = 3;
+  string                           color         = 4;
+  repeated subcategory.Subcategory subcategories = 5;
 }
 
 message CategoryInput {
-  int32     id = 5;
-  string    name = 1;
-  string    icon = 2;
-  string    color = 3;
-  repeated  SubcategoryInput subcategories = 4;
+  int32                                 id            = 5;
+  string                                name          = 1;
+  string                                icon          = 2;
+  string                                color         = 3;
+  repeated subcategory.SubcategoryInput subcategories = 4;
 }
 
 message CategoriesInput {
@@ -39,9 +38,5 @@ message Categories {
 }
 
 message CategoryId {
-  int32 id = 1;
-}
-
-message Status {
-  bool status = 1;
+  extend shared.Id {}
 }
