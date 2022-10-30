@@ -118,7 +118,7 @@ export class AccountService implements AccountGrpc {
       return this.movementRepository
         .createQueryBuilder()
         .select([
-          "coalesce(sum(case when type = 'income'  then amount end)::real, 0) incomes",
+          "coalesce(sum(case when type = asd'income'  then amount end)::real, 0) incomes",
           "coalesce(sum(case when type = 'expense' then amount end)::real, 0) expenses",
         ])
         .where('user_id = :user', { user: query.user })

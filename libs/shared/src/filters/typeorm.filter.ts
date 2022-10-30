@@ -1,11 +1,12 @@
-import { Catch, ExceptionFilter, Logger } from '@nestjs/common';
+import {
+  Catch,
+  ExceptionFilter,
+  InternalServerErrorException,
+  Logger,
+} from '@nestjs/common';
 import { TypeORMError } from 'typeorm';
 import { throwError } from 'rxjs';
-import {
-  GrpcCanceledException,
-  GrpcInternalException,
-  GrpcNotFoundException,
-} from '@admin-back/shared';
+import { getResponse } from '../functions';
 
 @Catch(TypeORMError)
 export class TypeormFilter implements ExceptionFilter {
@@ -14,30 +15,8 @@ export class TypeormFilter implements ExceptionFilter {
   catch(exception: TypeORMError) {
     this.#logger.error(`${exception.name}: ${exception.message}`);
 
-    const grpcException = this.grpcExceptionMapper(exception);
+    const grpcException = new InternalServerErrorException(exception.message);
 
-    return throwError(() => grpcException.getResponse());
-  }
-
-  grpcExceptionMapper(exception: TypeORMError) {
-    const mapped =
-      GrpcExceptionMapper[exception.name] || GrpcExceptionMapper.Default;
-
-    return new mapped.exception(mapped.message || exception.message);
+    return throwError(() => getResponse(grpcException));
   }
 }
-
-const GrpcExceptionMapper = {
-  EntityNotFoundError: {
-    exception: GrpcNotFoundException,
-    message: 'Entity not found',
-  },
-  QueryFailedError: {
-    exception: GrpcCanceledException,
-    message: 'Query failed',
-  },
-  Default: {
-    exception: GrpcInternalException,
-    message: 'Internal server error',
-  },
-};

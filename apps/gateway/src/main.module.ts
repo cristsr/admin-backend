@@ -8,6 +8,7 @@ import {
   configValidator,
   AllExceptionFilter,
   RequestInterceptor,
+  RpcExceptionFilter,
 } from '@admin-back/shared';
 import { AuthModule } from 'app/auth';
 import { FinancesModule } from 'app/finances';
@@ -38,6 +39,10 @@ import { AppController } from './app.controller';
     {
       provide: APP_FILTER,
       useClass: AllExceptionFilter,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: RpcExceptionFilter,
     },
     {
       provide: APP_INTERCEPTOR,

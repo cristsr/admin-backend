@@ -5,6 +5,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import {
   configValidator,
+  HttpExceptionFilter,
   ResponseInterceptor,
   TypeormFilter,
 } from '@admin-back/shared';
@@ -42,6 +43,10 @@ import { AppController } from './app.controller';
     {
       provide: APP_FILTER,
       useClass: TypeormFilter,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: HttpExceptionFilter,
     },
     {
       provide: APP_INTERCEPTOR,
