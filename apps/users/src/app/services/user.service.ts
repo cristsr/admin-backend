@@ -1,52 +1,65 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { from, Observable } from 'rxjs';
+import { defer, map, Observable, switchMap, tap } from 'rxjs';
 import {
-  CreateUser,
+  UserInput,
   Id,
-  QueryUser,
+  UserQuery,
   Status,
-  UpdateUser,
   User,
   UserGrpc,
   Users,
 } from '@admin-back/grpc';
-import { UserHandler } from 'app/handlers';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from 'app/entities';
 import { Repository } from 'typeorm';
+import { NotFoundException } from '@nestjs/common';
 
 @GrpcService('user')
 export class UserService implements UserGrpc {
   constructor(
     @InjectRepository(UserEntity)
-    private userRepository: Repository<UserEntity>,
-
-    private userHandler: UserHandler
+    private userRepository: Repository<UserEntity>
   ) {}
 
   @GrpcMethod()
   findAll(): Observable<Users> {
-    return from(this.userHandler.findAll());
+    return defer(() => this.userRepository.find()).pipe(
+      map((data) => ({ data }))
+    );
   }
 
   @GrpcMethod()
-  findOne(queryUser: QueryUser): Observable<User> {
-    console.log(queryUser);
-    return from(this.userHandler.findOne(queryUser));
+  findOne(queryUser: UserQuery): Observable<User> {
+    return defer(() => this.userRepository.findOneBy(queryUser));
   }
 
   @GrpcMethod()
-  create(user: CreateUser): Observable<User> {
-    return from(this.userHandler.create(user));
-  }
+  save(data: UserInput): Observable<User> {
+    const user = defer(() =>
+      this.userRepository.findOne({
+        where: {
+          email: data.email,
+          auth0Id: data.auth0Id,
+        },
+      })
+    );
 
-  @GrpcMethod()
-  update(user: UpdateUser): Observable<User> {
-    return from(this.userHandler.update(user));
+    return user.pipe(
+      tap((u) => {
+        if (u) {
+          throw new NotFoundException('User is already registered');
+        }
+      }),
+      switchMap(() => this.userRepository.save(data))
+    );
   }
 
   @GrpcMethod()
   remove({ id }: Id): Observable<Status> {
-    return from(this.userHandler.remove(id));
+    return defer(() => this.userRepository.delete({ id })).pipe(
+      map((result) => ({
+        status: !!result.affected,
+      }))
+    );
   }
 }

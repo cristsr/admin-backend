@@ -1,13 +1,7 @@
 import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
 import { Observable, pluck } from 'rxjs';
-import {
-  CreateUser,
-  UpdateUser,
-  User,
-  USER_SERVICE,
-  UserGrpc,
-} from '@admin-back/grpc';
+import { UserInput, User, USER_SERVICE, UserGrpc } from '@admin-back/grpc';
 import { CurrentUser, Public } from '@admin-back/shared';
 
 @Resolver(() => User)
@@ -27,13 +21,8 @@ export class UserResolver {
 
   @Public()
   @Mutation(() => User)
-  createUser(@Args('user') user: CreateUser) {
-    return this.userService.create(user);
-  }
-
-  @Mutation(() => User)
-  updateUser(@Args('user') user: UpdateUser) {
-    return this.userService.update(user);
+  saveUser(@Args('user') user: UserInput) {
+    return this.userService.save(user);
   }
 
   @Mutation(() => User)

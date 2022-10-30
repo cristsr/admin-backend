@@ -29,7 +29,7 @@ export class User {
 export class Users extends ListObject(User) {}
 
 @InputType()
-export class CreateUser extends OmitInputType(User, [
+export class UserInput extends OmitInputType(User, [
   'id',
   'createdAt',
   'updatedAt',
@@ -41,7 +41,7 @@ export class UpdateUser extends OmitInputType(User, [
   'updatedAt',
 ]) {}
 
-export class QueryUser {
+export class UserQuery {
   id?: number;
   email?: string;
   auth0Id?: string;
