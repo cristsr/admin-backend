@@ -1,6 +1,6 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { Account, Category } from '@admin-back/grpc';
-import { ListObject, PartialInputType } from '@admin-back/shared';
+import { ListObject } from '@admin-back/shared';
 
 @ObjectType()
 export class Budget {
@@ -72,6 +72,5 @@ export class BudgetFilter {
   @Field()
   account: number;
 
-  @Field()
   user: number;
 }

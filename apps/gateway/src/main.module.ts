@@ -6,7 +6,6 @@ import { ApolloDriver } from '@nestjs/apollo';
 import { Environment } from 'env';
 import {
   configValidator,
-  AllExceptionFilter,
   RequestInterceptor,
   RpcExceptionFilter,
 } from '@admin-back/shared';
@@ -36,10 +35,10 @@ import { AppController } from './app.controller';
     UsersModule,
   ],
   providers: [
-    {
-      provide: APP_FILTER,
-      useClass: AllExceptionFilter,
-    },
+    // {
+    //   provide: APP_FILTER,
+    //   useClass: AllExceptionFilter,
+    // },
     {
       provide: APP_FILTER,
       useClass: RpcExceptionFilter,

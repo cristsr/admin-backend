@@ -44,7 +44,12 @@ export class ScheduledService implements ScheduledGrpc {
 
   @GrpcMethod()
   findOne(scheduledId: Id): Observable<Scheduled> {
-    return from(this.scheduledRepository.findOneBy(scheduledId));
+    return from(
+      this.scheduledRepository.findOne({
+        where: scheduledId,
+        relations: ['category', 'subcategory'],
+      })
+    );
   }
 
   @GrpcMethod()
@@ -53,6 +58,7 @@ export class ScheduledService implements ScheduledGrpc {
       where: {
         account: { id: filters.account },
       },
+      relations: ['category', 'subcategory'],
     });
 
     return from(query).pipe(map((data) => ({ data })));
@@ -61,7 +67,7 @@ export class ScheduledService implements ScheduledGrpc {
   @GrpcMethod()
   save(data: ScheduledInput): Observable<Scheduled> {
     const scheduled = defer(() =>
-      this.scheduledRepository.findOneOrFail({
+      this.scheduledRepository.findOne({
         where: {
           id: data.id,
         },
@@ -69,7 +75,7 @@ export class ScheduledService implements ScheduledGrpc {
     );
 
     const category = defer(() =>
-      this.categoryRepository.findOneOrFail({
+      this.categoryRepository.findOne({
         where: {
           id: data.category,
         },
@@ -77,7 +83,7 @@ export class ScheduledService implements ScheduledGrpc {
     );
 
     const subcategory = defer(() =>
-      this.subcategoryRepository.findOneOrFail({
+      this.subcategoryRepository.findOne({
         where: {
           id: data.subcategory,
         },
@@ -85,7 +91,7 @@ export class ScheduledService implements ScheduledGrpc {
     );
 
     const account = defer(() =>
-      this.accountRepository.findOneOrFail({
+      this.accountRepository.findOne({
         where: {
           id: data.account,
         },

@@ -144,7 +144,7 @@ export class BudgetService implements BudgetGrpc {
     );
 
     const category = defer(() =>
-      this.categoryRepository.findOneOrFail({
+      this.categoryRepository.findOne({
         where: {
           id: data.category,
         },
@@ -152,7 +152,7 @@ export class BudgetService implements BudgetGrpc {
     );
 
     const account = defer(() =>
-      this.accountRepository.findOneOrFail({
+      this.accountRepository.findOne({
         where: {
           id: data.account,
         },

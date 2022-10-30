@@ -8,7 +8,7 @@ import "movement/movement.proto";
 service ScheduledService {
   rpc FindOne(ScheduledId)           returns (stream Scheduled);
   rpc FindAll(google.protobuf.Empty) returns (stream Scheduleds);
-  rpc Create(CreateScheduled)        returns (stream Scheduled);
+  rpc Save(CreateScheduled)          returns (stream Scheduled);
   rpc Update(UpdateScheduled)        returns (stream Scheduled);
   rpc Delete(ScheduledId)            returns (google.protobuf.Empty);
 }

@@ -7,7 +7,7 @@ import {
   configValidator,
   HttpExceptionFilter,
   ResponseInterceptor,
-  TypeormFilter,
+  TypeormExceptionFilter,
 } from '@admin-back/shared';
 import { Environment } from 'env';
 import { DatabaseModule } from 'database/database.module';
@@ -42,7 +42,7 @@ import { AppController } from './app.controller';
   providers: [
     {
       provide: APP_FILTER,
-      useClass: TypeormFilter,
+      useClass: TypeormExceptionFilter,
     },
     {
       provide: APP_FILTER,
