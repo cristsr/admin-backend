@@ -21,3 +21,5 @@ export const FinancesConfig = {
     arrays: true,
   },
 };
+
+export const FINANCES_GRPC_CLIENT = 'FINANCES_GRPC_CLIENT';

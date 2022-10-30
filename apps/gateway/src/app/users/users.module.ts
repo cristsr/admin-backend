@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { UserResolver } from 'app/users/resolvers';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { GrpcProvider } from '@admin-back/shared';
 import {
-  GrpcProvider,
   USER_GRPC_CLIENT,
   USER_SERVICE,
   USER_SERVICE_NAME,

@@ -1,3 +1,3 @@
 export * from './summary.grpc';
 export * from './summary.dto';
-export * from './constants';
+export * from './summary.config';

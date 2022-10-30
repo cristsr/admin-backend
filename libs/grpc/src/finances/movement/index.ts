@@ -1,4 +1,4 @@
 export * from './movement.grpc';
 export * from './movement.dto';
-export * from './types';
-export * from './constants';
+export * from './movement.types';
+export * from './movement.config';

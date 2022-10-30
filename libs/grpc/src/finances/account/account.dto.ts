@@ -2,7 +2,7 @@ import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { ListObject } from '@admin-back/shared';
 import { Relation } from 'typeorm';
 import { IsIn } from 'class-validator';
-import { Period, periods } from '../finances.types';
+import { Period, periods } from '../finances.constants';
 
 @ObjectType()
 export class Account {

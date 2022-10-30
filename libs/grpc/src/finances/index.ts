@@ -1,6 +1,5 @@
-export * from './finances.constants';
 export * from './finances.config';
-export * from './finances.types';
+export * from './finances.constants';
 
 export * from './account';
 export * from './category';

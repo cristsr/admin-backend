@@ -1,6 +1,10 @@
-export const FINANCES_GRPC_CLIENT = 'FINANCES_GRPC_CLIENT';
+export const periods = [
+  'daily',
+  'weekly',
+  'monthly',
+  'yearly',
+  'custom',
+  'all',
+] as const;
 
-// Events
-export const MovementCreated = 'movement.created';
-export const MovementUpdated = 'movement.updated';
-export const GenerateBudgets = 'budget.generate';
+export type Period = typeof periods[number];

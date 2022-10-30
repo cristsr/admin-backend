@@ -7,7 +7,7 @@ import "google/protobuf/empty.proto";
 service UserService {
   rpc FindAll(google.protobuf.Empty) returns (stream Users) {}
   rpc FindOne(UserQuery)             returns (stream User) {}
-  rpc Save(UserInput)               returns (stream User) {}
+  rpc Save(UserInput)                returns (stream User) {}
   rpc Remove(UserId)                 returns (stream shared.Status) {}
 }
 

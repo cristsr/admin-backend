@@ -4,8 +4,8 @@ import { ListObject, OmitInputType } from '@admin-back/shared';
 import { Category } from '../category';
 import { Subcategory } from '../subcategory';
 import { Account } from '../account';
-import { MovementType, movementTypes } from './types';
-import { Period, periods } from '../finances.types';
+import { MovementType, movementTypes } from './movement.types';
+import { Period, periods } from '../finances.constants';
 
 @ObjectType()
 export class Movement {

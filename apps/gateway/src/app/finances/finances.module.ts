@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
+import { GrpcProvider } from '@admin-back/shared';
 import {
-  GrpcProvider,
   FinancesConfig,
   FINANCES_GRPC_CLIENT,
   CATEGORY_SERVICE,

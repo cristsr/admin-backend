@@ -1,3 +1,3 @@
 export * from './subcategory.grpc';
 export * from './subcategory.dto';
-export * from './constants';
+export * from './subcategory.config';
