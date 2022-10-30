@@ -1,6 +1,6 @@
 import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
-import { Observable, pluck } from 'rxjs';
+import { map, Observable } from 'rxjs';
 import { UserInput, User, USER_SERVICE, UserGrpc } from '@admin-back/grpc';
 import { CurrentUser, Public } from '@admin-back/shared';
 
@@ -11,7 +11,7 @@ export class UserResolver {
 
   @Query(() => [User])
   users(): Observable<User[]> {
-    return this.userService.findAll().pipe(pluck('data'));
+    return this.userService.findAll().pipe(map((res) => res.data));
   }
 
   @Query(() => User)
