@@ -14,7 +14,6 @@ import { CategoryModule } from 'app/category/category.module';
 import { MovementModule } from 'app/movement/movement.module';
 import { SummaryModule } from 'app/summary/summary.module';
 import { BudgetModule } from 'app/budget/budget.module';
-import { BillModule } from 'app/bill/bill.module';
 import { ScheduledModule } from 'app/scheduled/scheduled.module';
 import { SubcategoryModule } from 'app/subcategory/subcategory.module';
 import { AccountModule } from 'app/account/account.module';
@@ -36,7 +35,6 @@ import { AppController } from './app.controller';
     MovementModule,
     SummaryModule,
     BudgetModule,
-    BillModule,
     ScheduledModule,
   ],
   controllers: [AppController],
