@@ -25,10 +25,8 @@ export class ScheduledResolver {
   }
 
   @Query(() => [Scheduled])
-  scheduleds(
-    @Args('filters') filters: ScheduledFilter
-  ): Observable<Scheduled[]> {
-    return this.scheduledService.findAll(filters).pipe(map((res) => res.data));
+  scheduleds(@Args('filter') filter: ScheduledFilter): Observable<Scheduled[]> {
+    return this.scheduledService.findAll(filter).pipe(map((res) => res.data));
   }
 
   @Mutation(() => Scheduled)

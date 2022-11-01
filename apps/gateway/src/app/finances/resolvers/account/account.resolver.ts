@@ -13,7 +13,7 @@ import {
   AccountGrpc,
   Balance,
   CreateAccount,
-  QueryBalance,
+  BalanceFilter,
   User,
 } from '@admin-back/grpc';
 import { map, Observable } from 'rxjs';
@@ -34,16 +34,16 @@ export class AccountResolver {
   @Mutation(() => Account)
   createAccount(
     @CurrentUser() user: User,
-    @Args('data') data: CreateAccount
+    @Args('account') account: CreateAccount
   ): Observable<Account> {
-    return this.accountService.create({ ...data, user: user.id });
+    return this.accountService.create({ ...account, user: user.id });
   }
 
   @ResolveField()
   balance(
     @CurrentUser() user: User,
     @Parent() account: Account,
-    @Args('query') balance: QueryBalance
+    @Args('filter') balance: BalanceFilter
   ): Observable<Balance> {
     return this.accountService.findBalance({
       user: user.id,

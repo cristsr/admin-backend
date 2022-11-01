@@ -11,7 +11,7 @@ import { Observable } from 'rxjs';
 export interface MovementGrpc {
   findOne(id: Id): Observable<Movement>;
 
-  findAll(filters: MovementFilter): Observable<Movements>;
+  findAll(filter: MovementFilter): Observable<Movements>;
 
   save(data: MovementInput): Observable<Movement>;
 

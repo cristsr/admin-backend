@@ -12,7 +12,7 @@ import {
 export interface BudgetGrpc {
   findOne(id: Id): Observable<Budget>;
 
-  findAll(filters: BudgetFilter): Observable<Budgets>;
+  findAll(filter: BudgetFilter): Observable<Budgets>;
 
   findMovements(id: Id): Observable<Movements>;
 

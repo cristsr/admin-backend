@@ -10,7 +10,7 @@ import {
   CreateAccount,
   Empty,
   Id,
-  QueryBalance,
+  BalanceFilter,
   Status,
 } from '@admin-back/grpc';
 import { AccountEntity } from 'app/account/entities';
@@ -61,37 +61,37 @@ export class AccountService implements AccountGrpc {
   }
 
   @GrpcMethod()
-  findBalance(query: QueryBalance): Observable<Balance> {
+  findBalance(filter: BalanceFilter): Observable<Balance> {
     const balanceMap: Record<string, any> = {
       daily: () => ({
         query: "to_char(date, 'YYYY-MM-DD') <= :date",
-        params: { date: query.date },
+        params: { date: filter.date },
       }),
 
       weekly: () => ({
         query: "to_char(date, 'YYYY-MM-DD') <= :date",
-        params: { date: Interval.fromISO(query.date).end.toSQLDate() },
+        params: { date: Interval.fromISO(filter.date).end.toSQLDate() },
       }),
 
       monthly: () => ({
         query: "to_char(date, 'YYYY-MM') <= :date",
-        params: { date: query.date },
+        params: { date: filter.date },
       }),
 
       yearly: () => ({
         query: "to_char(date, 'YYYY') <= :date",
-        params: { date: query.date },
+        params: { date: filter.date },
       }),
     };
 
     const movementMap: Record<string, any> = {
       daily: () => ({
         query: "to_char(date, 'YYYY-MM-DD') = :date",
-        params: { date: query.date },
+        params: { date: filter.date },
       }),
 
       weekly: () => {
-        const interval = Interval.fromISO(query.date);
+        const interval = Interval.fromISO(filter.date);
 
         return {
           query: `to_char(date, 'YYYY-MM-DD') >= :start and to_char(date, 'YYYY-MM-DD') <= :end`,
@@ -104,12 +104,12 @@ export class AccountService implements AccountGrpc {
 
       monthly: () => ({
         query: "to_char(date, 'YYYY-MM') = :date",
-        params: { date: query.date },
+        params: { date: filter.date },
       }),
 
       yearly: () => ({
         query: "to_char(date, 'YYYY') = :date",
-        params: { date: query.date },
+        params: { date: filter.date },
       }),
     };
 
@@ -121,18 +121,18 @@ export class AccountService implements AccountGrpc {
           "coalesce(sum(case when type = 'income'  then amount end)::real, 0) incomes",
           "coalesce(sum(case when type = 'expense' then amount end)::real, 0) expenses",
         ])
-        .where('user_id = :user', { user: query.user })
-        .andWhere('account_id = :account', { account: query.account })
+        .where('user_id = :user', { user: filter.user })
+        .andWhere('account_id = :account', { account: filter.account })
         .andWhere(opts.query, opts.params);
     };
 
-    const balanceOpts = balanceMap[query.period]();
-    const movementOpts = movementMap[query.period]();
+    const balanceOpts = balanceMap[filter.period]();
+    const movementOpts = movementMap[filter.period]();
 
     const account = defer(() =>
       this.accountRepository.findOne({
         where: {
-          id: query.account,
+          id: filter.account,
         },
       })
     );

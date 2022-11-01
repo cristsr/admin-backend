@@ -64,14 +64,14 @@ export class BudgetService implements BudgetGrpc {
   }
 
   @GrpcMethod()
-  findAll(filters: BudgetFilter): Observable<Budgets> {
+  findAll(filter: BudgetFilter): Observable<Budgets> {
     const budgets$ = defer(() =>
       this.budgetRepository.find({
         where: {
           account: {
-            id: filters.account,
+            id: filter.account,
           },
-          user: filters.user,
+          user: filter.user,
           active: true,
         },
         relations: ['category'],

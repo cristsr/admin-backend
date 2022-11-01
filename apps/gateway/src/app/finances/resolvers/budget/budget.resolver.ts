@@ -28,10 +28,10 @@ export class BudgetResolver {
   @Query(() => [Budget])
   budgets(
     @CurrentUser() user: User,
-    @Args('filters') filters: BudgetFilter
+    @Args('filter') filter: BudgetFilter
   ): Observable<Budget[]> {
     return this.budgetService
-      .findAll({ account: filters.account, user: user.id })
+      .findAll({ account: filter.account, user: user.id })
       .pipe(map((res) => res.data));
   }
 

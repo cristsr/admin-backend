@@ -27,8 +27,8 @@ export class MovementResolver {
   }
 
   @Query(() => [Movement])
-  movements(@Args('filters') filters: MovementFilter): Observable<Movement[]> {
-    return this.movementService.findAll(filters).pipe(map((res) => res.data));
+  movements(@Args('filter') filter: MovementFilter): Observable<Movement[]> {
+    return this.movementService.findAll(filter).pipe(map((res) => res.data));
   }
 
   @Mutation(() => Movement)

@@ -35,24 +35,24 @@ export class MovementService implements MovementGrpc {
   ) {}
 
   @GrpcMethod()
-  findAll(filters: MovementFilter): Observable<Movements> {
+  findAll(filter: MovementFilter): Observable<Movements> {
     const dateMap: Record<string, any> = {
-      daily: () => filters.date,
+      daily: () => filter.date,
 
       weekly: () => {
-        const interval = Interval.fromISO(filters.date);
+        const interval = Interval.fromISO(filter.date);
         return Between(interval.start.toSQLDate(), interval.end.toSQLDate());
       },
 
       monthly: () => {
         return Raw((alias) => `to_char(${alias}, 'YYYY-MM') = :date`, {
-          date: filters.date,
+          date: filter.date,
         });
       },
 
       yearly: () => {
         return Raw((alias) => `to_char(${alias}, 'YYYY') = :date`, {
-          date: filters.date,
+          date: filter.date,
         });
       },
     };
@@ -61,10 +61,10 @@ export class MovementService implements MovementGrpc {
     const movements = defer(() =>
       this.movementRepository.find({
         where: {
-          date: dateMap[filters.period](),
-          category: { id: filters.category },
-          account: { id: filters.account },
-          type: filters.type?.length ? In(filters.type) : null,
+          date: dateMap[filter.period](),
+          category: { id: filter.category },
+          account: { id: filter.account },
+          type: filter.type?.length ? In(filter.type) : null,
         },
         order: {
           date: 'DESC',

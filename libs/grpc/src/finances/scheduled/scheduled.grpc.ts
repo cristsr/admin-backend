@@ -11,7 +11,7 @@ import {
 export interface ScheduledGrpc {
   findOne(id: Id): Observable<Scheduled>;
 
-  findAll(filters: ScheduledFilter): Observable<Scheduleds>;
+  findAll(filter: ScheduledFilter): Observable<Scheduleds>;
 
   save(data: ScheduledInput): Observable<Scheduled>;
 

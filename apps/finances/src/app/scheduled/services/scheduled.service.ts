@@ -53,10 +53,10 @@ export class ScheduledService implements ScheduledGrpc {
   }
 
   @GrpcMethod()
-  findAll(filters: ScheduledFilter): Observable<Scheduleds> {
+  findAll(filter: ScheduledFilter): Observable<Scheduleds> {
     const query = this.scheduledRepository.find({
       where: {
-        account: { id: filters.account },
+        account: { id: filter.account },
       },
       relations: ['category', 'subcategory'],
     });

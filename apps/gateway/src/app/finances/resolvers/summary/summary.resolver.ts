@@ -7,7 +7,7 @@ import {
   Balance,
   Expense,
   Movement,
-  QueryBalance,
+  BalanceFilter,
   ExpenseFilter,
   SUMMARY_SERVICE,
   SummaryGrpc,
@@ -26,9 +26,9 @@ export class SummaryResolver {
   @Query(() => Balance)
   balance(
     @CurrentUser() user: User,
-    @Args('query') query: QueryBalance
+    @Args('filter') filter: BalanceFilter
   ): Observable<Balance> {
-    return this.accountService.findBalance({ ...query, user: user.id });
+    return this.accountService.findBalance({ ...filter, user: user.id });
   }
 
   @Query(() => [Expense])

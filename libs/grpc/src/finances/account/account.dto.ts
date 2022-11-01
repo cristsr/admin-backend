@@ -70,7 +70,7 @@ export class Balance {
 }
 
 @InputType()
-export class QueryBalance {
+export class BalanceFilter {
   @Field(() => String)
   @IsIn(periods)
   period: Period;
