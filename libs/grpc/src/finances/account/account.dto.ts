@@ -36,23 +36,12 @@ export class Account {
 export class Accounts extends ListObject(Account) {}
 
 @InputType()
-export class CreateAccount {
+export class AccountInput {
   @Field()
   name: string;
 
   @Field()
   initialBalance: number;
-
-  user: number;
-}
-
-@InputType()
-export class UpdateAccount {
-  @Field()
-  id: number;
-
-  @Field()
-  name: string;
 
   user: number;
 }
@@ -79,14 +68,6 @@ export class BalanceFilter {
   date: string;
 
   @Field({ nullable: true })
-  account: number;
-
-  user: number;
-}
-
-@InputType()
-export class QueryBalances {
-  @Field()
   account: number;
 
   user: number;

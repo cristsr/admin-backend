@@ -17,9 +17,7 @@ export class MovementResolver {
   constructor(
     @Inject(MOVEMENT_SERVICE)
     private movementService: MovementGrpc
-  ) {
-    console.error(movementService);
-  }
+  ) {}
 
   @Query(() => Movement, { nullable: true })
   movement(@Args('id') id: number): Observable<Movement> {

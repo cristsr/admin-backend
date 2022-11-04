@@ -7,11 +7,9 @@ import {
   AccountGrpc,
   Accounts,
   Balance,
-  CreateAccount,
-  Empty,
+  AccountInput,
   Id,
   BalanceFilter,
-  Status,
 } from '@admin-back/grpc';
 import { AccountEntity } from 'app/account/entities';
 import { Interval } from 'luxon';
@@ -157,7 +155,7 @@ export class AccountService implements AccountGrpc {
   }
 
   @GrpcMethod()
-  create(data: CreateAccount): Observable<Account> {
+  save(data: AccountInput): Observable<Account> {
     return defer(() =>
       this.accountRepository.save({
         name: data.name,
@@ -165,15 +163,5 @@ export class AccountService implements AccountGrpc {
         initialBalance: data.initialBalance,
       })
     );
-  }
-
-  @GrpcMethod()
-  update(empty: Empty): Observable<Account> {
-    return undefined;
-  }
-
-  @GrpcMethod()
-  remove(empty: Empty): Observable<Status> {
-    return undefined;
   }
 }

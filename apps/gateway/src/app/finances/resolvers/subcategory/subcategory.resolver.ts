@@ -12,8 +12,10 @@ import { map, Observable } from 'rxjs';
 
 @Resolver()
 export class SubcategoryResolver {
-  @Inject(SUBCATEGORY_SERVICE)
-  private subcategoryService: SubcategoryGrpc;
+  constructor(
+    @Inject(SUBCATEGORY_SERVICE)
+    private subcategoryService: SubcategoryGrpc
+  ) {}
 
   @Query(() => Subcategory)
   subcategory(@Args('id') id: number): Observable<Subcategory> {

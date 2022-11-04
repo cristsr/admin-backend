@@ -10,7 +10,7 @@ service AccountService {
   rpc FindByUser(user.UserId)        returns (stream Accounts);
   rpc FindBalance(QueryBalance)      returns (stream Balance);
   rpc FindBalances(QueryBalance)     returns (stream Balances);
-  rpc Create(CreateAccount)          returns (stream Account);
+  rpc Save(CreateAccount)            returns (stream Account);
   rpc Update(UpdateAccount)          returns (stream Account);
   rpc Remove(AccountId)              returns (stream shared.Status);
 }

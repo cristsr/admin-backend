@@ -2,10 +2,9 @@ import { Observable } from 'rxjs';
 import {
   Empty,
   Id,
-  CreateAccount,
+  AccountInput,
   Account,
   Accounts,
-  Status,
   Balance,
   BalanceFilter,
 } from '@admin-back/grpc';
@@ -17,11 +16,7 @@ export interface AccountGrpc {
 
   findByUser(user: Id): Observable<Accounts>;
 
+  save(account: AccountInput): Observable<Account>;
+
   findBalance(filter: BalanceFilter): Observable<Balance>;
-
-  create(account: CreateAccount): Observable<Account>;
-
-  update(empty: Empty): Observable<Account>;
-
-  remove(empty: Empty): Observable<Status>;
 }

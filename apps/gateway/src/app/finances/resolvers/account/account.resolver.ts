@@ -12,7 +12,7 @@ import {
   ACCOUNT_SERVICE,
   AccountGrpc,
   Balance,
-  CreateAccount,
+  AccountInput,
   BalanceFilter,
   User,
 } from '@admin-back/grpc';
@@ -21,8 +21,10 @@ import { CurrentUser } from '@admin-back/shared';
 
 @Resolver(Account)
 export class AccountResolver {
-  @Inject(ACCOUNT_SERVICE)
-  private accountService: AccountGrpc;
+  constructor(
+    @Inject(ACCOUNT_SERVICE)
+    private accountService: AccountGrpc
+  ) {}
 
   @Query(() => [Account])
   userAccounts(@CurrentUser() user: User): Observable<Account[]> {
@@ -34,9 +36,9 @@ export class AccountResolver {
   @Mutation(() => Account)
   createAccount(
     @CurrentUser() user: User,
-    @Args('account') account: CreateAccount
+    @Args('account') account: AccountInput
   ): Observable<Account> {
-    return this.accountService.create({ ...account, user: user.id });
+    return this.accountService.save({ ...account, user: user.id });
   }
 
   @ResolveField()

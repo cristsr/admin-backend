@@ -17,11 +17,13 @@ import { CurrentUser } from '@admin-back/shared';
 
 @Resolver()
 export class SummaryResolver {
-  @Inject(SUMMARY_SERVICE)
-  private summaryService: SummaryGrpc;
+  constructor(
+    @Inject(SUMMARY_SERVICE)
+    private summaryService: SummaryGrpc,
 
-  @Inject(ACCOUNT_SERVICE)
-  private accountService: AccountGrpc;
+    @Inject(ACCOUNT_SERVICE)
+    private accountService: AccountGrpc
+  ) {}
 
   @Query(() => Balance)
   balance(
