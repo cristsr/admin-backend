@@ -65,5 +65,5 @@ message MovementFilter {
 }
 
 message MovementId {
-  extend shared.Id {}
+  int32 id = 1;
 }

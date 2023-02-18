@@ -12,6 +12,7 @@ import {
   SUMMARY_SERVICE,
   SummaryGrpc,
   User,
+  LastMovementFilter,
 } from '@admin-back/grpc';
 import { CurrentUser } from '@admin-back/shared';
 
@@ -39,7 +40,16 @@ export class SummaryResolver {
   }
 
   @Query(() => [Movement])
-  lastMovements(): Observable<Movement[]> {
-    return this.summaryService.lastMovements({}).pipe(map((res) => res.data));
+  lastMovements(
+    @CurrentUser() user: User,
+    @Args('filter') filter: LastMovementFilter
+  ): Observable<Movement[]> {
+    return this.summaryService
+      .lastMovements({
+        account: filter.account,
+        user: user.id,
+        date: '',
+      })
+      .pipe(map((res) => res.data));
   }
 }

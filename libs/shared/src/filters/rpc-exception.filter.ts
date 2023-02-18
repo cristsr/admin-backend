@@ -5,14 +5,20 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { BaseRpcExceptionFilter } from '@nestjs/microservices';
 import { status } from '@grpc/grpc-js';
 
 @Catch()
-export class RpcExceptionFilter extends BaseRpcExceptionFilter {
+export class RpcExceptionFilter {
   #logger = new Logger(RpcExceptionFilter.name);
 
   catch(exception: any): never {
+    console.log('filter exception');
+
+    // if (exception instanceof HttpException) {
+    //   this.#logger.error(`${exception.constructor.name}: ${exception.message}`);
+    //   throw exception;
+    // }
+
     const message = exception.details || exception.message;
 
     if (exception.code === status.ABORTED) {
@@ -31,7 +37,7 @@ export class RpcExceptionFilter extends BaseRpcExceptionFilter {
       );
     }
 
-    this.#logger.error(`${exception.constructor.name}: ${message}`);
+    this.#logger.error(`${exception.constructor.name}: ${exception}`);
 
     throw new HttpException(
       {

@@ -9,9 +9,6 @@ import { ENV } from 'env';
       useFactory: (configService: ConfigService) => ({
         type: configService.get<any>(ENV.DB_TYPE),
         url: configService.get(ENV.DB_URI),
-        ssl: {
-          rejectUnauthorized: false,
-        },
         synchronize: configService.get(ENV.DB_SYNCHRONIZE),
         autoLoadEntities: true,
       }),

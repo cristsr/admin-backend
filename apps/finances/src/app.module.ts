@@ -4,10 +4,9 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 import {
-  configValidator,
-  HttpExceptionFilter,
   ResponseInterceptor,
-  TypeormExceptionFilter,
+  ExceptionFilter,
+  validatorFactory,
 } from '@admin-back/shared';
 import { Environment } from 'env';
 import { DatabaseModule } from 'database/database.module';
@@ -24,7 +23,7 @@ import { AppController } from './app.controller';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      validate: (config: object) => configValidator(config, Environment),
+      validate: validatorFactory(Environment),
     }),
     CacheModule.register(),
     ScheduleModule.forRoot(),
@@ -42,11 +41,7 @@ import { AppController } from './app.controller';
   providers: [
     {
       provide: APP_FILTER,
-      useClass: TypeormExceptionFilter,
-    },
-    {
-      provide: APP_FILTER,
-      useClass: HttpExceptionFilter,
+      useClass: ExceptionFilter,
     },
     {
       provide: APP_INTERCEPTOR,

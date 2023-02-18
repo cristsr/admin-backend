@@ -1,6 +1,6 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DateTime } from 'luxon';
+import { DateTime, Interval } from 'luxon';
 import { defer, map, Observable } from 'rxjs';
 import { Repository } from 'typeorm';
 import {
@@ -10,6 +10,7 @@ import {
   ExpenseFilter,
   SummaryGrpc,
   Period,
+  LastMovementFilter,
 } from '@admin-back/grpc';
 import { MovementEntity } from 'app/movement/entities';
 
@@ -22,43 +23,47 @@ export class SummaryService implements SummaryGrpc {
 
   @GrpcMethod()
   expenses(filter: ExpenseFilter): Observable<Expenses> {
-    const date = DateTime.utc();
-    const today = date.toSQLDate();
-    const start = date.startOf('week').toSQLDate();
-    const end = date.endOf('week').toSQLDate();
+    console.log(filter);
 
-    const queriesMap: Record<Exclude<Period, 'all' | 'custom'>, any> = {
-      daily: () => ({
-        query: `m.date = '${today}'`,
-        params: { today },
-      }),
+    const periodConfig: Record<Exclude<Period, 'all' | 'custom'>, any> = {
+      daily: () => {
+        return {
+          query: `m.date = '${DateTime.fromISO(filter.date).toISODate()}'`,
+        };
+      },
 
-      weekly: () => ({
-        query: `date BETWEEN '${start}'::date AND '${end}'::date`,
-        params: {},
-      }),
+      weekly: () => {
+        const interval = Interval.fromISO(filter.date);
+        return {
+          query: `date BETWEEN '${interval.start.toISODate()}'::date AND '${interval.end.toISODate()}'::date`,
+        };
+      },
 
       monthly: () => ({
-        query: `to_char(m.date, 'YYYY-MM') = to_char('${today}'::date, 'YYYY-MM')`,
-        params: {},
+        query: `to_char(m.date, 'YYYY-MM') = '${filter.date}'`,
       }),
 
       yearly: () => ({
-        query: "to_char(date, 'YYYY') = :date",
-        params: { date: filter.date },
+        query: `to_char(date, 'YYYY') = '${filter.date}'`,
       }),
     };
 
-    return this.expensesQuery(queriesMap[filter.period]().query).pipe(
-      map((data) => ({ data }))
-    );
+    return this.expensesQuery({
+      where: periodConfig[filter.period]().query,
+    }).pipe(map((data) => ({ data })));
   }
 
   @GrpcMethod()
-  lastMovements(): Observable<Movements> {
+  lastMovements(filter: LastMovementFilter): Observable<Movements> {
     return defer(() =>
       this.movementRepository.find({
         relations: ['category', 'subcategory'],
+        where: {
+          account: {
+            id: filter.account,
+          },
+          user: filter.user,
+        },
         order: {
           date: 'DESC',
         },
@@ -67,12 +72,12 @@ export class SummaryService implements SummaryGrpc {
     ).pipe(map((data) => ({ data })));
   }
 
-  private expensesQuery(where: string): Observable<Expense[]> {
+  private expensesQuery(opts): Observable<Expense[]> {
     const query = this.movementRepository
       .createQueryBuilder('m')
       .select('SUM(m.amount)::float', 'amount')
       .leftJoinAndSelect('m.category', 'c')
-      .where(where)
+      .where(opts.where)
       .andWhere(`m.type = 'expense'`)
       .groupBy('c.id, c.name, c.color, c.icon')
       .orderBy('amount', 'DESC')

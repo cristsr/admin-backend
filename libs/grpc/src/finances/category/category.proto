@@ -38,5 +38,6 @@ message Categories {
 }
 
 message CategoryId {
-  extend shared.Id {}
+  int32 id = 1;
 }
+

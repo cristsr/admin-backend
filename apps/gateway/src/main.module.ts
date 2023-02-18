@@ -5,9 +5,9 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver } from '@nestjs/apollo';
 import { Environment } from 'env';
 import {
-  configValidator,
   RequestInterceptor,
   RpcExceptionFilter,
+  validatorFactory,
 } from '@admin-back/shared';
 import { AuthModule } from 'app/auth';
 import { FinancesModule } from 'app/finances';
@@ -18,7 +18,7 @@ import { AppController } from './app.controller';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      validate: (config: object) => configValidator(config, Environment),
+      validate: validatorFactory(Environment),
     }),
     GraphQLModule.forRoot({
       driver: ApolloDriver,
@@ -35,10 +35,6 @@ import { AppController } from './app.controller';
     UsersModule,
   ],
   providers: [
-    // {
-    //   provide: APP_FILTER,
-    //   useClass: AllExceptionFilter,
-    // },
     {
       provide: APP_FILTER,
       useClass: RpcExceptionFilter,

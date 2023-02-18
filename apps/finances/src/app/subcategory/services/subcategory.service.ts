@@ -32,6 +32,7 @@ export class SubcategoryService implements SubcategoryGrpc {
 
   @GrpcMethod()
   findByCategory(categoryId: Id): Observable<Subcategories> {
+    console.log('findByCategory', categoryId);
     const query$ = defer(() => {
       return this.subcategoryRepository.find({
         where: {

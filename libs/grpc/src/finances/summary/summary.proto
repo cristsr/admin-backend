@@ -6,7 +6,7 @@ import "google/protobuf/any.proto";
 
 service SummaryService {
   rpc Expenses(ExpenseFilter)            returns (stream Expenses) {}
-  rpc LastMovements(google.protobuf.Any) returns (stream movement.Movements) {}
+  rpc LastMovements(LastMovementFilter)  returns (stream movement.Movements) {}
 }
 
 message Expense {
@@ -22,4 +22,9 @@ message Expenses {
 message ExpenseFilter {
   string    period = 10;
   string    date   = 20;
+}
+
+message LastMovementFilter {
+  int32   account = 10;
+  int32   user    = 20;
 }

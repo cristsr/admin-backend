@@ -6,7 +6,10 @@ export type Keys<T> = Readonly<{
   [key in keyof T]: key;
 }>;
 
-export function configValidator(config: object, type: Type) {
+export function configValidator(
+  config: object,
+  type: Type
+): Record<string, any> {
   const logger = new Logger(configValidator.name);
 
   const validatedConfig = plainToClass(type, config);
@@ -15,7 +18,7 @@ export function configValidator(config: object, type: Type) {
     skipMissingProperties: false,
   });
 
-  if (errors.length > 0) {
+  if (errors.length) {
     errors
       .map((error) => error.constraints)
       .map((constraints) => Object.values(constraints))
@@ -25,6 +28,10 @@ export function configValidator(config: object, type: Type) {
   }
 
   return validatedConfig;
+}
+
+export function validatorFactory(type: Type): (config) => Record<string, any> {
+  return (config) => configValidator(config, type);
 }
 
 export function mapEnvironmentKeys<T>(type: Type<T>): Keys<T> {

@@ -132,6 +132,7 @@ export class BudgetService implements BudgetGrpc {
   @GrpcMethod()
   save(data: BudgetInput): Observable<Budget> {
     const utc = DateTime.utc();
+
     const startDate = utc.startOf('month').toFormat('yyyy-MM-dd');
     const endDate = utc.endOf('month').toFormat('yyyy-MM-dd');
 

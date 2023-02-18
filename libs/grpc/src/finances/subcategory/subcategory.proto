@@ -3,6 +3,8 @@ syntax = "proto3";
 package admin.finances.subcategory;
 
 import "google/protobuf/empty.proto";
+import "shared/shared.proto";
+import "category/category.proto";
 
 service SubcategoryService {
   rpc FindOne(SubcategoryId)              returns (stream Subcategory) {}

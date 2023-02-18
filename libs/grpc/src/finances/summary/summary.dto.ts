@@ -27,3 +27,14 @@ export class ExpenseFilter {
   @Field()
   date: string;
 }
+
+@InputType()
+export class LastMovementFilter {
+  @Field()
+  account: number;
+
+  @Field()
+  date: string;
+
+  user: number;
+}

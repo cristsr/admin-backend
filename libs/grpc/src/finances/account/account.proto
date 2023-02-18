@@ -31,7 +31,7 @@ message Accounts {
 }
 
 message AccountId {
-  extend Id {}
+  int32 id = 10;
 }
 
 message CreateAccount {

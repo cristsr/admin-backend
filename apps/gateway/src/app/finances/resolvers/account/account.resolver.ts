@@ -28,6 +28,7 @@ export class AccountResolver {
 
   @Query(() => [Account])
   userAccounts(@CurrentUser() user: User): Observable<Account[]> {
+    console.log(user);
     return this.accountService
       .findByUser({ id: user.id })
       .pipe(map((res) => res.data));

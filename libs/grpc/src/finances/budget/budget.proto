@@ -44,7 +44,7 @@ message BudgetInput {
 }
 
 message BudgetId {
-  extend shared.Id {}
+  int32 id = 1;
 }
 
 message BudgetFilter {
