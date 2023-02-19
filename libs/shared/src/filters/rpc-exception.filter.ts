@@ -1,4 +1,5 @@
 import {
+  ArgumentsHost,
   Catch,
   HttpException,
   HttpStatus,
@@ -6,14 +7,14 @@ import {
   Logger,
 } from '@nestjs/common';
 import { status } from '@grpc/grpc-js';
+import { BaseExceptionFilter } from '@nestjs/core';
 
+// TODO refactor this for better integration with graphql
 @Catch()
-export class RpcExceptionFilter {
+export class RpcExceptionFilter extends BaseExceptionFilter {
   #logger = new Logger(RpcExceptionFilter.name);
 
-  catch(exception: any): never {
-    console.log('filter exception');
-
+  catch(exception: any, host: ArgumentsHost) {
     // if (exception instanceof HttpException) {
     //   this.#logger.error(`${exception.constructor.name}: ${exception.message}`);
     //   throw exception;
@@ -37,9 +38,22 @@ export class RpcExceptionFilter {
       );
     }
 
-    this.#logger.error(`${exception.constructor.name}: ${exception}`);
+    this.#logger.error(`${exception.constructor.name}: ${message}`);
 
-    throw new HttpException(
+    if (exception.constructor.name === 'Error') {
+      throw new HttpException(
+        {
+          statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+          message,
+          error: InternalServerErrorException.name,
+        },
+        HttpStatus.INTERNAL_SERVER_ERROR
+      );
+    }
+
+    // return exception;
+
+    const e = new HttpException(
       {
         statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
         message,
@@ -47,5 +61,7 @@ export class RpcExceptionFilter {
       },
       HttpStatus.INTERNAL_SERVER_ERROR
     );
+
+    super.catch(e, host);
   }
 }
