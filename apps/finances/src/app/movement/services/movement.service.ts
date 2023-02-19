@@ -1,4 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
 import { defer, forkJoin, map, Observable, of, switchMap, tap } from 'rxjs';
@@ -17,6 +18,7 @@ import { CategoryEntity } from 'app/category/entities';
 import { MovementEntity } from 'app/movement/entities';
 import { SubcategoryEntity } from 'app/subcategory/entities';
 import { AccountEntity } from 'app/account/entities';
+import { SaveMovement } from 'app/constants';
 
 @GrpcService('finances')
 export class MovementService implements MovementGrpc {
@@ -31,7 +33,9 @@ export class MovementService implements MovementGrpc {
     private subcategoryRepository: Repository<SubcategoryEntity>,
 
     @InjectRepository(AccountEntity)
-    private accountRepository: Repository<AccountEntity>
+    private accountRepository: Repository<AccountEntity>,
+
+    private eventEmitter: EventEmitter2
   ) {}
 
   @GrpcMethod()
@@ -151,13 +155,22 @@ export class MovementService implements MovementGrpc {
         }
       }),
       switchMap((e) =>
-        this.movementRepository.save({
-          ...e.movement,
-          ...data,
-          category: e.category,
-          subcategory: e.subcategory,
-          account: e.account,
-        })
+        defer(() =>
+          this.movementRepository.save({
+            ...e.movement,
+            ...data,
+            category: e.category,
+            subcategory: e.subcategory,
+            account: e.account,
+          })
+        ).pipe(
+          tap((movement) => {
+            this.eventEmitter.emit(SaveMovement, {
+              previous: e.movement,
+              current: movement,
+            });
+          })
+        )
       )
     );
   }

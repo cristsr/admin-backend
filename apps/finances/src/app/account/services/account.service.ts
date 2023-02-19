@@ -10,10 +10,13 @@ import {
   AccountInput,
   Id,
   BalanceFilter,
+  Movement,
 } from '@admin-back/grpc';
 import { AccountEntity } from 'app/account/entities';
 import { Interval } from 'luxon';
 import { MovementEntity } from 'app/movement/entities';
+import { OnEvent } from '@nestjs/event-emitter';
+import { SaveMovement } from 'app/constants';
 
 @GrpcService('finances')
 export class AccountService implements AccountGrpc {
@@ -163,5 +166,84 @@ export class AccountService implements AccountGrpc {
         initialBalance: data.initialBalance,
       })
     );
+  }
+
+  @OnEvent(SaveMovement)
+  updateBalance(event: { previous?: Movement; current: Movement }): void {
+    console.log('updateBalance called');
+    const { previous, current } = event;
+    const { account, amount, type } = current;
+
+    const calculateBalance = () => {
+      if (!previous) {
+        return type === 'income'
+          ? account.balance2 + amount
+          : account.balance2 - amount;
+      }
+
+      const { type: prevType, amount: prevAmount } = previous;
+      const diff = prevAmount - amount;
+
+      console.log({ balance: account.balance2, amount, prevAmount, diff });
+
+      if (prevType !== type) {
+        // different types
+
+        if (type === 'expense') {
+          // from income to expense
+
+          // e.g. balance $60.000
+          // previous income $60000
+          // current expense $70000
+          // return $-70000
+
+          // then return the new balance discount the previous amount and the current amount
+          return account.balance2 - prevAmount - amount;
+        }
+
+        // from expense to income
+
+        // e.g. balance $60000
+        // previous expense $70000
+        // current income $60000
+        // return $70000
+
+        // 60000 + 70000 + 60000 = 190000
+
+        // then return the new balance adding the previous amount and adding the difference
+        return account.balance2 + prevAmount + amount;
+      }
+
+      // equal types
+
+      if (prevAmount === amount) {
+        // no changes, so do nothing
+        return account.balance2;
+      }
+
+      // amount are different between versions
+
+      if (type === 'income') {
+        // from income
+        return (
+          account.balance2 + (amount > prevAmount ? Math.abs(diff) : -diff)
+        );
+      }
+
+      // from expense
+      return account.balance2 + (amount > prevAmount ? -Math.abs(diff) : diff);
+    };
+
+    const balance = calculateBalance();
+
+    console.log(balance);
+
+    // update balance
+    this.accountRepository
+      .save({
+        id: account.id,
+        balance2: balance,
+      })
+      .then();
   }
 }

@@ -23,34 +23,22 @@ export class SummaryService implements SummaryGrpc {
 
   @GrpcMethod()
   expenses(filter: ExpenseFilter): Observable<Expenses> {
-    console.log(filter);
-
     const periodConfig: Record<Exclude<Period, 'all' | 'custom'>, any> = {
-      daily: () => {
-        return {
-          query: `m.date = '${DateTime.fromISO(filter.date).toISODate()}'`,
-        };
-      },
+      daily: () => `m.date = '${DateTime.fromISO(filter.date).toISODate()}'`,
 
       weekly: () => {
         const interval = Interval.fromISO(filter.date);
-        return {
-          query: `date BETWEEN '${interval.start.toISODate()}'::date AND '${interval.end.toISODate()}'::date`,
-        };
+        return `date BETWEEN '${interval.start.toISODate()}'::date AND '${interval.end.toISODate()}'::date`;
       },
 
-      monthly: () => ({
-        query: `to_char(m.date, 'YYYY-MM') = '${filter.date}'`,
-      }),
+      monthly: () => `to_char(m.date, 'YYYY-MM') = '${filter.date}'`,
 
-      yearly: () => ({
-        query: `to_char(date, 'YYYY') = '${filter.date}'`,
-      }),
+      yearly: () => `to_char(date, 'YYYY') = '${filter.date}'`,
     };
 
-    return this.expensesQuery({
-      where: periodConfig[filter.period]().query,
-    }).pipe(map((data) => ({ data })));
+    const where = periodConfig[filter.period]();
+
+    return this.expensesQuery({ where }).pipe(map((data) => ({ data })));
   }
 
   @GrpcMethod()

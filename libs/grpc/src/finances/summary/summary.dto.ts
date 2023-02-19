@@ -33,8 +33,8 @@ export class LastMovementFilter {
   @Field()
   account: number;
 
-  @Field()
-  date: string;
+  // @Field()
+  // date: string;
 
   user: number;
 }

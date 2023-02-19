@@ -3,6 +3,7 @@ syntax = "proto3";
 package admin.finances.account;
 
 import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
 
 service AccountService {
   rpc FindAll(google.protobuf.Empty) returns (stream Accounts);
@@ -24,6 +25,7 @@ message Account {
   string  updatedAt      = 60;
   string  closedAt       = 70;
   int32   user           = 90;
+  float   balance2       = 100;
 }
 
 message Accounts {

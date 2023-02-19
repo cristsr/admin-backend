@@ -29,4 +29,4 @@ export class Environment {
   SHOW_DOCS: boolean;
 }
 
-export const ENV = mapEnvironmentKeys<Environment>(Environment);
+export const ENV = mapEnvironmentKeys(Environment);

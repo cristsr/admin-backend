@@ -48,7 +48,6 @@ export class SummaryResolver {
       .lastMovements({
         account: filter.account,
         user: user.id,
-        date: '',
       })
       .pipe(map((res) => res.data));
   }
