@@ -18,27 +18,18 @@ import {
   Status,
 } from '@admin-back/grpc';
 import { NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CategoryEntity } from 'app/category/entities';
-import { Repository } from 'typeorm';
-import { SubcategoryEntity } from 'app/subcategory/entities';
-import { ScheduledEntity } from 'app/scheduled/entities';
-import { AccountEntity } from 'app/account/entities';
+import { AccountRepository } from 'app/account/repositories';
+import { CategoryRepository } from 'app/category/repositories';
+import { SubcategoryRepository } from 'app/subcategory/repositories';
+import { ScheduledRepository } from 'app/scheduled/repositories';
 
 @GrpcService('finances')
 export class ScheduledService implements ScheduledGrpc {
   constructor(
-    @InjectRepository(CategoryEntity)
-    private categoryRepository: Repository<CategoryEntity>,
-
-    @InjectRepository(SubcategoryEntity)
-    private subcategoryRepository: Repository<SubcategoryEntity>,
-
-    @InjectRepository(ScheduledEntity)
-    private scheduledRepository: Repository<ScheduledEntity>,
-
-    @InjectRepository(AccountEntity)
-    private accountRepository: Repository<AccountEntity>
+    private categoryRepository: CategoryRepository,
+    private subcategoryRepository: SubcategoryRepository,
+    private scheduledRepository: ScheduledRepository,
+    private accountRepository: AccountRepository
   ) {}
 
   @GrpcMethod()

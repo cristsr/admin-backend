@@ -1,9 +1,8 @@
 import { NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { InjectRepository } from '@nestjs/typeorm';
 import { defer, forkJoin, map, Observable, of, switchMap, tap } from 'rxjs';
-import { Between, DeleteResult, In, Raw, Repository } from 'typeorm';
+import { Between, DeleteResult, In, Raw } from 'typeorm';
 import { Interval } from 'luxon';
 import {
   MovementInput,
@@ -13,27 +12,19 @@ import {
   MovementGrpc,
   Status,
 } from '@admin-back/grpc';
-import { CategoryEntity } from 'app/category/entities';
-import { MovementEntity } from 'app/movement/entities';
-import { SubcategoryEntity } from 'app/subcategory/entities';
-import { AccountEntity } from 'app/account/entities';
+import { AccountRepository } from 'app/account/repositories';
 import { SaveMovement } from 'app/constants';
+import { MovementRepository } from 'app/movement/repositories';
+import { CategoryRepository } from 'app/category/repositories';
+import { SubcategoryRepository } from 'app/subcategory/repositories';
 
 @GrpcService('finances')
 export class MovementService implements MovementGrpc {
   constructor(
-    @InjectRepository(MovementEntity)
-    private movementRepository: Repository<MovementEntity>,
-
-    @InjectRepository(CategoryEntity)
-    private categoryRepository: Repository<CategoryEntity>,
-
-    @InjectRepository(SubcategoryEntity)
-    private subcategoryRepository: Repository<SubcategoryEntity>,
-
-    @InjectRepository(AccountEntity)
-    private accountRepository: Repository<AccountEntity>,
-
+    private movementRepository: MovementRepository,
+    private categoryRepository: CategoryRepository,
+    private subcategoryRepository: SubcategoryRepository,
+    private accountRepository: AccountRepository,
     private eventEmitter: EventEmitter2
   ) {}
 

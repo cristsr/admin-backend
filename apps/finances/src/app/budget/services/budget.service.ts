@@ -10,32 +10,24 @@ import {
   GenerateBudgets,
   Movement,
 } from '@admin-back/grpc';
-import { InjectRepository } from '@nestjs/typeorm';
 import { BudgetEntity } from 'app/budget/entities';
-import { Between, Repository } from 'typeorm';
-import { MovementEntity } from 'app/movement/entities';
+import { Between } from 'typeorm';
 import { DateTime } from 'luxon';
 import { Logger, NotFoundException } from '@nestjs/common';
-import { CategoryEntity } from 'app/category/entities';
-import { AccountEntity } from 'app/account/entities';
+import { AccountRepository } from 'app/account/repositories';
 import { OnEvent } from '@nestjs/event-emitter';
+import { MovementRepository } from 'app/movement/repositories';
+import { BudgetRepository } from 'app/budget/repositories';
 
 @GrpcService('finances')
 export class BudgetService implements BudgetGrpc {
   #logger = new Logger(BudgetService.name);
 
   constructor(
-    @InjectRepository(BudgetEntity)
-    private budgetRepository: Repository<BudgetEntity>,
-
-    @InjectRepository(CategoryEntity)
-    private categoryRepository: Repository<CategoryEntity>,
-
-    @InjectRepository(MovementEntity)
-    private movementRepository: Repository<MovementEntity>,
-
-    @InjectRepository(AccountEntity)
-    private accountRepository: Repository<AccountEntity>
+    private budgetRepository: BudgetRepository,
+    private categoryRepository: BudgetRepository,
+    private movementRepository: MovementRepository,
+    private accountRepository: AccountRepository
   ) {}
 
   @GrpcMethod()

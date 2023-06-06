@@ -3,7 +3,7 @@ import { EntityTarget } from 'typeorm/common/EntityTarget';
 import { Injectable, Type } from '@nestjs/common';
 
 export function EntityRepository<T>(
-  entity?: EntityTarget<T>
+  entity: EntityTarget<T>
 ): Type<Repository<T>> {
   @Injectable()
   class BaseRepository extends Repository<T> {

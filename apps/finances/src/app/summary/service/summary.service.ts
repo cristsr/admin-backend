@@ -1,8 +1,6 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { InjectRepository } from '@nestjs/typeorm';
 import { DateTime, Interval } from 'luxon';
 import { defer, map, Observable } from 'rxjs';
-import { Repository } from 'typeorm';
 import {
   Expense,
   Movements,
@@ -11,14 +9,11 @@ import {
   Period,
   LastMovementFilter,
 } from '@admin-back/grpc';
-import { MovementEntity } from 'app/movement/entities';
+import { MovementRepository } from 'app/movement/repositories';
 
 @GrpcService('finances')
 export class SummaryService implements SummaryGrpc {
-  constructor(
-    @InjectRepository(MovementEntity)
-    private movementRepository: Repository<MovementEntity>
-  ) {}
+  constructor(private movementRepository: MovementRepository) {}
 
   @GrpcMethod()
   expenses(filter: ExpenseFilter): Observable<Expense[]> {

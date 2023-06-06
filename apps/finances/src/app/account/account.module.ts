@@ -5,13 +5,15 @@ import { AccountEntity } from 'app/account/entities';
 import { MovementModule } from 'app/movement/movement.module';
 import { AccountRepository } from 'app/account/repositories';
 
-const Entities = TypeOrmModule.forFeature([AccountEntity]);
 const Repositories = [AccountRepository];
 
 @Module({
-  imports: [Entities, forwardRef(() => MovementModule)],
+  imports: [
+    TypeOrmModule.forFeature([AccountEntity]),
+    forwardRef(() => MovementModule),
+  ],
   controllers: [AccountService],
-  exports: [Entities],
+  exports: [...Repositories],
   providers: [...Repositories],
 })
 export class AccountModule {}

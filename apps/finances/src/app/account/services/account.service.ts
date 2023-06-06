@@ -1,7 +1,5 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { InjectRepository } from '@nestjs/typeorm';
 import { defer, forkJoin, map, Observable } from 'rxjs';
-import { Repository } from 'typeorm';
 import {
   Account,
   AccountGrpc,
@@ -12,18 +10,16 @@ import {
   Movement,
 } from '@admin-back/grpc';
 import { Interval } from 'luxon';
-import { MovementEntity } from 'app/movement/entities';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SaveMovement } from 'app/constants';
 import { AccountRepository } from 'app/account/repositories';
+import { MovementRepository } from 'app/movement/repositories';
 
 @GrpcService('finances')
 export class AccountService implements AccountGrpc {
   constructor(
     private accountRepository: AccountRepository,
-
-    @InjectRepository(MovementEntity)
-    private movementRepository: Repository<MovementEntity>
+    private movementRepository: MovementRepository
   ) {}
 
   @GrpcMethod()

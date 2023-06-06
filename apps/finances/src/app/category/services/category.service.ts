@@ -1,7 +1,6 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import { NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 import {
   catchError,
   defer,
@@ -22,17 +21,14 @@ import {
   Id,
 } from '@admin-back/grpc';
 import { CategoryEntity } from 'app/category/entities';
-import { SubcategoryEntity } from 'app/subcategory/entities';
+import { CategoryRepository } from 'app/category/repositories';
+import { SubcategoryRepository } from 'app/subcategory/repositories';
 
 @GrpcService('finances')
 export class CategoryService implements CategoryGrpc {
   constructor(
-    @InjectRepository(CategoryEntity)
-    private categoryRepository: Repository<CategoryEntity>,
-
-    @InjectRepository(SubcategoryEntity)
-    private subcategoryRepository: Repository<SubcategoryEntity>,
-
+    private categoryRepository: CategoryRepository,
+    private subcategoryRepository: SubcategoryRepository,
     private dataSource: DataSource
   ) {}
 

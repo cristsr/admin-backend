@@ -8,20 +8,15 @@ import {
   Subcategory,
   Id,
 } from '@admin-back/grpc';
-import { InjectRepository } from '@nestjs/typeorm';
-import { CategoryEntity } from 'app/category/entities';
-import { Repository } from 'typeorm';
-import { SubcategoryEntity } from 'app/subcategory/entities';
 import { NotFoundException } from '@nestjs/common';
+import { CategoryRepository } from 'app/category/repositories';
+import { SubcategoryRepository } from 'app/subcategory/repositories';
 
 @GrpcService('finances')
 export class SubcategoryService implements SubcategoryGrpc {
   constructor(
-    @InjectRepository(CategoryEntity)
-    private categoryRepository: Repository<CategoryEntity>,
-
-    @InjectRepository(SubcategoryEntity)
-    private subcategoryRepository: Repository<SubcategoryEntity>
+    private categoryRepository: CategoryRepository,
+    private subcategoryRepository: SubcategoryRepository
   ) {}
 
   @GrpcMethod()
