@@ -9,7 +9,7 @@ import {
   Status,
   User,
 } from '@admin-back/grpc';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { CurrentUser } from '@admin-back/shared';
 
 @Resolver(Scheduled)
@@ -26,7 +26,7 @@ export class ScheduledResolver {
 
   @Query(() => [Scheduled])
   scheduleds(@Args('filter') filter: ScheduledFilter): Observable<Scheduled[]> {
-    return this.scheduledService.findAll(filter).pipe(map((res) => res.data));
+    return this.scheduledService.findAll(filter);
   }
 
   @Mutation(() => Scheduled)

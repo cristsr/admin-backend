@@ -11,7 +11,15 @@ import { isArray, isEmpty } from 'lodash';
 export class RequestInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     return next.handle().pipe(
-      map((result) => (!isArray(result) && isEmpty(result) ? null : result)),
+      map((result) =>
+        !isArray(result) && isEmpty(result)
+          ? null
+          : result
+          ? isArray(result.data)
+            ? result.data
+            : result
+          : {}
+      ),
       tap(console.log)
     );
   }

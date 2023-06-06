@@ -5,7 +5,6 @@ import { defer, map, Observable } from 'rxjs';
 import { Repository } from 'typeorm';
 import {
   Expense,
-  Expenses,
   Movements,
   ExpenseFilter,
   SummaryGrpc,
@@ -22,7 +21,7 @@ export class SummaryService implements SummaryGrpc {
   ) {}
 
   @GrpcMethod()
-  expenses(filter: ExpenseFilter): Observable<Expenses> {
+  expenses(filter: ExpenseFilter): Observable<Expense[]> {
     const periodConfig: Record<Exclude<Period, 'all' | 'custom'>, any> = {
       daily: () => `m.date = '${DateTime.fromISO(filter.date).toISODate()}'`,
 
@@ -38,7 +37,7 @@ export class SummaryService implements SummaryGrpc {
 
     const where = periodConfig[filter.period]();
 
-    return this.expensesQuery({ where }).pipe(map((data) => ({ data })));
+    return this.expensesQuery({ where });
   }
 
   @GrpcMethod()

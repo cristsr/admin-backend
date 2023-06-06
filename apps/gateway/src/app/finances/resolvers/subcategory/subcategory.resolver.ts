@@ -8,7 +8,7 @@ import {
   SUBCATEGORY_SERVICE,
   SubcategoryGrpc,
 } from '@admin-back/grpc';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 
 @Resolver()
 export class SubcategoryResolver {
@@ -24,9 +24,7 @@ export class SubcategoryResolver {
 
   @Query(() => [Subcategory])
   subcategories(@Args('category') category: number): Observable<Subcategory[]> {
-    return this.subcategoryService
-      .findByCategory({ id: category })
-      .pipe(map((res) => res.data));
+    return this.subcategoryService.findByCategory({ id: category });
   }
 
   @Mutation(() => Subcategory)

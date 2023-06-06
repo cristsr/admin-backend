@@ -4,14 +4,13 @@ import {
   Id,
   Scheduled,
   ScheduledFilter,
-  Scheduleds,
   Status,
 } from '@admin-back/grpc';
 
 export interface ScheduledGrpc {
   findOne(id: Id): Observable<Scheduled>;
 
-  findAll(filter: ScheduledFilter): Observable<Scheduleds>;
+  findAll(filter: ScheduledFilter): Observable<Scheduled[]>;
 
   save(data: ScheduledInput): Observable<Scheduled>;
 

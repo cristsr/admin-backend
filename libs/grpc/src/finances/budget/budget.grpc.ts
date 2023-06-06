@@ -2,19 +2,18 @@ import { Observable } from 'rxjs';
 import {
   Id,
   Budget,
-  Budgets,
   BudgetInput,
-  Movements,
   Status,
   BudgetFilter,
+  Movement,
 } from '@admin-back/grpc';
 
 export interface BudgetGrpc {
   findOne(id: Id): Observable<Budget>;
 
-  findAll(filter: BudgetFilter): Observable<Budgets>;
+  findAll(filter: BudgetFilter): Observable<Budget[]>;
 
-  findMovements(id: Id): Observable<Movements>;
+  findMovements(id: Id): Observable<Movement[]>;
 
   save(budget: BudgetInput): Observable<Budget>;
 

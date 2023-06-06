@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import {
   MovementInput,
   Movement,
@@ -26,7 +26,7 @@ export class MovementResolver {
 
   @Query(() => [Movement])
   movements(@Args('filter') filter: MovementFilter): Observable<Movement[]> {
-    return this.movementService.findAll(filter).pipe(map((res) => res.data));
+    return this.movementService.findAll(filter);
   }
 
   @Mutation(() => Movement)

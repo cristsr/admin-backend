@@ -16,7 +16,7 @@ import {
   BalanceFilter,
   User,
 } from '@admin-back/grpc';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import { CurrentUser } from '@admin-back/shared';
 
 @Resolver(Account)
@@ -28,10 +28,7 @@ export class AccountResolver {
 
   @Query(() => [Account])
   userAccounts(@CurrentUser() user: User): Observable<Account[]> {
-    console.log(user);
-    return this.accountService
-      .findByUser({ id: user.id })
-      .pipe(map((res) => res.data));
+    return this.accountService.findByUser({ id: user.id });
   }
 
   @Mutation(() => Account)

@@ -5,13 +5,12 @@ import {
   CategoryInput,
   Status,
   Id,
-  List,
 } from '@admin-back/grpc';
 
 export interface CategoryGrpc {
   findOne(id: Id): Observable<Category>;
 
-  findAll(): Observable<List<Category>>;
+  findAll(): Observable<Category[]>;
 
   save(data: CategoryInput): Observable<Category>;
 

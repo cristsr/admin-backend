@@ -26,15 +26,15 @@ export class AccountEntity implements Account {
   active: boolean;
 
   @CreateDateColumn({ name: 'created_at' })
-  @Transform(({ value }) => value.toISOString())
+  @Transform(({ value }) => value?.toISOString())
   createdAt: string;
 
   @UpdateDateColumn({ name: 'updated_at', nullable: true })
-  @Transform(({ value }) => value.toISOString())
+  @Transform(({ value }) => value?.toISOString())
   updatedAt: string;
 
   @Column({ name: 'closed_at', type: 'timestamp', nullable: true })
-  @Transform(({ value }) => value.toISOString())
+  @Transform(({ value }) => value?.toISOString())
   closedAt: string;
 
   @Column({ name: 'user_id' })

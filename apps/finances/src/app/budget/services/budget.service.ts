@@ -4,12 +4,11 @@ import {
   Id,
   BudgetGrpc,
   Budget,
-  Budgets,
   BudgetInput,
-  Movements,
   Status,
   BudgetFilter,
   GenerateBudgets,
+  Movement,
 } from '@admin-back/grpc';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BudgetEntity } from 'app/budget/entities';
@@ -64,7 +63,7 @@ export class BudgetService implements BudgetGrpc {
   }
 
   @GrpcMethod()
-  findAll(filter: BudgetFilter): Observable<Budgets> {
+  findAll(filter: BudgetFilter): Observable<Budget[]> {
     const budgets$ = defer(() =>
       this.budgetRepository.find({
         where: {
@@ -95,13 +94,12 @@ export class BudgetService implements BudgetGrpc {
             )
           )
         );
-      }),
-      map((data) => ({ data }))
+      })
     );
   }
 
   @GrpcMethod()
-  findMovements(budgetId: Id): Observable<Movements> {
+  findMovements(budgetId: Id): Observable<Movement[]> {
     const budget$ = defer(() =>
       this.budgetRepository.findOne({
         where: budgetId,
@@ -124,8 +122,7 @@ export class BudgetService implements BudgetGrpc {
           },
           relations: ['category', 'subcategory'],
         });
-      }),
-      map((data) => ({ data }))
+      })
     );
   }
 

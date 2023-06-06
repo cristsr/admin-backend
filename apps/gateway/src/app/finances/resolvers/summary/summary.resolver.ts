@@ -36,7 +36,7 @@ export class SummaryResolver {
 
   @Query(() => [Expense])
   expenses(@Args('filter') filter: ExpenseFilter): Observable<Expense[]> {
-    return this.summaryService.expenses(filter).pipe(map((res) => res.data));
+    return this.summaryService.expenses(filter);
   }
 
   @Query(() => [Movement])

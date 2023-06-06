@@ -5,36 +5,30 @@ import { Repository } from 'typeorm';
 import {
   Account,
   AccountGrpc,
-  Accounts,
-  Balance,
   AccountInput,
-  Id,
+  Balance,
   BalanceFilter,
+  Id,
   Movement,
 } from '@admin-back/grpc';
-import { AccountEntity } from 'app/account/entities';
 import { Interval } from 'luxon';
 import { MovementEntity } from 'app/movement/entities';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SaveMovement } from 'app/constants';
+import { AccountRepository } from 'app/account/repositories';
 
 @GrpcService('finances')
 export class AccountService implements AccountGrpc {
   constructor(
-    @InjectRepository(AccountEntity)
-    private accountRepository: Repository<AccountEntity>,
+    private accountRepository: AccountRepository,
 
     @InjectRepository(MovementEntity)
     private movementRepository: Repository<MovementEntity>
   ) {}
 
   @GrpcMethod()
-  findAll(): Observable<Accounts> {
-    return defer(() => this.accountRepository.find()).pipe(
-      map((data) => ({
-        data,
-      }))
-    );
+  findAll(): Observable<Account[]> {
+    return defer(() => this.accountRepository.find());
   }
 
   @GrpcMethod()
@@ -49,16 +43,14 @@ export class AccountService implements AccountGrpc {
   }
 
   @GrpcMethod()
-  findByUser(user: Id): Observable<Accounts> {
-    const account = defer(() =>
+  findByUser(user: Id): Observable<Account[]> {
+    return defer(() =>
       this.accountRepository.find({
         where: {
           user: user.id,
         },
       })
     );
-
-    return account.pipe(map((data) => ({ data })));
   }
 
   @GrpcMethod()
@@ -170,7 +162,6 @@ export class AccountService implements AccountGrpc {
 
   @OnEvent(SaveMovement)
   updateBalance(event: { previous?: Movement; current: Movement }): void {
-    console.log('updateBalance called');
     const { previous, current } = event;
     const { account, amount, type } = current;
 
@@ -183,8 +174,6 @@ export class AccountService implements AccountGrpc {
 
       const { type: prevType, amount: prevAmount } = previous;
       const diff = prevAmount - amount;
-
-      console.log({ balance: account.balance2, amount, prevAmount, diff });
 
       if (prevType !== type) {
         // different types
@@ -235,8 +224,6 @@ export class AccountService implements AccountGrpc {
     };
 
     const balance = calculateBalance();
-
-    console.log(balance);
 
     // update balance
     this.accountRepository

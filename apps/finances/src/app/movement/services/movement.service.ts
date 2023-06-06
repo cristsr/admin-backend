@@ -11,7 +11,6 @@ import {
   Movement,
   MovementFilter,
   MovementGrpc,
-  Movements,
   Status,
 } from '@admin-back/grpc';
 import { CategoryEntity } from 'app/category/entities';
@@ -39,7 +38,7 @@ export class MovementService implements MovementGrpc {
   ) {}
 
   @GrpcMethod()
-  findAll(filter: MovementFilter): Observable<Movements> {
+  findAll(filter: MovementFilter): Observable<Movement[]> {
     const dateMap: Record<string, any> = {
       daily: () => filter.date,
 
@@ -62,7 +61,7 @@ export class MovementService implements MovementGrpc {
     };
 
     // Execute query
-    const movements = defer(() =>
+    return defer(() =>
       this.movementRepository.find({
         where: {
           date: dateMap[filter.period](),
@@ -77,8 +76,6 @@ export class MovementService implements MovementGrpc {
         relations: ['category', 'subcategory'],
       })
     );
-
-    return movements.pipe(map((data: MovementEntity[]) => ({ data })));
   }
 
   @GrpcMethod()

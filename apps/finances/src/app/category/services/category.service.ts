@@ -15,7 +15,6 @@ import {
 } from 'rxjs';
 import {
   CategoryGrpc,
-  Categories,
   Category,
   CategoriesInput,
   CategoryInput,
@@ -43,14 +42,12 @@ export class CategoryService implements CategoryGrpc {
   }
 
   @GrpcMethod()
-  findAll(): Observable<Categories> {
-    const categories$ = defer(() =>
+  findAll(): Observable<Category[]> {
+    return defer(() =>
       this.categoryRepository.find({
         relations: ['subcategories'],
       })
     );
-
-    return categories$.pipe(map((data) => ({ data })));
   }
 
   @GrpcMethod()

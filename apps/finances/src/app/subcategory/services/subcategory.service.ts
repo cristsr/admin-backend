@@ -6,7 +6,6 @@ import {
   CreateSubcategories,
   Status,
   Subcategory,
-  Subcategories,
   Id,
 } from '@admin-back/grpc';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -31,17 +30,14 @@ export class SubcategoryService implements SubcategoryGrpc {
   }
 
   @GrpcMethod()
-  findByCategory(categoryId: Id): Observable<Subcategories> {
-    console.log('findByCategory', categoryId);
-    const query$ = defer(() => {
+  findByCategory(categoryId: Id): Observable<Subcategory[]> {
+    return defer(() => {
       return this.subcategoryRepository.find({
         where: {
           category: categoryId,
         },
       });
     });
-
-    return query$.pipe(map((data) => ({ data })));
   }
 
   @GrpcMethod()

@@ -1,6 +1,6 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import {
   Budget,
   BUDGET_SERVICE,
@@ -30,16 +30,15 @@ export class BudgetResolver {
     @CurrentUser() user: User,
     @Args('filter') filter: BudgetFilter
   ): Observable<Budget[]> {
-    return this.budgetService
-      .findAll({ account: filter.account, user: user.id })
-      .pipe(map((res) => res.data));
+    return this.budgetService.findAll({
+      account: filter.account,
+      user: user.id,
+    });
   }
 
   @Query(() => [Movement])
   budgetMovements(@Args('id') id: number): Observable<Movement[]> {
-    return this.budgetService
-      .findMovements({ id })
-      .pipe(map((res) => res.data));
+    return this.budgetService.findMovements({ id });
   }
 
   @Mutation(() => Budget)

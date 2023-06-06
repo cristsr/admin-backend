@@ -3,7 +3,6 @@ import {
   CreateSubcategories,
   SubcategoryInput,
   Status,
-  Subcategories,
   Subcategory,
   Id,
 } from '@admin-back/grpc';
@@ -11,7 +10,7 @@ import {
 export interface SubcategoryGrpc {
   findOne(id: Id): Observable<Subcategory>;
 
-  findByCategory(category: Id): Observable<Subcategories>;
+  findByCategory(category: Id): Observable<Subcategory[]>;
 
   save(subcategory: SubcategoryInput): Observable<Subcategory>;
 

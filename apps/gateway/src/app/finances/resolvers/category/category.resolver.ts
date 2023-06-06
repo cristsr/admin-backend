@@ -1,6 +1,6 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import {
   Category,
   CATEGORY_SERVICE,
@@ -24,7 +24,7 @@ export class CategoryResolver {
 
   @Query(() => [Category])
   categories(): Observable<Category[]> {
-    return this.categoryService.findAll().pipe(map((res) => res.data));
+    return this.categoryService.findAll();
   }
 
   @Mutation(() => Category)

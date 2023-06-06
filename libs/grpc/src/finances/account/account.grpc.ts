@@ -4,17 +4,16 @@ import {
   Id,
   AccountInput,
   Account,
-  Accounts,
   Balance,
   BalanceFilter,
 } from '@admin-back/grpc';
 
 export interface AccountGrpc {
-  findAll(empty: Empty): Observable<Accounts>;
+  findAll(empty: Empty): Observable<Account[]>;
 
   findOne(id: Id): Observable<Account>;
 
-  findByUser(user: Id): Observable<Accounts>;
+  findByUser(user: Id): Observable<Account[]>;
 
   save(account: AccountInput): Observable<Account>;
 

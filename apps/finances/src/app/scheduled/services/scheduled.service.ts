@@ -15,7 +15,6 @@ import {
   Scheduled,
   ScheduledFilter,
   ScheduledGrpc,
-  Scheduleds,
   Status,
 } from '@admin-back/grpc';
 import { NotFoundException } from '@nestjs/common';
@@ -53,15 +52,15 @@ export class ScheduledService implements ScheduledGrpc {
   }
 
   @GrpcMethod()
-  findAll(filter: ScheduledFilter): Observable<Scheduleds> {
-    const query = this.scheduledRepository.find({
-      where: {
-        account: { id: filter.account },
-      },
-      relations: ['category', 'subcategory'],
-    });
-
-    return from(query).pipe(map((data) => ({ data })));
+  findAll(filter: ScheduledFilter): Observable<Scheduled[]> {
+    return defer(() =>
+      this.scheduledRepository.find({
+        where: {
+          account: { id: filter.account },
+        },
+        relations: ['category', 'subcategory'],
+      })
+    );
   }
 
   @GrpcMethod()
