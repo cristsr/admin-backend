@@ -1,5 +1,6 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { Period } from '../finances.constants';
+import { IsDateString } from '@admin-back/shared';
 
 @ObjectType()
 export class Account {
@@ -56,6 +57,7 @@ export class BalanceFilter {
   period: Period;
 
   @Field()
+  @IsDateString()
   date: string;
 
   @Field({ nullable: true })

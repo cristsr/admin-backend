@@ -17,6 +17,10 @@ export class RpcExceptionFilter extends BaseExceptionFilter {
   catch(exception: any, host: ArgumentsHost) {
     const message = exception.details || exception.message;
 
+    if (exception.constructor.name === 'BadRequestException') {
+      throw exception;
+    }
+
     if (exception.code === status.ABORTED) {
       const [error] = exception.metadata.get('exception');
       const [statusCode] = exception.metadata.get('status').map(Number);
