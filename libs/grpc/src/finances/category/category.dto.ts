@@ -1,11 +1,4 @@
 import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
-import { SubcategoryInput, Subcategory } from '@admin-back/grpc';
-import {
-  ListInput,
-  ListObject,
-  OmitInputType,
-  PartialInputType,
-} from '@admin-back/shared';
 import {
   IsArray,
   IsNotEmpty,
@@ -14,13 +7,12 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { ListInput, ListObject, OmitInputType } from '@admin-back/shared';
+import { SubcategoryInput, Subcategory } from '../subcategory';
+import { BaseDto } from '../../shared';
 
 @ObjectType()
-export class Category {
-  @Field(() => Int)
-  @Min(0)
-  id: number;
-
+export class Category extends BaseDto {
   @Field()
   @IsNotEmpty()
   name: string;

@@ -1,11 +1,5 @@
 import { Observable } from 'rxjs';
-import {
-  Category,
-  CategoriesInput,
-  CategoryInput,
-  Status,
-  Id,
-} from '@admin-back/grpc';
+import { Category, CategoriesInput, CategoryInput, Status, Id } from '../..';
 
 export interface CategoryGrpc {
   findOne(id: Id): Observable<Category>;

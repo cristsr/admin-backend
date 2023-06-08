@@ -1,17 +1,15 @@
 import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
 import { ArrayMaxSize, IsArray, IsOptional } from 'class-validator';
 import { OmitInputType, TransformDate } from '@admin-back/shared';
+import { MovementType } from './movement.types';
 import { Category } from '../category';
 import { Subcategory } from '../subcategory';
 import { Account } from '../account';
-import { MovementType } from './movement.types';
 import { Period } from '../finances.constants';
+import { BaseDto } from '../../shared';
 
 @ObjectType()
-export class Movement {
-  @Field()
-  id: number;
-
+export class Movement extends BaseDto {
   @Field(() => MovementType)
   type: MovementType;
 
@@ -31,15 +29,6 @@ export class Movement {
 
   @Field()
   subcategory: Subcategory;
-
-  @Field()
-  createdAt: Date;
-
-  @Field({ nullable: true })
-  updatedAt: Date;
-
-  @Field({ nullable: true })
-  deletedAt: Date;
 
   account: Account;
 

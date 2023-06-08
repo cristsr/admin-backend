@@ -1,12 +1,10 @@
-import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm';
+import { Column, Entity, OneToMany } from 'typeorm';
 import { SubcategoryEntity } from 'app/subcategory/entities';
 import { Category } from '@admin-back/grpc';
+import { BaseEntity } from '@admin-back/shared';
 
 @Entity('categories')
-export class CategoryEntity implements Category {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+export class CategoryEntity extends BaseEntity implements Category {
   @Column()
   name: string;
 

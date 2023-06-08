@@ -1,18 +1,9 @@
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  PrimaryGeneratedColumn,
-  UpdateDateColumn,
-} from 'typeorm';
+import { Column, Entity } from 'typeorm';
 import { Account } from '@admin-back/grpc';
-import { TransformDate } from '@admin-back/shared';
+import { BaseEntity, TransformDate } from '@admin-back/shared';
 
 @Entity('accounts')
-export class AccountEntity implements Account {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+export class AccountEntity extends BaseEntity implements Account {
   @Column()
   name: string;
 
@@ -22,15 +13,7 @@ export class AccountEntity implements Account {
   @Column({ default: true })
   active: boolean;
 
-  @CreateDateColumn({ name: 'created_at' })
-  @TransformDate()
-  createdAt: Date;
-
-  @UpdateDateColumn({ name: 'updated_at', nullable: true })
-  @TransformDate()
-  updatedAt: Date;
-
-  @Column({ name: 'closed_at', type: 'timestamp', nullable: true })
+  @Column({ name: 'closed_at', nullable: true })
   @TransformDate()
   closedAt: Date;
 

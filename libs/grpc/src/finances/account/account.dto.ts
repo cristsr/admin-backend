@@ -1,12 +1,10 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { Period } from '../finances.constants';
 import { IsDateString } from '@admin-back/shared';
+import { Period } from '../finances.constants';
+import { BaseDto } from '../../shared';
 
 @ObjectType()
-export class Account {
-  @Field()
-  id: number;
-
+export class Account extends BaseDto {
   @Field()
   name: string;
 
@@ -15,12 +13,6 @@ export class Account {
 
   @Field()
   active: boolean;
-
-  @Field({ nullable: true })
-  createdAt: Date;
-
-  @Field({ nullable: true })
-  updatedAt: Date;
 
   @Field({ nullable: true })
   closedAt: Date;

@@ -8,3 +8,4 @@ export * from './logger';
 export * from './functions';
 export * from './types';
 export * from './scalares';
+export * from './entities';

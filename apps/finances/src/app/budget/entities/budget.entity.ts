@@ -1,20 +1,14 @@
-import {
-  Column,
-  Entity,
-  JoinColumn,
-  ManyToOne,
-  PrimaryGeneratedColumn,
-  RelationId,
-} from 'typeorm';
+import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { Budget } from '@admin-back/grpc';
 import { CategoryEntity } from 'app/category/entities';
 import { AccountEntity } from 'app/account/entities';
+import { BaseEntity } from '@admin-back/shared';
 
 @Entity('budgets')
-export class BudgetEntity implements Omit<Budget, 'percentage' | 'spent'> {
-  @PrimaryGeneratedColumn()
-  id: number;
-
+export class BudgetEntity
+  extends BaseEntity
+  implements Omit<Budget, 'percentage' | 'spent'>
+{
   @Column()
   name: string;
 

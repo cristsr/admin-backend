@@ -1,11 +1,10 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { Account, Category } from '../..';
+import { Account } from '../account';
+import { Category } from '../category';
+import { BaseDto } from '../../shared';
 
 @ObjectType()
-export class Budget {
-  @Field()
-  id: number;
-
+export class Budget extends BaseDto {
   @Field()
   name: string;
 

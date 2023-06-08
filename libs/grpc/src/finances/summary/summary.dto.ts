@@ -1,7 +1,6 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { Category, PeriodType, periods } from '../..';
-import { IsIn } from 'class-validator';
-import { ListObject } from '@admin-back/shared';
+import { Category } from '../category';
+import { Period } from '../finances.constants';
 
 @ObjectType()
 export class Expense {
@@ -15,14 +14,10 @@ export class Expense {
   category: Category;
 }
 
-@ObjectType()
-export class Expenses extends ListObject(Expense) {}
-
 @InputType()
 export class ExpenseFilter {
-  @Field(() => String)
-  @IsIn(periods)
-  period: PeriodType;
+  @Field(() => Period)
+  period: Period;
 
   @Field()
   date: string;
