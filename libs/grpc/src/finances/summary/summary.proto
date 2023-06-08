@@ -5,8 +5,22 @@ package admin.finances.summary;
 import "google/protobuf/any.proto";
 
 service SummaryService {
+  rpc Balance(BalanceFilter)             returns (Balance) {}
   rpc Expenses(ExpenseFilter)            returns (stream Expenses) {}
   rpc LastMovements(LastMovementFilter)  returns (stream movement.Movements) {}
+}
+
+message BalanceFilter {
+  string period     = 10;
+  int32  account    = 20;
+  int32  user       = 30;
+  string date       = 40;
+}
+
+message Balance {
+  float incomes  = 10;
+  float expenses = 20;
+  float balance = 30;
 }
 
 message Expense {

@@ -1,8 +1,6 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { ListObject } from '@admin-back/shared';
 import { Relation } from 'typeorm';
-import { IsIn } from 'class-validator';
-import { Period, periods } from '../finances.constants';
+import { Period } from '../finances.constants';
 
 @ObjectType()
 export class Account {
@@ -24,19 +22,17 @@ export class Account {
   @Field()
   active: boolean;
 
-  @Field()
-  createdAt: string;
+  @Field({ nullable: true })
+  createdAt: Date;
 
   @Field({ nullable: true })
-  updatedAt: string;
+  updatedAt: Date;
 
   @Field({ nullable: true })
-  closedAt: string;
+  closedAt: Date;
 
   user: number;
 }
-
-export class Accounts extends ListObject(Account) {}
 
 @InputType()
 export class AccountInput {
@@ -63,8 +59,7 @@ export class Balance {
 
 @InputType()
 export class BalanceFilter {
-  @Field(() => String)
-  @IsIn(periods)
+  @Field(() => Period)
   period: Period;
 
   @Field()

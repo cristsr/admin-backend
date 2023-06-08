@@ -9,6 +9,7 @@ import {
   BudgetFilter,
   GenerateBudgets,
   Movement,
+  MovementType,
 } from '@admin-back/grpc';
 import { BudgetEntity } from 'app/budget/entities';
 import { Between } from 'typeorm';
@@ -104,7 +105,7 @@ export class BudgetService implements BudgetGrpc {
 
         return this.movementRepository.find({
           where: {
-            type: 'expense',
+            type: MovementType.EXPENSE,
             category: { id: budget.categoryId },
             date: Between(budget.startDate, budget.endDate),
           },
@@ -252,7 +253,7 @@ export class BudgetService implements BudgetGrpc {
     );
   }
 
-  private getPercentage(value: number, total: number): number {
-    return Math.floor((value / total) * 100);
+  private getPercentage(spent: number, total: number): number {
+    return Math.floor((spent / total) * 100);
   }
 }

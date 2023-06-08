@@ -1,6 +1,6 @@
 import { Args, Query, Resolver } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
-import { map, Observable } from 'rxjs';
+import { Observable } from 'rxjs';
 import {
   ACCOUNT_SERVICE,
   AccountGrpc,
@@ -31,7 +31,7 @@ export class SummaryResolver {
     @CurrentUser() user: User,
     @Args('filter') filter: BalanceFilter
   ): Observable<Balance> {
-    return this.accountService.findBalance({ ...filter, user: user.id });
+    return this.summaryService.balance({ ...filter, user: user.id });
   }
 
   @Query(() => [Expense])
@@ -44,11 +44,9 @@ export class SummaryResolver {
     @CurrentUser() user: User,
     @Args('filter') filter: LastMovementFilter
   ): Observable<Movement[]> {
-    return this.summaryService
-      .lastMovements({
-        account: filter.account,
-        user: user.id,
-      })
-      .pipe(map((res) => res.data));
+    return this.summaryService.lastMovements({
+      account: filter.account,
+      user: user.id,
+    });
   }
 }

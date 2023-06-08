@@ -1,12 +1,5 @@
 import { Observable } from 'rxjs';
-import {
-  Empty,
-  Id,
-  AccountInput,
-  Account,
-  Balance,
-  BalanceFilter,
-} from '@admin-back/grpc';
+import { Empty, Id, AccountInput, Account } from '../..';
 
 export interface AccountGrpc {
   findAll(empty: Empty): Observable<Account[]>;
@@ -16,6 +9,4 @@ export interface AccountGrpc {
   findByUser(user: Id): Observable<Account[]>;
 
   save(account: AccountInput): Observable<Account>;
-
-  findBalance(filter: BalanceFilter): Observable<Balance>;
 }

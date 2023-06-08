@@ -6,13 +6,13 @@ import {
   PrimaryGeneratedColumn,
   RelationId,
 } from 'typeorm';
+import { Budget } from '@admin-back/grpc';
 import { CategoryEntity } from 'app/category/entities';
 import { AccountEntity } from 'app/account/entities';
 
-// Todo: Review this entity and remove unused fields or refactor it
 @Entity('budgets')
-export class BudgetEntity {
-  @PrimaryGeneratedColumn('increment')
+export class BudgetEntity implements Omit<Budget, 'percentage' | 'spent'> {
+  @PrimaryGeneratedColumn()
   id: number;
 
   @Column()
@@ -21,11 +21,11 @@ export class BudgetEntity {
   @Column()
   amount: number;
 
-  @Column({ type: 'date', name: 'start_date' })
-  startDate: string;
+  @Column({ name: 'start_date' })
+  startDate: Date;
 
-  @Column({ type: 'date', name: 'end_date' })
-  endDate: string;
+  @Column({ name: 'end_date' })
+  endDate: Date;
 
   @Column()
   repeat: boolean;

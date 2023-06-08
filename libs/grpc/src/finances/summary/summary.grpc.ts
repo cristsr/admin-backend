@@ -1,13 +1,17 @@
 import { Observable } from 'rxjs';
 import {
-  Movements,
   ExpenseFilter,
   LastMovementFilter,
   Expense,
-} from '@admin-back/grpc';
+  Movement,
+  BalanceFilter,
+  Balance,
+} from '../..';
 
 export interface SummaryGrpc {
+  balance(filter: BalanceFilter): Observable<Balance>;
+
   expenses(filter: ExpenseFilter): Observable<Expense[]>;
 
-  lastMovements(filter: LastMovementFilter): Observable<Movements>;
+  lastMovements(filter: LastMovementFilter): Observable<Movement[]>;
 }

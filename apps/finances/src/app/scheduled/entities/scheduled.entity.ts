@@ -1,11 +1,13 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   RelationId,
+  UpdateDateColumn,
 } from 'typeorm';
 import { MovementType, Scheduled } from '@admin-back/grpc';
 import { CategoryEntity } from 'app/category/entities';
@@ -21,7 +23,7 @@ export class ScheduledEntity implements Scheduled {
   type: MovementType;
 
   @Column({ type: 'date', name: 'start_date' })
-  date: string;
+  date: Date;
 
   @Column()
   description: string;
@@ -47,7 +49,13 @@ export class ScheduledEntity implements Scheduled {
   subcategoryId: number;
 
   @CreateDateColumn({ type: 'timestamp', name: 'created_at' })
-  createdAt: string;
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at', nullable: true })
+  updatedAt: Date;
+
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  deletedAt: Date;
 
   @ManyToOne(() => AccountEntity)
   @JoinColumn({ name: 'account_id' })

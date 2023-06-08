@@ -1,28 +1,29 @@
 import {
   Column,
   CreateDateColumn,
+  DeleteDateColumn,
   Entity,
   JoinColumn,
   ManyToOne,
   PrimaryGeneratedColumn,
   RelationId,
+  UpdateDateColumn,
 } from 'typeorm';
-import { DateTime } from 'luxon';
-import { Movement, MovementType } from '@admin-back/grpc';
-import { optTransformer } from 'database/utils';
+import {Movement, MovementType, } from '@admin-back/grpc';
 import { CategoryEntity } from 'app/category/entities';
 import { SubcategoryEntity } from 'app/subcategory/entities';
 import { AccountEntity } from 'app/account/entities';
+import { TransformDate } from '@admin-back/shared';
 
 @Entity('movements')
 export class MovementEntity implements Movement {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: 'date', nullable: true })
-  date: string;
+  @Column()
+  date: Date;
 
-  @Column({ nullable: true, type: 'varchar' })
+  @Column({ type: 'varchar' })
   type: MovementType;
 
   @Column()
@@ -45,16 +46,17 @@ export class MovementEntity implements Movement {
   @RelationId('subcategory')
   subcategoryId: number;
 
-  @CreateDateColumn({
-    name: 'created_at',
-    type: 'timestamptz',
-    transformer: optTransformer({
-      from: (date: Date) => {
-        return DateTime.fromJSDate(date).setZone('America/Bogota').toString();
-      },
-    }),
-  })
-  createdAt: string;
+  @CreateDateColumn({ name: 'created_at' })
+  @TransformDate()
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  @TransformDate()
+  updatedAt: Date;
+
+  @DeleteDateColumn({ name: 'deleted_at', nullable: true })
+  @TransformDate()
+  deletedAt: Date;
 
   @ManyToOne(() => AccountEntity, { eager: true })
   @JoinColumn({ name: 'account_id' })

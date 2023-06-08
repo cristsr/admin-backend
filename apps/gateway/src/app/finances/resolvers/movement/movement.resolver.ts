@@ -1,6 +1,6 @@
 import { Inject } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import {
   MovementInput,
   Movement,
@@ -34,7 +34,9 @@ export class MovementResolver {
     @CurrentUser() user: User,
     @Args('movement') movement: MovementInput
   ): Observable<Movement> {
-    return this.movementService.save({ ...movement, user: user.id });
+    return this.movementService
+      .save({ ...movement, user: user.id })
+      .pipe(tap((m) => console.log(m)));
   }
 
   @Mutation(() => Status)

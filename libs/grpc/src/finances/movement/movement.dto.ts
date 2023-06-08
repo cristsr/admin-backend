@@ -1,22 +1,22 @@
 import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
-import { ArrayMaxSize, IsArray, IsIn, IsOptional } from 'class-validator';
-import { ListObject, OmitInputType } from '@admin-back/shared';
+import { ArrayMaxSize, IsArray, IsOptional } from 'class-validator';
+import { OmitInputType, TransformDate } from '@admin-back/shared';
 import { Category } from '../category';
 import { Subcategory } from '../subcategory';
 import { Account } from '../account';
-import { MovementType, movementTypes } from './movement.types';
-import { Period, periods } from '../finances.constants';
+import { MovementType } from './movement.types';
+import { Period } from '../finances.constants';
 
 @ObjectType()
 export class Movement {
   @Field()
   id: number;
 
-  @Field(() => String)
+  @Field(() => MovementType)
   type: MovementType;
 
   @Field()
-  date: string;
+  date: Date;
 
   @Field()
   description: string;
@@ -32,18 +32,19 @@ export class Movement {
   @Field()
   subcategory: Subcategory;
 
-  subcategoryId: number;
-
   @Field()
-  createdAt: string;
+  createdAt: Date;
+
+  @Field({ nullable: true })
+  updatedAt: Date;
+
+  @Field({ nullable: true })
+  deletedAt: Date;
 
   account: Account;
 
   user: number;
 }
-
-@ObjectType()
-export class Movements extends ListObject(Movement) {}
 
 @InputType()
 export class MovementInput extends OmitInputType(Movement, [
@@ -51,10 +52,16 @@ export class MovementInput extends OmitInputType(Movement, [
   'category',
   'subcategory',
   'createdAt',
+  'updatedAt',
+  'deletedAt',
   'account',
 ]) {
   @Field({ nullable: true })
   id: number;
+
+  @Field()
+  @TransformDate()
+  date: Date;
 
   @Field()
   category: number;
@@ -68,8 +75,7 @@ export class MovementInput extends OmitInputType(Movement, [
 
 @InputType()
 export class MovementFilter {
-  @Field(() => String)
-  @IsIn(periods)
+  @Field(() => Period)
   period: Period;
 
   @Field()
@@ -84,10 +90,9 @@ export class MovementFilter {
   @Field(() => String, { nullable: true })
   order?: string;
 
-  @Field(() => [String], { nullable: true })
+  @Field(() => [MovementType], { nullable: true })
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(2)
-  @IsIn(movementTypes, { each: true })
   type?: MovementType[];
 }

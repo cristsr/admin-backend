@@ -5,6 +5,7 @@ import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver } from '@nestjs/apollo';
 import { Environment } from 'env';
 import {
+  DateScalar,
   RequestInterceptor,
   RpcExceptionFilter,
   validatorFactory,
@@ -43,6 +44,7 @@ import { AppController } from './app.controller';
       provide: APP_INTERCEPTOR,
       useClass: RequestInterceptor,
     },
+    DateScalar,
   ],
   controllers: [AppController],
 })

@@ -1,7 +1,16 @@
 import { NotFoundException } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { defer, forkJoin, map, Observable, of, switchMap, tap } from 'rxjs';
+import {
+  defer,
+  forkJoin,
+  from,
+  map,
+  Observable,
+  of,
+  switchMap,
+  tap,
+} from 'rxjs';
 import { Between, DeleteResult, In, Raw } from 'typeorm';
 import { Interval } from 'luxon';
 import {
@@ -11,12 +20,14 @@ import {
   MovementFilter,
   MovementGrpc,
   Status,
+  Period,
 } from '@admin-back/grpc';
 import { AccountRepository } from 'app/account/repositories';
 import { SaveMovement } from 'app/constants';
 import { MovementRepository } from 'app/movement/repositories';
 import { CategoryRepository } from 'app/category/repositories';
 import { SubcategoryRepository } from 'app/subcategory/repositories';
+import { Match } from '@admin-back/shared';
 
 @GrpcService('finances')
 export class MovementService implements MovementGrpc {
@@ -30,24 +41,29 @@ export class MovementService implements MovementGrpc {
 
   @GrpcMethod()
   findAll(filter: MovementFilter): Observable<Movement[]> {
-    const dateMap: Record<string, any> = {
-      daily: () => filter.date,
+    const periodMatch: Match<Period> = {
+      DAILY: () => filter.date,
 
-      weekly: () => {
-        const interval = Interval.fromISO(filter.date);
-        return Between(interval.start.toSQLDate(), interval.end.toSQLDate());
+      WEEKLY: () => {
+        const { start, end } = Interval.fromISO(filter.date);
+        return Between(start.toSQLDate(), end.toSQLDate());
       },
 
-      monthly: () => {
+      MONTHLY: () => {
         return Raw((alias) => `to_char(${alias}, 'YYYY-MM') = :date`, {
           date: filter.date,
         });
       },
 
-      yearly: () => {
+      YEARLY: () => {
         return Raw((alias) => `to_char(${alias}, 'YYYY') = :date`, {
           date: filter.date,
         });
+      },
+
+      CUSTOM: () => {
+        const { start, end } = Interval.fromISO(filter.date);
+        return Between(start.toSQLDate(), end.toSQLDate());
       },
     };
 
@@ -55,7 +71,7 @@ export class MovementService implements MovementGrpc {
     return defer(() =>
       this.movementRepository.find({
         where: {
-          date: dateMap[filter.period](),
+          date: periodMatch[filter.period](),
           category: { id: filter.category },
           account: { id: filter.account },
           type: filter.type?.length ? In(filter.type) : null,
@@ -143,7 +159,7 @@ export class MovementService implements MovementGrpc {
         }
       }),
       switchMap((e) =>
-        defer(() =>
+        from(
           this.movementRepository.save({
             ...e.movement,
             ...data,

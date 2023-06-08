@@ -9,7 +9,7 @@ const Repositories = [AccountRepository];
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([AccountEntity]),
+    TypeOrmModule.forFeature([AccountEntity], ),
     forwardRef(() => MovementModule),
   ],
   controllers: [AccountService],

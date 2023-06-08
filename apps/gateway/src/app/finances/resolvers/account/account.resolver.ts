@@ -1,19 +1,10 @@
-import {
-  Args,
-  Mutation,
-  Parent,
-  Query,
-  ResolveField,
-  Resolver,
-} from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
 import {
   Account,
   ACCOUNT_SERVICE,
   AccountGrpc,
-  Balance,
   AccountInput,
-  BalanceFilter,
   User,
 } from '@admin-back/grpc';
 import { Observable } from 'rxjs';
@@ -37,19 +28,5 @@ export class AccountResolver {
     @Args('account') account: AccountInput
   ): Observable<Account> {
     return this.accountService.save({ ...account, user: user.id });
-  }
-
-  @ResolveField()
-  balance(
-    @CurrentUser() user: User,
-    @Parent() account: Account,
-    @Args('filter') balance: BalanceFilter
-  ): Observable<Balance> {
-    return this.accountService.findBalance({
-      user: user.id,
-      account: account.id,
-      period: balance.period,
-      date: balance.date,
-    });
   }
 }

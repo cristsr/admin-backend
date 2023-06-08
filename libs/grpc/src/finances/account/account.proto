@@ -9,23 +9,21 @@ service AccountService {
   rpc FindAll(google.protobuf.Empty) returns (stream Accounts);
   rpc FindOne(AccountId)             returns (stream Account);
   rpc FindByUser(user.UserId)        returns (stream Accounts);
-  rpc FindBalance(QueryBalance)      returns (stream Balance);
-  rpc FindBalances(QueryBalance)     returns (stream Balances);
   rpc Save(CreateAccount)            returns (stream Account);
   rpc Update(UpdateAccount)          returns (stream Account);
   rpc Remove(AccountId)              returns (stream shared.Status);
 }
 
 message Account {
-  int32   id             = 10;
-  string  name           = 20;
-  int32   initialBalance = 80;
-  bool    active         = 40;
-  string  createdAt      = 50;
-  string  updatedAt      = 60;
-  string  closedAt       = 70;
-  int32   user           = 90;
-  float   balance2       = 100;
+  int32     id             = 10;
+  string    name           = 20;
+  int32     initialBalance = 80;
+  bool      active         = 40;
+  string    createdAt      = 50;
+  string    updatedAt      = 60;
+  string    closedAt       = 70;
+  int32     user           = 90;
+  float     balance2       = 100;
 }
 
 message Accounts {
@@ -46,26 +44,6 @@ message UpdateAccount {
   int32           id   = 10;
   optional string name = 20;
   optional int32  user = 40;
-}
-
-message Balance {
-  int32  id         = 50;
-  int32  balance    = 10;
-  int32  incomes    = 20;
-  int32  expenses   = 30;
-  string date       = 40;
-  bool   active     = 60;
-}
-
-message Balances {
-  repeated Balance data = 10;
-}
-
-message QueryBalance {
-  int32  account = 10;
-  int32  user    = 20;
-  string period  = 30;
-  string date    = 40;
 }
 
 

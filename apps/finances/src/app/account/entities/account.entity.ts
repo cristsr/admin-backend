@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Account } from '@admin-back/grpc';
-import { Transform } from 'class-transformer';
+import { TransformDate } from '@admin-back/shared';
 
 @Entity('accounts')
 export class AccountEntity implements Account {
@@ -26,16 +26,16 @@ export class AccountEntity implements Account {
   active: boolean;
 
   @CreateDateColumn({ name: 'created_at' })
-  @Transform(({ value }) => value?.toISOString())
-  createdAt: string;
+  @TransformDate()
+  createdAt: Date;
 
   @UpdateDateColumn({ name: 'updated_at', nullable: true })
-  @Transform(({ value }) => value?.toISOString())
-  updatedAt: string;
+  @TransformDate()
+  updatedAt: Date;
 
   @Column({ name: 'closed_at', type: 'timestamp', nullable: true })
-  @Transform(({ value }) => value?.toISOString())
-  closedAt: string;
+  @TransformDate()
+  closedAt: Date;
 
   @Column({ name: 'user_id' })
   user: number;

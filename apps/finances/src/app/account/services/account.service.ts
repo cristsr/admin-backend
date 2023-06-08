@@ -8,12 +8,15 @@ import {
   BalanceFilter,
   Id,
   Movement,
+  MovementType,
+  Period,
 } from '@admin-back/grpc';
 import { Interval } from 'luxon';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SaveMovement } from 'app/constants';
 import { AccountRepository } from 'app/account/repositories';
 import { MovementRepository } from 'app/movement/repositories';
+import { Match } from '@admin-back/shared';
 
 @GrpcService('finances')
 export class AccountService implements AccountGrpc {
@@ -51,55 +54,69 @@ export class AccountService implements AccountGrpc {
 
   @GrpcMethod()
   findBalance(filter: BalanceFilter): Observable<Balance> {
-    const balanceMap: Record<string, any> = {
-      daily: () => ({
+    const balanceMatch: Match<Period> = {
+      DAILY: () => ({
         query: "to_char(date, 'YYYY-MM-DD') <= :date",
         params: { date: filter.date },
       }),
 
-      weekly: () => ({
+      WEEKLY: () => ({
         query: "to_char(date, 'YYYY-MM-DD') <= :date",
         params: { date: Interval.fromISO(filter.date).end.toSQLDate() },
       }),
 
-      monthly: () => ({
+      MONTHLY: () => ({
         query: "to_char(date, 'YYYY-MM') <= :date",
         params: { date: filter.date },
       }),
 
-      yearly: () => ({
+      YEARLY: () => ({
         query: "to_char(date, 'YYYY') <= :date",
         params: { date: filter.date },
       }),
+
+      CUSTOM: () => ({}),
     };
 
-    const movementMap: Record<string, any> = {
-      daily: () => ({
+    const movementMatch: Match<Period> = {
+      DAILY: () => ({
         query: "to_char(date, 'YYYY-MM-DD') = :date",
         params: { date: filter.date },
       }),
 
-      weekly: () => {
-        const interval = Interval.fromISO(filter.date);
+      WEEKLY: () => {
+        const { start, end } = Interval.fromISO(filter.date);
 
         return {
           query: `to_char(date, 'YYYY-MM-DD') >= :start and to_char(date, 'YYYY-MM-DD') <= :end`,
           params: {
-            start: interval.start.toSQLDate(),
-            end: interval.end.toSQLDate(),
+            start: start.toSQLDate(),
+            end: end.toSQLDate(),
           },
         };
       },
 
-      monthly: () => ({
+      MONTHLY: () => ({
         query: "to_char(date, 'YYYY-MM') = :date",
         params: { date: filter.date },
       }),
 
-      yearly: () => ({
+      YEARLY: () => ({
         query: "to_char(date, 'YYYY') = :date",
         params: { date: filter.date },
       }),
+
+      CUSTOM: () => {
+        const { start, end } = Interval.fromISO(filter.date);
+
+        return {
+          query: `to_char(date, 'YYYY-MM-DD') >= :start and to_char(date, 'YYYY-MM-DD') <= :end`,
+          params: {
+            start: start.toSQLDate(),
+            end: end.toSQLDate(),
+          },
+        };
+      },
     };
 
     // Reuse function
@@ -115,8 +132,8 @@ export class AccountService implements AccountGrpc {
         .andWhere(opts.query, opts.params);
     };
 
-    const balanceOpts = balanceMap[filter.period]();
-    const movementOpts = movementMap[filter.period]();
+    const balanceOpts = balanceMatch[filter.period]();
+    const movementOpts = movementMatch[filter.period]();
 
     const account = defer(() =>
       this.accountRepository.findOne({
@@ -163,7 +180,7 @@ export class AccountService implements AccountGrpc {
 
     const calculateBalance = () => {
       if (!previous) {
-        return type === 'income'
+        return type === MovementType.INCOME
           ? account.balance2 + amount
           : account.balance2 - amount;
       }
@@ -174,7 +191,7 @@ export class AccountService implements AccountGrpc {
       if (prevType !== type) {
         // different types
 
-        if (type === 'expense') {
+        if (type === MovementType.EXPENSE) {
           // from income to expense
 
           // e.g. balance $60.000
@@ -208,7 +225,7 @@ export class AccountService implements AccountGrpc {
 
       // amount are different between versions
 
-      if (type === 'income') {
+      if (type === MovementType.INCOME) {
         // from income
         return (
           account.balance2 + (amount > prevAmount ? Math.abs(diff) : -diff)

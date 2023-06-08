@@ -1,7 +1,12 @@
-export const movementTypes = ['income', 'expense'] as const;
-export type MovementType = typeof movementTypes[number];
+import { registerEnumType } from '@nestjs/graphql';
 
-export enum MovemenType {
-  Income = 'income',
-  Expense = 'expense',
+export const movementTypes = ['INCOME', 'EXPENSE'] as const;
+
+export type MovementTypeType = typeof movementTypes[number];
+
+export enum MovementType {
+  INCOME = 'INCOME',
+  EXPENSE = 'EXPENSE',
 }
+
+registerEnumType(MovementType, { name: 'MovementType' });

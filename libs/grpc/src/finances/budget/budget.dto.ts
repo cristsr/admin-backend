@@ -1,6 +1,5 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { Account, Category } from '@admin-back/grpc';
-import { ListObject } from '@admin-back/shared';
+import { Account, Category } from '../..';
 
 @ObjectType()
 export class Budget {
@@ -14,19 +13,19 @@ export class Budget {
   amount: number;
 
   @Field()
-  startDate: string;
+  startDate: Date;
 
   @Field()
-  endDate: string;
-
-  @Field()
-  spent: number;
+  endDate: Date;
 
   @Field()
   repeat: boolean;
 
   @Field()
   active: boolean;
+
+  @Field()
+  spent: number;
 
   @Field()
   percentage: number;
@@ -40,9 +39,6 @@ export class Budget {
 
   user: number;
 }
-
-@InputType()
-export class Budgets extends ListObject(Budget) {}
 
 @InputType()
 export class BudgetInput {

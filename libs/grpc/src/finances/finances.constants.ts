@@ -1,18 +1,21 @@
+import { registerEnumType } from '@nestjs/graphql';
+
 export const periods = [
-  'daily',
-  'weekly',
-  'monthly',
-  'yearly',
-  'custom',
-  'all',
+  'DAILY',
+  'WEEKLY',
+  'MONTHLY',
+  'YEARLY',
+  'CUSTOM',
 ] as const;
 
-export type Period = typeof periods[number];
+export type PeriodType = typeof periods[number];
 
-export enum PeriodEnum {
+export enum Period {
   DAILY = 'DAILY',
   WEEKLY = 'WEEKLY',
   MONTHLY = 'MONTHLY',
   YEARLY = 'YEARLY',
   CUSTOM = 'CUSTOM',
 }
+
+registerEnumType(Period, { name: 'Period' });

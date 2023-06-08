@@ -1,10 +1,4 @@
-import {
-  Id,
-  Movement,
-  MovementFilter,
-  MovementInput,
-  Status,
-} from '@admin-back/grpc';
+import { Id, Movement, MovementFilter, MovementInput, Status } from '../..';
 import { Observable } from 'rxjs';
 
 export interface MovementGrpc {
