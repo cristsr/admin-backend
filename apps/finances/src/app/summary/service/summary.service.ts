@@ -158,6 +158,9 @@ export class SummaryService implements SummaryGrpc {
             name: item.c_name,
             color: item.c_color,
             icon: item.c_icon,
+            createdAt: item.c_created_at,
+            updatedAt: item.c_updated_at,
+            deletedAt: item.c_deleted_at,
           },
         }));
       })
