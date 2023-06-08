@@ -19,9 +19,6 @@ export class AccountEntity implements Account {
   @Column({ name: 'initial_balance' })
   initialBalance: number;
 
-  @Column({ name: 'balance', default: 0, type: 'float' })
-  balance2: number;
-
   @Column({ default: true })
   active: boolean;
 

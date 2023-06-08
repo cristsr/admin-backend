@@ -1,5 +1,4 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { Relation } from 'typeorm';
 import { Period } from '../finances.constants';
 
 @ObjectType()
@@ -9,12 +8,6 @@ export class Account {
 
   @Field()
   name: string;
-
-  @Field(() => Balance)
-  balance?: Relation<Balance>;
-
-  @Field({ nullable: true })
-  balance2: number;
 
   @Field()
   initialBalance: number;
