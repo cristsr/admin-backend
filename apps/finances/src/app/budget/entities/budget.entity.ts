@@ -24,9 +24,6 @@ export class BudgetEntity
   @Column()
   repeat: boolean;
 
-  @Column({ default: true })
-  active: boolean;
-
   @ManyToOne(() => CategoryEntity, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'category_id' })
   category: CategoryEntity;

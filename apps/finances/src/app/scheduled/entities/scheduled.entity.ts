@@ -4,6 +4,6 @@ import { MovementEntity } from 'app/movement/entities';
 
 @Entity('scheduled')
 export class ScheduledEntity extends MovementEntity implements Scheduled {
-  @Column({})
-  recurrent: string;
+  @Column()
+  repeat: boolean;
 }

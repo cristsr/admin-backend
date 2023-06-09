@@ -61,7 +61,7 @@ export class CategoryService implements CategoryGrpc {
 
     return source$.pipe(
       tap((category) => {
-        if (!category) {
+        if (data.id && !category) {
           throw new NotFoundException('Category not found');
         }
       }),

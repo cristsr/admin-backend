@@ -19,6 +19,10 @@ message Category {
   string                           icon          = 3;
   string                           color         = 4;
   repeated subcategory.Subcategory subcategories = 5;
+  string                           createdAt     = 6;
+  string                           updatedAt     = 7;
+  string                           deletedAt     = 8;
+  bool                             active        = 9;
 }
 
 message CategoryInput {
@@ -27,6 +31,7 @@ message CategoryInput {
   string                                icon          = 2;
   string                                color         = 3;
   repeated subcategory.SubcategoryInput subcategories = 4;
+  bool                                  active        = 6;
 }
 
 message CategoriesInput {

@@ -9,7 +9,6 @@ service MovementService {
   rpc FindAll(MovementFilter)          returns (stream Movements) {}
   rpc Save(MovementInput)              returns (stream Movement) {}
   rpc CreateMany(MovementInput)        returns (stream Movement) {}
-  rpc Update(UpdateMovement)           returns (stream Movement) {}
   rpc Remove(MovementId)               returns (stream shared.Status) {}
   rpc RemoveAll(google.protobuf.Empty) returns (stream shared.Status) {}
 }
@@ -25,6 +24,8 @@ message Movement {
   subcategory.Subcategory subcategory   = 61;
   int32                   subcategoryId = 7;
   string                  createdAt     = 8;
+  string                  updatedAt     = 9;
+  string                  deletedAt     = 10;
 }
 
 message Movements {
@@ -41,18 +42,7 @@ message MovementInput {
   int32   subcategory = 6;
   int32   account     = 9;
   int32   user        = 10;
-}
-
-message UpdateMovement {
-  int32  id          = 1;
-  string date        = 2;
-  string type        = 3;
-  string description = 4;
-  int32  amount      = 5;
-  int32  category    = 6;
-  int32  subcategory = 7;
-  int32  account     = 9;
-  int32  user        = 10;
+  bool    active      = 11;
 }
 
 message MovementFilter {

@@ -12,6 +12,11 @@ import { ENV } from 'env';
         synchronize: configService.get(ENV.DB_SYNCHRONIZE),
         autoLoadEntities: true,
         debug: true,
+        extra: {
+          columnTypes: {
+            timestamp: 'timestamp with time zone',
+          },
+        },
       }),
       inject: [ConfigService],
     }),

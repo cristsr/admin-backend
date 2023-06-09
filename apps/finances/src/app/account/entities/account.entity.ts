@@ -10,8 +10,8 @@ export class AccountEntity extends BaseEntity implements Account {
   @Column({ name: 'initial_balance' })
   initialBalance: number;
 
-  @Column({ default: true })
-  active: boolean;
+  @Column({ default: false })
+  closed: boolean;
 
   @Column({ name: 'closed_at', nullable: true })
   @TransformDate()

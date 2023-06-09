@@ -21,6 +21,8 @@ export function IsDateString(validationOptions?: ValidationOptions) {
             /^\d{4}$/,
             // yyyy-MM
             /^\d{4}-\d{2}$/,
+            // yyyy-MM-dd
+            /^\d{4}-\d{2}-\d{2}$/,
             // iso8601
             /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z?\/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z?$/,
           ];

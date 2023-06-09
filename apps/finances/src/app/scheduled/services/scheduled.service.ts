@@ -120,7 +120,8 @@ export class ScheduledService implements ScheduledGrpc {
           category: e.category,
           subcategory: e.subcategory,
         })
-      )
+      ),
+      map((v) => new Scheduled(v))
     );
   }
 

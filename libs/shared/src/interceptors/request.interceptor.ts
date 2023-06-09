@@ -18,7 +18,7 @@ export class RequestInterceptor implements NestInterceptor {
           ? isArray(result.data)
             ? result.data
             : result
-          : {}
+          : null
       ),
       tap(console.log)
     );

@@ -58,8 +58,6 @@ describe('SummaryController', () => {
 
     const saveSpy = jest.spyOn(repository, 'save').mockResolvedValue({});
 
-    service.updateBalance(event as any);
-
     expect(saveSpy).toHaveBeenCalledWith({
       id: 1,
       balance2: -70000,
@@ -90,8 +88,6 @@ describe('SummaryController', () => {
 
     const saveSpy = jest.spyOn(repository, 'save').mockResolvedValue({});
 
-    service.updateBalance(event as any);
-
     expect(saveSpy).toHaveBeenCalledWith({
       id: 1,
       balance2: 190000,
@@ -117,8 +113,6 @@ describe('SummaryController', () => {
     const repository = module.get(getRepositoryToken(AccountEntity));
 
     const saveSpy = jest.spyOn(repository, 'save').mockResolvedValue({});
-
-    service.updateBalance(event as any);
 
     expect(saveSpy).toHaveBeenCalledWith({
       id: 1,
@@ -150,8 +144,6 @@ describe('SummaryController', () => {
     const repository = module.get(getRepositoryToken(AccountEntity));
 
     const saveSpy = jest.spyOn(repository, 'save').mockResolvedValue({});
-
-    service.updateBalance(event as any);
 
     expect(saveSpy).toHaveBeenCalledWith({
       id: 1,

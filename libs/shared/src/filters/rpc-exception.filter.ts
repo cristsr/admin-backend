@@ -17,7 +17,7 @@ export class RpcExceptionFilter extends BaseExceptionFilter {
   catch(exception: any, host: ArgumentsHost) {
     const message = exception.details || exception.message;
 
-    if (exception.constructor.name === 'BadRequestException') {
+    if (exception instanceof HttpException) {
       throw exception;
     }
 

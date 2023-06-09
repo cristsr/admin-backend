@@ -1,6 +1,6 @@
 import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
 import { ArrayMaxSize, IsArray, IsOptional } from 'class-validator';
-import { OmitInputType, TransformDate } from '@admin-back/shared';
+import { IsDateString, OmitInputType, TransformDate } from '@admin-back/shared';
 import { MovementType } from './movement.types';
 import { Category } from '../category';
 import { Subcategory } from '../subcategory';
@@ -14,6 +14,7 @@ export class Movement extends BaseDto {
   type: MovementType;
 
   @Field()
+  @TransformDate()
   date: Date;
 
   @Field()
@@ -44,6 +45,7 @@ export class MovementInput extends OmitInputType(Movement, [
   'updatedAt',
   'deletedAt',
   'account',
+  'active',
 ]) {
   @Field({ nullable: true })
   id: number;
@@ -60,6 +62,9 @@ export class MovementInput extends OmitInputType(Movement, [
 
   @Field()
   account: number;
+
+  @Field({ nullable: true })
+  active: boolean;
 }
 
 @InputType()
@@ -68,6 +73,7 @@ export class MovementFilter {
   period: Period;
 
   @Field()
+  @IsDateString()
   date: string;
 
   @Field({ nullable: true })

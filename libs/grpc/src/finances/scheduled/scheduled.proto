@@ -8,8 +8,7 @@ import "movement/movement.proto";
 service ScheduledService {
   rpc FindOne(ScheduledId)           returns (stream Scheduled);
   rpc FindAll(google.protobuf.Empty) returns (stream Scheduleds);
-  rpc Save(CreateScheduled)          returns (stream Scheduled);
-  rpc Update(UpdateScheduled)        returns (stream Scheduled);
+  rpc Save(ScheduledInput)           returns (stream Scheduled);
   rpc Delete(ScheduledId)            returns (google.protobuf.Empty);
 }
 
@@ -24,34 +23,27 @@ message Scheduled {
   subcategory.Subcategory subcategory   = 7;
   int32                   subcategoryId = 70;
   string                  createdAt     = 8;
-  bool                    recurrent     = 10;
+  string                  updatedAt     = 9;
+  string                  deletedAt     = 80;
+  bool                    active        = 90;
+  bool                    repeat        = 10;
 }
 
 message Scheduleds {
   repeated Scheduled data = 1;
 }
 
-message CreateScheduled {
+message ScheduledInput {
+  int32  id          = 30;
   string date        = 1;
   string type        = 2;
   string description = 3;
   int32  amount      = 4;
   int32  category    = 5;
   int32  subcategory = 6;
-  bool   recurrent   = 10;
+  bool   repeat      = 10;
   int32  user        = 20;
-}
-
-message UpdateScheduled {
-  int32  id           = 1;
-  string date         = 2;
-  string type         = 3;
-  string description  = 4;
-  int32  amount       = 5;
-  int32  category     = 6;
-  int32  subcategory  = 7;
-  int32  account      = 80;
-  bool   recurrent    = 10;
+  bool   active      = 90;
 }
 
 message ScheduledId {

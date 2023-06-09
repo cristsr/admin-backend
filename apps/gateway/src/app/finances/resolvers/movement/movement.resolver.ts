@@ -1,4 +1,4 @@
-import { Inject } from '@nestjs/common';
+import { Headers, Inject } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Observable, tap } from 'rxjs';
 import {
@@ -10,7 +10,9 @@ import {
   Status,
   User,
 } from '@admin-back/grpc';
-import { CurrentUser } from '@admin-back/shared';
+import { ClientTimeZone, CurrentUser } from '@admin-back/shared';
+import { DateTime } from 'luxon';
+import { Metadata } from '@grpc/grpc-js';
 
 @Resolver(Movement)
 export class MovementResolver {
@@ -25,8 +27,13 @@ export class MovementResolver {
   }
 
   @Query(() => [Movement])
-  movements(@Args('filter') filter: MovementFilter): Observable<Movement[]> {
-    return this.movementService.findAll(filter);
+  movements(
+    @Args('filter') filter: MovementFilter,
+    @ClientTimeZone() clientTimeZone: string
+  ): Observable<Movement[]> {
+    const metadata = new Metadata();
+    metadata.set('client-time-zone', clientTimeZone);
+    return this.movementService.findAll(filter, metadata);
   }
 
   @Mutation(() => Movement)

@@ -12,7 +12,7 @@ export class Account extends BaseDto {
   initialBalance: number;
 
   @Field()
-  active: boolean;
+  closed: boolean;
 
   @Field({ nullable: true })
   closedAt: Date;
@@ -22,11 +22,20 @@ export class Account extends BaseDto {
 
 @InputType()
 export class AccountInput {
-  @Field()
+  @Field({ nullable: true })
+  id: number;
+
+  @Field({ nullable: true })
   name: string;
 
-  @Field()
+  @Field({ nullable: true })
   initialBalance: number;
+
+  @Field({ nullable: true })
+  active: boolean;
+
+  @Field({ nullable: true })
+  closed: boolean;
 
   user: number;
 }

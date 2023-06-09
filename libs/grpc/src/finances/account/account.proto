@@ -19,6 +19,7 @@ message Account {
   string    name           = 20;
   int32     initialBalance = 80;
   bool      active         = 40;
+  bool      closed         = 110;
   string    createdAt      = 50;
   string    updatedAt      = 60;
   string    closedAt       = 70;
@@ -35,9 +36,12 @@ message AccountId {
 }
 
 message CreateAccount {
+  int32  id             = 40;
   string name           = 10;
   int32  initialBalance = 20;
   int32  user           = 30;
+  bool   active         = 50;
+  bool   closed         = 60;
 }
 
 message UpdateAccount {

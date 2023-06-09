@@ -19,6 +19,7 @@ import { AccountRepository } from 'app/account/repositories';
 import { OnEvent } from '@nestjs/event-emitter';
 import { MovementRepository } from 'app/movement/repositories';
 import { BudgetRepository } from 'app/budget/repositories';
+import { CategoryRepository } from 'app/category/repositories';
 
 @GrpcService('finances')
 export class BudgetService implements BudgetGrpc {
@@ -26,7 +27,7 @@ export class BudgetService implements BudgetGrpc {
 
   constructor(
     private budgetRepository: BudgetRepository,
-    private categoryRepository: BudgetRepository,
+    private categoryRepository: CategoryRepository,
     private movementRepository: MovementRepository,
     private accountRepository: AccountRepository
   ) {}
@@ -45,11 +46,14 @@ export class BudgetService implements BudgetGrpc {
         if (!budget) return of(null);
 
         return this.getSpent(budget).pipe(
-          map((spent: number) => ({
-            ...budget,
-            spent,
-            percentage: this.getPercentage(spent, budget.amount),
-          }))
+          map(
+            (spent: number) =>
+              new Budget({
+                ...budget,
+                spent,
+                percentage: this.getPercentage(spent, budget.amount),
+              })
+          )
         );
       })
     );
@@ -79,11 +83,14 @@ export class BudgetService implements BudgetGrpc {
         return forkJoin(
           budgets.map((budget: BudgetEntity) =>
             this.getSpent(budget).pipe(
-              map((spent: number) => ({
-                ...budget,
-                spent,
-                percentage: this.getPercentage(spent, budget.amount),
-              }))
+              map(
+                (spent: number) =>
+                  new Budget({
+                    ...budget,
+                    spent,
+                    percentage: this.getPercentage(spent, budget.amount),
+                  })
+              )
             )
           )
         );
@@ -180,17 +187,13 @@ export class BudgetService implements BudgetGrpc {
           category: entities.category,
         })
       ),
-      map((budget) => ({
-        ...budget,
-        spent: 0,
-        percentage: 0,
-      }))
+      map((budget) => new Budget({ ...budget, spent: 0, percentage: 0 }))
     );
   }
 
   @GrpcMethod()
   remove(budget: Id): Observable<Status> {
-    return defer(() => this.budgetRepository.delete(budget.id)).pipe(
+    return defer(() => this.budgetRepository.softDelete(budget.id)).pipe(
       map((result) => ({
         status: !!result.affected,
       }))

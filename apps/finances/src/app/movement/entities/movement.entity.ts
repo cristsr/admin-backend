@@ -3,11 +3,12 @@ import { Movement, MovementType } from '@admin-back/grpc';
 import { CategoryEntity } from 'app/category/entities';
 import { SubcategoryEntity } from 'app/subcategory/entities';
 import { AccountEntity } from 'app/account/entities';
-import { BaseEntity } from '@admin-back/shared';
+import { BaseEntity, DateColumn, TransformDate } from '@admin-back/shared';
 
 @Entity('movements')
 export class MovementEntity extends BaseEntity implements Movement {
-  @Column()
+  @DateColumn()
+  @TransformDate()
   date: Date;
 
   @Column({ type: 'varchar' })

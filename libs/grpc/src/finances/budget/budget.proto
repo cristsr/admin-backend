@@ -26,6 +26,9 @@ message Budget {
   int32               categoryId  = 10;
   int32               accountId   = 20;
   int32               user        = 30;
+  string              createdAt   = 50;
+  string              updatedAt   = 60;
+  string              deletedAt   = 70;
 }
 
 message Budgets {
@@ -37,6 +40,7 @@ message BudgetInput {
   string  name      = 1;
   int32   amount    = 2;
   int32   category  = 3;
+  string  date      = 6;
   bool    repeat    = 4;
   bool    active    = 5;
   int32   account   = 20;

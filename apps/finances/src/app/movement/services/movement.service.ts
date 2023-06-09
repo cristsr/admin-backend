@@ -1,18 +1,14 @@
-import { NotFoundException } from '@nestjs/common';
-import { EventEmitter2 } from '@nestjs/event-emitter';
-import { GrpcMethod, GrpcService } from '@nestjs/microservices';
+import { Body, NotFoundException } from '@nestjs/common';
 import {
-  defer,
-  forkJoin,
-  from,
-  map,
-  Observable,
-  of,
-  switchMap,
-  tap,
-} from 'rxjs';
+  BaseRpcContext,
+  Ctx,
+  GrpcMethod,
+  GrpcService,
+  Payload,
+} from '@nestjs/microservices';
+import { defer, forkJoin, map, Observable, of, switchMap, tap } from 'rxjs';
 import { Between, DeleteResult, In, Raw } from 'typeorm';
-import { Interval } from 'luxon';
+import { DateTime, Interval } from 'luxon';
 import {
   MovementInput,
   Id,
@@ -23,11 +19,11 @@ import {
   Period,
 } from '@admin-back/grpc';
 import { AccountRepository } from 'app/account/repositories';
-import { SaveMovement } from 'app/constants';
 import { MovementRepository } from 'app/movement/repositories';
 import { CategoryRepository } from 'app/category/repositories';
 import { SubcategoryRepository } from 'app/subcategory/repositories';
-import { Match } from '@admin-back/shared';
+import { Context, CurrentUser, Match, metaToPlain } from '@admin-back/shared';
+import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
 
 @GrpcService('finances')
 export class MovementService implements MovementGrpc {
@@ -35,14 +31,33 @@ export class MovementService implements MovementGrpc {
     private movementRepository: MovementRepository,
     private categoryRepository: CategoryRepository,
     private subcategoryRepository: SubcategoryRepository,
-    private accountRepository: AccountRepository,
-    private eventEmitter: EventEmitter2
+    private accountRepository: AccountRepository
   ) {}
 
   @GrpcMethod()
-  findAll(filter: MovementFilter): Observable<Movement[]> {
+  findAll(
+    @Body() filter: MovementFilter,
+    // @Ctx() context: BaseRpcContext,
+    @CurrentUser() headers: any
+  ): Observable<Movement[]> {
+    // console.log(filter);
+    // console.log(headers);
+    // // const { clientTimeZone } = metaToPlain(metadata);
+    const clientTimeZone = 'America/Bogota';
+
+    // console.log(clientTimeZone);
+
     const periodMatch: Match<Period> = {
-      DAILY: () => filter.date,
+      DAILY: () => {
+        const date = DateTime.fromFormat(filter.date, 'yyyy-MM-dd').setZone(
+          clientTimeZone
+        );
+
+        return Between(
+          date.startOf('day').toJSDate(),
+          date.endOf('day').toJSDate()
+        );
+      },
 
       WEEKLY: () => {
         const { start, end } = Interval.fromISO(filter.date);
@@ -97,6 +112,8 @@ export class MovementService implements MovementGrpc {
 
   @GrpcMethod()
   save(data: MovementInput): Observable<Movement> {
+    console.log('Date due', data.date);
+
     const movement = defer(() =>
       this.movementRepository.findOne({
         where: {
@@ -159,23 +176,15 @@ export class MovementService implements MovementGrpc {
         }
       }),
       switchMap((e) =>
-        from(
-          this.movementRepository.save({
-            ...e.movement,
-            ...data,
-            category: e.category,
-            subcategory: e.subcategory,
-            account: e.account,
-          })
-        ).pipe(
-          tap((movement) => {
-            this.eventEmitter.emit(SaveMovement, {
-              previous: e.movement,
-              current: movement,
-            });
-          })
-        )
-      )
+        this.movementRepository.save({
+          ...e.movement,
+          ...data,
+          category: e.category,
+          subcategory: e.subcategory,
+          account: e.account,
+        })
+      ),
+      map((m) => new Movement(m))
     );
   }
 
