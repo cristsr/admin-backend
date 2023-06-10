@@ -7,7 +7,10 @@
     "build": {
       "executor": "@nx/webpack:webpack",
       "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
       "options": {
+        "target": "node",
+        "compiler": "tsc",
         "outputPath": "dist/apps/gateway",
         "main": "apps/gateway/src/main.ts",
         "tsConfig": "apps/gateway/tsconfig.app.json",
@@ -19,10 +22,21 @@
             "output": "assets/grpc"
           }
         ],
-        "compiler": "tsc",
-        "target": "node"
+        "isolatedConfig": true,
+        "webpackConfig": "apps/gateway/webpack.config.js"
       },
       "configurations": {
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "inspect": false,
+          "fileReplacements": [
+            {
+              "replace": "apps/gateway/src/environments/environment.ts",
+              "with": "apps/gateway/src/environments/environment.dev.ts"
+            }
+          ]
+        },
         "production": {
           "optimization": true,
           "extractLicenses": true,
@@ -37,9 +51,18 @@
       }
     },
     "serve": {
-      "executor": "@nx/node:node",
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
       "options": {
         "buildTarget": "gateway:build"
+      },
+      "configurations": {
+        "development": {
+          "buildTarget": "test:build:development"
+        },
+        "production": {
+          "buildTarget": "test:build:production"
+        }
       }
     },
     "lint": {
@@ -55,6 +78,12 @@
       "options": {
         "jestConfig": "apps/gateway/jest.config.js",
         "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true
+        }
       }
     }
   },

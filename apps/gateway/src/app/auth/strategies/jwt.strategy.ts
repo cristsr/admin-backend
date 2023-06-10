@@ -34,6 +34,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     const auth0Id = (payload.sub as string).split('|').pop();
 
+    console.log(auth0Id);
+
     const user$ = this.userService
       .findOne({ auth0Id })
       .pipe(tap((user) => this.#logger.debug(user)));
