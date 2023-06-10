@@ -5,7 +5,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { TransformDate } from '../functions';
+import { TransformDate } from '../decorators';
 
 export class BaseEntity {
   @PrimaryGeneratedColumn()

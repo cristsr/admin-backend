@@ -51,8 +51,6 @@ export class JwtGuard extends AuthGuard('jwt') {
    * @param context
    */
   handleRequest(err, user, info, context) {
-    // eslint-disable-next-line prefer-rest-params
-    console.log(arguments);
     if (!user) {
       this.#logger.error(info);
     }

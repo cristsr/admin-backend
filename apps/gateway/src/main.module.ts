@@ -6,6 +6,7 @@ import { ApolloDriver } from '@nestjs/apollo';
 import { Environment } from 'env';
 import {
   DateScalar,
+  GRPCInterceptor,
   RequestInterceptor,
   RpcExceptionFilter,
   validatorFactory,
@@ -45,6 +46,7 @@ import { AppController } from './app.controller';
       useClass: RequestInterceptor,
     },
     DateScalar,
+    GRPCInterceptor,
   ],
   controllers: [AppController],
 })
