@@ -1,9 +1,14 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { configValidator } from '@admin-back/shared';
+import {
+  configValidator,
+  ExceptionFilter,
+  ResponseInterceptor,
+} from '@admin-back/shared';
 import { UserEnvironment } from 'env';
 import { DatabaseModule } from 'database/database.module';
 import { UserModule } from 'app/user.module';
+import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
 
 @Module({
   imports: [
@@ -13,6 +18,16 @@ import { UserModule } from 'app/user.module';
     }),
     DatabaseModule,
     UserModule,
+  ],
+  providers: [
+    {
+      provide: APP_FILTER,
+      useClass: ExceptionFilter,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ResponseInterceptor,
+    },
   ],
 })
 export class AppModule {}

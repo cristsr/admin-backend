@@ -8,6 +8,8 @@
       "executor": "@nx/webpack:webpack",
       "outputs": ["{options.outputPath}"],
       "options": {
+        "target": "node",
+        "compiler": "tsc",
         "outputPath": "dist/apps/users",
         "main": "apps/users/src/main.ts",
         "tsConfig": "apps/users/tsconfig.app.json",
@@ -18,10 +20,15 @@
             "output": "assets/grpc"
           }
         ],
-        "compiler": "tsc",
-        "target": "node"
+        "isolatedConfig": true,
+        "webpackConfig": "apps/users/webpack.config.js"
       },
       "configurations": {
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "inspect": false
+        },
         "production": {
           "optimization": true,
           "extractLicenses": true,
@@ -30,11 +37,15 @@
       }
     },
     "serve": {
-      "executor": "@nx/node:node",
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
       "options": {
         "buildTarget": "users:build"
       },
       "configurations": {
+        "development": {
+          "buildTarget": "users:build:development"
+        },
         "production": {
           "buildTarget": "users:build:production"
         }
@@ -53,6 +64,12 @@
       "options": {
         "jestConfig": "apps/users/jest.config.ts",
         "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true
+        }
       }
     }
   },

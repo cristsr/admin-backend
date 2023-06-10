@@ -7,7 +7,10 @@
     "build": {
       "executor": "@nx/webpack:webpack",
       "outputs": ["{options.outputPath}"],
+      "defaultConfiguration": "production",
       "options": {
+        "target": "node",
+        "compiler": "tsc",
         "outputPath": "dist/apps/finances",
         "main": "apps/finances/src/main.ts",
         "tsConfig": "apps/finances/tsconfig.app.json",
@@ -19,29 +22,32 @@
             "output": "assets/grpc"
           }
         ],
-        "compiler": "tsc",
-        "target": "node"
+        "isolatedConfig": true,
+        "webpackConfig": "apps/finances/webpack.config.js"
       },
       "configurations": {
+        "development": {
+          "optimization": false,
+          "extractLicenses": false,
+          "inspect": false
+        },
         "production": {
           "optimization": true,
           "extractLicenses": true,
-          "inspect": false,
-          "fileReplacements": [
-            {
-              "replace": "apps/finances/src/environments/environment.ts",
-              "with": "apps/finances/src/environments/environment.prod.ts"
-            }
-          ]
+          "inspect": false
         }
       }
     },
     "serve": {
-      "executor": "@nx/node:node",
+      "executor": "@nx/js:node",
+      "defaultConfiguration": "development",
       "options": {
         "buildTarget": "finances:build"
       },
       "configurations": {
+        "development": {
+          "buildTarget": "finances:build:development"
+        },
         "production": {
           "buildTarget": "finances:build:production"
         }
@@ -60,6 +66,12 @@
       "options": {
         "jestConfig": "apps/finances/jest.config.ts",
         "passWithNoTests": true
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true
+        }
       }
     }
   },

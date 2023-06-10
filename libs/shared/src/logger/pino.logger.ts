@@ -1,17 +1,12 @@
 import { LoggerService } from '@nestjs/common';
-import pino from 'pino';
 import pretty from 'pino-pretty';
 
 const stream = pretty({
   levelKey: 'debug',
   colorize: true,
 });
-const log = pino(
-  {
-    level: 'trace',
-  },
-  pretty()
-);
+
+const log = console;
 
 export class PinoLogger implements LoggerService {
   public log(message: any, context?: string | undefined) {
