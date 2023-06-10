@@ -1,11 +1,5 @@
 import { Body, NotFoundException } from '@nestjs/common';
-import {
-  BaseRpcContext,
-  Ctx,
-  GrpcMethod,
-  GrpcService,
-  Payload,
-} from '@nestjs/microservices';
+import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import { defer, forkJoin, map, Observable, of, switchMap, tap } from 'rxjs';
 import { Between, DeleteResult, In, Raw } from 'typeorm';
 import { DateTime, Interval } from 'luxon';
@@ -22,8 +16,7 @@ import { AccountRepository } from 'app/account/repositories';
 import { MovementRepository } from 'app/movement/repositories';
 import { CategoryRepository } from 'app/category/repositories';
 import { SubcategoryRepository } from 'app/subcategory/repositories';
-import { Context, CurrentUser, Match, metaToPlain } from '@admin-back/shared';
-import { Metadata, ServerUnaryCall } from '@grpc/grpc-js';
+import { Headers, Match } from '@admin-back/shared';
 
 @GrpcService('finances')
 export class MovementService implements MovementGrpc {
@@ -36,17 +29,12 @@ export class MovementService implements MovementGrpc {
 
   @GrpcMethod()
   findAll(
-    @Body() filter: MovementFilter,
-    // @Ctx() context: BaseRpcContext,
-    @CurrentUser() headers: any
+    @Body()
+    filter: MovementFilter,
+
+    @Headers('x-time-zone')
+    clientTimeZone: string
   ): Observable<Movement[]> {
-    // console.log(filter);
-    // console.log(headers);
-    // // const { clientTimeZone } = metaToPlain(metadata);
-    const clientTimeZone = 'America/Bogota';
-
-    // console.log(clientTimeZone);
-
     const periodMatch: Match<Period> = {
       DAILY: () => {
         const date = DateTime.fromFormat(filter.date, 'yyyy-MM-dd').setZone(

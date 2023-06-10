@@ -1,5 +1,7 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
+import { Metadata } from '@grpc/grpc-js';
+import { metaToPlain } from '../functions';
 
 export const ClientTimeZone = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
@@ -9,13 +11,27 @@ export const ClientTimeZone = createParamDecorator(
 );
 
 export const Context = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext) => {
-    console.log('Headers', ctx.switchToRpc().getContext());
+  (data: string, ctx: ExecutionContext) => {
+    const metadata = ctx.switchToRpc().getContext();
+    const values = metaToPlain(metadata);
 
-    // const request = ctx.switchToRpc().getContext();
+    if (data) {
+      return values[data];
+    }
 
-    console.log('decorator');
+    return values;
+  }
+);
 
-    return 'test';
+export const Headers = createParamDecorator(
+  (data: string, ctx: ExecutionContext) => {
+    const metadata: Metadata = ctx.switchToRpc().getContext();
+    const values = metaToPlain(metadata);
+
+    if (data) {
+      return values.headers[data];
+    }
+
+    return values.headers;
   }
 );

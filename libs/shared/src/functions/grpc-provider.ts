@@ -9,7 +9,8 @@ interface GrpcProviderOptions {
 export function GrpcProvider(options: GrpcProviderOptions) {
   return {
     provide: options.provide,
-    useFactory: (client: ClientGrpc) => client.getService(options.service),
+    useFactory: async (client: ClientGrpc) =>
+      client.getService(options.service),
     inject: [options.client],
   };
 }

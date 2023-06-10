@@ -10,6 +10,8 @@ import { isArray, isEmpty } from 'lodash';
 @Injectable()
 export class RequestInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
+    console.log('RequestInterceptor');
+
     return next.handle().pipe(
       map((result) =>
         !isArray(result) && isEmpty(result)

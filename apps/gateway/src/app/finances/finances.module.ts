@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { GrpcProvider } from '@admin-back/shared';
+import { GRPCInterceptor, GrpcProvider } from '@admin-back/shared';
 import {
   FinancesConfig,
   FINANCES_GRPC_CLIENT,
@@ -31,11 +31,25 @@ import {
 
 @Module({
   imports: [
-    ClientsModule.register([
+    ClientsModule.registerAsync([
       {
         name: FINANCES_GRPC_CLIENT,
-        transport: Transport.GRPC,
-        options: FinancesConfig,
+        useFactory: (grpcInterceptor) => {
+          return {
+            transport: Transport.GRPC,
+            options: {
+              ...FinancesConfig,
+              channelOptions: {
+                interceptors: [
+                  (options, nextCall) =>
+                    grpcInterceptor.interceptGrpcCall(options, nextCall),
+                ],
+              },
+            },
+          };
+        },
+        inject: [GRPCInterceptor],
+        extraProviders: [GRPCInterceptor],
       },
     ]),
   ],
