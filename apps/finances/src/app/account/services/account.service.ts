@@ -1,6 +1,12 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import { defer, map, Observable, of, switchMap, tap } from 'rxjs';
-import { Account, AccountGrpc, AccountInput, Id } from '@admin-back/grpc';
+import {
+  Account,
+  AccountFilter,
+  AccountGrpc,
+  AccountInput,
+  Id,
+} from '@admin-back/grpc';
 import { AccountRepository } from 'app/account/repositories';
 import { NotFoundException } from '@nestjs/common';
 
@@ -9,8 +15,15 @@ export class AccountService implements AccountGrpc {
   constructor(private accountRepository: AccountRepository) {}
 
   @GrpcMethod()
-  findAll(): Observable<Account[]> {
-    return defer(() => this.accountRepository.find());
+  findAll(filter: AccountFilter): Observable<Account[]> {
+    return defer(() =>
+      this.accountRepository.find({
+        where: {
+          active: filter.active,
+          user: filter.user,
+        },
+      })
+    );
   }
 
   @GrpcMethod()
@@ -19,17 +32,6 @@ export class AccountService implements AccountGrpc {
       this.accountRepository.findOne({
         where: {
           id,
-        },
-      })
-    );
-  }
-
-  @GrpcMethod()
-  findByUser(user: Id): Observable<Account[]> {
-    return defer(() =>
-      this.accountRepository.find({
-        where: {
-          user: user.id,
         },
       })
     );
@@ -56,7 +58,6 @@ export class AccountService implements AccountGrpc {
         this.accountRepository.save({
           ...account,
           ...data,
-          closedAt: data.closed ? new Date() : null,
         })
       ),
       map((result) => new Account(result))

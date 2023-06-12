@@ -3,6 +3,7 @@ import { Inject } from '@nestjs/common';
 import {
   Account,
   ACCOUNT_SERVICE,
+  AccountFilter,
   AccountGrpc,
   AccountInput,
   User,
@@ -18,8 +19,14 @@ export class AccountResolver {
   ) {}
 
   @Query(() => [Account])
-  userAccounts(@CurrentUser() user: User): Observable<Account[]> {
-    return this.accountService.findByUser({ id: user.id });
+  userAccounts(
+    @CurrentUser() user: User,
+    @Args('filter') filter: AccountFilter
+  ): Observable<Account[]> {
+    return this.accountService.findAll({
+      ...filter,
+      user: user.id,
+    });
   }
 
   @Mutation(() => Account)

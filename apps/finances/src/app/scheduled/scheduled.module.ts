@@ -8,12 +8,19 @@ import { ScheduledService } from 'app/scheduled/services';
 import { ScheduledEntity } from 'app/scheduled/entities';
 import { AccountModule } from 'app/account/account.module';
 import { ScheduledRepository } from 'app/scheduled/repositories';
+import { MovementModule } from 'app/movement/movement.module';
 
 const Entities = TypeOrmModule.forFeature([ScheduledEntity]);
 const Repositories = [ScheduledRepository];
 
 @Module({
-  imports: [Entities, CategoryModule, SubcategoryModule, AccountModule],
+  imports: [
+    Entities,
+    CategoryModule,
+    SubcategoryModule,
+    AccountModule,
+    MovementModule,
+  ],
   controllers: [ScheduledService],
   providers: [...Repositories],
   exports: [...Repositories],

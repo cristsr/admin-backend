@@ -9,9 +9,9 @@ import {
 } from '../..';
 
 export interface SummaryGrpc {
-  balance(filter: BalanceFilter): Observable<Balance>;
+  balance(filter: BalanceFilter, ...args): Observable<Balance>;
 
-  expenses(filter: ExpenseFilter): Observable<Expense[]>;
+  expenses(filter: ExpenseFilter, ...args): Observable<Expense[]>;
 
   lastMovements(filter: LastMovementFilter): Observable<Movement[]>;
 }

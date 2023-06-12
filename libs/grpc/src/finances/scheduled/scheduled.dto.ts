@@ -15,6 +15,9 @@ export class ScheduledInput extends MovementInput {
 
 @InputType()
 export class ScheduledFilter {
-  @Field({ nullable: true })
+  @Field()
   account: number;
+
+  @Field()
+  active: boolean;
 }

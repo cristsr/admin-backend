@@ -10,9 +10,10 @@ import {
   GenerateBudgets,
   Movement,
   MovementType,
+  Period,
 } from '@admin-back/grpc';
 import { BudgetEntity } from 'app/budget/entities';
-import { Between } from 'typeorm';
+import { Between, LessThanOrEqual } from 'typeorm';
 import { DateTime } from 'luxon';
 import { Logger, NotFoundException } from '@nestjs/common';
 import { AccountRepository } from 'app/account/repositories';
@@ -128,11 +129,6 @@ export class BudgetService implements BudgetGrpc {
 
   @GrpcMethod()
   save(data: BudgetInput): Observable<Budget> {
-    const utc = DateTime.utc();
-
-    const startDate = utc.startOf('month').toFormat('yyyy-MM-dd');
-    const endDate = utc.endOf('month').toFormat('yyyy-MM-dd');
-
     const budget = defer(() =>
       this.budgetRepository.findOne({
         where: {
@@ -181,8 +177,6 @@ export class BudgetService implements BudgetGrpc {
       switchMap((entities) =>
         this.budgetRepository.save({
           ...data,
-          startDate,
-          endDate,
           account: entities.account,
           category: entities.category,
         })
@@ -204,20 +198,56 @@ export class BudgetService implements BudgetGrpc {
   async generateBudgets(): Promise<void> {
     this.#logger.log('Generating budgets');
 
+    const utc = DateTime.utc();
+
     const budgets = await this.budgetRepository.find({
       where: {
+        endDate: LessThanOrEqual(utc.toJSDate()),
         active: true,
         repeat: true,
       },
     });
 
-    const utc = DateTime.utc();
-    const startDate = utc.startOf('month').toFormat('yyyy-MM-dd');
-    const endDate = utc.endOf('month').toFormat('yyyy-MM-dd');
+    const dates = (budget: BudgetEntity) => {
+      switch (budget.period) {
+        case Period.DAILY:
+          return {
+            startDate: utc.startOf('day'),
+            endDate: utc.endOf('day'),
+          };
 
-    this.#logger.log(`Generating budgets for ${startDate} to ${endDate}`);
+        case Period.WEEKLY:
+        case Period.CUSTOM: {
+          const startDate = DateTime.fromJSDate(budget.startDate);
+          const endDate = DateTime.fromJSDate(budget.endDate);
+
+          return {
+            startDate: utc.startOf('day'),
+            endDate: utc
+              .plus({ days: startDate.diff(endDate).days })
+              .endOf('day'),
+          };
+        }
+
+        case Period.MONTHLY:
+          return {
+            startDate: utc.startOf('month'),
+            endDate: utc.endOf('month'),
+          };
+
+        case Period.YEARLY:
+          return {
+            startDate: utc.startOf('year'),
+            endDate: utc.endOf('year'),
+          };
+      }
+    };
+
+    this.#logger.log(`Generating budgets`);
 
     for (const budget of budgets) {
+      const { startDate, endDate } = dates(budget);
+
       // Create Budget for the month
       await this.budgetRepository
         .save({

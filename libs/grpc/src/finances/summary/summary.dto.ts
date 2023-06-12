@@ -1,6 +1,8 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { Category } from '../category';
 import { Period } from '../finances.constants';
+import { IsDate } from 'class-validator';
+import { TransformDate } from '@admin-back/shared';
 
 @ObjectType()
 export class Expense {
@@ -20,7 +22,14 @@ export class ExpenseFilter {
   period: Period;
 
   @Field()
-  date: string;
+  @IsDate()
+  @TransformDate()
+  startDate: Date;
+
+  @Field()
+  @IsDate()
+  @TransformDate()
+  endDate: Date;
 }
 
 @InputType()

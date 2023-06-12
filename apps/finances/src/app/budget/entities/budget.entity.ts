@@ -1,5 +1,5 @@
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
-import { Budget } from '@admin-back/grpc';
+import { Budget, Period } from '@admin-back/grpc';
 import { CategoryEntity } from 'app/category/entities';
 import { AccountEntity } from 'app/account/entities';
 import { BaseEntity } from '@admin-back/shared';
@@ -23,6 +23,9 @@ export class BudgetEntity
 
   @Column()
   repeat: boolean;
+
+  @Column({ type: 'enum', enum: Period, default: Period.MONTHLY })
+  period: Period;
 
   @ManyToOne(() => CategoryEntity, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'category_id' })

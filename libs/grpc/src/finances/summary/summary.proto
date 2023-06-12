@@ -14,7 +14,8 @@ message BalanceFilter {
   string period     = 10;
   int32  account    = 20;
   int32  user       = 30;
-  string date       = 40;
+  string startDate  = 50;
+  string endDate    = 60;
 }
 
 message Balance {
@@ -34,8 +35,11 @@ message Expenses {
 }
 
 message ExpenseFilter {
-  string    period = 10;
-  string    date   = 20;
+  string period     = 10;
+  int32  account    = 20;
+  int32  user       = 30;
+  string startDate  = 50;
+  string endDate    = 60;
 }
 
 message LastMovementFilter {
