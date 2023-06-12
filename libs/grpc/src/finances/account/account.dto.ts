@@ -1,7 +1,8 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { IsDateString } from '@admin-back/shared';
+import { TransformDate } from '@admin-back/shared';
 import { Period } from '../finances.constants';
 import { BaseDto } from '../../shared';
+import { IsDate } from 'class-validator';
 
 @ObjectType()
 export class Account extends BaseDto {
@@ -10,12 +11,6 @@ export class Account extends BaseDto {
 
   @Field()
   initialBalance: number;
-
-  @Field()
-  closed: boolean;
-
-  @Field({ nullable: true })
-  closedAt: Date;
 
   user: number;
 }
@@ -34,8 +29,13 @@ export class AccountInput {
   @Field({ nullable: true })
   active: boolean;
 
+  user: number;
+}
+
+@InputType()
+export class AccountFilter {
   @Field({ nullable: true })
-  closed: boolean;
+  active: boolean;
 
   user: number;
 }
@@ -58,8 +58,14 @@ export class BalanceFilter {
   period: Period;
 
   @Field()
-  @IsDateString()
-  date: string;
+  @IsDate()
+  @TransformDate()
+  startDate: Date;
+
+  @Field()
+  @IsDate()
+  @TransformDate()
+  endDate: Date;
 
   @Field({ nullable: true })
   account: number;

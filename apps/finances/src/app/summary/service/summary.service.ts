@@ -1,14 +1,11 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { DateTime, Interval } from 'luxon';
-import { defer, map, Observable } from 'rxjs';
-import { DataSource } from 'typeorm';
-import { Match } from '@admin-back/shared';
+import { defer, map, Observable, switchMap } from 'rxjs';
+import { DataSource, In } from 'typeorm';
 import {
   Expense,
   ExpenseFilter,
   SummaryGrpc,
   LastMovementFilter,
-  Period,
   Movement,
   BalanceFilter,
   Balance,
@@ -16,56 +13,19 @@ import {
 import { MovementRepository } from 'app/movement/repositories';
 import { AccountRepository } from 'app/account/repositories';
 import { MovementEntity } from 'app/movement/entities';
+import { CategoryRepository } from 'app/category/repositories';
 
 @GrpcService('finances')
 export class SummaryService implements SummaryGrpc {
   constructor(
     private movementRepository: MovementRepository,
+    private categoryRepository: CategoryRepository,
     private accountRepository: AccountRepository,
     private dataSource: DataSource
   ) {}
 
   @GrpcMethod()
   balance(filter: BalanceFilter): Observable<Balance> {
-    const parameters: Record<string, any> = {
-      userId: filter.user,
-      accountId: filter.account,
-    };
-
-    const periodMatch: Match<Period> = {
-      DAILY: () => {
-        const date = DateTime.fromISO(filter.date);
-        parameters.startDate = date.startOf('day').toISO();
-        parameters.endDate = date.endOf('day').toISO();
-      },
-
-      WEEKLY: () => {
-        const { start, end } = Interval.fromISO(filter.date);
-        parameters.startDate = start.startOf('day').toISO();
-        parameters.endDate = end.endOf('day').toISO();
-      },
-
-      MONTHLY: () => {
-        const date = DateTime.fromFormat(filter.date, 'yyyy-MM');
-        parameters.startDate = date.startOf('month').toISO();
-        parameters.endDate = date.endOf('month').toISO();
-      },
-
-      YEARLY: () => {
-        const date = DateTime.fromFormat(filter.date, 'yyyy');
-        parameters.startDate = date.startOf('year').toISO();
-        parameters.endDate = date.endOf('year').toISO();
-      },
-
-      CUSTOM: () => {
-        const { start, end } = Interval.fromISO(filter.date);
-        parameters.startDate = start.startOf('day').toISO();
-        parameters.endDate = end.endOf('day').toISO();
-      },
-    };
-
-    periodMatch[filter.period]();
-
     const query = this.dataSource
       .createQueryBuilder()
       .select([
@@ -84,7 +44,12 @@ export class SummaryService implements SummaryGrpc {
             ])
             .from(MovementEntity, 'm')
             .where('user_id = :userId')
-            .setParameters(parameters),
+            .setParameters({
+              userId: filter.user,
+              accountId: filter.account,
+              startDate: filter.startDate,
+              endDate: filter.endDate,
+            }),
         'result'
       );
 
@@ -93,27 +58,38 @@ export class SummaryService implements SummaryGrpc {
 
   @GrpcMethod()
   expenses(filter: ExpenseFilter): Observable<Expense[]> {
-    const periodConfig: Match<Period> = {
-      DAILY: () => `m.date = '${DateTime.fromISO(filter.date).toISODate()}'`,
+    const query = this.movementRepository
+      .createQueryBuilder('m')
+      .select(['SUM(m.amount)::float AS amount', 'category_id AS "categoryId"'])
+      .where(
+        `date BETWEEN '${filter.startDate.toISOString()}'::date AND '${filter.endDate.toISOString()}'::date`
+      )
+      .andWhere(`m.type = 'expense'`)
+      .groupBy('m.category_id')
+      .orderBy('amount', 'DESC')
+      .limit(5);
 
-      WEEKLY: () => {
-        const { start, end } = Interval.fromISO(filter.date);
-        return `date BETWEEN '${start.toISODate()}'::date AND '${end.toISODate()}'::date`;
-      },
+    return defer(() => query.getRawMany<Record<string, any>>()).pipe(
+      switchMap((data) => {
+        const categories = defer(() =>
+          this.categoryRepository.findBy({
+            id: In(data.map((item) => item.categoryId)),
+          })
+        );
 
-      MONTHLY: () => `to_char(m.date, 'YYYY-MM') = '${filter.date}'`,
+        return categories.pipe(
+          map((categories) => {
+            const total = data.reduce((acc, { amount }) => acc + amount, 0);
 
-      YEARLY: () => `to_char(date, 'YYYY') = '${filter.date}'`,
-
-      CUSTOM: () => {
-        const { start, end } = Interval.fromISO(filter.date);
-        return `date BETWEEN '${start.toISODate()}'::date AND '${end.toISODate()}'::date`;
-      },
-    };
-
-    const where = periodConfig[filter.period]();
-
-    return this.expensesQuery({ where });
+            return data.map((item) => ({
+              amount: item.amount,
+              percentage: Math.round((item.amount / total) * 100),
+              category: categories.find((c) => c.id === item.categoryId),
+            }));
+          })
+        );
+      })
+    );
   }
 
   @GrpcMethod()
@@ -131,39 +107,6 @@ export class SummaryService implements SummaryGrpc {
           date: 'DESC',
         },
         take: 5,
-      })
-    );
-  }
-
-  private expensesQuery(opts): Observable<Expense[]> {
-    const query = this.movementRepository
-      .createQueryBuilder('m')
-      .select('SUM(m.amount)::float', 'amount')
-      .leftJoinAndSelect('m.category', 'c')
-      .where(opts.where)
-      .andWhere(`m.type = 'expense'`)
-      .groupBy('c.id, c.name, c.color, c.icon')
-      .orderBy('amount', 'DESC')
-      .limit(5);
-
-    return defer(() => query.getRawMany<Record<string, any>>()).pipe(
-      map((data) => {
-        const total = data.reduce((acc, { amount }) => acc + amount, 0);
-
-        return data.map((item) => ({
-          amount: item.amount,
-          percentage: Math.round((item.amount / total) * 100),
-          category: {
-            id: item.c_id,
-            name: item.c_name,
-            color: item.c_color,
-            icon: item.c_icon,
-            active: item.c_active,
-            createdAt: item.c_created_at,
-            updatedAt: item.c_updated_at,
-            deletedAt: item.c_deleted_at,
-          },
-        }));
       })
     );
   }

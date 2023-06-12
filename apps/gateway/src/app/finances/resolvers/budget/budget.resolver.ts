@@ -31,7 +31,7 @@ export class BudgetResolver {
     @Args('filter') filter: BudgetFilter
   ): Observable<Budget[]> {
     return this.budgetService.findAll({
-      account: filter.account,
+      ...filter,
       user: user.id,
     });
   }

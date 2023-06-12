@@ -52,6 +52,8 @@ message BudgetId {
 }
 
 message BudgetFilter {
-  int32 account = 10;
-  int32 user    = 20;
+  int32 account     = 10;
+  int32 user        = 20;
+  string startDate  = 30;
+  string endDate    = 40;
 }

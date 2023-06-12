@@ -34,7 +34,8 @@ message Movements {
 
 message MovementInput {
   int32   id          = 20;
-  string  date        = 1;
+  string  startDate   = 13;
+  string  endDate     = 14;
   string  type        = 2;
   string  description = 3;
   int32   amount      = 4;

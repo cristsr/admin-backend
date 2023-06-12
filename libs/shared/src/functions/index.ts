@@ -8,3 +8,4 @@ export * from './entity-repository';
 export * from './map-to';
 export * from './metadata';
 export * from './create-execution-context';
+export * from './dates';

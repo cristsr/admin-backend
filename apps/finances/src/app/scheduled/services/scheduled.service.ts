@@ -17,18 +17,24 @@ import {
   ScheduledGrpc,
   Status,
 } from '@admin-back/grpc';
-import { NotFoundException } from '@nestjs/common';
+import { Logger, NotFoundException } from '@nestjs/common';
 import { AccountRepository } from 'app/account/repositories';
 import { CategoryRepository } from 'app/category/repositories';
 import { SubcategoryRepository } from 'app/subcategory/repositories';
 import { ScheduledRepository } from 'app/scheduled/repositories';
+import { DateTime } from 'luxon';
+import { Between } from 'typeorm';
+import { MovementRepository } from 'app/movement/repositories';
 
 @GrpcService('finances')
 export class ScheduledService implements ScheduledGrpc {
+  #logger = new Logger(ScheduledService.name);
+
   constructor(
     private categoryRepository: CategoryRepository,
     private subcategoryRepository: SubcategoryRepository,
     private scheduledRepository: ScheduledRepository,
+    private movementRepository: MovementRepository,
     private accountRepository: AccountRepository
   ) {}
 
@@ -48,6 +54,7 @@ export class ScheduledService implements ScheduledGrpc {
       this.scheduledRepository.find({
         where: {
           account: { id: filter.account },
+          active: filter.active,
         },
         relations: ['category', 'subcategory'],
       })
@@ -130,5 +137,42 @@ export class ScheduledService implements ScheduledGrpc {
     return from(this.scheduledRepository.delete(scheduledId)).pipe(
       map((res) => ({ status: !!res.affected }))
     );
+  }
+
+  async generateMovements(): Promise<void> {
+    this.#logger.log(`Generating movements`);
+
+    const utc = DateTime.utc();
+
+    const records = await this.scheduledRepository.find({
+      where: {
+        date: Between(
+          utc.startOf('minute').toJSDate(),
+          utc.endOf('minute').toJSDate()
+        ),
+        active: true,
+        repeat: true,
+      },
+    });
+
+    for (const schedule of records) {
+      // Create Budget for the month
+      await this.movementRepository
+        .save({
+          description: schedule.description,
+          amount: schedule.amount,
+          type: schedule.type,
+          date: schedule.date,
+          category: schedule.category,
+          subcategory: schedule.subcategory,
+          account: schedule.account,
+          user: schedule.user,
+        })
+        .catch((error) => {
+          this.#logger.error(`Error creating movement ${error.message}`);
+        });
+    }
+
+    this.#logger.log('Movements generated');
   }
 }

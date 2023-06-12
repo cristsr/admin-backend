@@ -6,11 +6,10 @@ import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
 
 service AccountService {
-  rpc FindAll(google.protobuf.Empty) returns (stream Accounts);
+  rpc FindAll(AccountFilter)         returns (stream Accounts);
   rpc FindOne(AccountId)             returns (stream Account);
   rpc FindByUser(user.UserId)        returns (stream Accounts);
-  rpc Save(CreateAccount)            returns (stream Account);
-  rpc Update(UpdateAccount)          returns (stream Account);
+  rpc Save(AccountInput)             returns (stream Account);
   rpc Remove(AccountId)              returns (stream shared.Status);
 }
 
@@ -19,7 +18,6 @@ message Account {
   string    name           = 20;
   int32     initialBalance = 80;
   bool      active         = 40;
-  bool      closed         = 110;
   string    createdAt      = 50;
   string    updatedAt      = 60;
   string    closedAt       = 70;
@@ -35,19 +33,17 @@ message AccountId {
   int32 id = 10;
 }
 
-message CreateAccount {
+message AccountInput {
   int32  id             = 40;
   string name           = 10;
   int32  initialBalance = 20;
   int32  user           = 30;
   bool   active         = 50;
-  bool   closed         = 60;
 }
 
-message UpdateAccount {
-  int32           id   = 10;
-  optional string name = 20;
-  optional int32  user = 40;
-}
 
+message AccountFilter {
+  bool   active = 10;
+  int32  user = 20;
+}
 
