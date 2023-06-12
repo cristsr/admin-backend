@@ -1,5 +1,5 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { defer, map, Observable, switchMap } from 'rxjs';
+import { defer, map, Observable, of, switchMap } from 'rxjs';
 import { DataSource, In } from 'typeorm';
 import {
   Expense,
@@ -9,6 +9,7 @@ import {
   Movement,
   BalanceFilter,
   Balance,
+  MovementType,
 } from '@admin-back/grpc';
 import { MovementRepository } from 'app/movement/repositories';
 import { AccountRepository } from 'app/account/repositories';
@@ -39,16 +40,18 @@ export class SummaryService implements SummaryGrpc {
             .select([
               `(SELECT initial_balance FROM accounts WHERE id = :accountId and user_id = :userId)::float AS initial_balance`,
               `COALESCE(SUM(CASE WHEN date <= :endDate THEN CASE WHEN type = 'INCOME' THEN amount ELSE -amount END END), 0)::float AS accumulated_balance`,
-              `COALESCE(SUM(CASE WHEN type = 'INCOME' AND date >= :startDate AND date <= :endDate THEN amount END), 0)::float AS incomes`,
-              `COALESCE(SUM(CASE WHEN type = 'EXPENSE' AND date >= :startDate AND date <= :endDate THEN amount END), 0)::float AS expenses`,
+              `COALESCE(SUM(CASE WHEN type = 'INCOME' AND date BETWEEN :startDate and :endDate THEN amount END), 0)::float AS incomes`,
+              `COALESCE(SUM(CASE WHEN type = 'EXPENSE' AND date BETWEEN :startDate and :endDate THEN amount END), 0)::float AS expenses`,
             ])
             .from(MovementEntity, 'm')
             .where('user_id = :userId')
+            .andWhere('active = :active')
             .setParameters({
               userId: filter.user,
               accountId: filter.account,
               startDate: filter.startDate,
               endDate: filter.endDate,
+              active: true,
             }),
         'result'
       );
@@ -60,17 +63,27 @@ export class SummaryService implements SummaryGrpc {
   expenses(filter: ExpenseFilter): Observable<Expense[]> {
     const query = this.movementRepository
       .createQueryBuilder('m')
-      .select(['SUM(m.amount)::float AS amount', 'category_id AS "categoryId"'])
-      .where(
-        `date BETWEEN '${filter.startDate.toISOString()}'::date AND '${filter.endDate.toISOString()}'::date`
-      )
-      .andWhere(`m.type = 'expense'`)
+      .select([
+        'SUM(m.amount)::float AS amount',
+        'm.category_id AS "categoryId"',
+      ])
+      .where(`date BETWEEN :startDate AND :endDate`)
+      .andWhere(`m.type = :type`)
       .groupBy('m.category_id')
       .orderBy('amount', 'DESC')
+      .setParameters({
+        startDate: filter.startDate,
+        endDate: filter.endDate,
+        type: MovementType.EXPENSE,
+      })
       .limit(5);
 
     return defer(() => query.getRawMany<Record<string, any>>()).pipe(
       switchMap((data) => {
+        if (!data.length) {
+          return of([]);
+        }
+
         const categories = defer(() =>
           this.categoryRepository.findBy({
             id: In(data.map((item) => item.categoryId)),
@@ -102,6 +115,7 @@ export class SummaryService implements SummaryGrpc {
             id: filter.account,
           },
           user: filter.user,
+          active: true,
         },
         order: {
           date: 'DESC',
