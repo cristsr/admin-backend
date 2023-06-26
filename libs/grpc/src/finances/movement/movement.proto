@@ -34,8 +34,7 @@ message Movements {
 
 message MovementInput {
   int32   id          = 20;
-  string  startDate   = 13;
-  string  endDate     = 14;
+  string  date        = 1;
   string  type        = 2;
   string  description = 3;
   int32   amount      = 4;
@@ -48,7 +47,8 @@ message MovementInput {
 
 message MovementFilter {
   string          period   = 1;
-  string          date     = 2;
+  string          startDate= 7;
+  string          endDate  = 8;
   int32           category = 3;
   repeated string type     = 4;
   string          order    = 5;

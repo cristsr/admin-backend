@@ -1,4 +1,4 @@
-import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
+import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { ArrayMaxSize, IsArray, IsDate, IsOptional } from 'class-validator';
 import { OmitInputType, TransformDate } from '@admin-back/shared';
 import { MovementType } from './movement.types';
@@ -85,10 +85,10 @@ export class MovementFilter {
   @Field({ nullable: true })
   account: number;
 
-  @Field(() => Int, { nullable: true })
+  @Field({ nullable: true })
   category?: number;
 
-  @Field(() => String, { nullable: true })
+  @Field({ nullable: true })
   order?: string;
 
   @Field(() => [MovementType], { nullable: true })

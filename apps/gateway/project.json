@@ -22,20 +22,17 @@
             "output": "assets/grpc"
           }
         ],
-        "isolatedConfig": true,
+        "isolatedConfig": false,
         "webpackConfig": "apps/gateway/webpack.config.js"
       },
       "configurations": {
         "development": {
+          "mode": "development",
           "optimization": false,
           "extractLicenses": false,
-          "inspect": false,
-          "fileReplacements": [
-            {
-              "replace": "apps/gateway/src/environments/environment.ts",
-              "with": "apps/gateway/src/environments/environment.dev.ts"
-            }
-          ]
+          "inspect": true,
+          "progress": true,
+          "sourceMap": true
         },
         "production": {
           "optimization": true,
@@ -51,7 +48,7 @@
       }
     },
     "serve": {
-      "executor": "@nx/js:node",
+      "executor": "@nx/node:node",
       "defaultConfiguration": "development",
       "options": {
         "buildTarget": "gateway:build"

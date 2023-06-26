@@ -15,9 +15,11 @@ export class Budget extends BaseDto {
   amount: number;
 
   @Field()
+  @TransformDate()
   startDate: Date;
 
   @Field()
+  @TransformDate()
   endDate: Date;
 
   @Field()

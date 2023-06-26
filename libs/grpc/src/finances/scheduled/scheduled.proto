@@ -7,7 +7,7 @@ import "movement/movement.proto";
 
 service ScheduledService {
   rpc FindOne(ScheduledId)           returns (stream Scheduled);
-  rpc FindAll(google.protobuf.Empty) returns (stream Scheduleds);
+  rpc FindAll(ScheduledFilter)       returns (stream Scheduleds);
   rpc Save(ScheduledInput)           returns (stream Scheduled);
   rpc Delete(ScheduledId)            returns (google.protobuf.Empty);
 }
@@ -44,6 +44,11 @@ message ScheduledInput {
   bool   repeat      = 10;
   int32  user        = 20;
   bool   active      = 90;
+}
+
+message ScheduledFilter {
+  int32  account         = 30;
+  bool   active          = 90;
 }
 
 message ScheduledId {

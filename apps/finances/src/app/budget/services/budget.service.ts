@@ -13,7 +13,7 @@ import {
   Period,
 } from '@admin-back/grpc';
 import { BudgetEntity } from 'app/budget/entities';
-import { Between, LessThanOrEqual } from 'typeorm';
+import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import { DateTime } from 'luxon';
 import { Logger, NotFoundException } from '@nestjs/common';
 import { AccountRepository } from 'app/account/repositories';
@@ -62,12 +62,15 @@ export class BudgetService implements BudgetGrpc {
 
   @GrpcMethod()
   findAll(filter: BudgetFilter): Observable<Budget[]> {
+    console.log('filter', filter);
     const budgets$ = defer(() =>
       this.budgetRepository.find({
         where: {
           account: {
             id: filter.account,
           },
+          startDate: MoreThanOrEqual(filter.startDate),
+          endDate: LessThanOrEqual(filter.endDate),
           user: filter.user,
           active: true,
         },
@@ -129,6 +132,7 @@ export class BudgetService implements BudgetGrpc {
 
   @GrpcMethod()
   save(data: BudgetInput): Observable<Budget> {
+    console.log('data', data);
     const budget = defer(() =>
       this.budgetRepository.findOne({
         where: {

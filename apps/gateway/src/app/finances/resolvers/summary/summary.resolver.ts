@@ -35,8 +35,14 @@ export class SummaryResolver {
   }
 
   @Query(() => [Expense])
-  expenses(@Args('filter') filter: ExpenseFilter): Observable<Expense[]> {
-    return this.summaryService.expenses(filter);
+  expenses(
+    @CurrentUser() user: User,
+    @Args('filter') filter: ExpenseFilter
+  ): Observable<Expense[]> {
+    return this.summaryService.expenses({
+      ...filter,
+      user: user.id,
+    });
   }
 
   @Query(() => [Movement])
