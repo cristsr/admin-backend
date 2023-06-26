@@ -36,15 +36,16 @@ message Budgets {
 }
 
 message BudgetInput {
-  int32   id        = 30;
-  string  name      = 1;
-  int32   amount    = 2;
-  int32   category  = 3;
-  string  date      = 6;
-  bool    repeat    = 4;
-  bool    active    = 5;
-  int32   account   = 20;
-  int32   user      = 10;
+  int32   id          = 30;
+  string  name        = 1;
+  int32   amount      = 2;
+  int32   category    = 3;
+  bool    repeat      = 4;
+  bool    active      = 5;
+  int32   account     = 20;
+  int32   user        = 10;
+  string  startDate   = 6;
+  string  endDate     = 7;
 }
 
 message BudgetId {

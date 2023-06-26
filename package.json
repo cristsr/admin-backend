@@ -4,7 +4,7 @@
   "license": "MIT",
   "scripts": {
     "start": "nx serve",
-    "dev": "nx serve --watch",
+    "dev": "nx serve",
     "build": "nx build",
     "test": "nx test"
   },
@@ -59,6 +59,7 @@
     "@nx/linter": "16.3.2",
     "@nx/nest": "16.3.2",
     "@nx/node": "16.3.2",
+    "@nx/rollup": "^16.3.2",
     "@nx/webpack": "^16.3.2",
     "@nx/workspace": "16.3.2",
     "@types/bcrypt": "^5.0.0",

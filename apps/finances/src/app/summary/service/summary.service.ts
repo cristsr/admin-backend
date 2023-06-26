@@ -69,12 +69,18 @@ export class SummaryService implements SummaryGrpc {
       ])
       .where(`date BETWEEN :startDate AND :endDate`)
       .andWhere(`m.type = :type`)
+      .andWhere(`m.user_id = :userId`)
+      .andWhere(`m.active = :active`)
+      .andWhere(`m.account_id = :accountId`)
       .groupBy('m.category_id')
       .orderBy('amount', 'DESC')
       .setParameters({
         startDate: filter.startDate,
         endDate: filter.endDate,
         type: MovementType.EXPENSE,
+        userId: filter.user,
+        active: true,
+        accountId: filter.account,
       })
       .limit(5);
 

@@ -55,6 +55,7 @@ export class MovementService implements MovementGrpc {
 
   @GrpcMethod()
   save(data: MovementInput): Observable<Movement> {
+    console.log('data', data);
     const movement = defer(() =>
       this.movementRepository.findOne({
         where: {

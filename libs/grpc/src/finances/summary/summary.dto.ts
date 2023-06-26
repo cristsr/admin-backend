@@ -18,6 +18,9 @@ export class Expense {
 
 @InputType()
 export class ExpenseFilter {
+  @Field()
+  account: number;
+
   @Field(() => Period)
   period: Period;
 
@@ -30,6 +33,8 @@ export class ExpenseFilter {
   @IsDate()
   @TransformDate()
   endDate: Date;
+
+  user: number;
 }
 
 @InputType()
