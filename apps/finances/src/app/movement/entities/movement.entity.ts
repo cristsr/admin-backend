@@ -38,6 +38,6 @@ export class MovementEntity extends BaseEntity implements Movement {
   @JoinColumn({ name: 'account_id' })
   account: AccountEntity;
 
-  @Column({ name: 'user_id' })
+  @Column({ name: 'user_id', nullable: true })
   user: number;
 }

@@ -1,5 +1,5 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { defer, map, Observable, of, switchMap } from 'rxjs';
+import { catchError, defer, map, Observable, of, switchMap } from 'rxjs';
 import { DataSource, In } from 'typeorm';
 import {
   Expense,
@@ -56,7 +56,9 @@ export class SummaryService implements SummaryGrpc {
         'result'
       );
 
-    return defer(() => query.getRawOne<Balance>());
+    return defer(() => query.getRawOne<Balance>()).pipe(
+      catchError(() => of(null))
+    );
   }
 
   @GrpcMethod()

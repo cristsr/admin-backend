@@ -41,5 +41,5 @@ message UserInput {
 }
 
 message UserId {
-  extend Id {}
+  int32 id = 1;
 }
