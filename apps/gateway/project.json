@@ -54,6 +54,11 @@
       "executor": "@nrwl/node:node",
       "options": {
         "buildTarget": "gateway:build"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "gateway:build:production"
+        }
       }
     },
     "lint": {
