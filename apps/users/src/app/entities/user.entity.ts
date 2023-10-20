@@ -15,7 +15,7 @@ export class UserEntity implements User {
   @Column()
   name: string;
 
-  @Column()
+  @Column({ nullable: true })
   lastname: string;
 
   @Column()

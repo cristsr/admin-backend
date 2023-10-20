@@ -41,6 +41,6 @@ export class AccountEntity implements Account {
   })
   closedAt: string;
 
-  @Column()
+  @Column({ nullable: true })
   user: number;
 }

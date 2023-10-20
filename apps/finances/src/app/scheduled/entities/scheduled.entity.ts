@@ -21,6 +21,7 @@ export class ScheduledEntity {
   @Column({
     type: 'date',
     name: 'start_date',
+    nullable: true,
   })
   date: string;
 
@@ -30,7 +31,7 @@ export class ScheduledEntity {
   @Column()
   amount: number;
 
-  @Column({})
+  @Column({ nullable: true })
   recurrent: string;
 
   @ManyToOne(() => CategoryEntity, (e) => e.id, {

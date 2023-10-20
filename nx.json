@@ -1,31 +1,6 @@
 {
-  "npmScope": "admin-back",
   "affected": {
     "defaultBase": "master"
-  },
-  "cli": {
-    "defaultCollection": "@nrwl/nest"
-  },
-  "implicitDependencies": {
-    "package.json": {
-      "dependencies": "*",
-      "devDependencies": "*"
-    },
-    ".eslintrc.json": "*"
-  },
-  "tasksRunnerOptions": {
-    "default": {
-      "runner": "@nrwl/nx-cloud",
-      "options": {
-        "cacheableOperations": [
-          "build",
-          "lint",
-          "test",
-          "e2e"
-        ],
-        "accessToken": "ZTRjMWY5ZGItMDgyMC00YTRlLThhNmQtMDQ4OTRlMzY0NGE5fHJlYWQtd3JpdGU="
-      }
-    }
   },
   "targetDependencies": {
     "build": [
@@ -35,5 +10,35 @@
       }
     ]
   },
-  "defaultProject": "gateway"
+  "defaultProject": "gateway",
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals"],
+    "sharedGlobals": [],
+    "production": [
+      "default",
+      "!{projectRoot}/.eslintrc.json",
+      "!{projectRoot}/**/?(*.)+(spec|test).[jt]s?(x)?(.snap)",
+      "!{projectRoot}/tsconfig.spec.json",
+      "!{projectRoot}/jest.config.[jt]s",
+      "!{projectRoot}/src/test-setup.[jt]s"
+    ]
+  },
+  "targetDefaults": {
+    "build": {
+      "inputs": ["production", "^production"],
+      "cache": true
+    },
+    "lint": {
+      "cache": true,
+      "inputs": ["default", "{workspaceRoot}/.eslintrc.json"]
+    },
+    "test": {
+      "cache": true,
+      "inputs": ["default", "^production", "{workspaceRoot}/jest.preset.js"]
+    },
+    "e2e": {
+      "cache": true
+    }
+  },
+  "nxCloudAccessToken": "ZTRjMWY5ZGItMDgyMC00YTRlLThhNmQtMDQ4OTRlMzY0NGE5fHJlYWQtd3JpdGU="
 }

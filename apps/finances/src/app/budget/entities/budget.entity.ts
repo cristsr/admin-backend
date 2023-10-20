@@ -19,10 +19,10 @@ export class BudgetEntity {
   @Column()
   amount: number;
 
-  @Column({ type: 'date', name: 'start_date' })
+  @Column({ type: 'date', name: 'start_date', nullable: true })
   startDate: string;
 
-  @Column({ type: 'date', name: 'end_date' })
+  @Column({ type: 'date', name: 'end_date', nullable: true })
   endDate: string;
 
   @Column()

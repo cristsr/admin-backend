@@ -11,23 +11,10 @@ export class Environment {
   PORT: number;
 
   @IsString()
+  DB_URI: string;
+
+  @IsString()
   DB_TYPE: string;
-
-  @IsString()
-  DB_HOST: string;
-
-  @Transform(({ value }) => Number(value))
-  @IsNumber()
-  DB_PORT: number;
-
-  @IsString()
-  DB_NAME: string;
-
-  @IsString()
-  DB_USER: string;
-
-  @IsString()
-  DB_PASSWORD: string;
 
   @Transform(({ value }) => value === 'true')
   @IsBoolean()

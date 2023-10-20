@@ -5,7 +5,7 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { map, Observable, tap } from 'rxjs';
-import { isArray, isEmpty } from 'lodash-es';
+import { isArray, isEmpty } from 'lodash';
 
 @Injectable()
 export class RequestInterceptor implements NestInterceptor {
