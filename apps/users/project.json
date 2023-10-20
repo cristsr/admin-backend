@@ -8,8 +8,6 @@
       "executor": "@nx/webpack:webpack",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "target": "node",
-        "compiler": "tsc",
         "outputPath": "dist/apps/users",
         "main": "apps/users/src/main.ts",
         "tsConfig": "apps/users/tsconfig.app.json",
@@ -20,15 +18,10 @@
             "output": "assets/grpc"
           }
         ],
-        "isolatedConfig": true,
-        "webpackConfig": "apps/users/webpack.config.js"
+        "compiler": "tsc",
+        "target": "node"
       },
       "configurations": {
-        "development": {
-          "optimization": false,
-          "extractLicenses": false,
-          "inspect": false
-        },
         "production": {
           "optimization": true,
           "extractLicenses": true,
@@ -38,21 +31,17 @@
     },
     "serve": {
       "executor": "@nx/js:node",
-      "defaultConfiguration": "development",
       "options": {
         "buildTarget": "users:build"
       },
       "configurations": {
-        "development": {
-          "buildTarget": "users:build:development"
-        },
         "production": {
           "buildTarget": "users:build:production"
         }
       }
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
+      "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["apps/users/**/*.ts"]
@@ -60,16 +49,10 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["coverage/apps/users"],
+      "outputs": ["{workspaceRoot}/coverage/apps/users"],
       "options": {
         "jestConfig": "apps/users/jest.config.ts",
         "passWithNoTests": true
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "codeCoverage": true
-        }
       }
     }
   },

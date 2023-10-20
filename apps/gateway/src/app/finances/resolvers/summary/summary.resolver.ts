@@ -26,7 +26,7 @@ export class SummaryResolver {
     private accountService: AccountGrpc
   ) {}
 
-  @Query(() => Balance)
+  @Query(() => Balance, { nullable: true })
   balance(
     @CurrentUser() user: User,
     @Args('filter') filter: BalanceFilter

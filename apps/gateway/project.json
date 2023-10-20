@@ -7,10 +7,7 @@
     "build": {
       "executor": "@nx/webpack:webpack",
       "outputs": ["{options.outputPath}"],
-      "defaultConfiguration": "production",
       "options": {
-        "target": "node",
-        "compiler": "tsc",
         "outputPath": "dist/apps/gateway",
         "main": "apps/gateway/src/main.ts",
         "tsConfig": "apps/gateway/tsconfig.app.json",
@@ -22,18 +19,10 @@
             "output": "assets/grpc"
           }
         ],
-        "isolatedConfig": false,
-        "webpackConfig": "apps/gateway/webpack.config.js"
+        "compiler": "tsc",
+        "target": "node"
       },
       "configurations": {
-        "development": {
-          "mode": "development",
-          "optimization": false,
-          "extractLicenses": false,
-          "inspect": true,
-          "progress": true,
-          "sourceMap": true
-        },
         "production": {
           "optimization": true,
           "extractLicenses": true,
@@ -48,22 +37,18 @@
       }
     },
     "serve": {
-      "executor": "@nx/node:node",
-      "defaultConfiguration": "development",
+      "executor": "@nx/js:node",
       "options": {
         "buildTarget": "gateway:build"
       },
       "configurations": {
-        "development": {
-          "buildTarget": "test:build:development"
-        },
         "production": {
-          "buildTarget": "test:build:production"
+          "buildTarget": "gateway:build:production"
         }
       }
     },
     "lint": {
-      "executor": "@nx/linter:eslint",
+      "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
         "lintFilePatterns": ["apps/gateway/**/*.ts"]
@@ -71,16 +56,10 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["coverage/apps/gateway"],
+      "outputs": ["{workspaceRoot}/coverage/apps/gateway"],
       "options": {
         "jestConfig": "apps/gateway/jest.config.js",
         "passWithNoTests": true
-      },
-      "configurations": {
-        "ci": {
-          "ci": true,
-          "codeCoverage": true
-        }
       }
     }
   },

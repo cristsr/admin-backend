@@ -24,7 +24,7 @@ export class UserEntity implements User {
   email: string;
 
   @Index()
-  @Column({ name: 'auth0_id', unique: true })
+  @Column({ name: 'auth0_id', unique: true, nullable: true })
   auth0Id: string;
 
   @CreateDateColumn({ name: 'created_at' })

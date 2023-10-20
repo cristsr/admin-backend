@@ -42,13 +42,13 @@ export class AccountFilter {
 
 @ObjectType()
 export class Balance {
-  @Field()
+  @Field({ nullable: true })
   balance: number;
 
-  @Field()
+  @Field({ nullable: true })
   incomes: number;
 
-  @Field()
+  @Field({ nullable: true })
   expenses: number;
 }
 

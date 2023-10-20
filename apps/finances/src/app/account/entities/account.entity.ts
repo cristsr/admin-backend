@@ -7,9 +7,9 @@ export class AccountEntity extends BaseEntity implements Account {
   @Column()
   name: string;
 
-  @Column({ name: 'initial_balance' })
+  @Column({ name: 'initial_balance', nullable: true })
   initialBalance: number;
 
-  @Column({ name: 'user_id' })
+  @Column({ name: 'user_id', nullable: true })
   user: number;
 }
