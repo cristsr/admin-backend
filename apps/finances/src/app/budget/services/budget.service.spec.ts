@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BudgetService } from './budget.service';
 import { BudgetHandler } from 'app/budget/handlers';
+import { BudgetService } from './budget.service';
 
 describe('BudgetController', () => {
   let controller: BudgetService;

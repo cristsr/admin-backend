@@ -1,11 +1,11 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { PassportStrategy } from '@nestjs/passport';
-import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
-import { passportJwtSecret } from 'jwks-rsa';
+import { PassportStrategy } from '@nestjs/passport';
 import { ENV } from 'env';
-import { User, USER_SERVICE, UserGrpc } from '@admin-back/grpc';
+import { passportJwtSecret } from 'jwks-rsa';
+import { ExtractJwt, Strategy } from 'passport-jwt';
 import { firstValueFrom, tap } from 'rxjs';
+import { USER_SERVICE, User, UserGrpc } from '@admin-back/grpc';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -33,8 +33,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     this.#logger.debug(payload);
 
     const auth0Id = (payload.sub as string).split('|').pop();
-
-    console.log(auth0Id);
 
     const user$ = this.userService
       .findOne({ auth0Id })

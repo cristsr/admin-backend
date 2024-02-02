@@ -1,9 +1,9 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Observable } from 'rxjs';
 import {
-  Budget,
   BUDGET_SERVICE,
+  Budget,
   BudgetFilter,
   BudgetGrpc,
   BudgetInput,

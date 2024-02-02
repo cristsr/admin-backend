@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { AccountService } from './account.service';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { AccountEntity } from 'app/account/entities';
 import { MovementEntity } from 'app/movement/entities';
+import { AccountService } from './account.service';
 
 describe('SummaryController', () => {
   let module: TestingModule;

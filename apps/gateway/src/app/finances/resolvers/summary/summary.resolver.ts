@@ -1,18 +1,18 @@
-import { Args, Query, Resolver } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
+import { Args, Query, Resolver } from '@nestjs/graphql';
 import { Observable } from 'rxjs';
 import {
   ACCOUNT_SERVICE,
   AccountGrpc,
   Balance,
-  Expense,
-  Movement,
   BalanceFilter,
+  Expense,
   ExpenseFilter,
+  LastMovementFilter,
+  Movement,
   SUMMARY_SERVICE,
   SummaryGrpc,
   User,
-  LastMovementFilter,
 } from '@admin-back/grpc';
 import { CurrentUser } from '@admin-back/shared';
 

@@ -1,8 +1,8 @@
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { Budget, Period } from '@admin-back/grpc';
-import { CategoryEntity } from 'app/category/entities';
-import { AccountEntity } from 'app/account/entities';
 import { BaseEntity } from '@admin-back/shared';
+import { AccountEntity } from 'app/account/entities';
+import { CategoryEntity } from 'app/category/entities';
 
 @Entity('budgets')
 export class BudgetEntity

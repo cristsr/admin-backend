@@ -1,20 +1,20 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { catchError, defer, map, Observable, of, switchMap } from 'rxjs';
+import { Observable, catchError, defer, map, of, switchMap } from 'rxjs';
 import { DataSource, In } from 'typeorm';
 import {
+  Balance,
+  BalanceFilter,
   Expense,
   ExpenseFilter,
-  SummaryGrpc,
   LastMovementFilter,
   Movement,
-  BalanceFilter,
-  Balance,
   MovementType,
+  SummaryGrpc,
 } from '@admin-back/grpc';
-import { MovementRepository } from 'app/movement/repositories';
 import { AccountRepository } from 'app/account/repositories';
-import { MovementEntity } from 'app/movement/entities';
 import { CategoryRepository } from 'app/category/repositories';
+import { MovementEntity } from 'app/movement/entities';
+import { MovementRepository } from 'app/movement/repositories';
 
 @GrpcService('finances')
 export class SummaryService implements SummaryGrpc {

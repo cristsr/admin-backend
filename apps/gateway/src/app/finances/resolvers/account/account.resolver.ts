@@ -1,14 +1,14 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Observable } from 'rxjs';
 import {
-  Account,
   ACCOUNT_SERVICE,
+  Account,
   AccountFilter,
   AccountGrpc,
   AccountInput,
   User,
 } from '@admin-back/grpc';
-import { Observable } from 'rxjs';
 import { CurrentUser } from '@admin-back/shared';
 
 @Resolver(Account)

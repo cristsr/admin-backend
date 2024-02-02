@@ -1,18 +1,18 @@
 import { NotFoundException } from '@nestjs/common';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { defer, forkJoin, map, Observable, of, switchMap, tap } from 'rxjs';
+import { Observable, defer, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { Between, DeleteResult, In } from 'typeorm';
 import {
-  MovementInput,
   Id,
   Movement,
   MovementFilter,
   MovementGrpc,
+  MovementInput,
   Status,
 } from '@admin-back/grpc';
 import { AccountRepository } from 'app/account/repositories';
-import { MovementRepository } from 'app/movement/repositories';
 import { CategoryRepository } from 'app/category/repositories';
+import { MovementRepository } from 'app/movement/repositories';
 import { SubcategoryRepository } from 'app/subcategory/repositories';
 
 @GrpcService('finances')
@@ -55,7 +55,6 @@ export class MovementService implements MovementGrpc {
 
   @GrpcMethod()
   save(data: MovementInput): Observable<Movement> {
-    console.log('data', data);
     const movement = defer(() =>
       this.movementRepository.findOne({
         where: {

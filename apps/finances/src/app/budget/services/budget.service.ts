@@ -1,26 +1,26 @@
+import { Logger, NotFoundException } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { defer, forkJoin, map, Observable, of, switchMap, tap } from 'rxjs';
+import { DateTime } from 'luxon';
+import { Observable, defer, forkJoin, map, of, switchMap, tap } from 'rxjs';
+import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import {
-  Id,
-  BudgetGrpc,
   Budget,
-  BudgetInput,
-  Status,
   BudgetFilter,
+  BudgetGrpc,
+  BudgetInput,
   GenerateBudgets,
+  Id,
   Movement,
   MovementType,
   Period,
+  Status,
 } from '@admin-back/grpc';
-import { BudgetEntity } from 'app/budget/entities';
-import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
-import { DateTime } from 'luxon';
-import { Logger, NotFoundException } from '@nestjs/common';
 import { AccountRepository } from 'app/account/repositories';
-import { OnEvent } from '@nestjs/event-emitter';
-import { MovementRepository } from 'app/movement/repositories';
+import { BudgetEntity } from 'app/budget/entities';
 import { BudgetRepository } from 'app/budget/repositories';
 import { CategoryRepository } from 'app/category/repositories';
+import { MovementRepository } from 'app/movement/repositories';
 
 @GrpcService('finances')
 export class BudgetService implements BudgetGrpc {
@@ -62,7 +62,6 @@ export class BudgetService implements BudgetGrpc {
 
   @GrpcMethod()
   findAll(filter: BudgetFilter): Observable<Budget[]> {
-    console.log('filter', filter);
     const budgets$ = defer(() =>
       this.budgetRepository.find({
         where: {
@@ -132,7 +131,6 @@ export class BudgetService implements BudgetGrpc {
 
   @GrpcMethod()
   save(data: BudgetInput): Observable<Budget> {
-    console.log('data', data);
     const budget = defer(() =>
       this.budgetRepository.findOne({
         where: {

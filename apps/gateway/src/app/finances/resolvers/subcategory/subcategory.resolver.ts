@@ -1,14 +1,14 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Observable } from 'rxjs';
 import {
   CreateSubcategories,
-  SubcategoryInput,
+  SUBCATEGORY_SERVICE,
   Status,
   Subcategory,
-  SUBCATEGORY_SERVICE,
   SubcategoryGrpc,
+  SubcategoryInput,
 } from '@admin-back/grpc';
-import { Observable } from 'rxjs';
 
 @Resolver()
 export class SubcategoryResolver {

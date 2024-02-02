@@ -1,5 +1,5 @@
-import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
+import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { FinancesConfig } from '@admin-back/grpc';
 import { AppModule } from './app.module';

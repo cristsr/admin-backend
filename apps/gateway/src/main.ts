@@ -1,15 +1,16 @@
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { MainModule } from './main.module';
-import { Logger, ValidationPipe } from '@nestjs/common';
 
 process.on('unhandledRejection', function (err) {
-  console.error(err, '[unhandledRejection]');
+  const logger = new Logger('unhandledRejection');
+  logger.error(err);
 });
 
 // Better error logging of uncaughtException errors
 process.on('uncaughtException', (err) => {
-  console.error(err, '[Uncaught Exception thrown]');
-
+  const logger = new Logger('uncaughtException');
+  logger.error(err);
   // process.exit(1);
 });
 
