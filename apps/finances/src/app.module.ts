@@ -1,23 +1,23 @@
-import { Module } from '@nestjs/common';
 import { CacheModule } from '@nestjs/cache-manager';
+import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { ScheduleModule } from '@nestjs/schedule';
-import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { EventEmitterModule } from '@nestjs/event-emitter';
+import { ScheduleModule } from '@nestjs/schedule';
+import { DatabaseModule } from 'database/database.module';
+import { Environment } from 'env';
 import {
-  ResponseInterceptor,
   ExceptionFilter,
+  ResponseInterceptor,
   validatorFactory,
 } from '@admin-back/shared';
-import { Environment } from 'env';
-import { DatabaseModule } from 'database/database.module';
+import { AccountModule } from 'app/account/account.module';
+import { BudgetModule } from 'app/budget/budget.module';
 import { CategoryModule } from 'app/category/category.module';
 import { MovementModule } from 'app/movement/movement.module';
-import { SummaryModule } from 'app/summary/summary.module';
-import { BudgetModule } from 'app/budget/budget.module';
 import { ScheduledModule } from 'app/scheduled/scheduled.module';
 import { SubcategoryModule } from 'app/subcategory/subcategory.module';
-import { AccountModule } from 'app/account/account.module';
+import { SummaryModule } from 'app/summary/summary.module';
 import { AppController } from './app.controller';
 
 @Module({

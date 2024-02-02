@@ -1,7 +1,7 @@
-import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { Inject } from '@nestjs/common';
-import { map, Observable } from 'rxjs';
-import { UserInput, User, USER_SERVICE, UserGrpc } from '@admin-back/grpc';
+import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { Observable, map } from 'rxjs';
+import { USER_SERVICE, User, UserGrpc, UserInput } from '@admin-back/grpc';
 import { CurrentUser, Public } from '@admin-back/shared';
 
 @Resolver(() => User)

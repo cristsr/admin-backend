@@ -1,24 +1,24 @@
-import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import { NotFoundException } from '@nestjs/common';
-import { DataSource } from 'typeorm';
+import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import {
+  Observable,
   catchError,
   defer,
   finalize,
   from,
   map,
-  Observable,
   of,
   switchMap,
   tap,
 } from 'rxjs';
+import { DataSource } from 'typeorm';
 import {
-  CategoryGrpc,
-  Category,
   CategoriesInput,
+  Category,
+  CategoryGrpc,
   CategoryInput,
-  Status,
   Id,
+  Status,
 } from '@admin-back/grpc';
 import { CategoryEntity } from 'app/category/entities';
 import { CategoryRepository } from 'app/category/repositories';

@@ -1,5 +1,6 @@
+import { NotFoundException } from '@nestjs/common';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { defer, map, Observable, of, switchMap, tap } from 'rxjs';
+import { Observable, defer, map, of, switchMap, tap } from 'rxjs';
 import {
   Account,
   AccountFilter,
@@ -8,7 +9,6 @@ import {
   Id,
 } from '@admin-back/grpc';
 import { AccountRepository } from 'app/account/repositories';
-import { NotFoundException } from '@nestjs/common';
 
 @GrpcService('finances')
 export class AccountService implements AccountGrpc {

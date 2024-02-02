@@ -1,12 +1,12 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { ArrayMaxSize, IsArray, IsDate, IsOptional } from 'class-validator';
 import { OmitInputType, TransformDate } from '@admin-back/shared';
-import { MovementType } from './movement.types';
-import { Category } from '../category';
-import { Subcategory } from '../subcategory';
-import { Account } from '../account';
-import { Period } from '../finances.constants';
 import { BaseDto } from '../../shared';
+import { Account } from '../account';
+import { Category } from '../category';
+import { Period } from '../finances.constants';
+import { Subcategory } from '../subcategory';
+import { MovementType } from './movement.types';
 
 @ObjectType()
 export class Movement extends BaseDto {

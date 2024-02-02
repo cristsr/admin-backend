@@ -1,5 +1,5 @@
-import { IsNumber, IsString } from 'class-validator';
 import { Transform } from 'class-transformer';
+import { IsNumber, IsString } from 'class-validator';
 import { mapEnvironmentKeys } from '@admin-back/shared';
 
 export class Environment {

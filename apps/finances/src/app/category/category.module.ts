@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { SubcategoryModule } from 'app/subcategory/subcategory.module';
 import { CategoryEntity } from 'app/category/entities';
-import { CategoryService } from 'app/category/services';
 import { CategoryRepository } from 'app/category/repositories';
+import { CategoryService } from 'app/category/services';
+import { SubcategoryModule } from 'app/subcategory/subcategory.module';
 
 const Entities = TypeOrmModule.forFeature([CategoryEntity]);
 const Repositories = [CategoryRepository];

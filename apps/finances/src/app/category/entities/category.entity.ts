@@ -1,7 +1,7 @@
 import { Column, Entity, OneToMany } from 'typeorm';
-import { SubcategoryEntity } from 'app/subcategory/entities';
 import { Category } from '@admin-back/grpc';
 import { BaseEntity } from '@admin-back/shared';
+import { SubcategoryEntity } from 'app/subcategory/entities';
 
 @Entity('categories')
 export class CategoryEntity extends BaseEntity implements Category {

@@ -18,13 +18,63 @@
               }
             ]
           }
-        ]
+        ],
+        "no-console": "error"
       }
     },
     {
       "files": ["*.ts", "*.tsx"],
       "extends": ["plugin:@nx/typescript"],
-      "rules": {}
+      "plugins": ["import"],
+      "rules": {
+        "sort-imports": [
+          "error",
+          {
+            "ignoreCase": false,
+            "ignoreDeclarationSort": true,
+            "ignoreMemberSort": false,
+            "memberSyntaxSortOrder": ["none", "all", "multiple", "single"],
+            "allowSeparatedGroups": true
+          }
+        ],
+        "import/order": [
+          "error",
+          {
+            "groups": [
+              "builtin",
+              "external",
+              "internal",
+              "parent",
+              "sibling",
+              "index",
+              "unknown"
+            ],
+            "pathGroups": [
+              {
+                "pattern": "@nestjs/**",
+                "group": "builtin",
+                "position": "before"
+              },
+              {
+                "pattern": "@admin-back/**",
+                "group": "internal",
+                "position": "before"
+              },
+              {
+                "pattern": "app/**",
+                "group": "internal",
+                "position": "before"
+              }
+            ],
+            "pathGroupsExcludedImportTypes": ["@nestjs/**", "@admin-back/**", "app/**"],
+            "newlines-between": "ignore",
+            "alphabetize": {
+              "order": "asc",
+              "caseInsensitive": true
+            }
+          }
+        ]
+      }
     },
     {
       "files": ["*.js", "*.jsx"],

@@ -1,9 +1,9 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AccountService } from 'app/account/services';
 import { AccountEntity } from 'app/account/entities';
-import { MovementModule } from 'app/movement/movement.module';
 import { AccountRepository } from 'app/account/repositories';
+import { AccountService } from 'app/account/services';
+import { MovementModule } from 'app/movement/movement.module';
 
 const Repositories = [AccountRepository];
 
