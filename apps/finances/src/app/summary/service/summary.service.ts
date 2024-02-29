@@ -1,5 +1,5 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { Observable, catchError, defer, map, of, switchMap } from 'rxjs';
+import { Observable, catchError, defer, map, of, switchMap, tap } from 'rxjs';
 import { DataSource, In } from 'typeorm';
 import {
   Balance,
@@ -38,7 +38,7 @@ export class SummaryService implements SummaryGrpc {
         (qb) =>
           qb
             .select([
-              `(SELECT initial_balance FROM accounts WHERE id = :accountId and user_id = :userId)::float AS initial_balance`,
+              `COALESCE((SELECT initial_balance FROM accounts WHERE id = :accountId and user_id = :userId)::float, 0) AS initial_balance`,
               `COALESCE(SUM(CASE WHEN date <= :endDate THEN CASE WHEN type = 'INCOME' THEN amount ELSE -amount END END), 0)::float AS accumulated_balance`,
               `COALESCE(SUM(CASE WHEN type = 'INCOME' AND date BETWEEN :startDate and :endDate THEN amount END), 0)::float AS incomes`,
               `COALESCE(SUM(CASE WHEN type = 'EXPENSE' AND date BETWEEN :startDate and :endDate THEN amount END), 0)::float AS expenses`,

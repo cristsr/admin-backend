@@ -1,6 +1,5 @@
-import { DataSource, Repository } from 'typeorm';
-import { EntityTarget } from 'typeorm/common/EntityTarget';
 import { Injectable, Type } from '@nestjs/common';
+import { DataSource, EntityTarget, Repository } from 'typeorm';
 
 export function EntityRepository<T>(
   entity: EntityTarget<T>
