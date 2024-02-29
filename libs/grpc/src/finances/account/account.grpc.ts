@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { Id, AccountInput, Account, AccountFilter } from '../..';
+import { Account, AccountFilter, AccountInput, Id } from '../..';
 
 export interface AccountGrpc {
   findAll(filter: AccountFilter): Observable<Account[]>;

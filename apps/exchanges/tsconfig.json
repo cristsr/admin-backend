@@ -1,0 +1,30 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ],
+  "compilerOptions": {
+    "esModuleInterop": true,
+    "paths": {
+      "@admin-back/shared": [
+        "libs/shared/src/index.ts"
+      ],
+      "@admin-back/grpc": [
+        "libs/grpc/src/index.ts"
+      ],
+      "env": [
+        "apps/exchanges/src/env/index.ts"
+      ],
+      "app/*": [
+        "apps/exchanges/src/app/*"
+      ]
+    }
+  }
+}

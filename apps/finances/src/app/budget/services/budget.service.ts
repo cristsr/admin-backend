@@ -65,9 +65,7 @@ export class BudgetService implements BudgetGrpc {
     const budgets$ = defer(() =>
       this.budgetRepository.find({
         where: {
-          account: {
-            id: filter.account,
-          },
+          account: { id: filter.account },
           startDate: MoreThanOrEqual(filter.startDate),
           endDate: LessThanOrEqual(filter.endDate),
           user: filter.user,

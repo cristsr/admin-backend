@@ -1,8 +1,8 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { TransformDate } from '@admin-back/shared';
-import { Period } from '../finances.constants';
-import { BaseDto } from '../../shared';
 import { IsDate } from 'class-validator';
+import { TransformDate } from '@admin-back/shared';
+import { BaseDto } from '../../shared';
+import { Period } from '../finances.constants';
 
 @ObjectType()
 export class Account extends BaseDto {
