@@ -18,6 +18,14 @@ export class AccountResolver {
     private accountService: AccountGrpc
   ) {}
 
+  @Query(() => Account)
+  accountById(
+    @CurrentUser() user: User,
+    @Args('id') id: number
+  ): Observable<Account> {
+    return this.accountService.findOne({ id });
+  }
+
   @Query(() => [Account])
   userAccounts(
     @CurrentUser() user: User,

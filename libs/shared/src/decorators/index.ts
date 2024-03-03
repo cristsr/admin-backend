@@ -4,3 +4,6 @@ export * from './public.decorator';
 export * from './is-date-string.decorator';
 export * from './date-column.decorator';
 export * from './transform-date.decorator';
+export * from './to-entity.decorator';
+export * from './has-entity.decorator';
+export * from './resolve-entity.decorator';

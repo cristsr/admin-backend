@@ -2,14 +2,16 @@ import { ApolloDriver } from '@nestjs/apollo';
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { GraphQLModule } from '@nestjs/graphql';
 import { Environment } from 'env';
 import {
   DateScalar,
+  EntityConstraint,
   GRPCInterceptor,
   RequestInterceptor,
   RpcExceptionFilter,
+  ValidationPipe,
   validatorFactory,
 } from '@admin-back/shared';
 import { AuthModule } from 'app/auth';
@@ -46,8 +48,17 @@ import { AppController } from './app.controller';
       provide: APP_INTERCEPTOR,
       useClass: RequestInterceptor,
     },
+    {
+      provide: APP_PIPE,
+      useClass: ValidationPipe,
+    },
+    {
+      provide: 'MODULE',
+      useClass: MainModule,
+    },
     DateScalar,
     GRPCInterceptor,
+    EntityConstraint,
   ],
   controllers: [AppController],
 })

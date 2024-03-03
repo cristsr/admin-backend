@@ -1,6 +1,13 @@
-import { Field, InputType, ObjectType } from '@nestjs/graphql';
+import { ENTRY_PROVIDER_WATERMARK } from '@nestjs/common/constants';
+import { Field, ID, InputType, ObjectType } from '@nestjs/graphql';
 import { ArrayMaxSize, IsArray, IsDate, IsOptional } from 'class-validator';
-import { OmitInputType, TransformDate } from '@admin-back/shared';
+import {
+  OmitInputType,
+  ResolveEntity,
+  ToEntity,
+  TransformDate,
+} from '@admin-back/shared';
+import { AccountEntity } from '../../../../../apps/finances/src/app/account/entities';
 import { BaseDto } from '../../shared';
 import { Account } from '../account';
 import { Category } from '../category';
@@ -36,6 +43,8 @@ export class Movement extends BaseDto {
   user: number;
 }
 
+ENTRY_PROVIDER_WATERMARK;
+
 @InputType()
 export class MovementInput extends OmitInputType(Movement, [
   'id',
@@ -68,6 +77,7 @@ export class MovementInput extends OmitInputType(Movement, [
 }
 
 @InputType()
+@ResolveEntity()
 export class MovementFilter {
   @Field(() => Period)
   period: Period;
@@ -82,11 +92,13 @@ export class MovementFilter {
   @TransformDate()
   endDate: Date;
 
-  @Field({ nullable: true })
-  account: number;
+  @Field(() => ID, { nullable: true })
+  @ToEntity(() => Account, { nullable: true })
+  account?: Account;
 
-  @Field({ nullable: true })
-  category?: number;
+  @Field(() => ID, { nullable: true })
+  @ToEntity(() => Category, { nullable: false })
+  category?: Category;
 
   @Field({ nullable: true })
   order?: string;

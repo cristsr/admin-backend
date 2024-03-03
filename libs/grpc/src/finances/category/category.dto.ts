@@ -1,4 +1,5 @@
 import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
+import { Type } from 'class-transformer';
 import {
   IsArray,
   IsNotEmpty,
@@ -6,10 +7,9 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 import { ListInput, ListObject, OmitInputType } from '@admin-back/shared';
-import { SubcategoryInput, Subcategory } from '../subcategory';
 import { BaseDto } from '../../shared';
+import { Subcategory, SubcategoryInput } from '../subcategory';
 
 @ObjectType()
 export class Category extends BaseDto {

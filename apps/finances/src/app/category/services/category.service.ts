@@ -34,7 +34,13 @@ export class CategoryService implements CategoryGrpc {
 
   @GrpcMethod()
   findOne(categoryId: Id): Observable<Category> {
-    return defer(() => this.categoryRepository.findOne({ where: categoryId }));
+    console.log('categoryId', categoryId);
+    return defer(() =>
+      this.categoryRepository.findOne({ where: categoryId }).then((v) => {
+        console.log('category', v);
+        return v;
+      })
+    );
   }
 
   @GrpcMethod()

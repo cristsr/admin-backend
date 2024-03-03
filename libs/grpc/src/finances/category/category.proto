@@ -18,7 +18,7 @@ message Category {
   string                           name          = 2;
   string                           icon          = 3;
   string                           color         = 4;
-  repeated subcategory.Subcategory subcategories = 5;
+//  repeated subcategory.Subcategory subcategories = 5;
   string                           createdAt     = 6;
   string                           updatedAt     = 7;
   string                           deletedAt     = 8;
