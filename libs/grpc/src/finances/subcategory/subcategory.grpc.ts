@@ -1,11 +1,10 @@
 import { Observable } from 'rxjs';
+import { Id, Status } from '../../shared';
 import {
   CreateSubcategories,
-  SubcategoryInput,
-  Status,
   Subcategory,
-  Id,
-} from '@admin-back/grpc';
+  SubcategoryInput,
+} from '../subcategory';
 
 export interface SubcategoryGrpc {
   findOne(id: Id): Observable<Subcategory>;

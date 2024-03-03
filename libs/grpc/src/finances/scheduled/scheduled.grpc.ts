@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { ScheduledInput, Id, Scheduled, ScheduledFilter, Status } from '../..';
+import { Id, Scheduled, ScheduledFilter, ScheduledInput, Status } from '../..';
 
 export interface ScheduledGrpc {
   findOne(id: Id): Observable<Scheduled>;

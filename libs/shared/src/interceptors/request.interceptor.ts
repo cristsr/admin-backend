@@ -4,25 +4,24 @@ import {
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
-import { map, Observable, tap } from 'rxjs';
 import { isArray, isEmpty } from 'lodash';
+import { Observable, map } from 'rxjs';
 
 @Injectable()
 export class RequestInterceptor implements NestInterceptor {
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    console.log('RequestInterceptor');
-
-    return next.handle().pipe(
-      map((result) =>
-        !isArray(result) && isEmpty(result)
-          ? null
-          : result
-          ? isArray(result.data)
-            ? result.data
+    return next
+      .handle()
+      .pipe(
+        map((result) =>
+          !isArray(result) && isEmpty(result)
+            ? null
             : result
-          : null
-      ),
-      tap(console.log)
-    );
+            ? isArray(result.data)
+              ? result.data
+              : result
+            : null
+        )
+      );
   }
 }

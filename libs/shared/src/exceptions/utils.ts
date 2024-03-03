@@ -1,5 +1,5 @@
-import { isObject } from 'class-validator';
 import { HttpException } from '@nestjs/common';
+import { isObject } from 'class-validator';
 
 export const createHttpExceptionBody = (
   message: object | string,

@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { Status, Id } from '@admin-back/grpc';
+import { Id, Status } from '../../shared';
 import { CreateRol, Rol, Roles, UpdateRol } from './rol.dto';
 
 export interface RolGrpc {

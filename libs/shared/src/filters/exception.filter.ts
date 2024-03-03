@@ -1,7 +1,7 @@
 import {
   Catch,
-  ExceptionFilter as IExceptionFilter,
   HttpException,
+  ExceptionFilter as IExceptionFilter,
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
@@ -13,8 +13,6 @@ export class ExceptionFilter implements IExceptionFilter {
   #logger = new Logger(ExceptionFilter.name);
 
   catch(exception: Error): Observable<never> | void {
-    console.log(exception);
-    console.log(exception.stack);
     this.#logger.error(`${exception.name}: ${exception.message}`);
 
     return throwError(() => {

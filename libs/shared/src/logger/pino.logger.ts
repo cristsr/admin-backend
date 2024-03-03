@@ -1,10 +1,11 @@
 import { LoggerService } from '@nestjs/common';
-import pretty from 'pino-pretty';
 
-const stream = pretty({
-  levelKey: 'debug',
-  colorize: true,
-});
+// import pretty from 'pino-pretty';
+//
+// const stream = pretty({
+//   levelKey: 'debug',
+//   colorize: true,
+// });
 
 const log = console;
 

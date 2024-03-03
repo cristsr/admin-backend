@@ -1,5 +1,5 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { Observable, catchError, defer, map, of, switchMap, tap } from 'rxjs';
+import { Observable, catchError, defer, map, of, switchMap } from 'rxjs';
 import { DataSource, In } from 'typeorm';
 import {
   Balance,

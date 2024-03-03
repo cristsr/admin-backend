@@ -1,12 +1,7 @@
 import { Observable } from 'rxjs';
-import {
-  Id,
-  Budget,
-  BudgetInput,
-  Status,
-  BudgetFilter,
-  Movement,
-} from '@admin-back/grpc';
+import { Id, Status } from '../../shared';
+import { Budget, BudgetFilter, BudgetInput } from '../budget';
+import { Movement } from '../movement';
 
 export interface BudgetGrpc {
   findOne(id: Id): Observable<Budget>;

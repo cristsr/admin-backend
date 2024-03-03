@@ -1,9 +1,9 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { useContainer } from 'class-validator';
 import { FinancesConfig } from '@admin-back/grpc';
 import { AppModule } from './app.module';
-import { useContainer } from 'class-validator';
 
 process.on('uncaughtException', (err: Error) => {
   Logger.error(`uncaughtException: ${err.message}`, err.stack);

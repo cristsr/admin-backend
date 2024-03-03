@@ -1,12 +1,6 @@
 import { Observable } from 'rxjs';
-import {
-  Id,
-  UserInput,
-  Status,
-  UserQuery,
-  User,
-  Users,
-} from '@admin-back/grpc';
+import { Id, Status } from '../shared';
+import { User, UserInput, UserQuery, Users } from '../user';
 
 export interface UserGrpc {
   findAll(): Observable<Users>;
