@@ -27,27 +27,23 @@ export class ValidationPipe extends NestValidationPipe {
   }
 
   async transform(value: any, metadata: ArgumentMetadata) {
-    try {
-      // console.log(this.context);
-      const transformed = await super.transform(value, metadata);
+    // console.log(this.context);
+    const transformed = await super.transform(value, metadata);
 
-      const resolveEntity = this.reflector.get(
-        RESOLVE_ENTITY,
-        transformed.constructor
-      );
+    const resolveEntity = this.reflector.get(
+      RESOLVE_ENTITY,
+      transformed.constructor
+    );
 
-      if (!resolveEntity) {
-        return transformed;
-      }
-
-      await this.resolveEntities(transformed);
-
+    if (!resolveEntity) {
       return transformed;
-
-      // Do something with the transformed value
-    } catch (e) {
-      throw e;
     }
+
+    await this.resolveEntities(transformed);
+
+    return transformed;
+
+    // Do something with the transformed value
   }
 
   async resolveEntities(target: any) {
