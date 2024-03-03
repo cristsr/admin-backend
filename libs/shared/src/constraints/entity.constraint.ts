@@ -1,10 +1,10 @@
-import { Inject, Injectable, Optional, Scope } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import {
   ValidationArguments,
   ValidatorConstraint,
   ValidatorConstraintInterface,
 } from 'class-validator';
-import { DataSource, ObjectLiteral, Repository } from 'typeorm';
+import { DataSource } from 'typeorm';
 
 @Injectable()
 @ValidatorConstraint({ async: false })
@@ -24,12 +24,9 @@ export class EntityConstraint implements ValidatorConstraintInterface {
     }
 
     const entity = validationArguments.constraints.at(0);
-    console.log('EntityConstraint.entity', entity());
     const repository = this.datasource.getRepository(entity());
 
     const entityExists = await repository.findOne({ where: { id: value } });
-
-    console.log('EntityConstraint.validate', entityExists);
 
     value = entityExists;
 

@@ -1,5 +1,5 @@
-import { Metadata, status } from '@grpc/grpc-js';
 import { HttpException } from '@nestjs/common';
+import { Metadata, status } from '@grpc/grpc-js';
 
 export function getExceptionResponse(exception: HttpException) {
   const metadata = new Metadata();

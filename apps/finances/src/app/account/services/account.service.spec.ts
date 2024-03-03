@@ -35,7 +35,7 @@ describe('SummaryController', () => {
   });
 
   it('should be call income to expense ', () => {
-    const event = {
+    const _event = {
       previous: {
         account: {
           id: 1,
@@ -65,7 +65,7 @@ describe('SummaryController', () => {
   });
 
   it('should be call expense to income', () => {
-    const event = {
+    const _event = {
       previous: {
         amount: 60000,
         type: 'expense',
@@ -95,7 +95,7 @@ describe('SummaryController', () => {
   });
 
   it('should be call expense to expense', () => {
-    const event = {
+    const _event = {
       previous: {
         amount: 60000,
         type: 'expense',
@@ -121,7 +121,7 @@ describe('SummaryController', () => {
   });
 
   it('should be call income to income', () => {
-    const event = {
+    const _event = {
       previous: {
         amount: 60000,
         type: 'income',

@@ -1,7 +1,7 @@
 import {
-  registerDecorator,
   ValidationArguments,
   ValidationOptions,
+  registerDecorator,
 } from 'class-validator';
 
 export function IsDateString(validationOptions?: ValidationOptions) {

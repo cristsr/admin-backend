@@ -1,5 +1,4 @@
-import { SetMetadata } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
+import { Type } from '@nestjs/common';
 import { WITH_ENTITY } from '../constants';
 
 export interface Opts {
@@ -7,7 +6,7 @@ export interface Opts {
   search?: string;
 }
 
-export function ToEntity(type: () => Function, opts?: Opts) {
+export function ToEntity(type: () => Type, opts?: Opts) {
   return (target: Record<any, any>, propertyKey: string) => {
     Reflect.defineMetadata(WITH_ENTITY, { type, opts }, target, propertyKey);
   };

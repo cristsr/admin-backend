@@ -1,6 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { InterceptingCall, Metadata, RequesterBuilder } from '@grpc/grpc-js';
 import { REQUEST } from '@nestjs/core';
+import { InterceptingCall, Metadata, RequesterBuilder } from '@grpc/grpc-js';
 import { assignPlainToMeta, metaToPlain } from '../functions';
 @Injectable()
 export class GRPCInterceptor {

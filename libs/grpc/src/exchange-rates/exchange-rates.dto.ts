@@ -1,7 +1,6 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { Transform } from 'class-transformer';
-import { IsDateString, IsNumber, IsString } from 'class-validator';
-import { DateTime } from 'luxon';
+import { IsNumber, IsString } from 'class-validator';
 import { OmitObjectType, TransformDate } from '@admin-back/shared';
 
 @InputType()

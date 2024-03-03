@@ -6,8 +6,8 @@ import {
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { status } from '@grpc/grpc-js';
 import { BaseExceptionFilter } from '@nestjs/core';
+import { status } from '@grpc/grpc-js';
 
 // TODO refactor this for better integration with graphql
 @Catch()

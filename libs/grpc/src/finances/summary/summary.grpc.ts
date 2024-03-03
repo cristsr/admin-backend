@@ -1,11 +1,11 @@
 import { Observable } from 'rxjs';
 import {
+  Balance,
+  BalanceFilter,
+  Expense,
   ExpenseFilter,
   LastMovementFilter,
-  Expense,
   Movement,
-  BalanceFilter,
-  Balance,
 } from '../..';
 
 export interface SummaryGrpc {

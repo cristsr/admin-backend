@@ -1,5 +1,5 @@
-import { Id, Movement, MovementFilter, MovementInput, Status } from '../..';
 import { Observable } from 'rxjs';
+import { Id, Movement, MovementFilter, MovementInput, Status } from '../..';
 
 export interface MovementGrpc {
   findOne(id: Id): Observable<Movement>;

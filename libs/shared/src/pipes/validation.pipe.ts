@@ -75,9 +75,9 @@ export class ValidationPipe extends NestValidationPipe {
 
       // console.log('resolver', resolver);
       //
-      console.log('query', query);
-
-      console.log('entity', entity);
+      // console.log('query', query);
+      //
+      // console.log('entity', entity);
 
       if (!entity) {
         if (metadata.opts?.nullable) {

@@ -7,7 +7,6 @@ import {
   ToEntity,
   TransformDate,
 } from '@admin-back/shared';
-import { AccountEntity } from '../../../../../apps/finances/src/app/account/entities';
 import { BaseDto } from '../../shared';
 import { Account } from '../account';
 import { Category } from '../category';

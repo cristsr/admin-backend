@@ -1,6 +1,4 @@
 import { Test, TestingModule } from '@nestjs/testing';
-
-import { UserHandler } from '../handlers/user.handler';
 import { UserService } from './user.service';
 
 describe('AppController', () => {
@@ -8,15 +6,17 @@ describe('AppController', () => {
 
   beforeAll(async () => {
     app = await Test.createTestingModule({
-      controllers: [UserHandler],
-      providers: [UserHandler],
+      controllers: [UserService],
+      providers: [UserService],
     }).compile();
   });
 
   describe('getData', () => {
     it('should return "Welcome to users!"', () => {
-      const appController = app.get<UserHandler>(UserHandler);
-      expect(appController.getData()).toEqual({ message: 'Welcome to users!' });
+      const appController = app.get<UserService>(UserService);
+      expect(appController.findOne({})).toEqual({
+        message: 'Welcome to users!',
+      });
     });
   });
 });

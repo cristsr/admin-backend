@@ -1,4 +1,4 @@
-import { Controller, Get, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import { Observable, defer, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { Between, DeleteResult, In } from 'typeorm';
@@ -28,7 +28,6 @@ export class MovementService implements MovementGrpc {
   // @Get()
   @GrpcMethod()
   findAll(filter: MovementFilter): Observable<Movement[]> {
-    console.log('MovementService.findAll', filter);
     return defer(() =>
       this.movementRepository.find({
         where: {

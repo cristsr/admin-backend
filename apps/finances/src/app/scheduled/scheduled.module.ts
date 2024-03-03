@@ -1,6 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
 import { AccountModule } from 'app/account/account.module';
 import { CategoryModule } from 'app/category/category.module';
 import { MovementModule } from 'app/movement/movement.module';
