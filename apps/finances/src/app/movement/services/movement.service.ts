@@ -1,4 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
+import { Controller, Get, NotFoundException } from '@nestjs/common';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import { Observable, defer, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { Between, DeleteResult, In } from 'typeorm';
@@ -16,6 +16,7 @@ import { MovementRepository } from 'app/movement/repositories';
 import { SubcategoryRepository } from 'app/subcategory/repositories';
 
 @GrpcService('finances')
+// @Controller('movement')
 export class MovementService implements MovementGrpc {
   constructor(
     private movementRepository: MovementRepository,
@@ -24,14 +25,16 @@ export class MovementService implements MovementGrpc {
     private accountRepository: AccountRepository
   ) {}
 
+  // @Get()
   @GrpcMethod()
   findAll(filter: MovementFilter): Observable<Movement[]> {
+    console.log('MovementService.findAll', filter);
     return defer(() =>
       this.movementRepository.find({
         where: {
           date: Between(filter.startDate, filter.endDate),
-          category: { id: filter.category },
-          account: { id: filter.account },
+          category: filter.category,
+          account: filter.account,
           type: filter.type?.length ? In(filter.type) : null,
         },
         order: {

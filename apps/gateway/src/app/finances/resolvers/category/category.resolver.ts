@@ -18,7 +18,7 @@ export class CategoryResolver {
   ) {}
 
   @Query(() => Category)
-  category(@Args('id') id: number) {
+  category(user, @Args('id') id: number) {
     return this.categoryService.findOne({ id: +id });
   }
 

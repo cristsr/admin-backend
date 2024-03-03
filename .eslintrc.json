@@ -68,7 +68,7 @@
               }
             ],
             "pathGroupsExcludedImportTypes": ["@nestjs/**", "@admin-back/**", "app/**"],
-            "newlines-between": "ignore",
+            "newlines-between": "never",
             "alphabetize": {
               "order": "asc",
               "caseInsensitive": true

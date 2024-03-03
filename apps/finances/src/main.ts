@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { FinancesConfig } from '@admin-back/grpc';
 import { AppModule } from './app.module';
+import { useContainer } from 'class-validator';
 
 process.on('uncaughtException', (err: Error) => {
   Logger.error(`uncaughtException: ${err.message}`, err.stack);
@@ -27,6 +28,8 @@ async function bootstrap() {
       forbidUnknownValues: false,
     })
   );
+
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
   await app.listen();
 

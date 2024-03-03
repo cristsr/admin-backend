@@ -1,14 +1,16 @@
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { DatabaseModule } from 'database/database.module';
 import { Environment } from 'env';
 import {
+  EntityConstraint,
   ExceptionFilter,
   ResponseInterceptor,
+  ValidationPipe,
   validatorFactory,
 } from '@admin-back/shared';
 import { AccountModule } from 'app/account/account.module';
@@ -48,6 +50,7 @@ import { AppController } from './app.controller';
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,
     },
+    EntityConstraint,
   ],
 })
 export class AppModule {}

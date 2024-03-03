@@ -97,5 +97,49 @@ import {
     ScheduledResolver,
     SummaryResolver,
   ],
+  exports: [
+    GrpcProvider({
+      provide: ACCOUNT_SERVICE,
+      service: ACCOUNT_SERVICE_NAME,
+      client: FINANCES_GRPC_CLIENT,
+    }),
+    GrpcProvider({
+      provide: CATEGORY_SERVICE,
+      service: CATEGORY_SERVICE_NAME,
+      client: FINANCES_GRPC_CLIENT,
+    }),
+    GrpcProvider({
+      provide: SUBCATEGORY_SERVICE,
+      service: SUBCATEGORY_SERVICE_NAME,
+      client: FINANCES_GRPC_CLIENT,
+    }),
+    GrpcProvider({
+      provide: MOVEMENT_SERVICE,
+      service: MOVEMENT_SERVICE_NAME,
+      client: FINANCES_GRPC_CLIENT,
+    }),
+    GrpcProvider({
+      provide: SUMMARY_SERVICE,
+      service: SUMMARY_SERVICE_NAME,
+      client: FINANCES_GRPC_CLIENT,
+    }),
+    GrpcProvider({
+      provide: BUDGET_SERVICE,
+      service: BUDGET_SERVICE_NAME,
+      client: FINANCES_GRPC_CLIENT,
+    }),
+    GrpcProvider({
+      provide: SCHEDULED_SERVICE,
+      service: SCHEDULED_SERVICE_NAME,
+      client: FINANCES_GRPC_CLIENT,
+    }),
+    AccountResolver,
+    CategoryResolver,
+    SubcategoryResolver,
+    MovementResolver,
+    BudgetResolver,
+    ScheduledResolver,
+    SummaryResolver,
+  ],
 })
 export class FinancesModule {}
