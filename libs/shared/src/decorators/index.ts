@@ -7,3 +7,4 @@ export * from './transform-date.decorator';
 export * from './to-entity.decorator';
 export * from './has-entity.decorator';
 export * from './resolve-entity.decorator';
+export * from './qs.decorator';
