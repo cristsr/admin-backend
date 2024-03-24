@@ -1,5 +1,6 @@
 import { ENTRY_PROVIDER_WATERMARK } from '@nestjs/common/constants';
 import { Field, ID, InputType, ObjectType } from '@nestjs/graphql';
+import { ApiProperty } from '@nestjs/swagger';
 import { ArrayMaxSize, IsArray, IsDate, IsOptional } from 'class-validator';
 import {
   OmitInputType,
@@ -78,30 +79,37 @@ export class MovementInput extends OmitInputType(Movement, [
 @InputType()
 @ResolveEntity()
 export class MovementFilter {
+  @ApiProperty({ enum: Period })
   @Field(() => Period)
   period: Period;
 
+  @ApiProperty()
   @Field()
   @IsDate()
   @TransformDate()
   startDate: Date;
 
+  @ApiProperty()
   @Field()
   @IsDate()
   @TransformDate()
   endDate: Date;
 
+  @ApiProperty({ type: Number })
   @Field(() => ID, { nullable: true })
   @ToEntity(() => Account, { nullable: true })
   account?: Account;
 
+  @ApiProperty({ type: Number })
   @Field(() => ID, { nullable: true })
   @ToEntity(() => Category, { nullable: false })
   category?: Category;
 
+  @ApiProperty()
   @Field({ nullable: true })
   order?: string;
 
+  @ApiProperty({ isArray: true, enum: MovementType })
   @Field(() => [MovementType], { nullable: true })
   @IsOptional()
   @IsArray()
