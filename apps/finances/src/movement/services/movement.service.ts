@@ -1,6 +1,5 @@
 import { NotFoundException } from '@nestjs/common';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { AccountRepository } from 'apps/finances/src/app/account/repositories';
 import { Observable, defer, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { Between, DeleteResult, In } from 'typeorm';
 import {
@@ -11,6 +10,7 @@ import {
   MovementInput,
   Status,
 } from '@admin-back/core';
+import { AccountRepository } from 'app/account/repositories';
 import { CategoryRepository } from 'app/category/repositories';
 import { MovementRepository } from 'app/movement/repositories';
 import { SubcategoryRepository } from 'app/subcategory/repositories';

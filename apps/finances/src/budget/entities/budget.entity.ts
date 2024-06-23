@@ -1,7 +1,7 @@
-import { AccountEntity } from 'apps/finances/src/app/account/entities';
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { Budget, Period } from '@admin-back/core';
 import { BaseEntity } from '@admin-back/shared';
+import { AccountEntity } from 'app/account/entities';
 import { CategoryEntity } from 'app/category/entities';
 
 @Entity('budgets')

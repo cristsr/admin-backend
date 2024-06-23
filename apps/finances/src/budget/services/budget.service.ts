@@ -1,7 +1,6 @@
 import { Logger, NotFoundException } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { AccountRepository } from 'apps/finances/src/app/account/repositories';
 import { DateTime } from 'luxon';
 import { Observable, defer, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
@@ -17,6 +16,7 @@ import {
   Period,
   Status,
 } from '@admin-back/core';
+import { AccountRepository } from 'app/account/repositories';
 import { BudgetEntity } from 'app/budget/entities';
 import { BudgetRepository } from 'app/budget/repositories';
 import { CategoryRepository } from 'app/category/repositories';

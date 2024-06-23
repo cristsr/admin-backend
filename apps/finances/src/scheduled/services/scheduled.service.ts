@@ -1,6 +1,5 @@
 import { Logger, NotFoundException } from '@nestjs/common';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { AccountRepository } from 'apps/finances/src/app/account/repositories';
 import { DateTime } from 'luxon';
 import {
   Observable,
@@ -21,6 +20,7 @@ import {
   ScheduledInput,
   Status,
 } from '@admin-back/core';
+import { AccountRepository } from 'app/account/repositories';
 import { CategoryRepository } from 'app/category/repositories';
 import { MovementRepository } from 'app/movement/repositories';
 import { ScheduledRepository } from 'app/scheduled/repositories';

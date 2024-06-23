@@ -1,5 +1,4 @@
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { AccountRepository } from 'apps/finances/src/app/account/repositories';
 import { Observable, catchError, defer, map, of, switchMap } from 'rxjs';
 import { DataSource, In } from 'typeorm';
 import {
@@ -12,6 +11,7 @@ import {
   MovementType,
   SummaryGrpc,
 } from '@admin-back/core';
+import { AccountRepository } from 'app/account/repositories';
 import { CategoryRepository } from 'app/category/repositories';
 import { MovementEntity } from 'app/movement/entities';
 import { MovementRepository } from 'app/movement/repositories';
