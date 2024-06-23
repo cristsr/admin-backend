@@ -8,7 +8,7 @@ import {
   CategoryGrpc,
   CategoryInput,
   Status,
-} from '@admin-back/grpc';
+} from '@admin-back/core';
 
 @Resolver(Category)
 export class CategoryResolver {

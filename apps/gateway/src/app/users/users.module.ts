@@ -5,7 +5,7 @@ import {
   USER_SERVICE,
   USER_SERVICE_NAME,
   UserConfig,
-} from '@admin-back/grpc';
+} from '@admin-back/core';
 import { GrpcProvider } from '@admin-back/shared';
 import { UserResolver } from 'app/users/resolvers';
 

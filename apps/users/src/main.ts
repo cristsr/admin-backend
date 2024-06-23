@@ -1,7 +1,7 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { UserConfig } from '@admin-back/grpc';
+import { UserConfig } from '@admin-back/core';
 import { AppModule } from './app.module';
 
 async function bootstrap() {

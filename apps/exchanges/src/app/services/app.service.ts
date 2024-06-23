@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Observable, filter, from, map, of, switchMap } from 'rxjs';
-import { ExchangeRates, ExchangeRatesInput } from '@admin-back/grpc';
+import { ExchangeRates, ExchangeRatesInput } from '@admin-back/core';
 import { ExchangeRatesService } from 'app/providers';
 import { ExchangeRepository } from 'app/repositories';
 

@@ -3,7 +3,7 @@ import {
   ExchangeRates,
   ExchangeRatesInput,
   LatestExchangeRatesInput,
-} from '@admin-back/grpc';
+} from '@admin-back/core';
 
 export abstract class ExchangeRatesService {
   abstract latest(input: LatestExchangeRatesInput): Observable<ExchangeRates>;

@@ -6,7 +6,7 @@ import { UserEnvironment } from 'env';
 import {
   ExceptionFilter,
   ResponseInterceptor,
-  configValidator,
+  validatorFactory,
 } from '@admin-back/shared';
 import { UserModule } from 'app/user.module';
 
@@ -14,7 +14,7 @@ import { UserModule } from 'app/user.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      validate: (config: object) => configValidator(config, UserEnvironment),
+      validate: validatorFactory(UserEnvironment),
     }),
     DatabaseModule,
     UserModule,

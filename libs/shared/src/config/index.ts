@@ -2,14 +2,11 @@ import { Logger, Type } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import { getMetadataStorage, validateSync } from 'class-validator';
 
-export type Keys<T> = Readonly<{
+type Keys<T> = Readonly<{
   [key in keyof T]: key;
 }>;
 
-export function configValidator(
-  config: object,
-  type: Type
-): Record<string, any> {
+function configValidator(config: object, type: Type): Record<string, any> {
   const logger = new Logger(configValidator.name);
 
   const validatedConfig = plainToClass(type, config);
@@ -30,7 +27,9 @@ export function configValidator(
   return validatedConfig;
 }
 
-export function validatorFactory(type: Type): (config) => Record<string, any> {
+export function validatorFactory(
+  type: Type
+): (config: Record<string, any>) => Record<string, any> {
   return (config) => configValidator(config, type);
 }
 

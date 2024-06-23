@@ -5,7 +5,7 @@ import { ENV } from 'env';
 import { passportJwtSecret } from 'jwks-rsa';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { firstValueFrom, tap } from 'rxjs';
-import { USER_SERVICE, User, UserGrpc } from '@admin-back/grpc';
+import { USER_SERVICE, User, UserGrpc } from '@admin-back/core';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {

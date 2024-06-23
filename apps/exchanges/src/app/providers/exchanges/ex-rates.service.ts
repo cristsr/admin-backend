@@ -9,7 +9,7 @@ import {
   ExchangeRates,
   ExchangeRatesInput,
   LatestExchangeRatesInput,
-} from '@admin-back/grpc';
+} from '@admin-back/core';
 import { ExchangeRatesService } from 'app/providers';
 
 @Injectable()

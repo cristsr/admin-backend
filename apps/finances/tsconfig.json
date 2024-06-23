@@ -13,10 +13,8 @@
   "compilerOptions": {
     "paths": {
       "@admin-back/shared": ["libs/shared/src/index.ts"],
-      "@admin-back/grpc": ["libs/grpc/src/index.ts"],
-      "env": ["apps/finances/src/env"],
-      "app/*": ["apps/finances/src/app/*"],
-      "database/*": ["apps/finances/src/database/*"]
+      "@admin-back/core": ["libs/core/src/index.ts"],
+      "app/*": ["apps/finances/src/*"],
     }
   }
 }

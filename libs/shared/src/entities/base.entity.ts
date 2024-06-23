@@ -36,8 +36,4 @@ export class BaseEntity {
   })
   @TransformDate()
   deletedAt: Date;
-
-  constructor(partial: Partial<BaseEntity>) {
-    Object.assign(this, partial);
-  }
 }

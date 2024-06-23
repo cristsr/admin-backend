@@ -11,7 +11,7 @@ import {
   UserInput,
   UserQuery,
   Users,
-} from '@admin-back/grpc';
+} from '@admin-back/core';
 import { UserEntity } from 'app/entities';
 
 @GrpcService('user')

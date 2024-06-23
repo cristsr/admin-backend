@@ -22,7 +22,7 @@ export default {
     // 'testing/(.*)': '<rootDir>/src/testing/$1',
 
     '@admin-back/shared': '<rootDir>../../libs/shared/src/index.ts',
-    '@admin-back/grpc': '<rootDir>../../libs/grpc/src/index.ts',
+    '@admin-back/core': '<rootDir>../../libs/core/src/index.ts',
     env: '<rootDir>/src/env',
     'app/(.*)': '<rootDir>/src/app/$1',
     'database/(.*)': '<rootDir>/src/database/$1',

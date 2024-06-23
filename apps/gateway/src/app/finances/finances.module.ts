@@ -17,7 +17,7 @@ import {
   SUBCATEGORY_SERVICE_NAME,
   SUMMARY_SERVICE,
   SUMMARY_SERVICE_NAME,
-} from '@admin-back/grpc';
+} from '@admin-back/core';
 import { GRPCInterceptor, GrpcProvider } from '@admin-back/shared';
 import {
   AccountResolver,

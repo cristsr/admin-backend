@@ -9,7 +9,7 @@ import {
   ScheduledInput,
   Status,
   User,
-} from '@admin-back/grpc';
+} from '@admin-back/core';
 import { CurrentUser } from '@admin-back/shared';
 
 @Resolver(Scheduled)

@@ -1,5 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
-import { ExchangeRatesInput } from '@admin-back/grpc';
+import { ExchangeRatesInput } from '@admin-back/core';
 import { AppService } from 'app/services';
 
 @Controller('exchanges')

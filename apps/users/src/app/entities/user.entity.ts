@@ -6,7 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { User } from '@admin-back/grpc';
+import { User } from '@admin-back/core';
 
 @Entity('users')
 export class UserEntity implements User {

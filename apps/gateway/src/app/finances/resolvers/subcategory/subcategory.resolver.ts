@@ -8,7 +8,7 @@ import {
   Subcategory,
   SubcategoryGrpc,
   SubcategoryInput,
-} from '@admin-back/grpc';
+} from '@admin-back/core';
 
 @Resolver()
 export class SubcategoryResolver {

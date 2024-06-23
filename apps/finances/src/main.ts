@@ -2,16 +2,8 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
 import { useContainer } from 'class-validator';
-import { FinancesConfig } from '@admin-back/grpc';
+import { FinancesConfig } from '@admin-back/core';
 import { AppModule } from './app.module';
-
-process.on('uncaughtException', (err: Error) => {
-  Logger.error(`uncaughtException: ${err.message}`, err.stack);
-});
-
-process.on('unhandledRejection', (err: Error) => {
-  Logger.error(`unhandledRejection: ${err.message}`, err.stack);
-});
 
 async function bootstrap() {
   const app = await NestFactory.createMicroservice<MicroserviceOptions>(
