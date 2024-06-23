@@ -1,6 +1,6 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AccountController } from 'app/account/controllers';
+// import { AccountController } from 'app/account/controllers';
 import { AccountEntity } from 'app/account/entities';
 import { AccountRepository } from 'app/account/repositories';
 import { AccountService } from 'app/account/services';
@@ -14,7 +14,7 @@ const Repositories = [AccountRepository];
     forwardRef(() => MovementModule),
   ],
   exports: [...Repositories],
-  controllers: [AccountController],
-  providers: [...Repositories, AccountService],
+  controllers: [AccountService],
+  providers: [...Repositories],
 })
 export class AccountModule {}
