@@ -2,10 +2,10 @@ import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
 import { Observable } from 'rxjs';
 import {
-  CreateSubcategories,
   Id,
   SUBCATEGORY_HANDLER,
   Status,
+  SubcategoriesInput,
   Subcategory,
   SubcategoryHandler,
   SubcategoryInput,
@@ -32,7 +32,7 @@ export class SubcategoryController implements SubcategoryHandler {
   }
 
   @GrpcMethod(SUBCATEGORY_HANDLER)
-  saveMany(input: CreateSubcategories): Observable<Status> {
+  saveMany(input: SubcategoriesInput): Observable<Status> {
     return this.subcategoryService.saveMany(input);
   }
 

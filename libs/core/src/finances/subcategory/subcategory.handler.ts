@@ -1,7 +1,7 @@
 import { Observable } from 'rxjs';
 import { Id, Status } from '../../shared';
 import {
-  CreateSubcategories,
+  SubcategoriesInput,
   Subcategory,
   SubcategoryInput,
 } from '../subcategory';
@@ -13,7 +13,7 @@ export abstract class SubcategoryHandler {
 
   abstract save(subcategory: SubcategoryInput): Observable<Subcategory>;
 
-  abstract saveMany(subcategories: CreateSubcategories): Observable<Status>;
+  abstract saveMany(subcategories: SubcategoriesInput): Observable<Status>;
 
   abstract remove(id: Id): Observable<Status>;
 }

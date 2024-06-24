@@ -2,7 +2,7 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Observable } from 'rxjs';
 import { Status, SubcategoryHandler } from '@admin-back/core';
 import {
-  CreateSubcategoriesImp,
+  SubcategoriesInputImp,
   SubcategoryImp,
   SubcategoryInputImp,
 } from 'app/finances/subcategory/dto';
@@ -34,7 +34,7 @@ export class SubcategoryResolver {
   @Mutation(() => Status)
   saveSubcategories(
     @Args('subcategories')
-    subcategories: CreateSubcategoriesImp
+    subcategories: SubcategoriesInputImp
   ): Observable<Status> {
     return this.subcategoryHandler.saveMany(subcategories);
   }

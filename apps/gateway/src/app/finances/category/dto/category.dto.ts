@@ -20,7 +20,7 @@ import {
 } from 'app/finances/subcategory/dto';
 import { GqlBaseResult } from 'app/shared/dto';
 
-@ObjectType()
+@ObjectType(Category.name)
 export class CategoryImp extends GqlBaseResult implements Category {
   @Field()
   @IsNotEmpty()
@@ -43,7 +43,7 @@ export class CategoryImp extends GqlBaseResult implements Category {
 }
 
 // TODO: optimize this class to avid to use omitType
-@InputType()
+@InputType(CategoryInput.name)
 export class CategoryInputImp
   extends OmitInputType(CategoryImp, ['id', 'subcategories'])
   implements CategoryInput
@@ -62,12 +62,12 @@ export class CategoryInputImp
   subcategories?: Omit<SubcategoryInputImp, 'category'>[];
 }
 
-@ObjectType()
+@ObjectType(Categories.name)
 export class CategoriesImp
   extends ListObject(CategoryImp)
   implements Categories {}
 
-@InputType()
+@InputType(CategoriesInput.name)
 export class CategoriesInputImp
   extends ListInput(CategoryInputImp)
   implements CategoriesInput {}

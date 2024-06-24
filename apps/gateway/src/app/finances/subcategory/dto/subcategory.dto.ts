@@ -1,7 +1,7 @@
 import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
 import {
-  CreateSubcategories,
   Subcategories,
+  SubcategoriesInput,
   Subcategory,
   SubcategoryInput,
 } from '@admin-back/core';
@@ -28,22 +28,15 @@ export class SubcategoryInputImp implements SubcategoryInput {
   category: number;
 }
 
-// TODO: remove this dto to centralize into save mutation
-@InputType()
-export class UpdateSubcategoryInput extends OmitInputType(SubcategoryImp, []) {
-  @Field({ nullable: true })
-  category?: number;
-}
-
 @ObjectType()
 export class SubcategoriesImp
   extends ListObject(SubcategoryImp)
   implements Subcategories {}
 
-@InputType()
-export class CreateSubcategoriesImp
+@InputType(SubcategoriesInput.name)
+export class SubcategoriesInputImp
   extends ListInput(SubcategoryInputImp)
-  implements CreateSubcategories
+  implements SubcategoriesInput
 {
   @Field()
   category: number;

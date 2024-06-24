@@ -1,9 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Observable, defer, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import {
-  CreateSubcategories,
   Id,
   Status,
+  SubcategoriesInput,
   Subcategory,
   SubcategoryHandler,
   SubcategoryInput,
@@ -74,7 +74,7 @@ export class SubcategoryService implements SubcategoryHandler {
     );
   }
 
-  saveMany(data: CreateSubcategories): Observable<Status> {
+  saveMany(data: SubcategoriesInput): Observable<Status> {
     const records = data.data.map((subcategory) => ({
       ...subcategory,
       category: { id: data.category },
