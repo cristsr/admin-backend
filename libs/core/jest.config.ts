@@ -1,6 +1,6 @@
 /* eslint-disable */
 export default {
-  displayName: 'grpc',
+  displayName: 'core',
   preset: '../../jest.preset.js',
   globals: {},
   testEnvironment: 'node',
@@ -13,5 +13,5 @@ export default {
     ],
   },
   moduleFileExtensions: ['ts', 'js', 'html'],
-  coverageDirectory: '../../coverage/libs/grpc',
+  coverageDirectory: '../../coverage/libs/core',
 };
