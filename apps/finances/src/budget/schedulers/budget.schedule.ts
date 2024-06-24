@@ -7,9 +7,7 @@ import { GenerateBudgets } from '@admin-back/core';
 export class BudgetSchedule {
   constructor(private eventEmitter: EventEmitter2) {}
 
-  @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_NOON, {
-    timeZone: 'America/Bogota',
-  })
+  @Cron(CronExpression.EVERY_1ST_DAY_OF_MONTH_AT_NOON)
   createBudgets() {
     this.eventEmitter.emit(GenerateBudgets);
   }

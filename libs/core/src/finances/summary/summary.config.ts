@@ -1,2 +1,8 @@
-export const SUMMARY_SERVICE = 'SUMMARY_SERVICE';
-export const SUMMARY_SERVICE_NAME = 'SummaryService';
+import { GrpcServiceNameExtractor } from '@admin-back/shared';
+import { FinancesAssetsPath } from '../finances.config';
+
+export const SUMMARY_HANDLER = GrpcServiceNameExtractor(
+  FinancesAssetsPath,
+  'summary',
+  'summary.proto'
+);

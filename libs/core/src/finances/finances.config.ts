@@ -1,4 +1,8 @@
 import { join } from 'path';
+import { InjectionToken } from '@admin-back/shared';
+import { CorePackageName } from '../core.constants';
+
+const FinancesPackageName = 'finances';
 
 const packages = [
   'admin.shared',
@@ -14,7 +18,7 @@ const packages = [
 export const FinancesConfig = {
   url: 'localhost:5003',
   package: packages,
-  protoPath: join(__dirname, 'assets', 'grpc', 'admin.proto'),
+  protoPath: join(__dirname, 'assets', 'core', 'admin.proto'),
   loader: {
     keepCase: true,
     oneofs: true,
@@ -22,4 +26,11 @@ export const FinancesConfig = {
   },
 };
 
-export const FINANCES_GRPC_CLIENT = 'FINANCES_GRPC_CLIENT';
+export const FINANCES_GRPC_CLIENT = InjectionToken('FINANCES_GRPC_CLIENT');
+
+export const FinancesAssetsPath = join(
+  __dirname,
+  'assets',
+  CorePackageName,
+  FinancesPackageName
+);

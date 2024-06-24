@@ -1,6 +1,6 @@
 import { ApolloDriver } from '@nestjs/apollo';
 import { CacheModule } from '@nestjs/cache-manager';
-import { Module } from '@nestjs/common';
+import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { GraphQLModule } from '@nestjs/graphql';
@@ -11,7 +11,6 @@ import {
   GRPCInterceptor,
   RequestInterceptor,
   RpcExceptionFilter,
-  ValidationPipe,
   validatorFactory,
 } from '@admin-back/shared';
 import { AuthModule } from 'app/auth';

@@ -1,2 +1,8 @@
-export const SUBCATEGORY_SERVICE = 'SUBCATEGORY_SERVICE';
-export const SUBCATEGORY_SERVICE_NAME = 'SubcategoryService';
+import { GrpcServiceNameExtractor } from '@admin-back/shared';
+import { FinancesAssetsPath } from '../finances.config';
+
+export const SUBCATEGORY_HANDLER = GrpcServiceNameExtractor(
+  FinancesAssetsPath,
+  'subcategory',
+  'subcategory.proto'
+);

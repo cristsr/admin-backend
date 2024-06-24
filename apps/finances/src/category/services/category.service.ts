@@ -1,5 +1,4 @@
-import { NotFoundException } from '@nestjs/common';
-import { GrpcMethod, GrpcService } from '@nestjs/microservices';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import {
   Observable,
   catchError,
@@ -15,7 +14,7 @@ import { DataSource } from 'typeorm';
 import {
   CategoriesInput,
   Category,
-  CategoryGrpc,
+  CategoryHandler,
   CategoryInput,
   Id,
   Status,
@@ -24,20 +23,18 @@ import { CategoryEntity } from 'app/category/entities';
 import { CategoryRepository } from 'app/category/repositories';
 import { SubcategoryRepository } from 'app/subcategory/repositories';
 
-@GrpcService('finances')
-export class CategoryService implements CategoryGrpc {
+@Injectable()
+export class CategoryService implements CategoryHandler {
   constructor(
     private categoryRepository: CategoryRepository,
     private subcategoryRepository: SubcategoryRepository,
     private dataSource: DataSource
   ) {}
 
-  @GrpcMethod()
   findOne(categoryId: Id): Observable<Category> {
     return defer(() => this.categoryRepository.findOne({ where: categoryId }));
   }
 
-  @GrpcMethod()
   findAll(): Observable<Category[]> {
     return defer(() =>
       this.categoryRepository.find({
@@ -46,7 +43,6 @@ export class CategoryService implements CategoryGrpc {
     );
   }
 
-  @GrpcMethod()
   save(data: CategoryInput): Observable<Category> {
     const category$ = defer(() =>
       this.categoryRepository.findOneOrFail({
@@ -98,7 +94,6 @@ export class CategoryService implements CategoryGrpc {
     );
   }
 
-  @GrpcMethod()
   saveMany({ data }: CategoriesInput): Observable<Status> {
     const queryRunner = this.dataSource.createQueryRunner();
 
@@ -141,7 +136,6 @@ export class CategoryService implements CategoryGrpc {
     );
   }
 
-  @GrpcMethod()
   remove(category: Id): Observable<Status> {
     return defer(() => this.categoryRepository.delete(category.id)).pipe(
       map((result) => ({
@@ -150,7 +144,6 @@ export class CategoryService implements CategoryGrpc {
     );
   }
 
-  @GrpcMethod()
   removeAll(): Observable<Status> {
     return defer(() => this.categoryRepository.clear()).pipe(
       map(() => ({ status: true })),

@@ -1,20 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
 import { Observable, defer, map, of, switchMap, tap } from 'rxjs';
 import {
   Account,
   AccountFilter,
-  AccountGrpc,
+  AccountHandler,
   AccountInput,
   Id,
 } from '@admin-back/core';
 import { AccountRepository } from 'app/account/repositories';
 
 @Injectable()
-export class AccountService implements AccountGrpc {
+export class AccountService implements AccountHandler {
   constructor(private accountRepository: AccountRepository) {}
 
-  @GrpcMethod()
   findAll(filter: AccountFilter): Observable<Account[]> {
     return defer(() =>
       this.accountRepository.find({
@@ -26,7 +24,6 @@ export class AccountService implements AccountGrpc {
     );
   }
 
-  @GrpcMethod()
   findOne({ id }: Id): Observable<Account> {
     return defer(() =>
       this.accountRepository.findOne({
@@ -37,7 +34,6 @@ export class AccountService implements AccountGrpc {
     );
   }
 
-  @GrpcMethod()
   save(data: AccountInput): Observable<Account> {
     const account = defer(() =>
       this.accountRepository.findOne({

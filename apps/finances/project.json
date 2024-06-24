@@ -12,7 +12,6 @@
         "main": "apps/finances/src/main.ts",
         "tsConfig": "apps/finances/tsconfig.app.json",
         "assets": [
-          "apps/finances/src/assets",
           {
             "glob": "**/*.proto",
             "input": "libs/core/src",

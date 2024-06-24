@@ -1,41 +1,33 @@
-import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
-import { ListInput, ListObject, OmitInputType } from '@admin-back/shared';
+import { ListMixin } from '@admin-back/shared';
 
-@ObjectType()
 export class Subcategory {
-  @Field(() => Int)
   id: number;
 
-  @Field()
   name: string;
 }
 
-@InputType()
 export class SubcategoryInput {
-  @Field({ nullable: true })
-  id: number;
+  id?: number;
 
-  @Field()
   name: string;
 
-  @Field({ nullable: true })
   category: number;
 }
 
-@InputType()
-export class UpdateSubcategory extends OmitInputType(Subcategory, []) {
-  @Field({ nullable: true })
+export class UpdateSubcategory {
+  id: number;
+
+  name: string;
+
   category?: number;
 }
-// export class UpdateSubcategory extends Subcategory {}
 
-@ObjectType()
-export class Subcategories extends ListObject(Subcategory) {}
+export class Subcategories implements ListMixin<Subcategory> {
+  data: Subcategory[];
+}
 
-@InputType()
-export class CreateSubcategories extends ListInput(
-  OmitInputType(Subcategory, ['id'])
-) {
-  @Field()
+export class CreateSubcategories implements ListMixin<SubcategoryInput> {
+  data: SubcategoryInput[];
+
   category: number;
 }

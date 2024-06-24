@@ -1,15 +1,12 @@
-import { Logger, NotFoundException } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
-import { GrpcMethod, GrpcService } from '@nestjs/microservices';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { DateTime } from 'luxon';
 import { Observable, defer, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { Between, LessThanOrEqual, MoreThanOrEqual } from 'typeorm';
 import {
   Budget,
   BudgetFilter,
-  BudgetGrpc,
+  BudgetHandler,
   BudgetInput,
-  GenerateBudgets,
   Id,
   Movement,
   MovementType,
@@ -22,8 +19,8 @@ import { BudgetRepository } from 'app/budget/repositories';
 import { CategoryRepository } from 'app/category/repositories';
 import { MovementRepository } from 'app/movement/repositories';
 
-@GrpcService('finances')
-export class BudgetService implements BudgetGrpc {
+@Injectable()
+export class BudgetService implements BudgetHandler {
   #logger = new Logger(BudgetService.name);
 
   constructor(
@@ -33,7 +30,6 @@ export class BudgetService implements BudgetGrpc {
     private accountRepository: AccountRepository
   ) {}
 
-  @GrpcMethod()
   findOne(budgetId: Id): Observable<Budget> {
     const budget$ = defer(() =>
       this.budgetRepository.findOne({
@@ -60,7 +56,6 @@ export class BudgetService implements BudgetGrpc {
     );
   }
 
-  @GrpcMethod()
   findAll(filter: BudgetFilter): Observable<Budget[]> {
     const budgets$ = defer(() =>
       this.budgetRepository.find({
@@ -99,7 +94,6 @@ export class BudgetService implements BudgetGrpc {
     );
   }
 
-  @GrpcMethod()
   findMovements(budgetId: Id): Observable<Movement[]> {
     const budget$ = defer(() =>
       this.budgetRepository.findOne({
@@ -127,7 +121,6 @@ export class BudgetService implements BudgetGrpc {
     );
   }
 
-  @GrpcMethod()
   save(data: BudgetInput): Observable<Budget> {
     const budget = defer(() =>
       this.budgetRepository.findOne({
@@ -185,7 +178,6 @@ export class BudgetService implements BudgetGrpc {
     );
   }
 
-  @GrpcMethod()
   remove(budget: Id): Observable<Status> {
     return defer(() => this.budgetRepository.softDelete(budget.id)).pipe(
       map((result) => ({
@@ -194,7 +186,6 @@ export class BudgetService implements BudgetGrpc {
     );
   }
 
-  @OnEvent(GenerateBudgets)
   async generateBudgets(): Promise<void> {
     this.#logger.log('Generating budgets');
 

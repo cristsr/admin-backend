@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { CategoryController } from 'app/category/controllers';
 import { CategoryEntity } from 'app/category/entities';
 import { CategoryRepository } from 'app/category/repositories';
 import { CategoryService } from 'app/category/services';
@@ -10,8 +11,8 @@ const Repositories = [CategoryRepository];
 
 @Module({
   imports: [Entities, SubcategoryModule],
-  controllers: [CategoryService],
-  providers: [...Repositories],
+  controllers: [CategoryController],
+  providers: [...Repositories, CategoryService],
   exports: [...Repositories],
 })
 export class CategoryModule {}

@@ -1,24 +1,17 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import {
-  ACCOUNT_SERVICE,
-  ACCOUNT_SERVICE_NAME,
-  BUDGET_SERVICE,
-  BUDGET_SERVICE_NAME,
-  CATEGORY_SERVICE,
-  CATEGORY_SERVICE_NAME,
+  ACCOUNT_HANDLER,
+  BUDGET_HANDLER,
+  CATEGORY_HANDLER,
   FINANCES_GRPC_CLIENT,
   FinancesConfig,
-  MOVEMENT_SERVICE,
-  MOVEMENT_SERVICE_NAME,
-  SCHEDULED_SERVICE,
-  SCHEDULED_SERVICE_NAME,
-  SUBCATEGORY_SERVICE,
-  SUBCATEGORY_SERVICE_NAME,
-  SUMMARY_SERVICE,
-  SUMMARY_SERVICE_NAME,
+  MOVEMENT_HANDLER,
+  SCHEDULED_HANDLER,
+  SUBCATEGORY_HANDLER,
+  SUMMARY_HANDLER,
 } from '@admin-back/core';
-import { GRPCInterceptor, GrpcProvider } from '@admin-back/shared';
+import { GRPCInterceptor, GrpcProviders } from '@admin-back/shared';
 import {
   AccountResolver,
   BudgetResolver,
@@ -27,7 +20,20 @@ import {
   ScheduledResolver,
   SubcategoryResolver,
   SummaryResolver,
-} from 'app/finances/resolvers';
+} from 'app/finances';
+
+const Providers = GrpcProviders({
+  providers: [
+    ACCOUNT_HANDLER,
+    CATEGORY_HANDLER,
+    SUBCATEGORY_HANDLER,
+    MOVEMENT_HANDLER,
+    SUMMARY_HANDLER,
+    BUDGET_HANDLER,
+    SCHEDULED_HANDLER,
+  ],
+  client: FINANCES_GRPC_CLIENT,
+});
 
 @Module({
   imports: [
@@ -54,41 +60,7 @@ import {
     ]),
   ],
   providers: [
-    GrpcProvider({
-      provide: ACCOUNT_SERVICE,
-      service: ACCOUNT_SERVICE_NAME,
-      client: FINANCES_GRPC_CLIENT,
-    }),
-    GrpcProvider({
-      provide: CATEGORY_SERVICE,
-      service: CATEGORY_SERVICE_NAME,
-      client: FINANCES_GRPC_CLIENT,
-    }),
-    GrpcProvider({
-      provide: SUBCATEGORY_SERVICE,
-      service: SUBCATEGORY_SERVICE_NAME,
-      client: FINANCES_GRPC_CLIENT,
-    }),
-    GrpcProvider({
-      provide: MOVEMENT_SERVICE,
-      service: MOVEMENT_SERVICE_NAME,
-      client: FINANCES_GRPC_CLIENT,
-    }),
-    GrpcProvider({
-      provide: SUMMARY_SERVICE,
-      service: SUMMARY_SERVICE_NAME,
-      client: FINANCES_GRPC_CLIENT,
-    }),
-    GrpcProvider({
-      provide: BUDGET_SERVICE,
-      service: BUDGET_SERVICE_NAME,
-      client: FINANCES_GRPC_CLIENT,
-    }),
-    GrpcProvider({
-      provide: SCHEDULED_SERVICE,
-      service: SCHEDULED_SERVICE_NAME,
-      client: FINANCES_GRPC_CLIENT,
-    }),
+    ...Providers,
     AccountResolver,
     CategoryResolver,
     SubcategoryResolver,
@@ -98,41 +70,7 @@ import {
     SummaryResolver,
   ],
   exports: [
-    GrpcProvider({
-      provide: ACCOUNT_SERVICE,
-      service: ACCOUNT_SERVICE_NAME,
-      client: FINANCES_GRPC_CLIENT,
-    }),
-    GrpcProvider({
-      provide: CATEGORY_SERVICE,
-      service: CATEGORY_SERVICE_NAME,
-      client: FINANCES_GRPC_CLIENT,
-    }),
-    GrpcProvider({
-      provide: SUBCATEGORY_SERVICE,
-      service: SUBCATEGORY_SERVICE_NAME,
-      client: FINANCES_GRPC_CLIENT,
-    }),
-    GrpcProvider({
-      provide: MOVEMENT_SERVICE,
-      service: MOVEMENT_SERVICE_NAME,
-      client: FINANCES_GRPC_CLIENT,
-    }),
-    GrpcProvider({
-      provide: SUMMARY_SERVICE,
-      service: SUMMARY_SERVICE_NAME,
-      client: FINANCES_GRPC_CLIENT,
-    }),
-    GrpcProvider({
-      provide: BUDGET_SERVICE,
-      service: BUDGET_SERVICE_NAME,
-      client: FINANCES_GRPC_CLIENT,
-    }),
-    GrpcProvider({
-      provide: SCHEDULED_SERVICE,
-      service: SCHEDULED_SERVICE_NAME,
-      client: FINANCES_GRPC_CLIENT,
-    }),
+    ...Providers,
     AccountResolver,
     CategoryResolver,
     SubcategoryResolver,

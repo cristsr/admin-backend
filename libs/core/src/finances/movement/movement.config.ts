@@ -1,2 +1,8 @@
-export const MOVEMENT_SERVICE = 'MOVEMENT_SERVICE';
-export const MOVEMENT_SERVICE_NAME = 'MovementService';
+import { GrpcServiceNameExtractor } from '@admin-back/shared';
+import { FinancesAssetsPath } from '../finances.config';
+
+export const MOVEMENT_HANDLER = GrpcServiceNameExtractor(
+  FinancesAssetsPath,
+  'movement',
+  'movement.proto'
+);

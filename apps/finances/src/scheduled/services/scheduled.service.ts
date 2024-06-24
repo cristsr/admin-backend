@@ -1,5 +1,4 @@
-import { Logger, NotFoundException } from '@nestjs/common';
-import { GrpcMethod, GrpcService } from '@nestjs/microservices';
+import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { DateTime } from 'luxon';
 import {
   Observable,
@@ -16,7 +15,7 @@ import {
   Id,
   Scheduled,
   ScheduledFilter,
-  ScheduledGrpc,
+  ScheduledHandler,
   ScheduledInput,
   Status,
 } from '@admin-back/core';
@@ -26,8 +25,8 @@ import { MovementRepository } from 'app/movement/repositories';
 import { ScheduledRepository } from 'app/scheduled/repositories';
 import { SubcategoryRepository } from 'app/subcategory/repositories';
 
-@GrpcService('finances')
-export class ScheduledService implements ScheduledGrpc {
+@Injectable()
+export class ScheduledService implements ScheduledHandler {
   #logger = new Logger(ScheduledService.name);
 
   constructor(
@@ -38,7 +37,6 @@ export class ScheduledService implements ScheduledGrpc {
     private accountRepository: AccountRepository
   ) {}
 
-  @GrpcMethod()
   findOne(scheduledId: Id): Observable<Scheduled> {
     return from(
       this.scheduledRepository.findOne({
@@ -48,7 +46,6 @@ export class ScheduledService implements ScheduledGrpc {
     );
   }
 
-  @GrpcMethod()
   findAll(filter: ScheduledFilter): Observable<Scheduled[]> {
     return defer(() =>
       this.scheduledRepository.find({
@@ -61,7 +58,6 @@ export class ScheduledService implements ScheduledGrpc {
     );
   }
 
-  @GrpcMethod()
   save(data: ScheduledInput): Observable<Scheduled> {
     const scheduled = defer(() =>
       this.scheduledRepository.findOne({
@@ -132,7 +128,6 @@ export class ScheduledService implements ScheduledGrpc {
     );
   }
 
-  @GrpcMethod()
   remove(scheduledId: Id): Observable<Status> {
     return from(this.scheduledRepository.delete(scheduledId)).pipe(
       map((res) => ({ status: !!res.affected }))

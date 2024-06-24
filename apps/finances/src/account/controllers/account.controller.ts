@@ -1,60 +1,32 @@
-import { Controller, NotFoundException } from '@nestjs/common';
-import { MessagePattern } from '@nestjs/microservices';
-import { Observable, defer, map, of, switchMap, tap } from 'rxjs';
-import { Account, AccountFilter, AccountInput, Id } from '@admin-back/core';
-import { AccountRepository } from 'app/account/repositories';
+import { Controller } from '@nestjs/common';
+import { GrpcMethod } from '@nestjs/microservices';
+import { Observable } from 'rxjs';
+import {
+  ACCOUNT_HANDLER,
+  Account,
+  AccountFilter,
+  AccountHandler,
+  AccountInput,
+  Id,
+} from '@admin-back/core';
+import { AccountService } from 'app/account/services';
 
-@Controller()
-export class AccountController {
-  constructor(private accountRepository: AccountRepository) {}
+@Controller('finances')
+export class AccountController implements AccountHandler {
+  constructor(private accountService: AccountService) {}
 
-  @MessagePattern()
+  @GrpcMethod(ACCOUNT_HANDLER)
   findAll(filter: AccountFilter): Observable<Account[]> {
-    return defer(() =>
-      this.accountRepository.find({
-        where: {
-          active: filter.active,
-          user: filter.user,
-        },
-      })
-    );
+    return this.accountService.findAll(filter);
   }
 
-  @MessagePattern()
-  findOne({ id }: Id): Observable<Account> {
-    return defer(() =>
-      this.accountRepository.findOne({
-        where: {
-          id,
-        },
-      })
-    );
+  @GrpcMethod(ACCOUNT_HANDLER)
+  findOne(id: Id): Observable<Account> {
+    return this.accountService.findOne(id);
   }
 
-  @MessagePattern()
+  @GrpcMethod(ACCOUNT_HANDLER)
   save(data: AccountInput): Observable<Account> {
-    const account = defer(() =>
-      this.accountRepository.findOne({
-        where: {
-          id: data.id,
-          user: data.user,
-        },
-      })
-    );
-
-    return (data.id ? account : of(null)).pipe(
-      tap((account) => {
-        if (data.id && !account) {
-          throw new NotFoundException('Account not found');
-        }
-      }),
-      switchMap((account) =>
-        this.accountRepository.save({
-          ...account,
-          ...data,
-        })
-      ),
-      map((result) => new Account(result))
-    );
+    return this.accountService.save(data);
   }
 }

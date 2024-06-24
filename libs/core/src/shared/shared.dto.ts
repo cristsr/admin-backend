@@ -14,7 +14,7 @@ export class Message {
 }
 
 @ObjectType()
-export class BaseDto {
+export class GqlBaseResult {
   @Field()
   id: number;
 

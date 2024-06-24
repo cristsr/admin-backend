@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccountModule } from 'app/account/account.module';
+import { BudgetController } from 'app/budget/controllers';
 import { BudgetEntity } from 'app/budget/entities';
 import { BudgetRepository } from 'app/budget/repositories';
 import { BudgetSchedule } from 'app/budget/schedulers';
@@ -12,9 +13,9 @@ const Entities = TypeOrmModule.forFeature([BudgetEntity]);
 const Repositories = [BudgetRepository];
 
 @Module({
-  controllers: [BudgetService],
   imports: [Entities, CategoryModule, MovementModule, AccountModule],
-  providers: [...Repositories, BudgetSchedule],
+  controllers: [BudgetController],
+  providers: [...Repositories, BudgetService, BudgetSchedule],
   exports: [...Repositories],
 })
 export class BudgetModule {}

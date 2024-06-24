@@ -9,3 +9,5 @@ export * from './map-to';
 export * from './metadata';
 export * from './create-execution-context';
 export * from './dates';
+export * from './grpc-service-name-extractor';
+export * from './injection-token';

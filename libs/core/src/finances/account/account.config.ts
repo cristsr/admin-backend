@@ -1,2 +1,8 @@
-export const ACCOUNT_SERVICE = 'ACCOUNT_SERVICE';
-export const ACCOUNT_SERVICE_NAME = 'AccountService';
+import { GrpcServiceNameExtractor } from '@admin-back/shared';
+import { FinancesAssetsPath } from '../finances.config';
+
+export const ACCOUNT_HANDLER = GrpcServiceNameExtractor(
+  FinancesAssetsPath,
+  'account',
+  'account.proto'
+);

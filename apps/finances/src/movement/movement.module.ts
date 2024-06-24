@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccountModule } from 'app/account/account.module';
 import { CategoryModule } from 'app/category/category.module';
+import { MovementController } from 'app/movement/controllers';
 import { MovementEntity } from 'app/movement/entities';
 import { MovementRepository } from 'app/movement/repositories';
 import { MovementService } from 'app/movement/services';
@@ -17,8 +18,8 @@ const Repositories = [MovementRepository];
     SubcategoryModule,
     forwardRef(() => AccountModule),
   ],
-  controllers: [MovementService],
-  providers: [...Repositories],
+  controllers: [MovementController],
+  providers: [...Repositories, MovementService],
   exports: [...Repositories],
 })
 export class MovementModule {}

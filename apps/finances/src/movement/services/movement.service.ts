@@ -1,12 +1,11 @@
-import { NotFoundException } from '@nestjs/common';
-import { GrpcMethod, GrpcService } from '@nestjs/microservices';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Observable, defer, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { Between, DeleteResult, In } from 'typeorm';
 import {
   Id,
   Movement,
   MovementFilter,
-  MovementGrpc,
+  MovementHandler,
   MovementInput,
   Status,
 } from '@admin-back/core';
@@ -15,9 +14,8 @@ import { CategoryRepository } from 'app/category/repositories';
 import { MovementRepository } from 'app/movement/repositories';
 import { SubcategoryRepository } from 'app/subcategory/repositories';
 
-@GrpcService('finances')
-// @Controller('movement')
-export class MovementService implements MovementGrpc {
+@Injectable()
+export class MovementService implements MovementHandler {
   constructor(
     private movementRepository: MovementRepository,
     private categoryRepository: CategoryRepository,
@@ -25,15 +23,17 @@ export class MovementService implements MovementGrpc {
     private accountRepository: AccountRepository
   ) {}
 
-  // @Get()
-  @GrpcMethod()
   findAll(filter: MovementFilter): Observable<Movement[]> {
     return defer(() =>
       this.movementRepository.find({
         where: {
           date: Between(filter.startDate, filter.endDate),
-          category: filter.category,
-          account: filter.account,
+          category: {
+            id: filter.category,
+          },
+          account: {
+            id: filter.account,
+          },
           type: filter.type?.length ? In(filter.type) : null,
         },
         order: {
@@ -45,7 +45,6 @@ export class MovementService implements MovementGrpc {
     );
   }
 
-  @GrpcMethod()
   findOne(movementId: Id): Observable<Movement> {
     return defer(() =>
       this.movementRepository.findOne({
@@ -55,7 +54,6 @@ export class MovementService implements MovementGrpc {
     );
   }
 
-  @GrpcMethod()
   save(data: MovementInput): Observable<Movement> {
     const movement = defer(() =>
       this.movementRepository.findOne({
@@ -131,7 +129,6 @@ export class MovementService implements MovementGrpc {
     );
   }
 
-  @GrpcMethod()
   remove(movement: Id): Observable<Status> {
     return defer(() => this.movementRepository.delete(movement.id)).pipe(
       map((data: DeleteResult) => ({
@@ -140,7 +137,6 @@ export class MovementService implements MovementGrpc {
     );
   }
 
-  @GrpcMethod()
   removeAll() {
     return defer(() => this.movementRepository.clear()).pipe(
       map(() => ({

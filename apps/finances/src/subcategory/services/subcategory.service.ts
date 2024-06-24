@@ -1,30 +1,27 @@
-import { NotFoundException } from '@nestjs/common';
-import { GrpcMethod, GrpcService } from '@nestjs/microservices';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { Observable, defer, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import {
   CreateSubcategories,
   Id,
   Status,
   Subcategory,
-  SubcategoryGrpc,
+  SubcategoryHandler,
   SubcategoryInput,
 } from '@admin-back/core';
 import { CategoryRepository } from 'app/category/repositories';
 import { SubcategoryRepository } from 'app/subcategory/repositories';
 
-@GrpcService('finances')
-export class SubcategoryService implements SubcategoryGrpc {
+@Injectable()
+export class SubcategoryService implements SubcategoryHandler {
   constructor(
     private categoryRepository: CategoryRepository,
     private subcategoryRepository: SubcategoryRepository
   ) {}
 
-  @GrpcMethod()
   findOne(subcategoryId: Id): Observable<Subcategory> {
     return defer(() => this.subcategoryRepository.findOneBy(subcategoryId));
   }
 
-  @GrpcMethod()
   findByCategory(categoryId: Id): Observable<Subcategory[]> {
     return defer(() => {
       return this.subcategoryRepository.find({
@@ -35,7 +32,6 @@ export class SubcategoryService implements SubcategoryGrpc {
     });
   }
 
-  @GrpcMethod()
   save(data: SubcategoryInput): Observable<Subcategory> {
     const subcategory = defer(() =>
       this.subcategoryRepository.findOne({
@@ -78,7 +74,6 @@ export class SubcategoryService implements SubcategoryGrpc {
     );
   }
 
-  @GrpcMethod()
   saveMany(data: CreateSubcategories): Observable<Status> {
     const records = data.data.map((subcategory) => ({
       ...subcategory,
@@ -90,7 +85,6 @@ export class SubcategoryService implements SubcategoryGrpc {
     );
   }
 
-  @GrpcMethod()
   remove(subcategoryId: Id): Observable<Status> {
     return defer(() => this.subcategoryRepository.delete(subcategoryId)).pipe(
       map((res) => {

@@ -12,7 +12,6 @@
         "main": "apps/gateway/src/main.ts",
         "tsConfig": "apps/gateway/tsconfig.app.json",
         "assets": [
-          "apps/gateway/src/assets",
           {
             "glob": "**/*.proto",
             "input": "libs/core/src",

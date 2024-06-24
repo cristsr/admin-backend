@@ -1,43 +1,28 @@
-import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { IsDate } from 'class-validator';
-import { TransformDate } from '@admin-back/shared';
-import { BaseDto } from '../../shared';
+import { GqlBaseResult } from '../../shared';
 import { Account } from '../account';
 import { Category } from '../category';
 import { Period } from '../finances.constants';
 
-@ObjectType()
-export class Budget extends BaseDto {
-  @Field()
+// TODO: replace GqlBaseResult
+export class Budget extends GqlBaseResult {
   name: string;
 
-  @Field()
   amount: number;
 
-  @Field()
-  @TransformDate()
   startDate: Date;
 
-  @Field()
-  @TransformDate()
   endDate: Date;
 
-  @Field()
   repeat: boolean;
 
-  @Field()
   active: boolean;
 
-  @Field(() => Period)
   period: Period;
 
-  @Field()
   spent: number;
 
-  @Field()
   percentage: number;
 
-  @Field(() => Category)
   category: Category;
 
   categoryId: number;
@@ -47,52 +32,31 @@ export class Budget extends BaseDto {
   user: number;
 }
 
-@InputType()
 export class BudgetInput {
-  @Field({ nullable: true })
   id: number;
 
-  @Field()
   name: string;
 
-  @Field()
   amount: number;
 
-  @Field()
   repeat: boolean;
 
-  @Field()
   category: number;
 
-  @Field()
   account: number;
 
-  @Field()
-  @IsDate()
-  @TransformDate()
   startDate: Date;
 
-  @Field()
-  @IsDate()
-  @TransformDate()
   endDate: Date;
 
   user: number;
 }
 
-@InputType()
 export class BudgetFilter {
-  @Field()
-  @IsDate()
-  @TransformDate()
   startDate: Date;
 
-  @Field()
-  @IsDate()
-  @TransformDate()
   endDate: Date;
 
-  @Field()
   account: number;
 
   user: number;
