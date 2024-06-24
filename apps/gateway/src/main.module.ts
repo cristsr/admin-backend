@@ -15,7 +15,7 @@ import {
 import { AuthModule } from 'app/auth';
 import { Environment } from 'app/config/env';
 import { FinancesModule } from 'app/finances';
-import { UsersModule } from 'app/users';
+import { UsersModule } from 'app/users/users.module';
 import { AppController } from './config/controllers';
 
 @Module({
@@ -49,7 +49,10 @@ import { AppController } from './config/controllers';
     },
     {
       provide: APP_PIPE,
-      useClass: ValidationPipe,
+      useValue: new ValidationPipe({
+        transform: true,
+        forbidUnknownValues: false,
+      }),
     },
     {
       provide: 'MODULE',

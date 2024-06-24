@@ -1,31 +1,30 @@
-import { NotFoundException } from '@nestjs/common';
-import { GrpcMethod, GrpcService } from '@nestjs/microservices';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Id, Status, User, UserGrpc, UserInput, UserQuery, Users } from '@core';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Id,
+  Status,
+  User,
+  UserHandler,
+  UserInput,
+  UserQuery,
+  Users,
+} from '@core';
 import { Observable, defer, map, switchMap, tap } from 'rxjs';
-import { Repository } from 'typeorm';
-import { UserEntity } from 'app/entities';
+import { UserRepository } from 'app/user/repositories';
 
-@GrpcService('user')
-export class UserService implements UserGrpc {
-  constructor(
-    @InjectRepository(UserEntity)
-    private userRepository: Repository<UserEntity>
-  ) {}
+@Injectable()
+export class UserService implements UserHandler {
+  constructor(private userRepository: UserRepository) {}
 
-  @GrpcMethod()
   findAll(): Observable<Users> {
     return defer(() => this.userRepository.find()).pipe(
       map((data) => ({ data }))
     );
   }
 
-  @GrpcMethod()
   findOne(queryUser: UserQuery): Observable<User> {
     return defer(() => this.userRepository.findOneBy(queryUser));
   }
 
-  @GrpcMethod()
   save(data: UserInput): Observable<User> {
     const user = defer(() =>
       this.userRepository.findOne({
@@ -46,7 +45,6 @@ export class UserService implements UserGrpc {
     );
   }
 
-  @GrpcMethod()
   remove({ id }: Id): Observable<Status> {
     return defer(() => this.userRepository.delete({ id })).pipe(
       map((result) => ({

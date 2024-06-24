@@ -11,10 +11,10 @@ export class Environment {
   PORT: number;
 
   @IsString()
-  AUTH0_ISSUER;
+  AUTH0_ISSUER: string;
 
   @IsString()
-  AUTH0_AUDIENCE;
+  AUTH0_AUDIENCE: string;
 }
 
 export const ENV = mapEnvironmentKeys(Environment);

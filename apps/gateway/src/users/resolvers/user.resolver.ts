@@ -1,32 +1,31 @@
-import { Inject } from '@nestjs/common';
-import { Args, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { USER_SERVICE, User, UserGrpc, UserInput } from '@core';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
+import { User, UserHandler } from '@core';
 import { CurrentUser, Public } from '@shared';
 import { Observable, map } from 'rxjs';
+import { UserImp, UserInputImp } from 'app/users/dto';
 
-@Resolver(() => User)
+@Resolver(() => UserImp)
 export class UserResolver {
-  @Inject(USER_SERVICE)
-  private userService: UserGrpc;
+  constructor(private userHandler: UserHandler) {}
 
-  @Query(() => [User])
-  users(): Observable<User[]> {
-    return this.userService.findAll().pipe(map((res) => res.data));
+  @Query(() => [UserImp])
+  users(): Observable<UserImp[]> {
+    return this.userHandler.findAll().pipe(map((res) => res.data));
   }
 
-  @Query(() => User)
+  @Query(() => UserImp)
   user(@CurrentUser() user: User) {
     return user;
   }
 
   @Public()
-  @Mutation(() => User)
-  saveUser(@Args('user') user: UserInput) {
-    return this.userService.save(user);
+  @Mutation(() => UserImp)
+  saveUser(@Args('user') user: UserInputImp) {
+    return this.userHandler.save(user);
   }
 
-  @Mutation(() => User)
-  removeUser(@Args('id', { type: () => Int }) id: number) {
-    return this.userService.remove({ id });
+  @Mutation(() => UserImp)
+  removeUser(@Args('id') id: number) {
+    return this.userHandler.remove({ id });
   }
 }

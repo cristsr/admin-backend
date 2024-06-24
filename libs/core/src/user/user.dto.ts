@@ -1,45 +1,34 @@
-import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { ListObject, OmitInputType } from '@shared';
+import { ListMixin } from '@shared';
 
-@ObjectType()
 export class User {
-  @Field()
   id: number;
 
-  @Field()
   name: string;
 
-  @Field()
   lastName: string;
 
-  @Field()
   email: string;
 
-  @Field()
   createdAt: string;
 
-  @Field()
   updatedAt: string;
 
-  @Field()
   auth0Id: string;
 }
 
-@ObjectType()
-export class Users extends ListObject(User) {}
+export class Users implements ListMixin<User> {
+  data: User[];
+}
 
-@InputType()
-export class UserInput extends OmitInputType(User, [
-  'id',
-  'createdAt',
-  'updatedAt',
-]) {}
+export class UserInput implements Omit<User, 'id' | 'createdAt' | 'updatedAt'> {
+  auth0Id: string;
 
-@InputType()
-export class UpdateUser extends OmitInputType(User, [
-  'createdAt',
-  'updatedAt',
-]) {}
+  lastName: string;
+
+  name: string;
+
+  email: string;
+}
 
 export class UserQuery {
   id?: number;

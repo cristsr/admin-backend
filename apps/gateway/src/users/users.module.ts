@@ -1,11 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import {
-  USER_GRPC_CLIENT,
-  USER_SERVICE,
-  USER_SERVICE_NAME,
-  UserConfig,
-} from '@core';
+import { USER_GRPC_CLIENT, USER_HANDLER, UserConfig, UserHandler } from '@core';
 import { GrpcProvider } from '@shared';
 import { UserResolver } from 'app/users/resolvers';
 
@@ -21,12 +16,12 @@ import { UserResolver } from 'app/users/resolvers';
   ],
   providers: [
     GrpcProvider({
-      provide: USER_SERVICE,
-      service: USER_SERVICE_NAME,
+      provide: UserHandler,
+      service: USER_HANDLER,
       client: USER_GRPC_CLIENT,
     }),
     UserResolver,
   ],
-  exports: [USER_SERVICE],
+  exports: [UserHandler],
 })
 export class UsersModule {}

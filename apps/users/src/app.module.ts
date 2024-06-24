@@ -1,14 +1,14 @@
-import { Module } from '@nestjs/common';
+import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import {
   ExceptionFilter,
   ResponseInterceptor,
   validatorFactory,
 } from '@shared';
-import { DatabaseModule } from 'database/database.module';
-import { UserEnvironment } from 'env';
-import { UserModule } from 'app/user.module';
+import { DatabaseModule } from 'app/config/database';
+import { UserEnvironment } from 'app/config/env';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -27,6 +27,13 @@ import { UserModule } from 'app/user.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: ResponseInterceptor,
+    },
+    {
+      provide: APP_PIPE,
+      useValue: new ValidationPipe({
+        transform: true,
+        forbidUnknownValues: false,
+      }),
     },
   ],
 })

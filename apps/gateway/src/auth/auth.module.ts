@@ -5,7 +5,7 @@ import { AuthController } from 'app/auth/controllers';
 import { JwtGuard } from 'app/auth/guards';
 import { AuthResolver } from 'app/auth/resolvers';
 import { JwtStrategy } from 'app/auth/strategies';
-import { UsersModule } from 'app/users';
+import { UsersModule } from 'app/users/users.module';
 
 @Module({
   imports: [PassportModule.register({}), UsersModule],

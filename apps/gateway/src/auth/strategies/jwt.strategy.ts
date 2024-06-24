@@ -1,7 +1,8 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
-import { USER_SERVICE, User, UserGrpc } from '@core';
+import { User, UserHandler } from '@core';
+import { ObjectLiteral } from '@shared';
 import { passportJwtSecret } from 'jwks-rsa';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { firstValueFrom, tap } from 'rxjs';
@@ -11,10 +12,7 @@ import { ENV } from 'app/config/env';
 export class JwtStrategy extends PassportStrategy(Strategy) {
   #logger = new Logger(JwtStrategy.name);
 
-  constructor(
-    @Inject(USER_SERVICE) private userService: UserGrpc,
-    private config: ConfigService
-  ) {
+  constructor(private userService: UserHandler, private config: ConfigService) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKeyProvider: passportJwtSecret({
@@ -29,9 +27,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload): Promise<User> {
-    this.#logger.debug(payload);
-
+  validate(payload: ObjectLiteral): Promise<User> {
+    //
     const auth0Id = (payload.sub as string).split('|').pop();
 
     const user$ = this.userService
