@@ -11,7 +11,7 @@ import {
 } from '@admin-back/core';
 import { AccountService } from 'app/account/services';
 
-@Controller('finances')
+@Controller()
 export class AccountController implements AccountHandler {
   constructor(private accountService: AccountService) {}
 

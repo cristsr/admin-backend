@@ -1,13 +1,14 @@
+import { Abstract, Type } from '@nestjs/common';
 import { ClientGrpc } from '@nestjs/microservices';
 
 interface GrpcProviderOptions {
-  provide: string;
+  provide: string | Type | Abstract<any>;
   service: string;
   client?: string;
 }
 
 interface GrpcProvidersOptions {
-  providers: string[];
+  providers: GrpcProviderOptions[];
   client: string;
 }
 
@@ -20,10 +21,10 @@ export function GrpcProvider(options: GrpcProviderOptions) {
 }
 
 export function GrpcProviders(options: GrpcProvidersOptions) {
-  return options.providers.map((provider) =>
+  return options.providers.map((opt) =>
     GrpcProvider({
-      provide: provider,
-      service: provider,
+      provide: opt.provide,
+      service: opt.service,
       client: options.client,
     })
   );

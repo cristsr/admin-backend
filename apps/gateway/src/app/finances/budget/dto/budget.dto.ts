@@ -1,15 +1,10 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { IsDate } from 'class-validator';
-import {
-  Budget,
-  BudgetFilter,
-  BudgetInput,
-  GqlBaseResult,
-  Period,
-} from '@admin-back/core';
+import { Budget, BudgetFilter, BudgetInput, Period } from '@admin-back/core';
 import { TransformDate } from '@admin-back/shared';
 import { AccountImp } from 'app/finances/account/dto';
 import { CategoryImp } from 'app/finances/category/dto/category.dto';
+import { GqlBaseResult } from 'app/shared/dto';
 
 @ObjectType(Budget.name)
 export class BudgetImp extends GqlBaseResult implements Budget {

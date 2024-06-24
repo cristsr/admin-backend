@@ -1,12 +1,12 @@
 import { Observable } from 'rxjs';
 import { Id, Scheduled, ScheduledFilter, ScheduledInput, Status } from '../..';
 
-export interface ScheduledHandler {
-  findOne(id: Id): Observable<Scheduled>;
+export abstract class ScheduledHandler {
+  abstract findOne(id: Id): Observable<Scheduled>;
 
-  findAll(filter: ScheduledFilter): Observable<Scheduled[]>;
+  abstract findAll(filter: ScheduledFilter): Observable<Scheduled[]>;
 
-  save(data: ScheduledInput): Observable<Scheduled>;
+  abstract save(data: ScheduledInput): Observable<Scheduled>;
 
-  remove(id: Id): Observable<Status>;
+  abstract remove(id: Id): Observable<Status>;
 }

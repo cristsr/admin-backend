@@ -1,15 +1,22 @@
 import { Module } from '@nestjs/common';
-import { ClientsModule, Transport } from '@nestjs/microservices';
+import { ClientGrpc, ClientsModule, Transport } from '@nestjs/microservices';
 import {
   ACCOUNT_HANDLER,
+  AccountHandler,
   BUDGET_HANDLER,
+  BudgetHandler,
   CATEGORY_HANDLER,
+  CategoryHandler,
   FINANCES_GRPC_CLIENT,
   FinancesConfig,
   MOVEMENT_HANDLER,
+  MovementHandler,
   SCHEDULED_HANDLER,
   SUBCATEGORY_HANDLER,
   SUMMARY_HANDLER,
+  ScheduledHandler,
+  SubcategoryHandler,
+  SummaryHandler,
 } from '@admin-back/core';
 import { GRPCInterceptor, GrpcProviders } from '@admin-back/shared';
 import {
@@ -24,13 +31,13 @@ import {
 
 const Providers = GrpcProviders({
   providers: [
-    ACCOUNT_HANDLER,
-    CATEGORY_HANDLER,
-    SUBCATEGORY_HANDLER,
-    MOVEMENT_HANDLER,
-    SUMMARY_HANDLER,
-    BUDGET_HANDLER,
-    SCHEDULED_HANDLER,
+    { provide: AccountHandler, service: ACCOUNT_HANDLER },
+    { provide: CategoryHandler, service: CATEGORY_HANDLER },
+    { provide: SubcategoryHandler, service: SUBCATEGORY_HANDLER },
+    { provide: MovementHandler, service: MOVEMENT_HANDLER },
+    { provide: SummaryHandler, service: SUMMARY_HANDLER },
+    { provide: BudgetHandler, service: BUDGET_HANDLER },
+    { provide: ScheduledHandler, service: SCHEDULED_HANDLER },
   ],
   client: FINANCES_GRPC_CLIENT,
 });
@@ -61,6 +68,11 @@ const Providers = GrpcProviders({
   ],
   providers: [
     ...Providers,
+    {
+      provide: AccountHandler,
+      useFactory: (client: ClientGrpc) => client.getService(ACCOUNT_HANDLER),
+      inject: [FINANCES_GRPC_CLIENT],
+    },
     AccountResolver,
     CategoryResolver,
     SubcategoryResolver,

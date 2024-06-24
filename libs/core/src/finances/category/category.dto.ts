@@ -1,10 +1,9 @@
 import { OmitType } from '@nestjs/mapped-types';
 import { ListMixin } from '@admin-back/shared';
-import { GqlBaseResult } from '../../shared';
+import { BaseModel } from '../../shared';
 import { Subcategory, SubcategoryInput } from '../subcategory';
 
-// TODO: replace gql
-export class Category extends GqlBaseResult {
+export class Category extends BaseModel {
   name: string;
 
   icon: string;

@@ -3,14 +3,14 @@ import { Id, Status } from '../../shared';
 import { Budget, BudgetFilter, BudgetInput } from '../budget';
 import { Movement } from '../movement';
 
-export interface BudgetHandler {
-  findOne(id: Id): Observable<Budget>;
+export abstract class BudgetHandler {
+  abstract findOne(id: Id): Observable<Budget>;
 
-  findAll(filter: BudgetFilter): Observable<Budget[]>;
+  abstract findAll(filter: BudgetFilter): Observable<Budget[]>;
 
-  findMovements(id: Id): Observable<Movement[]>;
+  abstract findMovements(id: Id): Observable<Movement[]>;
 
-  save(budget: BudgetInput): Observable<Budget>;
+  abstract save(budget: BudgetInput): Observable<Budget>;
 
-  remove(id: Id): Observable<Status>;
+  abstract remove(id: Id): Observable<Status>;
 }

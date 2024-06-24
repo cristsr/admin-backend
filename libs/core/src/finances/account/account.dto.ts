@@ -1,14 +1,17 @@
-import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { GqlBaseResult } from '../../shared';
-import { Period } from '../finances.constants';
+import { BaseModel } from '../../shared';
+import { Period } from '../finances.dto';
 
-// TODO: Create BaseModel instead of BaseResult
-export class Account extends GqlBaseResult {
+export class Account extends BaseModel {
   name: string;
 
   initialBalance: number;
 
   user: number;
+
+  constructor(args: Partial<Account>) {
+    super();
+    Object.assign(this, args);
+  }
 }
 
 export class AccountInput {

@@ -18,7 +18,7 @@ const packages = [
 export const FinancesConfig = {
   url: 'localhost:5003',
   package: packages,
-  protoPath: join(__dirname, 'assets', 'core', 'admin.proto'),
+  protoPath: join(__dirname, 'assets', CorePackageName, 'admin.proto'),
   loader: {
     keepCase: true,
     oneofs: true,

@@ -6,14 +6,14 @@ import {
   SubcategoryInput,
 } from '../subcategory';
 
-export interface SubcategoryHandler {
-  findOne(id: Id): Observable<Subcategory>;
+export abstract class SubcategoryHandler {
+  abstract findOne(id: Id): Observable<Subcategory>;
 
-  findByCategory(category: Id): Observable<Subcategory[]>;
+  abstract findByCategory(category: Id): Observable<Subcategory[]>;
 
-  save(subcategory: SubcategoryInput): Observable<Subcategory>;
+  abstract save(subcategory: SubcategoryInput): Observable<Subcategory>;
 
-  saveMany(subcategories: CreateSubcategories): Observable<Status>;
+  abstract saveMany(subcategories: CreateSubcategories): Observable<Status>;
 
-  remove(id: Id): Observable<Status>;
+  abstract remove(id: Id): Observable<Status>;
 }

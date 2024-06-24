@@ -8,10 +8,10 @@ import {
   Movement,
 } from '../..';
 
-export interface SummaryHandler {
-  balance(filter: BalanceFilter, ...args): Observable<Balance>;
+export abstract class SummaryHandler {
+  abstract balance(filter: BalanceFilter, ...args): Observable<Balance>;
 
-  expenses(filter: ExpenseFilter, ...args): Observable<Expense[]>;
+  abstract expenses(filter: ExpenseFilter, ...args): Observable<Expense[]>;
 
-  lastMovements(filter: LastMovementFilter): Observable<Movement[]>;
+  abstract lastMovements(filter: LastMovementFilter): Observable<Movement[]>;
 }

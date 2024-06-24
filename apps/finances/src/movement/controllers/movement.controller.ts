@@ -12,7 +12,7 @@ import {
 } from '@admin-back/core';
 import { MovementService } from 'app/movement/services';
 
-@Controller('finances')
+@Controller()
 export class MovementController implements MovementHandler {
   constructor(private movementService: MovementService) {}
 

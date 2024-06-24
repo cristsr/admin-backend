@@ -1,11 +1,11 @@
-import { GqlBaseResult } from '../../shared';
+import { BaseModel } from '../../shared';
 import { Account } from '../account';
 import { Category } from '../category';
-import { Period } from '../finances.constants';
+import { Period } from '../finances.dto';
 import { Subcategory } from '../subcategory';
 import { MovementType } from './movement.types';
 
-export class Movement extends GqlBaseResult {
+export class Movement extends BaseModel {
   type: MovementType;
 
   date: Date;
@@ -16,14 +16,16 @@ export class Movement extends GqlBaseResult {
 
   category: Category;
 
-  // TODO: review this field
-  categoryId: number;
-
   subcategory: Subcategory;
 
   account: Account;
 
   user: number;
+
+  constructor(args: Partial<Movement>) {
+    super();
+    Object.assign(this, args);
+  }
 }
 
 export class MovementInput {

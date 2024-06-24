@@ -12,7 +12,7 @@ import {
 } from '@admin-back/core';
 import { SubcategoryService } from 'app/subcategory/services';
 
-@Controller('finances')
+@Controller()
 export class SubcategoryController implements SubcategoryHandler {
   constructor(private subcategoryService: SubcategoryService) {}
 

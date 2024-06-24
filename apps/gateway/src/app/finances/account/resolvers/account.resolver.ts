@@ -1,7 +1,6 @@
-import { Inject } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Observable } from 'rxjs';
-import { ACCOUNT_HANDLER, AccountHandler, User } from '@admin-back/core';
+import { AccountHandler, User } from '@admin-back/core';
 import { CurrentUser } from '@admin-back/shared';
 import {
   AccountFilterImp,
@@ -11,10 +10,7 @@ import {
 
 @Resolver(AccountImp)
 export class AccountResolver {
-  constructor(
-    @Inject(ACCOUNT_HANDLER)
-    private accountHandler: AccountHandler
-  ) {}
+  constructor(private accountHandler: AccountHandler) {}
 
   @Query(() => AccountImp)
   accountById(

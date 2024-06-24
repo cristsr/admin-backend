@@ -12,13 +12,13 @@ import {
   CategoriesInput,
   Category,
   CategoryInput,
-  GqlBaseResult,
 } from '@admin-back/core';
 import { ListInput, ListObject, OmitInputType } from '@admin-back/shared';
 import {
   SubcategoryImp,
   SubcategoryInputImp,
 } from 'app/finances/subcategory/dto';
+import { GqlBaseResult } from 'app/shared/dto';
 
 @ObjectType()
 export class CategoryImp extends GqlBaseResult implements Category {

@@ -1,7 +1,6 @@
-import { Inject } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Observable } from 'rxjs';
-import { BUDGET_HANDLER, BudgetHandler, Status, User } from '@admin-back/core';
+import { BudgetHandler, Status, User } from '@admin-back/core';
 import { CurrentUser } from '@admin-back/shared';
 import {
   BudgetFilterImp,
@@ -12,14 +11,11 @@ import { MovementImp } from 'app/finances/movement/dto';
 
 @Resolver(BudgetImp)
 export class BudgetResolver {
-  constructor(
-    @Inject(BUDGET_HANDLER)
-    private budgetService: BudgetHandler
-  ) {}
+  constructor(private budgetHandler: BudgetHandler) {}
 
   @Query(() => BudgetImp, { nullable: true })
   budget(@Args('id') id: number): Observable<BudgetImp> {
-    return this.budgetService.findOne({ id });
+    return this.budgetHandler.findOne({ id });
   }
 
   @Query(() => [BudgetImp])
@@ -27,7 +23,7 @@ export class BudgetResolver {
     @CurrentUser() user: User,
     @Args('filter') filter: BudgetFilterImp
   ): Observable<BudgetImp[]> {
-    return this.budgetService.findAll({
+    return this.budgetHandler.findAll({
       ...filter,
       user: user.id,
     });
@@ -36,7 +32,7 @@ export class BudgetResolver {
   // TODO: update movement
   @Query(() => [MovementImp])
   budgetMovements(@Args('id') id: number): Observable<MovementImp[]> {
-    return this.budgetService.findMovements({ id });
+    return this.budgetHandler.findMovements({ id });
   }
 
   @Mutation(() => BudgetImp)
@@ -44,12 +40,12 @@ export class BudgetResolver {
     @CurrentUser() user: User,
     @Args('budget') budget: BudgetInputImp
   ): Observable<BudgetImp> {
-    return this.budgetService.save({ ...budget, user: user.id });
+    return this.budgetHandler.save({ ...budget, user: user.id });
   }
 
   // TODO: change status to void
   @Mutation(() => Status)
   removeBudgetImp(@Args('id') id: number): Observable<Status> {
-    return this.budgetService.remove({ id });
+    return this.budgetHandler.remove({ id });
   }
 }

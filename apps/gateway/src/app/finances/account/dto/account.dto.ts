@@ -6,10 +6,10 @@ import {
   AccountInput,
   Balance,
   BalanceFilter,
-  GqlBaseResult,
   Period,
 } from '@admin-back/core';
 import { TransformDate } from '@admin-back/shared';
+import { GqlBaseResult } from 'app/shared/dto';
 
 @ObjectType(Account.name)
 export class AccountImp extends GqlBaseResult implements Account {

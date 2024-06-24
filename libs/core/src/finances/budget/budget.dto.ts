@@ -1,10 +1,9 @@
-import { GqlBaseResult } from '../../shared';
+import { BaseModel } from '../../shared';
 import { Account } from '../account';
 import { Category } from '../category';
-import { Period } from '../finances.constants';
+import { Period } from '../finances.dto';
 
-// TODO: replace GqlBaseResult
-export class Budget extends GqlBaseResult {
+export class Budget extends BaseModel {
   name: string;
 
   amount: number;
@@ -14,8 +13,6 @@ export class Budget extends GqlBaseResult {
   endDate: Date;
 
   repeat: boolean;
-
-  active: boolean;
 
   period: Period;
 
@@ -30,6 +27,11 @@ export class Budget extends GqlBaseResult {
   account: Account;
 
   user: number;
+
+  constructor(args: Partial<Budget>) {
+    super();
+    Object.assign(this, args);
+  }
 }
 
 export class BudgetInput {

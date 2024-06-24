@@ -2,7 +2,6 @@ import { Field, ID, InputType, ObjectType } from '@nestjs/graphql';
 import { ApiProperty } from '@nestjs/swagger';
 import { ArrayMaxSize, IsArray, IsDate, IsOptional } from 'class-validator';
 import {
-  GqlBaseResult,
   Movement,
   MovementFilter,
   MovementInput,
@@ -13,6 +12,7 @@ import { ResolveEntity, TransformDate } from '@admin-back/shared';
 import { AccountImp } from 'app/finances/account/dto';
 import { CategoryImp } from 'app/finances/category/dto';
 import { SubcategoryImp } from 'app/finances/subcategory/dto';
+import { GqlBaseResult } from 'app/shared/dto';
 
 @ObjectType(Movement.name)
 export class MovementImp extends GqlBaseResult implements Movement {
@@ -31,8 +31,6 @@ export class MovementImp extends GqlBaseResult implements Movement {
 
   @Field()
   category: CategoryImp;
-
-  categoryId: number;
 
   @Field()
   subcategory: SubcategoryImp;

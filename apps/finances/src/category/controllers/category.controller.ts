@@ -12,7 +12,7 @@ import {
 } from '@admin-back/core';
 import { CategoryService } from 'app/category/services';
 
-@Controller('finances')
+@Controller()
 export class CategoryController implements CategoryHandler {
   constructor(private categoryService: CategoryService) {}
 

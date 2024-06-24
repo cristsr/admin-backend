@@ -1,4 +1,5 @@
-import { GrpcMethod, GrpcService } from '@nestjs/microservices';
+import { Controller } from '@nestjs/common';
+import { GrpcMethod } from '@nestjs/microservices';
 import { Observable } from 'rxjs';
 import {
   Balance,
@@ -12,7 +13,7 @@ import {
 } from '@admin-back/core';
 import { SummaryService } from 'app/summary/services';
 
-@GrpcService('finances')
+@Controller()
 export class SummaryController implements SummaryHandler {
   constructor(private summaryService: SummaryService) {}
 

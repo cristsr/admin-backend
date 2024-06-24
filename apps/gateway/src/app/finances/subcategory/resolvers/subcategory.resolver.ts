@@ -1,11 +1,6 @@
-import { Inject } from '@nestjs/common';
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { Observable } from 'rxjs';
-import {
-  SUBCATEGORY_HANDLER,
-  Status,
-  SubcategoryHandler,
-} from '@admin-back/core';
+import { Status, SubcategoryHandler } from '@admin-back/core';
 import {
   CreateSubcategoriesImp,
   SubcategoryImp,
@@ -14,21 +9,18 @@ import {
 
 @Resolver(SubcategoryImp)
 export class SubcategoryResolver {
-  constructor(
-    @Inject(SUBCATEGORY_HANDLER)
-    private subcategoryService: SubcategoryHandler
-  ) {}
+  constructor(private subcategoryHandler: SubcategoryHandler) {}
 
   @Query(() => SubcategoryImp)
   subcategory(@Args('id') id: number): Observable<SubcategoryImp> {
-    return this.subcategoryService.findOne({ id });
+    return this.subcategoryHandler.findOne({ id });
   }
 
   @Query(() => [SubcategoryImp])
   subcategories(
     @Args('category') category: number
   ): Observable<SubcategoryImp[]> {
-    return this.subcategoryService.findByCategory({ id: category });
+    return this.subcategoryHandler.findByCategory({ id: category });
   }
 
   @Mutation(() => SubcategoryImp)
@@ -36,7 +28,7 @@ export class SubcategoryResolver {
     @Args('subcategory')
     subcategory: SubcategoryInputImp
   ): Observable<SubcategoryImp> {
-    return this.subcategoryService.save(subcategory);
+    return this.subcategoryHandler.save(subcategory);
   }
 
   @Mutation(() => Status)
@@ -44,12 +36,12 @@ export class SubcategoryResolver {
     @Args('subcategories')
     subcategories: CreateSubcategoriesImp
   ): Observable<Status> {
-    return this.subcategoryService.saveMany(subcategories);
+    return this.subcategoryHandler.saveMany(subcategories);
   }
 
   //TODO: update status
   @Mutation(() => Status)
   removeSubcategory(@Args('id') id: number): Observable<Status> {
-    return this.subcategoryService.remove({ id });
+    return this.subcategoryHandler.remove({ id });
   }
 }

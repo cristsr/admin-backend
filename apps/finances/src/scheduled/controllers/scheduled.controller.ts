@@ -12,7 +12,7 @@ import {
 } from '@admin-back/core';
 import { ScheduledService } from 'app/scheduled/services';
 
-@Controller('finances')
+@Controller()
 export class ScheduledController implements ScheduledHandler {
   constructor(private scheduledService: ScheduledService) {}
 

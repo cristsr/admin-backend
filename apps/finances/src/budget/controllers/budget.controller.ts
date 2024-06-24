@@ -15,7 +15,7 @@ import {
 } from '@admin-back/core';
 import { BudgetService } from 'app/budget/services';
 
-@Controller('finances')
+@Controller()
 export class BudgetController implements BudgetHandler {
   constructor(private budgetService: BudgetService) {}
 

@@ -1,16 +1,16 @@
 import { Observable } from 'rxjs';
 import { CategoriesInput, Category, CategoryInput, Id, Status } from '../..';
 
-export interface CategoryHandler {
-  findOne(id: Id): Observable<Category>;
+export abstract class CategoryHandler {
+  abstract findOne(id: Id): Observable<Category>;
 
-  findAll(): Observable<Category[]>;
+  abstract findAll(): Observable<Category[]>;
 
-  save(data: CategoryInput): Observable<Category>;
+  abstract save(data: CategoryInput): Observable<Category>;
 
-  saveMany(data: CategoriesInput): Observable<Status>;
+  abstract saveMany(data: CategoriesInput): Observable<Status>;
 
-  remove(id: Id): Observable<Status>;
+  abstract remove(id: Id): Observable<Status>;
 
-  removeAll(): Observable<Status>;
+  abstract removeAll(): Observable<Status>;
 }
