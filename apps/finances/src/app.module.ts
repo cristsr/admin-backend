@@ -9,7 +9,7 @@ import {
   ExceptionFilter,
   ResponseInterceptor,
   validatorFactory,
-} from '@admin-back/shared';
+} from '@shared';
 import { AccountModule } from 'app/account/account.module';
 import { BudgetModule } from 'app/budget/budget.module';
 import { CategoryModule } from 'app/category/category.module';

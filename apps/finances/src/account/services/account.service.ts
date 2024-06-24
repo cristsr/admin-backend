@@ -1,12 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Observable, defer, map, of, switchMap, tap } from 'rxjs';
 import {
   Account,
   AccountFilter,
   AccountHandler,
   AccountInput,
   Id,
-} from '@admin-back/core';
+} from '@core';
+import { Observable, defer, map, of, switchMap, tap } from 'rxjs';
 import { AccountRepository } from 'app/account/repositories';
 
 @Injectable()

@@ -1,5 +1,5 @@
+import { BaseEntity } from '@shared';
 import { Column, Entity } from 'typeorm';
-import { BaseEntity } from '@admin-back/shared';
 
 @Entity('exchanges')
 export class ExchangeEntity extends BaseEntity {

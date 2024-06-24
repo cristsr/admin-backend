@@ -1,6 +1,6 @@
+import { Category } from '@core';
+import { BaseEntity } from '@shared';
 import { Column, Entity, OneToMany } from 'typeorm';
-import { Category } from '@admin-back/core';
-import { BaseEntity } from '@admin-back/shared';
 import { SubcategoryEntity } from 'app/subcategory/entities';
 
 @Entity('categories')

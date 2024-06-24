@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Observable, defer, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import {
   Id,
   Status,
@@ -7,7 +6,8 @@ import {
   Subcategory,
   SubcategoryHandler,
   SubcategoryInput,
-} from '@admin-back/core';
+} from '@core';
+import { Observable, defer, forkJoin, map, of, switchMap, tap } from 'rxjs';
 import { CategoryRepository } from 'app/category/repositories';
 import { SubcategoryRepository } from 'app/subcategory/repositories';
 

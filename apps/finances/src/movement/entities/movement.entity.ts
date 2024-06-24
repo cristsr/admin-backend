@@ -1,6 +1,6 @@
+import { Movement, MovementType } from '@core';
+import { BaseEntity, DateColumn, TransformDate } from '@shared';
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
-import { Movement, MovementType } from '@admin-back/core';
-import { BaseEntity, DateColumn, TransformDate } from '@admin-back/shared';
 import { AccountEntity } from 'app/account/entities';
 import { CategoryEntity } from 'app/category/entities';
 import { SubcategoryEntity } from 'app/subcategory/entities';

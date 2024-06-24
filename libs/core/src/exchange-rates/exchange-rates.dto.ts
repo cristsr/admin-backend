@@ -1,7 +1,7 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
+import { OmitObjectType, TransformDate } from '@shared';
 import { Transform } from 'class-transformer';
 import { IsNumber, IsString } from 'class-validator';
-import { OmitObjectType, TransformDate } from '@admin-back/shared';
 
 @InputType()
 export class ExchangeRatesInput {

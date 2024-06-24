@@ -4,7 +4,6 @@ import { Module, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import { GraphQLModule } from '@nestjs/graphql';
-import { Environment } from 'env';
 import {
   DateScalar,
   EntityConstraint,
@@ -12,11 +11,12 @@ import {
   RequestInterceptor,
   RpcExceptionFilter,
   validatorFactory,
-} from '@admin-back/shared';
+} from '@shared';
+import { Environment } from 'apps/gateway/src/config/env';
 import { AuthModule } from 'app/auth';
 import { FinancesModule } from 'app/finances';
 import { UsersModule } from 'app/users';
-import { AppController } from './app.controller';
+import { AppController } from './config/controllers';
 
 @Module({
   imports: [

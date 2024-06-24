@@ -1,6 +1,5 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { Observable } from 'rxjs';
 import {
   Balance,
   BalanceFilter,
@@ -10,7 +9,8 @@ import {
   Movement,
   SUMMARY_HANDLER,
   SummaryHandler,
-} from '@admin-back/core';
+} from '@core';
+import { Observable } from 'rxjs';
 import { SummaryService } from 'app/summary/services';
 
 @Controller()

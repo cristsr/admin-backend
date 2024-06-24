@@ -1,6 +1,5 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { Observable } from 'rxjs';
 import {
   Id,
   SUBCATEGORY_HANDLER,
@@ -9,7 +8,8 @@ import {
   Subcategory,
   SubcategoryHandler,
   SubcategoryInput,
-} from '@admin-back/core';
+} from '@core';
+import { Observable } from 'rxjs';
 import { SubcategoryService } from 'app/subcategory/services';
 
 @Controller()

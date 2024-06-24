@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { InjectionToken } from '@admin-back/shared';
+import { InjectionToken } from '@shared';
 import { CorePackageName } from '../core.constants';
 
 const FinancesPackageName = 'finances';

@@ -13,10 +13,10 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "paths": {
-      "@admin-back/shared": [
+      "@shared": [
         "libs/shared/src/index.ts"
       ],
-      "@admin-back/core": [
+      "@core": [
         "libs/core/src/index.ts"
       ],
       "env": [

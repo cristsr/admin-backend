@@ -12,12 +12,9 @@
   ],
   "compilerOptions": {
     "paths": {
-      "@admin-back/shared": ["libs/shared/src/index.ts"],
-      "@admin-back/core": ["libs/core/src/index.ts"],
-      "env": ["apps/gateway/src/env"],
-      "domain/*": ["apps/gateway/src/domain/*"],
-      "app/*": ["apps/gateway/src/app/*"],
-      "core/*": ["apps/gateway/src/core/*"]
+      "@shared": ["libs/shared/src/index.ts"],
+      "@core": ["libs/core/src/index.ts"],
+      "app/*": ["apps/gateway/src/*"],
     }
   },
 }

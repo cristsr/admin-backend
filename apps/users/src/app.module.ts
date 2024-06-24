@@ -1,13 +1,13 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
-import { DatabaseModule } from 'database/database.module';
-import { UserEnvironment } from 'env';
 import {
   ExceptionFilter,
   ResponseInterceptor,
   validatorFactory,
-} from '@admin-back/shared';
+} from '@shared';
+import { DatabaseModule } from 'database/database.module';
+import { UserEnvironment } from 'env';
 import { UserModule } from 'app/user.module';
 
 @Module({

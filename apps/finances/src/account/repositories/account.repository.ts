@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { EntityRepository } from '@admin-back/shared';
+import { EntityRepository } from '@shared';
 import { AccountEntity } from 'app/account/entities';
 
 @Injectable()

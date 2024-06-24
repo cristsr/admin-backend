@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { GenerateBudgets } from '@admin-back/core';
+import { GenerateBudgets } from '@core';
 
 @Injectable()
 export class BudgetSchedule {

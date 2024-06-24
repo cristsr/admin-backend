@@ -1,15 +1,15 @@
 import { HttpService } from '@nestjs/axios';
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import * as cheerio from 'cheerio';
-import { ENV } from 'env';
-import { DateTime } from 'luxon';
-import { Observable, catchError, map, of } from 'rxjs';
 import {
   ExchangeRates,
   ExchangeRatesInput,
   LatestExchangeRatesInput,
-} from '@admin-back/core';
+} from '@core';
+import * as cheerio from 'cheerio';
+import { ENV } from 'env';
+import { DateTime } from 'luxon';
+import { Observable, catchError, map, of } from 'rxjs';
 import { ExchangeRatesService } from 'app/providers';
 
 @Injectable()

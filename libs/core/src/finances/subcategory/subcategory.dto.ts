@@ -1,4 +1,4 @@
-import { ListMixin } from '@admin-back/shared';
+import { ListMixin } from '@shared';
 
 export class Subcategory {
   id: number;

@@ -1,17 +1,9 @@
 import { NotFoundException } from '@nestjs/common';
 import { GrpcMethod, GrpcService } from '@nestjs/microservices';
 import { InjectRepository } from '@nestjs/typeorm';
+import { Id, Status, User, UserGrpc, UserInput, UserQuery, Users } from '@core';
 import { Observable, defer, map, switchMap, tap } from 'rxjs';
 import { Repository } from 'typeorm';
-import {
-  Id,
-  Status,
-  User,
-  UserGrpc,
-  UserInput,
-  UserQuery,
-  Users,
-} from '@admin-back/core';
 import { UserEntity } from 'app/entities';
 
 @GrpcService('user')

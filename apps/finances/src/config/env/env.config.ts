@@ -1,6 +1,6 @@
+import { mapEnvironmentKeys } from '@shared';
 import { Transform } from 'class-transformer';
 import { IsBoolean, IsNumber, IsString } from 'class-validator';
-import { mapEnvironmentKeys } from '@admin-back/shared';
 
 export class Environment {
   @IsString()

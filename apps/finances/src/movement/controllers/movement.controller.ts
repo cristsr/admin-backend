@@ -1,6 +1,5 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { Observable } from 'rxjs';
 import {
   Id,
   MOVEMENT_HANDLER,
@@ -9,7 +8,8 @@ import {
   MovementHandler,
   MovementInput,
   Status,
-} from '@admin-back/core';
+} from '@core';
+import { Observable } from 'rxjs';
 import { MovementService } from 'app/movement/services';
 
 @Controller()

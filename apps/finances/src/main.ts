@@ -1,8 +1,8 @@
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { MicroserviceOptions, Transport } from '@nestjs/microservices';
+import { FinancesConfig } from '@core';
 import { useContainer } from 'class-validator';
-import { FinancesConfig } from '@admin-back/core';
 import { AppModule } from './app.module';
 
 async function bootstrap() {

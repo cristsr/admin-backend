@@ -1,4 +1,4 @@
-import { GrpcServiceNameExtractor } from '@admin-back/shared';
+import { GrpcServiceNameExtractor } from '@shared';
 import { FinancesAssetsPath } from '../finances.config';
 
 export const CATEGORY_HANDLER = GrpcServiceNameExtractor(

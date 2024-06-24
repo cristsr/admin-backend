@@ -12,8 +12,8 @@
   ],
   "compilerOptions": {
     "paths": {
-      "@admin-back/shared": ["libs/shared/src/index.ts"],
-      "@admin-back/core": ["libs/core/src/index.ts"],
+      "@shared": ["libs/shared/src/index.ts"],
+      "@core": ["libs/core/src/index.ts"],
       "env": ["apps/users/src/env"],
       "app/*": ["apps/users/src/app/*"],
       "database/*": ["apps/users/src/database/*"],

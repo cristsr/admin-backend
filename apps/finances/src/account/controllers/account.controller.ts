@@ -1,6 +1,5 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { Observable } from 'rxjs';
 import {
   ACCOUNT_HANDLER,
   Account,
@@ -8,7 +7,8 @@ import {
   AccountHandler,
   AccountInput,
   Id,
-} from '@admin-back/core';
+} from '@core';
+import { Observable } from 'rxjs';
 import { AccountService } from 'app/account/services';
 
 @Controller()

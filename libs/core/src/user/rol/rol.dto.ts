@@ -1,5 +1,5 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import { ListObject, OmitInputType } from '@admin-back/shared';
+import { ListObject, OmitInputType } from '@shared';
 
 @ObjectType()
 export class Rol {

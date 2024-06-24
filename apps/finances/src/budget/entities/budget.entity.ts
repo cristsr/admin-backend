@@ -1,6 +1,6 @@
+import { Budget, Period } from '@core';
+import { BaseEntity } from '@shared';
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
-import { Budget, Period } from '@admin-back/core';
-import { BaseEntity } from '@admin-back/shared';
 import { AccountEntity } from 'app/account/entities';
 import { CategoryEntity } from 'app/category/entities';
 

@@ -1,6 +1,5 @@
 import { Controller } from '@nestjs/common';
 import { GrpcMethod } from '@nestjs/microservices';
-import { Observable } from 'rxjs';
 import {
   Id,
   SCHEDULED_HANDLER,
@@ -9,7 +8,8 @@ import {
   ScheduledHandler,
   ScheduledInput,
   Status,
-} from '@admin-back/core';
+} from '@core';
+import { Observable } from 'rxjs';
 import { ScheduledService } from 'app/scheduled/services';
 
 @Controller()

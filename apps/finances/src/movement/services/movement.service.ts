@@ -1,6 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { Observable, defer, forkJoin, map, of, switchMap, tap } from 'rxjs';
-import { Between, DeleteResult, In } from 'typeorm';
 import {
   Id,
   Movement,
@@ -8,7 +6,9 @@ import {
   MovementHandler,
   MovementInput,
   Status,
-} from '@admin-back/core';
+} from '@core';
+import { Observable, defer, forkJoin, map, of, switchMap, tap } from 'rxjs';
+import { Between, DeleteResult, In } from 'typeorm';
 import { AccountRepository } from 'app/account/repositories';
 import { CategoryRepository } from 'app/category/repositories';
 import { MovementRepository } from 'app/movement/repositories';

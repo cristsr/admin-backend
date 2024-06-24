@@ -1,5 +1,5 @@
 import { OmitType } from '@nestjs/mapped-types';
-import { ListMixin } from '@admin-back/shared';
+import { ListMixin } from '@shared';
 import { BaseModel } from '../../shared';
 import { Subcategory, SubcategoryInput } from '../subcategory';
 

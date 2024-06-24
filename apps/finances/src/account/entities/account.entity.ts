@@ -1,6 +1,6 @@
+import { Account } from '@core';
+import { BaseEntity } from '@shared';
 import { Column, Entity } from 'typeorm';
-import { Account } from '@admin-back/core';
-import { BaseEntity } from '@admin-back/shared';
 
 @Entity('accounts')
 export class AccountEntity extends BaseEntity implements Account {
