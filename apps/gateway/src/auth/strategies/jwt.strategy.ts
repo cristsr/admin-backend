@@ -2,10 +2,10 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
 import { USER_SERVICE, User, UserGrpc } from '@core';
-import { ENV } from 'apps/gateway/src/config/env';
 import { passportJwtSecret } from 'jwks-rsa';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { firstValueFrom, tap } from 'rxjs';
+import { ENV } from 'app/config/env';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {

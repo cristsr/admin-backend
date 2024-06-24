@@ -12,8 +12,8 @@ import {
   RpcExceptionFilter,
   validatorFactory,
 } from '@shared';
-import { Environment } from 'apps/gateway/src/config/env';
 import { AuthModule } from 'app/auth';
+import { Environment } from 'app/config/env';
 import { FinancesModule } from 'app/finances';
 import { UsersModule } from 'app/users';
 import { AppController } from './config/controllers';

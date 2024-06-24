@@ -5,7 +5,7 @@ import {
   Subcategory,
   SubcategoryInput,
 } from '@core';
-import { ListInput, ListObject, OmitInputType } from '@shared';
+import { ListInput, ListObject } from '@shared';
 
 @ObjectType(Subcategory.name)
 export class SubcategoryImp implements Subcategory {
