@@ -7,10 +7,10 @@ import {
   LatestExchangeRatesInput,
 } from '@core';
 import * as cheerio from 'cheerio';
-import { ENV } from 'env';
 import { DateTime } from 'luxon';
 import { Observable, catchError, map, of } from 'rxjs';
-import { ExchangeRatesService } from 'app/providers';
+import { ExchangeRatesService } from 'app/app/providers';
+import { ENV } from 'app/config/env';
 
 @Injectable()
 export class ExRatesService implements ExchangeRatesService {

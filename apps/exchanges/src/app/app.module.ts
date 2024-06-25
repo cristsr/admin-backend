@@ -3,13 +3,13 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { validatorFactory } from '@shared';
-import { Environment } from 'env';
+import { DatabaseModule } from 'config/database';
+import { Environment } from 'config/env';
+import { AppController } from 'app/cotrollers';
 import { ExchangeEntity } from 'app/entities';
 import { ExRatesService, ExchangeRatesService } from 'app/providers';
 import { ExchangeRepository } from 'app/repositories';
 import { AppService } from 'app/services';
-import { DatabaseModule } from '../database/database.module';
-import { AppController } from './cotrollers';
 
 @Module({
   imports: [

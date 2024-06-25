@@ -13,18 +13,10 @@
   "compilerOptions": {
     "esModuleInterop": true,
     "paths": {
-      "@shared": [
-        "libs/shared/src/index.ts"
-      ],
-      "@core": [
-        "libs/core/src/index.ts"
-      ],
-      "env": [
-        "apps/exchanges/src/env/index.ts"
-      ],
-      "app/*": [
-        "apps/exchanges/src/app/*"
-      ]
+      "@shared": ["libs/shared/src/index.ts"],
+      "@core": ["libs/core/src/index.ts"],
+      "app/*": ["apps/exchanges/src/app/*"],
+      "config/*": ["apps/exchanges/src/config/*"]
     }
   }
 }

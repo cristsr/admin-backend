@@ -17,7 +17,7 @@ export function ListInput<T>(classRef: Type<T>): Type<ListMixin<T>> {
 
 export function ListObject<T>(classRef: Type<T>): Type<ListMixin<T>> {
   @ObjectType({ isAbstract: true })
-  class BaseList {
+  class BaseList implements ListMixin<T> {
     @Field(() => [classRef])
     data: T[];
   }

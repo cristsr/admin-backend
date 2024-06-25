@@ -17,7 +17,7 @@ export class AccountController implements AccountHandler {
 
   @GrpcMethod(ACCOUNT_HANDLER)
   findAll(filter: AccountFilter): Observable<Account[]> {
-    return this.accountService.findAll(filter);
+    return this.accountService.findAll(filter) as any;
   }
 
   @GrpcMethod(ACCOUNT_HANDLER)

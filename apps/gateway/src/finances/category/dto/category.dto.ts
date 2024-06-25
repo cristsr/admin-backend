@@ -1,6 +1,6 @@
 import { Field, InputType, Int, ObjectType } from '@nestjs/graphql';
 import { Categories, CategoriesInput, Category, CategoryInput } from '@core';
-import { ListInput, ListObject, OmitInputType } from '@shared';
+import { ListInput, ListObject } from '@shared';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -37,18 +37,25 @@ export class CategoryImp extends GqlBaseResult implements Category {
   subcategories?: SubcategoryImp[];
 }
 
-// TODO: optimize this class to avid to use omitType
 @InputType(CategoryInput.name)
-export class CategoryInputImp
-  extends OmitInputType(CategoryImp, ['id', 'subcategories'])
-  implements CategoryInput
-{
+export class CategoryInputImp implements CategoryInput {
   @Field(() => Int, { nullable: true })
   @IsOptional()
   @Min(0)
   id?: number;
 
-  // TODO: replace subcategory to imp
+  @Field()
+  active: boolean;
+
+  @Field()
+  color: string;
+
+  @Field()
+  icon: string;
+
+  @Field()
+  name: string;
+
   @Field(() => [SubcategoryInputImp], { nullable: true })
   @Type(() => SubcategoryInputImp)
   @IsOptional()

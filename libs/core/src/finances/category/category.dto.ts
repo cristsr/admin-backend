@@ -1,4 +1,3 @@
-import { OmitType } from '@nestjs/mapped-types';
 import { ListMixin } from '@shared';
 import { BaseModel } from '../../shared';
 import { Subcategory, SubcategoryInput } from '../subcategory';
@@ -13,8 +12,16 @@ export class Category extends BaseModel {
   subcategories?: Subcategory[];
 }
 
-export class CategoryInput extends OmitType(Category, ['id', 'subcategories']) {
+export class CategoryInput {
   id?: number;
+
+  active: boolean;
+
+  color: string;
+
+  icon: string;
+
+  name: string;
 
   subcategories?: Omit<SubcategoryInput, 'category'>[];
 }

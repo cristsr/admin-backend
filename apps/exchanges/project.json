@@ -14,7 +14,7 @@
         "outputPath": "dist/apps/exchanges",
         "main": "apps/exchanges/src/main.ts",
         "tsConfig": "apps/exchanges/tsconfig.app.json",
-        "assets": ["apps/exchanges/src/assets"],
+        "assets": [],
         "isolatedConfig": true,
         "webpackConfig": "apps/exchanges/webpack.config.js"
       },

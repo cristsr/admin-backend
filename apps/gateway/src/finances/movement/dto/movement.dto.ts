@@ -7,7 +7,7 @@ import {
   MovementType,
   Period,
 } from '@core';
-import { ResolveEntity, TransformDate } from '@shared';
+import { TransformDate } from '@shared';
 import { ArrayMaxSize, IsArray, IsDate, IsOptional } from 'class-validator';
 import { AccountImp } from 'app/finances/account/dto';
 import { CategoryImp } from 'app/finances/category/dto';
@@ -74,9 +74,7 @@ export class MovementInputImp implements MovementInput {
   user: number;
 }
 
-// TODO replace resolve entity with entity validator
 @InputType(MovementFilter.name)
-@ResolveEntity()
 export class MovementFilterImp implements MovementFilter {
   @Field(() => Period)
   period: Period;
