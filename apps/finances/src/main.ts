@@ -11,14 +11,14 @@ async function bootstrap() {
     {
       transport: Transport.GRPC,
       options: FinancesConfig,
-    }
+    },
   );
 
   app.useGlobalPipes(
     new ValidationPipe({
       transform: true,
       forbidUnknownValues: false,
-    })
+    }),
   );
 
   useContainer(app.select(AppModule), { fallbackOnErrors: true });

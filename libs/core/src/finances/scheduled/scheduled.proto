@@ -3,7 +3,6 @@ syntax = "proto3";
 package admin.finances.scheduled;
 
 import "google/protobuf/empty.proto";
-import "movement/movement.proto";
 
 service ScheduledService {
   rpc FindOne(ScheduledId)           returns (stream Scheduled);

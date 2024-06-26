@@ -19,7 +19,8 @@
           }
         ],
         "compiler": "tsc",
-        "target": "node"
+        "target": "node",
+        "webpackConfig": "apps/gateway/webpack.config.js"
       },
       "configurations": {
         "production": {
