@@ -24,7 +24,7 @@ export class CategoryResolver {
   @Mutation(() => CategoryImp)
   saveCategory(
     @Args('category')
-    category: CategoryInputImp
+    category: CategoryInputImp,
   ): Observable<CategoryImp> {
     return this.categoryHandler.save(category);
   }
@@ -32,7 +32,7 @@ export class CategoryResolver {
   @Mutation(() => Status)
   saveCategories(
     @Args('categories')
-    categories: CategoriesInputImp
+    categories: CategoriesInputImp,
   ): Observable<Status> {
     return this.categoryHandler.saveMany(categories);
   }

@@ -21,7 +21,7 @@ export class BudgetResolver {
   @Query(() => [BudgetImp])
   budgets(
     @CurrentUser() user: User,
-    @Args('filter') filter: BudgetFilterImp
+    @Args('filter') filter: BudgetFilterImp,
   ): Observable<BudgetImp[]> {
     return this.budgetHandler.findAll({
       ...filter,
@@ -29,7 +29,6 @@ export class BudgetResolver {
     });
   }
 
-  // TODO: update movement
   @Query(() => [MovementImp])
   budgetMovements(@Args('id') id: number): Observable<MovementImp[]> {
     return this.budgetHandler.findMovements({ id });
@@ -38,7 +37,7 @@ export class BudgetResolver {
   @Mutation(() => BudgetImp)
   saveBudgetImp(
     @CurrentUser() user: User,
-    @Args('budget') budget: BudgetInputImp
+    @Args('budget') budget: BudgetInputImp,
   ): Observable<BudgetImp> {
     return this.budgetHandler.save({ ...budget, user: user.id });
   }

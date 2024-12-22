@@ -6,8 +6,9 @@ import { useContainer } from 'class-validator';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
+  const app = await NestFactory.create(AppModule);
+
+  app.connectMicroservice<MicroserviceOptions>(
     {
       transport: Transport.GRPC,
       options: FinancesConfig,
@@ -23,7 +24,7 @@ async function bootstrap() {
 
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-  await app.listen();
+  await app.startAllMicroservices();
 
   Logger.log(`🚀 Finances microservice is running`);
 }

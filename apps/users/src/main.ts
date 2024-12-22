@@ -5,15 +5,17 @@ import { UserConfig } from '@core';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.createMicroservice<MicroserviceOptions>(
-    AppModule,
+
+  const app = await NestFactory.create(AppModule);
+
+  app.connectMicroservice<MicroserviceOptions>(
     {
       transport: Transport.GRPC,
       options: UserConfig,
     }
   );
 
-  await app.listen();
+  await app.startAllMicroservices();
 
   Logger.log(`🚀 Application is running`);
 }
