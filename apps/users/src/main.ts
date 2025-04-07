@@ -1,23 +1,21 @@
 import { Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
-import { MicroserviceOptions, Transport } from '@nestjs/microservices';
-import { UserConfig } from '@core';
+import { ENV } from 'app/config/env';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-
   const app = await NestFactory.create(AppModule);
 
-  app.connectMicroservice<MicroserviceOptions>(
-    {
-      transport: Transport.GRPC,
-      options: UserConfig,
-    }
-  );
+  app.enableCors();
 
-  await app.startAllMicroservices();
+  const config = app.get(ConfigService);
 
-  Logger.log(`🚀 Application is running`);
+  const port = config.get(ENV.PORT);
+
+  await app.listen(port);
+
+  Logger.log(`🚀 Application is running on port ${port}`);
 }
 
 bootstrap();

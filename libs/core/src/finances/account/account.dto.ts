@@ -26,6 +26,12 @@ export class AccountInput {
   user: number;
 }
 
+export class UserAccountFilter {
+  account: number;
+
+  user: number;
+}
+
 export class AccountFilter {
   active: boolean;
 

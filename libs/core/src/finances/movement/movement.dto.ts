@@ -64,4 +64,6 @@ export class MovementFilter {
   order?: string;
 
   type?: MovementType[];
+
+  user: number;
 }

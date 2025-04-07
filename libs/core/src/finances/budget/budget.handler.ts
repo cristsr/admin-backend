@@ -1,14 +1,18 @@
 import { Observable } from 'rxjs';
 import { Id, Status } from '../../shared';
-import { Budget, BudgetFilter, BudgetInput } from '../budget';
+import { Budget, BudgetFilter, BudgetInput, UserBudgetFilter } from '../budget';
 import { Movement } from '../movement';
 
 export abstract class BudgetHandler {
-  abstract findOne(id: Id): Observable<Budget>;
+  abstract findOne(
+    filter: UserBudgetFilter,
+  ): Promise<Budget> | Observable<Budget>;
 
-  abstract findAll(filter: BudgetFilter): Observable<Budget[]>;
+  abstract findAll(
+    filter: BudgetFilter,
+  ): Promise<Budget[]> | Observable<Budget[]>;
 
-  abstract findMovements(id: Id): Observable<Movement[]>;
+  abstract findMovements(id: Id): Promise<Movement[]> | Observable<Movement[]>;
 
   abstract save(budget: BudgetInput): Observable<Budget>;
 

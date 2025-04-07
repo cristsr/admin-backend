@@ -1,10 +1,13 @@
 import { mapEnvironmentKeys } from '@shared';
 import { Transform } from 'class-transformer';
-import { IsBoolean, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsString } from 'class-validator';
 
 export class UserEnvironment {
   @IsString()
   ENV: string;
+
+  @IsNumber()
+  PORT: number;
 
   @IsString()
   DB_TYPE: string;

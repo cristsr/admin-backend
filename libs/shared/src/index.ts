@@ -12,3 +12,4 @@ export * from './entities';
 export * from './constraints';
 export * from './pipes';
 export * from './classes';
+export * from './modules';

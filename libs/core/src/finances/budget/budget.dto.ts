@@ -54,6 +54,12 @@ export class BudgetInput {
   user: number;
 }
 
+export class UserBudgetFilter {
+  budget: number;
+
+  user: number;
+}
+
 export class BudgetFilter {
   startDate: Date;
 

@@ -1,7 +1,7 @@
 import { Query, Resolver } from '@nestjs/graphql';
 import { User } from '@core';
 import { CurrentUser } from '@shared';
-import { UserImp } from 'app/users/dto';
+import { UserImp } from 'app/modules/users/dto';
 
 @Resolver(() => User)
 export class AuthResolver {

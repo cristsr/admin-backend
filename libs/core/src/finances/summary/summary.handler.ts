@@ -13,5 +13,7 @@ export abstract class SummaryHandler {
 
   abstract expenses(filter: ExpenseFilter, ...args): Observable<Expense[]>;
 
-  abstract lastMovements(filter: LastMovementFilter): Observable<Movement[]>;
+  abstract lastMovements(
+    filter: LastMovementFilter,
+  ): Promise<Movement[]> | Observable<Movement[]>;
 }

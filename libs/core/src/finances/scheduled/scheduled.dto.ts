@@ -29,4 +29,6 @@ export class ScheduledFilter {
   type?: string[];
 
   order?: string;
+
+  user: number;
 }

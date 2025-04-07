@@ -1,9 +1,15 @@
-import { Controller } from '@nestjs/common';
-import { GrpcMethod } from '@nestjs/microservices';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+} from '@nestjs/common';
 import {
   Id,
   Status,
-  USER_HANDLER,
   User,
   UserHandler,
   UserInput,
@@ -13,27 +19,42 @@ import {
 import { Observable } from 'rxjs';
 import { UserService } from 'app/user/services';
 
-@Controller()
+@Controller('users')
 export class UserController implements UserHandler {
   constructor(private userService: UserService) {}
 
-  @GrpcMethod(USER_HANDLER)
+  @Get()
   findAll(): Observable<Users> {
     return this.userService.findAll();
   }
 
-  @GrpcMethod(USER_HANDLER)
+  @Get(':id')
+  getUser(@Param('id') id: number): Observable<User> {
+    const queryUser: UserQuery = { id };
+    return this.userService.findOne(queryUser);
+  }
+
+  @Get('/sub/:id')
+  findBySubId(@Param('id') id: string): Observable<User> {
+    const queryUser: UserQuery = { auth0Id: id };
+    return this.userService.findOne(queryUser);
+  }
+
   findOne(queryUser: UserQuery): Observable<User> {
     return this.userService.findOne(queryUser);
   }
 
-  @GrpcMethod(USER_HANDLER)
-  save(data: UserInput): Observable<User> {
+  @Post()
+  save(@Body() data: UserInput): Observable<User> {
     return this.userService.save(data);
   }
 
-  @GrpcMethod(USER_HANDLER)
-  remove({ id }: Id): Observable<Status> {
+  @Delete(':id')
+  deleteUser(@Param('id', ParseIntPipe) id: number): Observable<Status> {
     return this.userService.remove({ id });
+  }
+
+  remove(id: Id): Observable<Status> {
+    return this.userService.remove(id);
   }
 }

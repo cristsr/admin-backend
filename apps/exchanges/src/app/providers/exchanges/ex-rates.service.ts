@@ -7,10 +7,10 @@ import {
   LatestExchangeRatesInput,
 } from '@core';
 import * as cheerio from 'cheerio';
+import { ENV } from 'config/env';
 import { DateTime } from 'luxon';
 import { Observable, catchError, map, of } from 'rxjs';
-import { ExchangeRatesService } from 'app/app/providers';
-import { ENV } from 'app/config/env';
+import { ExchangeRatesService } from 'app/providers';
 
 @Injectable()
 export class ExRatesService implements ExchangeRatesService {
@@ -30,7 +30,7 @@ export class ExRatesService implements ExchangeRatesService {
   ];
   constructor(
     private config: ConfigService,
-    private httpService: HttpService
+    private httpService: HttpService,
   ) {}
 
   latest(input: LatestExchangeRatesInput): Observable<ExchangeRates> {
@@ -50,7 +50,7 @@ export class ExRatesService implements ExchangeRatesService {
       map((d) => cheerio.load(d)),
       map(($) => $('.ccOutputRslt').text()),
       map((rate) => ({ rate: parseFloat(rate) })),
-      catchError(() => of({ rate: null }))
+      catchError(() => of({ rate: null })),
     );
   }
 
@@ -73,7 +73,7 @@ export class ExRatesService implements ExchangeRatesService {
       map(($) => $('.tablesorter > tbody')),
       map(($) => $.find(`td:contains("${to}")`).next().text()),
       map((rate) => ({ rate: parseFloat(rate) })),
-      catchError(() => of({ rate: null }))
+      catchError(() => of({ rate: null })),
     );
   }
 }

@@ -1,18 +1,23 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { HttpService } from '@nestjs/axios';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PassportStrategy } from '@nestjs/passport';
-import { User, UserHandler } from '@core';
+import { User } from '@core';
 import { ObjectLiteral } from '@shared';
 import { passportJwtSecret } from 'jwks-rsa';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { firstValueFrom, tap } from 'rxjs';
-import { ENV } from 'app/config/env';
+import { firstValueFrom, map, tap } from 'rxjs';
+import { ENV } from 'app/env';
+import { USER_API } from 'app/modules/users/constants';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   #logger = new Logger(JwtStrategy.name);
 
-  constructor(private userService: UserHandler, private config: ConfigService) {
+  constructor(
+    @Inject(USER_API) private httpClient: HttpService,
+    private config: ConfigService,
+  ) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       secretOrKeyProvider: passportJwtSecret({
@@ -28,12 +33,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   validate(payload: ObjectLiteral): Promise<User> {
-    //
     const auth0Id = (payload.sub as string).split('|').pop();
 
-    const user$ = this.userService
-      .findOne({ auth0Id })
-      .pipe(tap((user) => this.#logger.debug(user)));
+    const user$ = this.httpClient.get(`users/sub/${auth0Id}`).pipe(
+      map((r) => r.data),
+      tap((user) => this.#logger.debug(user)),
+    );
 
     return firstValueFrom(user$);
   }
