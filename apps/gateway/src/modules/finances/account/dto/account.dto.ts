@@ -6,7 +6,6 @@ import {
   Balance,
   BalanceFilter,
   Period,
-  UserAccountFilter,
 } from '@core';
 import { TransformDate } from '@shared';
 import { IsDate } from 'class-validator';

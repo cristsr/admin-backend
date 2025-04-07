@@ -6,10 +6,6 @@ export const UserPackageName = 'user';
 
 export const UsersAssetsPath = join(CoreAssetsPath, UserPackageName);
 
-console.log(UsersAssetsPath);
-
-console.log(join(CoreAssetsPath, 'admin.proto'));
-
 export const UserConfig = {
   url: 'localhost:5004',
   package: ['admin.shared', 'admin.user'],

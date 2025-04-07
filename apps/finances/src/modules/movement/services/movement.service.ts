@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import {
-  Id,
   Movement,
   MovementFilter,
   MovementHandler,
