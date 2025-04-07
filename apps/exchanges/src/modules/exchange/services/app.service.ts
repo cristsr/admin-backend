@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { ExchangeRates, ExchangeRatesInput } from '@core';
 import { Observable, filter, from, map, of, switchMap } from 'rxjs';
-import { ExchangeRatesService } from 'app/providers';
-import { ExchangeRepository } from 'app/repositories';
+import { ExchangeRatesService } from 'app/modules/exchange/providers';
+import { ExchangeRepository } from 'app/modules/exchange/repositories';
 
 @Injectable()
 export class AppService {
   constructor(
     private exchanges: ExchangeRepository,
-    private exchangeRate: ExchangeRatesService
+    private exchangeRate: ExchangeRatesService,
   ) {}
 
   rate(input: ExchangeRatesInput): Observable<ExchangeRates> {
@@ -19,7 +19,7 @@ export class AppService {
           to: input.to,
           date: input.date,
         },
-      })
+      }),
     ).pipe(
       switchMap((exchange) => {
         if (exchange) {
@@ -35,12 +35,12 @@ export class AppService {
               date: input.date,
               rate: rate.rate,
             });
-          })
+          }),
         );
       }),
       map((exchange) => ({
         rate: exchange.rate * input.rate,
-      }))
+      })),
     );
   }
 }

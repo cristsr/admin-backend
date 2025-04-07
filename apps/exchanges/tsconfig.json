@@ -15,8 +15,7 @@
     "paths": {
       "@shared": ["libs/shared/src/index.ts"],
       "@core": ["libs/core/src/index.ts"],
-      "app/*": ["apps/exchanges/src/app/*"],
-      "config/*": ["apps/exchanges/src/config/*"]
+      "app/*": ["apps/exchanges/src/*"]
     }
   }
 }
