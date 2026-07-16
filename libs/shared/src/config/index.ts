@@ -13,9 +13,10 @@
  * - Uses class-validator to perform synchronous validation.
  */
 
-import { Logger, Type } from '@nestjs/common';
+import { Type } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import { getMetadataStorage, validateSync } from 'class-validator';
+import { InvalidConfigurationException } from '../exceptions';
 
 /**
  * A readonly mapping type that reflects the keys of T.
@@ -31,15 +32,16 @@ type Keys<T> = Readonly<{
  * Behavior:
  * - Transforms the plain config into an instance of the given class using class-transformer.
  * - Runs synchronous validation with class-validator (does not skip missing properties).
- * - If any validation errors are found, logs warnings for each constraint and returns the original config object unchanged.
+ * - If any validation error is found, throws: the app must not boot on a config it
+ *   could not validate.
  * - If validation succeeds, returns the transformed (and thus typed) config instance.
  *
- * Note: This function intentionally returns Record<string, any> to keep a flexible shape
- * while still enabling typed usage via the provided Type when consumed downstream.
+ * This used to log a warning and return the *untransformed* config instead of
+ * throwing. That turned a config typo into silent data loss: consumers kept
+ * reading raw strings, and `synchronize: 'false'` is truthy, so TypeORM
+ * rewrote the schema on boot. Config errors are always fatal here.
  */
 function configValidator(config: object, type: Type): Record<string, any> {
-  const logger = new Logger(configValidator.name);
-
   const validatedConfig = plainToClass(type, config);
 
   const errors = validateSync(validatedConfig, {
@@ -47,12 +49,14 @@ function configValidator(config: object, type: Type): Record<string, any> {
   });
 
   if (errors.length) {
-    errors
-      .map((error) => error.constraints)
-      .map((constraints) => Object.values(constraints))
-      .forEach(([v]) => logger.warn(v));
+    const failures = errors.flatMap((error) =>
+      Object.values(error.constraints ?? {}),
+    );
 
-    return config;
+    throw new InvalidConfigurationException(
+      `Invalid ${type.name}:\n  - ${failures.join('\n  - ')}`,
+      { context: { invalid: errors.map((error) => error.property) } },
+    );
   }
 
   return validatedConfig;

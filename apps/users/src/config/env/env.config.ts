@@ -6,6 +6,7 @@ export class UserEnvironment {
   @IsString()
   ENV: string;
 
+  @Transform(({ value }) => Number(value))
   @IsNumber()
   PORT: number;
 
