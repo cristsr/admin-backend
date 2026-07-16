@@ -27,6 +27,18 @@ export class Environment {
   @Transform(({ value }) => value === 'true')
   @IsBoolean()
   SHOW_DOCS: boolean;
+
+  @IsString()
+  OIDC_ISSUER: string;
+
+  @IsString()
+  OIDC_AUDIENCE: string;
+
+  @IsString()
+  AUTH_IDENTITY_PROVIDER: string;
+
+  @IsString()
+  USERS_API_URL: string;
 }
 
 export const ENV = mapEnvironmentKeys(Environment);

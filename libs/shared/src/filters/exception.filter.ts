@@ -1,28 +1,28 @@
 import {
+  ArgumentsHost,
   Catch,
   HttpException,
   ExceptionFilter as IExceptionFilter,
   InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
-import { Observable, throwError } from 'rxjs';
 import { getExceptionResponse } from '../functions';
 
 @Catch()
 export class ExceptionFilter implements IExceptionFilter {
   #logger = new Logger(ExceptionFilter.name);
 
-  catch(exception: Error): Observable<never> | void {
+  catch(exception: Error, host: ArgumentsHost): void {
     this.#logger.error(`${exception.name}: ${exception.message}`);
 
-    return throwError(() => {
-      if (exception instanceof HttpException) {
-        return getExceptionResponse(exception);
-      }
+    const httpException =
+      exception instanceof HttpException
+        ? exception
+        : new InternalServerErrorException(exception.message);
 
-      return getExceptionResponse(
-        new InternalServerErrorException(exception.message)
-      );
-    });
+    const response = host.switchToHttp().getResponse();
+    response
+      .status(httpException.getStatus())
+      .json(getExceptionResponse(httpException));
   }
 }

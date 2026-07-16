@@ -16,6 +16,7 @@ import {
   UserQuery,
   Users,
 } from '@core';
+import { Public } from '@shared';
 import { Observable } from 'rxjs';
 import { UserService } from 'app/user/services';
 
@@ -34,6 +35,7 @@ export class UserController implements UserHandler {
     return this.userService.findOne(queryUser);
   }
 
+  @Public()
   @Get('/sub/:id')
   findBySubId(@Param('id') id: string): Observable<User> {
     const queryUser: UserQuery = { auth0Id: id };

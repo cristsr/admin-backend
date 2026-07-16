@@ -1,13 +1,15 @@
 import { Module, ValidationPipe } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
 import {
+  Auth0IdentityResolver,
+  AuthModule,
   ExceptionFilter,
   ResponseInterceptor,
   validatorFactory,
 } from '@shared';
 import { DatabaseModule } from 'app/config/database';
-import { UserEnvironment } from 'app/config/env';
+import { ENV, UserEnvironment } from 'app/config/env';
 import { UserModule } from './user/user.module';
 
 @Module({
@@ -17,6 +19,18 @@ import { UserModule } from './user/user.module';
       validate: validatorFactory(UserEnvironment),
     }),
     DatabaseModule,
+    AuthModule.forRootAsync({
+      inject: [ConfigService],
+      identityResolver:
+        process.env.AUTH_IDENTITY_PROVIDER === 'auth0'
+          ? Auth0IdentityResolver
+          : undefined,
+      useFactory: (configService: ConfigService) => ({
+        issuer: configService.get(ENV.OIDC_ISSUER),
+        audience: configService.get(ENV.OIDC_AUDIENCE),
+        usersServiceUrl: configService.get(ENV.USERS_API_URL),
+      }),
+    }),
     UserModule,
   ],
   providers: [
