@@ -11,13 +11,7 @@
         "outputPath": "dist/apps/users",
         "main": "apps/users/src/main.ts",
         "tsConfig": "apps/users/tsconfig.app.json",
-        "assets": [
-          {
-            "glob": "**/*.proto",
-            "input": "libs/core/src",
-            "output": "assets/core"
-          }
-        ],
+        "assets": [],
         "compiler": "tsc",
         "target": "node",
         "webpackConfig": "apps/users/webpack.config.js"

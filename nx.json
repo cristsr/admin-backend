@@ -10,7 +10,7 @@
       }
     ]
   },
-  "defaultProject": "gateway",
+  "defaultProject": "finances",
   "namedInputs": {
     "default": ["{projectRoot}/**/*", "sharedGlobals"],
     "sharedGlobals": [],

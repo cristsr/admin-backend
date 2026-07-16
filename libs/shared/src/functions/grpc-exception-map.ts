@@ -1,14 +1,14 @@
 import { HttpException } from '@nestjs/common';
-import { Metadata, status } from '@grpc/grpc-js';
+
+const GRPC_STATUS_ABORTED = 10;
 
 export function getExceptionResponse(exception: HttpException) {
-  const metadata = new Metadata();
-  metadata.add('exception', exception.constructor.name);
-  metadata.add('status', exception.getStatus().toString());
-
   return {
-    code: status.ABORTED,
+    code: GRPC_STATUS_ABORTED,
     message: exception.message,
-    metadata,
+    metadata: {
+      exception: exception.constructor.name,
+      status: exception.getStatus().toString(),
+    },
   };
 }

@@ -11,13 +11,7 @@
         "outputPath": "dist/apps/finances",
         "main": "apps/finances/src/main.ts",
         "tsConfig": "apps/finances/tsconfig.app.json",
-        "assets": [
-          {
-            "glob": "**/*.proto",
-            "input": "libs/core/src",
-            "output": "assets/core"
-          }
-        ],
+        "assets": [],
         "compiler": "tsc",
         "target": "node",
         "webpackConfig": "apps/finances/webpack.config.js"
