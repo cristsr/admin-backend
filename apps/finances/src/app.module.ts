@@ -1,9 +1,15 @@
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { APP_FILTER } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
-import { Auth0IdentityResolver, AuthModule, validatorFactory } from '@shared';
+import {
+  Auth0IdentityResolver,
+  AuthModule,
+  ExceptionFilter,
+  validatorFactory,
+} from '@shared';
 import { AppController } from 'app/config/controllers';
 import { DatabaseModule } from 'app/database/';
 import { ENV, Environment } from 'app/env';
@@ -48,5 +54,6 @@ import { WebhookModule } from 'app/webhook/webhook.module';
     WebhookModule,
   ],
   controllers: [AppController],
+  providers: [{ provide: APP_FILTER, useClass: ExceptionFilter }],
 })
 export class AppModule {}

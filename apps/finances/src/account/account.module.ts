@@ -9,6 +9,7 @@ import {
 import {
   FindAccountUsecase,
   FindAllAccountsUsecase,
+  RemoveAccountUsecase,
   SaveAccountUsecase,
 } from './application/usecases';
 
@@ -20,6 +21,7 @@ import {
     FindAccountUsecase,
     FindAllAccountsUsecase,
     SaveAccountUsecase,
+    RemoveAccountUsecase,
   ],
   exports: [AccountRepository],
 })
