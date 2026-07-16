@@ -1,0 +1,14 @@
+import { Injectable } from '@nestjs/common';
+import { normalizePagination } from '@shared';
+import { Movement, MovementRepository } from '../../domain/movement';
+import { MovementFilterDto } from '../dto/movement-filter.dto';
+
+@Injectable()
+export class FindAllMovementsUsecase {
+  constructor(private readonly movementRepository: MovementRepository) {}
+
+  async execute(filter: MovementFilterDto): Promise<Movement[]> {
+    const { take, skip } = normalizePagination(filter);
+    return this.movementRepository.findAll({ ...filter, take, skip });
+  }
+}

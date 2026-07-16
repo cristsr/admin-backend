@@ -1,0 +1,12 @@
+import { Injectable } from '@nestjs/common';
+import { Nullable } from '@shared';
+import { Scheduled, ScheduledRepository } from '../../domain/scheduled';
+
+@Injectable()
+export class FindScheduledUsecase {
+  constructor(private readonly scheduledRepository: ScheduledRepository) {}
+
+  async execute(id: number, user: number): Promise<Nullable<Scheduled>> {
+    return this.scheduledRepository.findByIdAndUser(id, user);
+  }
+}

@@ -7,13 +7,12 @@ import { Auth0IdentityResolver, AuthModule, validatorFactory } from '@shared';
 import { AppController } from 'app/config/controllers';
 import { DatabaseModule } from 'app/database/';
 import { ENV, Environment } from 'app/env';
-import { AccountModule } from 'app/modules/account/account.module';
-import { BudgetModule } from 'app/modules/budget/budget.module';
-import { CategoryModule } from 'app/modules/category/category.module';
-import { MovementModule } from 'app/modules/movement/movement.module';
-import { ScheduledModule } from 'app/modules/scheduled/scheduled.module';
-import { SubcategoryModule } from 'app/modules/subcategory/subcategory.module';
-import { SummaryModule } from 'app/modules/summary/summary.module';
+import { AccountModule } from 'app/account/account.module';
+import { BudgetModule } from 'app/budget/budget.module';
+import { CategoryModule } from 'app/category/category.module';
+import { MovementModule } from 'app/movement/movement.module';
+import { ScheduledModule } from 'app/scheduled/scheduled.module';
+import { SummaryModule } from 'app/summary/summary.module';
 
 @Module({
   imports: [
@@ -41,7 +40,6 @@ import { SummaryModule } from 'app/modules/summary/summary.module';
     }),
     AccountModule,
     CategoryModule,
-    SubcategoryModule,
     MovementModule,
     SummaryModule,
     BudgetModule,
