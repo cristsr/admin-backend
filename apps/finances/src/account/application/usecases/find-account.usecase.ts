@@ -7,7 +7,10 @@ import { UserAccountFilterDto } from '../dto/account-filter.dto';
 export class FindAccountUsecase {
   constructor(private readonly accountRepository: AccountRepository) {}
 
-  async execute(filter: UserAccountFilterDto): Promise<Nullable<Account>> {
-    return this.accountRepository.findByIdAndUser(filter.account, filter.user);
+  async execute(
+    filter: UserAccountFilterDto,
+    user: number,
+  ): Promise<Nullable<Account>> {
+    return this.accountRepository.findByIdAndUser(filter.account, user);
   }
 }

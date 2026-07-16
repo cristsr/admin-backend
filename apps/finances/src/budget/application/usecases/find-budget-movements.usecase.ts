@@ -15,6 +15,7 @@ export class FindBudgetMovementsUsecase {
     if (!budget) return [];
 
     return this.movementRepository.findAll({
+      user,
       startDate: budget.startDate,
       endDate: budget.endDate,
       category: budget.categoryId,

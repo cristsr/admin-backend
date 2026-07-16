@@ -16,6 +16,4 @@ export class MovementFilterDto {
   limit?: number;
 
   offset?: number;
-
-  user: number;
 }

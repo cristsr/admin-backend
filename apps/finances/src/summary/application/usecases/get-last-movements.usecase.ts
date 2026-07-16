@@ -7,7 +7,10 @@ import { LastMovementFilterDto } from '../dto/last-movement-filter.dto';
 export class GetLastMovementsUsecase {
   constructor(private readonly summaryRepository: SummaryRepository) {}
 
-  async execute(filter: LastMovementFilterDto): Promise<Movement[]> {
-    return this.summaryRepository.lastMovements(filter);
+  async execute(
+    filter: LastMovementFilterDto,
+    user: number,
+  ): Promise<Movement[]> {
+    return this.summaryRepository.lastMovements({ ...filter, user });
   }
 }

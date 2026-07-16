@@ -1,4 +1,5 @@
 import { Controller, Get, Query } from '@nestjs/common';
+import { AuthenticatedUser, CurrentUser } from '@shared';
 import {
   BalanceFilterDto,
   ExpenseFilterDto,
@@ -19,17 +20,26 @@ export class SummaryController {
   ) {}
 
   @Get('balance')
-  balance(@Query() filter: BalanceFilterDto) {
-    return this.getBalanceUsecase.execute(filter);
+  balance(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() filter: BalanceFilterDto,
+  ) {
+    return this.getBalanceUsecase.execute(filter, user.id);
   }
 
   @Get('expenses')
-  expenses(@Query() filter: ExpenseFilterDto) {
-    return this.getExpensesUsecase.execute(filter);
+  expenses(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() filter: ExpenseFilterDto,
+  ) {
+    return this.getExpensesUsecase.execute(filter, user.id);
   }
 
   @Get('last-movements')
-  lastMovements(@Query() filter: LastMovementFilterDto) {
-    return this.getLastMovementsUsecase.execute(filter);
+  lastMovements(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() filter: LastMovementFilterDto,
+  ) {
+    return this.getLastMovementsUsecase.execute(filter, user.id);
   }
 }

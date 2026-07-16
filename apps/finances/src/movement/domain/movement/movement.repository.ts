@@ -5,11 +5,21 @@ import { MovementType } from './movement.types';
 export interface MovementQuery {
   startDate: Date;
   endDate: Date;
+  user: number;
   account?: number;
   category?: number;
   type?: MovementType[];
   take?: number;
   skip?: number;
+}
+
+export interface MovementSumQuery {
+  user: number;
+  category: number;
+  startDate: Date;
+  endDate: Date;
+  type: MovementType;
+  account?: number;
 }
 
 export abstract class MovementRepository {
@@ -30,9 +40,5 @@ export abstract class MovementRepository {
 
   abstract remove(id: number, user: number): Promise<boolean>;
 
-  abstract sumAmountByCategoryAndDateRange(
-    categoryId: number,
-    startDate: Date,
-    endDate: Date,
-  ): Promise<number>;
+  abstract sumAmount(query: MovementSumQuery): Promise<number>;
 }

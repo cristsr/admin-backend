@@ -14,17 +14,17 @@ export class SaveScheduledUsecase {
     private readonly accountRepository: AccountRepository,
   ) {}
 
-  async execute(input: ScheduledInputDto): Promise<Scheduled> {
+  async execute(input: ScheduledInputDto, user: number): Promise<Scheduled> {
     const [existing, category, subcategory, account] = await Promise.all([
       input.id
-        ? this.scheduledRepository.findByIdAndUser(input.id, input.user)
+        ? this.scheduledRepository.findByIdAndUser(input.id, user)
         : null,
       this.categoryRepository.findById(input.category),
       this.subcategoryRepository.findByIdAndCategory(
         input.subcategory,
         input.category,
       ),
-      this.accountRepository.findByIdAndUser(input.account, input.user),
+      this.accountRepository.findByIdAndUser(input.account, user),
     ]);
 
     if (input.id && !existing) {
@@ -54,7 +54,7 @@ export class SaveScheduledUsecase {
       categoryId: category.id,
       subcategoryId: subcategory.id,
       accountId: account.id,
-      user: input.user,
+      user,
     } as Scheduled);
 
     return this.scheduledRepository.save(scheduled);

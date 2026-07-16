@@ -7,8 +7,8 @@ import { MovementFilterDto } from '../dto/movement-filter.dto';
 export class FindAllMovementsUsecase {
   constructor(private readonly movementRepository: MovementRepository) {}
 
-  async execute(filter: MovementFilterDto): Promise<Movement[]> {
+  async execute(filter: MovementFilterDto, user: number): Promise<Movement[]> {
     const { take, skip } = normalizePagination(filter);
-    return this.movementRepository.findAll({ ...filter, take, skip });
+    return this.movementRepository.findAll({ ...filter, user, take, skip });
   }
 }

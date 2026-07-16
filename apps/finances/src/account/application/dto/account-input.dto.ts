@@ -11,6 +11,4 @@ export class AccountInputDto {
 
   @IsNotEmpty()
   currency: string;
-
-  user: number;
 }

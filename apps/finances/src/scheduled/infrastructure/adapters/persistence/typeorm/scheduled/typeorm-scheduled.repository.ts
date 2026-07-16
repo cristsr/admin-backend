@@ -31,6 +31,7 @@ export class TypeOrmScheduledRepository implements ScheduledRepository {
   async findAll(filter: ScheduledQuery): Promise<Scheduled[]> {
     const entities = await this.repository.find({
       where: {
+        user: filter.user,
         account: { id: filter.account },
         active: filter.active,
       },

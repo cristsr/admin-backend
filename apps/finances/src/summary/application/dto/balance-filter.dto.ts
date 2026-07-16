@@ -4,6 +4,4 @@ export class BalanceFilterDto {
   endDate: Date;
 
   account: number;
-
-  user: number;
 }

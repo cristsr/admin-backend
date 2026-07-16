@@ -41,15 +41,22 @@ export class ScheduledController {
 
   @Get()
   async findAll(
+    @CurrentUser() user: AuthenticatedUser,
     @Query() filter: ScheduledFilterDto,
   ): Promise<ScheduledOutputDto[]> {
-    const scheduled = await this.findAllScheduledUsecase.execute(filter);
+    const scheduled = await this.findAllScheduledUsecase.execute(
+      filter,
+      user.id,
+    );
     return scheduled.map(ScheduledMapper.toOutput);
   }
 
   @Post()
-  async save(@Body() input: ScheduledInputDto): Promise<ScheduledOutputDto> {
-    const scheduled = await this.saveScheduledUsecase.execute(input);
+  async save(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() input: ScheduledInputDto,
+  ): Promise<ScheduledOutputDto> {
+    const scheduled = await this.saveScheduledUsecase.execute(input, user.id);
     return ScheduledMapper.toOutput(scheduled);
   }
 

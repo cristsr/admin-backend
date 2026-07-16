@@ -6,7 +6,7 @@ import { ExpenseFilterDto } from '../dto/expense-filter.dto';
 export class GetExpensesUsecase {
   constructor(private readonly summaryRepository: SummaryRepository) {}
 
-  async execute(filter: ExpenseFilterDto): Promise<Expense[]> {
-    return this.summaryRepository.expenses(filter);
+  async execute(filter: ExpenseFilterDto, user: number): Promise<Expense[]> {
+    return this.summaryRepository.expenses({ ...filter, user });
   }
 }

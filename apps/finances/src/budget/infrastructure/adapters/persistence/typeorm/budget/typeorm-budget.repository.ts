@@ -45,9 +45,11 @@ export class TypeOrmBudgetRepository implements BudgetRepository {
     categoryId: number,
     accountId: number,
     date: Date,
+    user: number,
   ): Promise<Budget[]> {
     const entities = await this.repository.find({
       where: {
+        user,
         category: { id: categoryId },
         account: { id: accountId },
         startDate: LessThanOrEqual(date),
@@ -76,8 +78,8 @@ export class TypeOrmBudgetRepository implements BudgetRepository {
     return TypeOrmBudgetMapper.toDomain(saved as TypeOrmBudgetEntity);
   }
 
-  async softRemove(id: number): Promise<boolean> {
-    const result = await this.repository.softDelete(id);
+  async softRemove(id: number, user: number): Promise<boolean> {
+    const result = await this.repository.softDelete({ id, user });
     return !!result.affected;
   }
 

@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { AuthenticatedUser, CurrentUser } from '@shared';
 import {
   BudgetFilterDto,
@@ -29,16 +37,16 @@ export class BudgetController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: number,
   ): Promise<BudgetOutputDto> {
-    const budget = await this.findBudgetUsecase.execute({
-      budget: id,
-      user: user.id,
-    });
+    const budget = await this.findBudgetUsecase.execute({ budget: id }, user.id);
     return budget && BudgetMapper.toOutput(budget);
   }
 
   @Get()
-  async findAll(@Body() filter: BudgetFilterDto): Promise<BudgetOutputDto[]> {
-    const budgets = await this.findAllBudgetsUsecase.execute(filter);
+  async findAll(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() filter: BudgetFilterDto,
+  ): Promise<BudgetOutputDto[]> {
+    const budgets = await this.findAllBudgetsUsecase.execute(filter, user.id);
     return budgets.map(BudgetMapper.toOutput);
   }
 
@@ -48,14 +56,20 @@ export class BudgetController {
   }
 
   @Post()
-  async save(@Body() data: BudgetInputDto): Promise<BudgetOutputDto> {
-    const budget = await this.saveBudgetUsecase.execute(data);
+  async save(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() data: BudgetInputDto,
+  ): Promise<BudgetOutputDto> {
+    const budget = await this.saveBudgetUsecase.execute(data, user.id);
     return BudgetMapper.toOutput(budget);
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: number): Promise<{ status: boolean }> {
-    const status = await this.removeBudgetUsecase.execute(id);
+  async remove(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: number,
+  ): Promise<{ status: boolean }> {
+    const status = await this.removeBudgetUsecase.execute(id, user.id);
     return { status };
   }
 }

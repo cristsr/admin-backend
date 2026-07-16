@@ -1,7 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { MovementSaved, MovementSavedPayload } from '../../../../movement/application/movement.constants';
-import { MovementRepository } from '../../../../movement/domain/movement';
+import {
+  MovementRepository,
+  MovementType,
+} from '../../../../movement/domain/movement';
 import { BudgetRepository } from '../../../domain/budget';
 import {
   BUDGET_THRESHOLD_LIMITS,
@@ -29,14 +32,18 @@ export class MovementSavedEventHandler {
       payload.categoryId,
       payload.accountId,
       payload.date,
+      payload.user,
     );
 
     for (const budget of budgets) {
-      const spent = await this.movementRepository.sumAmountByCategoryAndDateRange(
-        budget.categoryId,
-        budget.startDate,
-        budget.endDate,
-      );
+      const spent = await this.movementRepository.sumAmount({
+        user: budget.user,
+        category: budget.categoryId,
+        account: budget.accountId,
+        startDate: budget.startDate,
+        endDate: budget.endDate,
+        type: MovementType.EXPENSE,
+      });
 
       const percentage = Math.floor((spent / budget.amount) * 100);
 

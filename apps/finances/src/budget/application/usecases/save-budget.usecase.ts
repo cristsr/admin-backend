@@ -12,13 +12,11 @@ export class SaveBudgetUsecase {
     private readonly accountRepository: AccountRepository,
   ) {}
 
-  async execute(input: BudgetInputDto): Promise<Budget> {
+  async execute(input: BudgetInputDto, user: number): Promise<Budget> {
     const [existing, category, account] = await Promise.all([
-      input.id
-        ? this.budgetRepository.findByIdAndUser(input.id, input.user)
-        : null,
+      input.id ? this.budgetRepository.findByIdAndUser(input.id, user) : null,
       this.categoryRepository.findById(input.category),
-      this.accountRepository.findByIdAndUser(input.account, input.user),
+      this.accountRepository.findByIdAndUser(input.account, user),
     ]);
 
     if (input.id && !existing) {
@@ -44,7 +42,7 @@ export class SaveBudgetUsecase {
       endDate: input.endDate,
       categoryId: category.id,
       accountId: account.id,
-      user: input.user,
+      user,
     } as Budget);
 
     const saved = await this.budgetRepository.save(budget);

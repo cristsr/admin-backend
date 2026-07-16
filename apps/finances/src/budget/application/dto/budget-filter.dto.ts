@@ -1,7 +1,5 @@
 export class UserBudgetFilterDto {
   budget: number;
-
-  user: number;
 }
 
 export class BudgetFilterDto {
@@ -14,6 +12,4 @@ export class BudgetFilterDto {
   limit?: number;
 
   offset?: number;
-
-  user: number;
 }

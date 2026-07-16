@@ -4,6 +4,4 @@ export class ExpenseFilterDto {
   startDate: Date;
 
   endDate: Date;
-
-  user: number;
 }

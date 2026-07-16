@@ -19,13 +19,14 @@ export abstract class BudgetRepository {
     categoryId: number,
     accountId: number,
     date: Date,
+    user: number,
   ): Promise<Budget[]>;
 
   abstract findDueForRegeneration(now: Date): Promise<Budget[]>;
 
   abstract save(budget: Budget): Promise<Budget>;
 
-  abstract softRemove(id: number): Promise<boolean>;
+  abstract softRemove(id: number, user: number): Promise<boolean>;
 
   abstract deactivate(id: number): Promise<void>;
 }

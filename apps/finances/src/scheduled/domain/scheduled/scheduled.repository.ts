@@ -2,6 +2,7 @@ import { Nullable } from '@shared';
 import { Scheduled } from './scheduled.entity';
 
 export interface ScheduledQuery {
+  user: number;
   account?: number;
   active?: boolean;
   take?: number;

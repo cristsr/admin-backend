@@ -41,15 +41,22 @@ export class MovementController {
 
   @Get()
   async findAll(
+    @CurrentUser() user: AuthenticatedUser,
     @Query() filter: MovementFilterDto,
   ): Promise<MovementOutputDto[]> {
-    const movements = await this.findAllMovementsUsecase.execute(filter);
+    const movements = await this.findAllMovementsUsecase.execute(
+      filter,
+      user.id,
+    );
     return movements.map(MovementMapper.toOutput);
   }
 
   @Post()
-  async save(@Body() input: MovementInputDto): Promise<MovementOutputDto> {
-    const movement = await this.saveMovementUsecase.execute(input);
+  async save(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() input: MovementInputDto,
+  ): Promise<MovementOutputDto> {
+    const movement = await this.saveMovementUsecase.execute(input, user.id);
     return MovementMapper.toOutput(movement);
   }
 

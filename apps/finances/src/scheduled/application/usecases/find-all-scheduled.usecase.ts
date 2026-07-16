@@ -7,8 +7,8 @@ import { ScheduledFilterDto } from '../dto/scheduled-filter.dto';
 export class FindAllScheduledUsecase {
   constructor(private readonly scheduledRepository: ScheduledRepository) {}
 
-  async execute(filter: ScheduledFilterDto): Promise<Scheduled[]> {
+  async execute(filter: ScheduledFilterDto, user: number): Promise<Scheduled[]> {
     const { take, skip } = normalizePagination(filter);
-    return this.scheduledRepository.findAll({ ...filter, take, skip });
+    return this.scheduledRepository.findAll({ ...filter, user, take, skip });
   }
 }

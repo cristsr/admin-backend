@@ -22,6 +22,4 @@ export class MovementInputDto {
 
   @IsNotEmpty()
   currency: string;
-
-  user: number;
 }

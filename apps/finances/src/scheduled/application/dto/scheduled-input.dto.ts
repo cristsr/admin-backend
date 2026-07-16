@@ -24,6 +24,4 @@ export class ScheduledInputDto {
   currency: string;
 
   repeat: boolean;
-
-  user: number;
 }

@@ -6,9 +6,9 @@ import { AccountInputDto } from '../dto/account-input.dto';
 export class SaveAccountUsecase {
   constructor(private readonly accountRepository: AccountRepository) {}
 
-  async execute(input: AccountInputDto): Promise<Account> {
+  async execute(input: AccountInputDto, user: number): Promise<Account> {
     const existing = input.id
-      ? await this.accountRepository.findByIdAndUser(input.id, input.user)
+      ? await this.accountRepository.findByIdAndUser(input.id, user)
       : null;
 
     if (input.id && !existing) {
@@ -20,7 +20,7 @@ export class SaveAccountUsecase {
       name: input.name,
       initialBalance: input.initialBalance,
       currency: input.currency,
-      user: input.user,
+      user,
     } as Account);
 
     return this.accountRepository.save(account);

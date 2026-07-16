@@ -6,6 +6,7 @@ import {
   Movement,
   MovementQuery,
   MovementRepository,
+  MovementSumQuery,
 } from '../../../../../domain/movement';
 import { TypeOrmMovementEntity } from './typeorm-movement.entity';
 import { TypeOrmMovementMapper } from './typeorm-movement.mapper';
@@ -49,6 +50,7 @@ export class TypeOrmMovementRepository implements MovementRepository {
   async findAll(filter: MovementQuery): Promise<Movement[]> {
     const entities = await this.repository.find({
       where: {
+        user: filter.user,
         date: Between(filter.startDate, filter.endDate),
         category: { id: filter.category },
         account: { id: filter.account },
@@ -82,23 +84,25 @@ export class TypeOrmMovementRepository implements MovementRepository {
     return !!result.affected;
   }
 
-  async sumAmountByCategoryAndDateRange(
-    categoryId: number,
-    startDate: Date,
-    endDate: Date,
-  ): Promise<number> {
-    try {
-      const result = await this.repository
-        .createQueryBuilder()
-        .select('sum(amount)', 'spent')
-        .where({
-          category: categoryId,
-          date: Between(startDate, endDate),
-        })
-        .getRawOne();
-      return +result.spent || 0;
-    } catch {
-      return 0;
+  async sumAmount(query: MovementSumQuery): Promise<number> {
+    const builder = this.repository
+      .createQueryBuilder('m')
+      .select('COALESCE(SUM(m.amount), 0)', 'total')
+      .where('m.user_id = :user', { user: query.user })
+      .andWhere('m.category_id = :category', { category: query.category })
+      .andWhere('m.type = :type', { type: query.type })
+      .andWhere('m.date BETWEEN :startDate AND :endDate', {
+        startDate: query.startDate,
+        endDate: query.endDate,
+      })
+      .andWhere('m.active = true');
+
+    if (query.account) {
+      builder.andWhere('m.account_id = :account', { account: query.account });
     }
+
+    const result = await builder.getRawOne<{ total: string }>();
+
+    return Number(result.total);
   }
 }

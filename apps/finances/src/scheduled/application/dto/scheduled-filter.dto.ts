@@ -6,6 +6,4 @@ export class ScheduledFilterDto {
   limit?: number;
 
   offset?: number;
-
-  user: number;
 }

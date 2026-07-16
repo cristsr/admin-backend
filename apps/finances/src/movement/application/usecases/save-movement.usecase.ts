@@ -17,17 +17,17 @@ export class SaveMovementUsecase {
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
-  async execute(input: MovementInputDto): Promise<Movement> {
+  async execute(input: MovementInputDto, user: number): Promise<Movement> {
     const [existing, category, subcategory, account] = await Promise.all([
       input.id
-        ? this.movementRepository.findByIdAndUser(input.id, input.user)
+        ? this.movementRepository.findByIdAndUser(input.id, user)
         : null,
       this.categoryRepository.findById(input.category),
       this.subcategoryRepository.findByIdAndCategory(
         input.subcategory,
         input.category,
       ),
-      this.accountRepository.findByIdAndUser(input.account, input.user),
+      this.accountRepository.findByIdAndUser(input.account, user),
     ]);
 
     if (input.id && !existing) {
@@ -56,7 +56,7 @@ export class SaveMovementUsecase {
       categoryId: category.id,
       subcategoryId: subcategory.id,
       accountId: account.id,
-      user: input.user,
+      user,
     } as Movement);
 
     const saved = await this.movementRepository.save(movement);

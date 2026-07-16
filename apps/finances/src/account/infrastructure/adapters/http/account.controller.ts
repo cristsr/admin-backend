@@ -1,4 +1,5 @@
 import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { AuthenticatedUser, CurrentUser } from '@shared';
 import { AccountFilterDto, AccountInputDto, AccountOutputDto, UserAccountFilterDto } from '../../../application/dto';
 import { AccountMapper } from '../../../application/mappers';
 import { FindAccountUsecase, FindAllAccountsUsecase, SaveAccountUsecase } from '../../../application/usecases';
@@ -12,20 +13,29 @@ export class AccountController {
   ) {}
 
   @Get()
-  async findOne(@Query() filter: UserAccountFilterDto): Promise<AccountOutputDto> {
-    const account = await this.findAccountUsecase.execute(filter);
+  async findOne(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() filter: UserAccountFilterDto,
+  ): Promise<AccountOutputDto> {
+    const account = await this.findAccountUsecase.execute(filter, user.id);
     return account && AccountMapper.toOutput(account);
   }
 
   @Get('/query')
-  async findAll(@Query() filter: AccountFilterDto): Promise<AccountOutputDto[]> {
-    const accounts = await this.findAllAccountsUsecase.execute(filter);
+  async findAll(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query() filter: AccountFilterDto,
+  ): Promise<AccountOutputDto[]> {
+    const accounts = await this.findAllAccountsUsecase.execute(filter, user.id);
     return accounts.map(AccountMapper.toOutput);
   }
 
   @Post()
-  async save(@Body() data: AccountInputDto): Promise<AccountOutputDto> {
-    const account = await this.saveAccountUsecase.execute(data);
+  async save(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() data: AccountInputDto,
+  ): Promise<AccountOutputDto> {
+    const account = await this.saveAccountUsecase.execute(data, user.id);
     return AccountMapper.toOutput(account);
   }
 }
