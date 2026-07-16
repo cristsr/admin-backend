@@ -11,6 +11,7 @@ import { ENV } from '../env';
         url: configService.get(ENV.DB_URI),
         synchronize: configService.get(ENV.DB_SYNCHRONIZE),
         autoLoadEntities: true,
+        migrations: ['dist/apps/users/config/database/migrations/*.js'],
       }),
       inject: [ConfigService],
     }),

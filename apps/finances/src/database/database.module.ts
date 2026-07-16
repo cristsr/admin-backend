@@ -13,6 +13,7 @@ import { ENV } from 'app/env';
         synchronize: configService.get(ENV.DB_SYNCHRONIZE),
         autoLoadEntities: true,
         debug: true,
+        migrations: ['dist/apps/finances/database/migrations/*.js'],
         extra: {
           columnTypes: {
             timestamp: 'timestamp with time zone',

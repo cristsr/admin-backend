@@ -6,7 +6,13 @@
     "start": "nx serve",
     "dev": "nx serve",
     "build": "nx build",
-    "test": "nx test"
+    "test": "nx test",
+    "migration:generate:finances": "typeorm-ts-node-commonjs migration:generate -d apps/finances/src/database/data-source.ts",
+    "migration:run:finances": "typeorm-ts-node-commonjs migration:run -d apps/finances/src/database/data-source.ts",
+    "migration:revert:finances": "typeorm-ts-node-commonjs migration:revert -d apps/finances/src/database/data-source.ts",
+    "migration:generate:users": "typeorm-ts-node-commonjs migration:generate -d apps/users/src/config/database/data-source.ts",
+    "migration:run:users": "typeorm-ts-node-commonjs migration:run -d apps/users/src/config/database/data-source.ts",
+    "migration:revert:users": "typeorm-ts-node-commonjs migration:revert -d apps/users/src/config/database/data-source.ts"
   },
   "private": true,
   "dependencies": {
@@ -84,6 +90,7 @@
     "prettier": "3.3.2",
     "ts-jest": "29.1.5",
     "ts-node": "10.9.2",
+    "tsconfig-paths": "^4.2.0",
     "typescript": "5.7.3"
   }
 }
