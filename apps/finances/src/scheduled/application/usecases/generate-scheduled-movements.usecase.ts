@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { DateTime } from 'luxon';
-import { Movement, MovementRepository } from '../../../movement/domain/movement';
+import {
+  Movement,
+  MovementRepository,
+  MovementSource,
+} from '../../../movement/domain/movement';
 import { ScheduledRepository } from '../../domain/scheduled';
 
 /**
@@ -36,6 +40,7 @@ export class GenerateScheduledMovementsUsecase {
         subcategoryId: schedule.subcategoryId,
         accountId: schedule.accountId,
         user: schedule.user,
+        source: MovementSource.SCHEDULED,
       } as Movement);
 
       await this.movementRepository.save(movement).catch((error) => {

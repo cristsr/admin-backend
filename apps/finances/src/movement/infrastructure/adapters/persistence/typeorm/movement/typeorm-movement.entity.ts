@@ -1,9 +1,13 @@
-import { BaseEntity, DateColumn, TransformDate } from '@shared';
+import { BaseEntity, DateColumn, MoneyColumn, TransformDate } from '@shared';
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { TypeOrmAccountEntity } from '../../../../../../account/infrastructure/adapters/persistence/typeorm/account';
 import { TypeOrmCategoryEntity } from '../../../../../../category/infrastructure/adapters/persistence/typeorm/category';
 import { TypeOrmSubcategoryEntity } from '../../../../../../category/infrastructure/adapters/persistence/typeorm/subcategory';
-import { MovementType } from '../../../../../domain/movement';
+import {
+  MovementSource,
+  MovementType,
+  PaymentMethod,
+} from '../../../../../domain/movement';
 
 @Entity('movements')
 export class TypeOrmMovementEntity extends BaseEntity {
@@ -17,11 +21,23 @@ export class TypeOrmMovementEntity extends BaseEntity {
   @Column()
   description: string;
 
-  @Column()
+  @Column({ nullable: true })
+  merchant: string;
+
+  @Column({ type: 'text', nullable: true })
+  notes: string;
+
+  @MoneyColumn()
   amount: number;
 
   @Column({ length: 3 })
   currency: string;
+
+  @Column({ name: 'payment_method', type: 'varchar', nullable: true })
+  paymentMethod: PaymentMethod;
+
+  @Column({ type: 'varchar', default: MovementSource.MANUAL })
+  source: MovementSource;
 
   @ManyToOne(() => TypeOrmCategoryEntity, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'category_id' })
@@ -49,4 +65,17 @@ export class TypeOrmMovementEntity extends BaseEntity {
 
   @Column({ name: 'external_reference', nullable: true })
   externalReference: string;
+
+  @Column({ name: 'invoice_number', nullable: true })
+  invoiceNumber: string;
+
+  @Column({ name: 'invoice_issuer', nullable: true })
+  invoiceIssuer: string;
+
+  @Column({ name: 'invoice_url', nullable: true })
+  invoiceUrl: string;
+
+  @DateColumn({ name: 'invoice_issued_at', nullable: true })
+  @TransformDate()
+  invoiceIssuedAt: Date;
 }

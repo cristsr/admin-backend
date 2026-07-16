@@ -5,6 +5,28 @@ export enum MovementType {
   EXPENSE = 'EXPENSE',
 }
 
+/**
+ * How the money moved. Independent from the account: the same account can
+ * hold debit and credit operations.
+ */
+export enum PaymentMethod {
+  CASH = 'CASH',
+  DEBIT = 'DEBIT',
+  CREDIT = 'CREDIT',
+  TRANSFER = 'TRANSFER',
+  OTHER = 'OTHER',
+}
+
+/**
+ * Where the movement came from. Until now this could only be guessed from
+ * `externalReference` being set, which said nothing about cron-generated ones.
+ */
+export enum MovementSource {
+  MANUAL = 'MANUAL',
+  WEBHOOK = 'WEBHOOK',
+  SCHEDULED = 'SCHEDULED',
+}
+
 export interface MovementCategorySummary {
   id: number;
   name: string;

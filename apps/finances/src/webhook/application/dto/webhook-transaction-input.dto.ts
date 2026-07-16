@@ -1,5 +1,5 @@
-import { IsIn, IsNotEmpty, IsOptional } from 'class-validator';
-import { MovementType } from '../../../movement/domain/movement';
+import { IsEnum, IsIn, IsNotEmpty, IsOptional } from 'class-validator';
+import { MovementType, PaymentMethod } from '../../../movement/domain/movement';
 
 /**
  * Generic, provider-agnostic contract for an externally reconciled
@@ -34,7 +34,21 @@ export class WebhookTransactionInputDto {
   subcategory?: string;
 
   @IsOptional()
-  paymentMethod?: string;
+  @IsEnum(PaymentMethod)
+  paymentMethod?: PaymentMethod;
+
+  /** Source invoice, when the ingestion extracted one. */
+  @IsOptional()
+  invoiceNumber?: string;
+
+  @IsOptional()
+  invoiceIssuer?: string;
+
+  @IsOptional()
+  invoiceUrl?: string;
+
+  @IsOptional()
+  invoiceIssuedAt?: Date;
 
   @IsOptional()
   @IsIn(['INCOME', 'EXPENSE'])

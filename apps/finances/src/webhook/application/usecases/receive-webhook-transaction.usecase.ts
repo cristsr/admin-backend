@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { AccountNotFoundException, AccountRepository } from '../../../account/domain/account';
 import { CategoryNotFoundException, CategoryRepository } from '../../../category/domain/category';
 import { SubcategoryNotFoundException, SubcategoryRepository } from '../../../category/domain/subcategory';
-import { Movement, MovementRepository, MovementType } from '../../../movement/domain/movement';
+import { Movement, MovementRepository, MovementSource, MovementType } from '../../../movement/domain/movement';
 import { WebhookTransactionInputDto } from '../dto/webhook-transaction-input.dto';
 import { WebhookTransactionOutputDto } from '../dto/webhook-transaction-output.dto';
 
@@ -64,13 +64,20 @@ export class ReceiveWebhookTransactionUsecase {
       date: input.date,
       type: input.type ?? MovementType.EXPENSE,
       description: input.merchant,
+      merchant: input.merchant,
       amount: input.amount,
       currency: input.currency,
+      paymentMethod: input.paymentMethod,
+      source: MovementSource.WEBHOOK,
       categoryId: category.id,
       subcategoryId: subcategory?.id,
       accountId: account.id,
       user: input.user,
       externalReference: input.externalReference,
+      invoiceNumber: input.invoiceNumber,
+      invoiceIssuer: input.invoiceIssuer,
+      invoiceUrl: input.invoiceUrl,
+      invoiceIssuedAt: input.invoiceIssuedAt,
     } as Movement);
 
     const saved = await this.movementRepository.save(movement);

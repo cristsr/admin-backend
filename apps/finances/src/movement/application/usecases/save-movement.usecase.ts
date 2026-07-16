@@ -3,7 +3,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { AccountNotFoundException, AccountRepository } from '../../../account/domain/account';
 import { CategoryNotFoundException, CategoryRepository } from '../../../category/domain/category';
 import { SubcategoryNotFoundException, SubcategoryRepository } from '../../../category/domain/subcategory';
-import { Movement, MovementNotFoundException, MovementRepository } from '../../domain/movement';
+import { Movement, MovementNotFoundException, MovementRepository, MovementSource } from '../../domain/movement';
 import { MovementInputDto } from '../dto/movement-input.dto';
 import { MovementSaved, MovementSavedPayload } from '../movement.constants';
 
@@ -51,8 +51,11 @@ export class SaveMovementUsecase {
       date: input.date,
       type: input.type,
       description: input.description,
+      notes: input.notes,
       amount: input.amount,
       currency: input.currency,
+      paymentMethod: input.paymentMethod,
+      source: existing?.source ?? MovementSource.MANUAL,
       categoryId: category.id,
       subcategoryId: subcategory.id,
       accountId: account.id,

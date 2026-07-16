@@ -2,8 +2,10 @@ import { PropertiesOnly } from '@shared';
 import {
   MovementAccountSummary,
   MovementCategorySummary,
+  MovementSource,
   MovementSubcategorySummary,
   MovementType,
+  PaymentMethod,
 } from './movement.types';
 
 export class Movement {
@@ -23,9 +25,20 @@ export class Movement {
 
   description: string;
 
+  /** Who charged. Kept apart from `description` so editing the note never
+   * destroys the merchant the ingestion extracted. */
+  merchant?: string;
+
+  /** Free-form note owned by the user. */
+  notes?: string;
+
   amount: number;
 
   currency: string;
+
+  paymentMethod?: PaymentMethod;
+
+  source: MovementSource;
 
   categoryId: number;
 
@@ -39,7 +52,19 @@ export class Movement {
 
   account?: MovementAccountSummary;
 
+  /** Id of the transaction in the source system — exists for idempotent
+   * delivery, and is not a pointer to the invoice document. */
   externalReference?: string;
+
+  /** Source invoice this movement was extracted from, when there is one.
+   * One invoice maps to exactly one movement. */
+  invoiceNumber?: string;
+
+  invoiceIssuer?: string;
+
+  invoiceUrl?: string;
+
+  invoiceIssuedAt?: Date;
 
   user: number;
 
