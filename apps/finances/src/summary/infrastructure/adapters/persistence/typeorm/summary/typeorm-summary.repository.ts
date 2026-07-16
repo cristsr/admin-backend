@@ -39,10 +39,10 @@ export class TypeOrmSummaryRepository implements SummaryRepository {
         (qb) =>
           qb
             .select([
-              `COALESCE((SELECT initial_balance FROM accounts WHERE id = :accountId and user_id = :userId)::float, 0) AS initial_balance`,
-              `COALESCE(SUM(CASE WHEN date <= :endDate THEN CASE WHEN type = 'INCOME' THEN amount ELSE -amount END END), 0)::float AS accumulated_balance`,
-              `COALESCE(SUM(CASE WHEN type = 'INCOME' AND date BETWEEN :startDate and :endDate THEN amount END), 0)::float AS incomes`,
-              `COALESCE(SUM(CASE WHEN type = 'EXPENSE' AND date BETWEEN :startDate and :endDate THEN amount END), 0)::float AS expenses`,
+              `COALESCE((SELECT initial_balance FROM accounts WHERE id = :accountId and user_id = :userId), 0) AS initial_balance`,
+              `COALESCE(SUM(CASE WHEN date <= :endDate THEN CASE WHEN type = 'INCOME' THEN amount ELSE -amount END END), 0) AS accumulated_balance`,
+              `COALESCE(SUM(CASE WHEN type = 'INCOME' AND date BETWEEN :startDate and :endDate THEN amount END), 0) AS incomes`,
+              `COALESCE(SUM(CASE WHEN type = 'EXPENSE' AND date BETWEEN :startDate and :endDate THEN amount END), 0) AS expenses`,
             ])
             .from(TypeOrmMovementEntity, 'm')
             .where('user_id = :userId')
@@ -57,20 +57,27 @@ export class TypeOrmSummaryRepository implements SummaryRepository {
         'result',
       );
 
-    try {
-      return await query.getRawOne<Balance>();
-    } catch {
-      return null;
-    }
+    // numeric comes back from the driver as string, so it is mapped
+    // explicitly — the aggregation itself stays exact inside Postgres.
+    const raw = await query.getRawOne<{
+      incomes: string;
+      expenses: string;
+      balance: string;
+    }>();
+
+    if (!raw) return null;
+
+    return {
+      incomes: Number(raw.incomes),
+      expenses: Number(raw.expenses),
+      balance: Number(raw.balance),
+    };
   }
 
   async expenses(filter: ExpenseQuery): Promise<Expense[]> {
     const data = await this.movementRepository
       .createQueryBuilder('m')
-      .select([
-        'SUM(m.amount)::float AS amount',
-        'm.category_id AS "categoryId"',
-      ])
+      .select(['SUM(m.amount) AS amount', 'm.category_id AS "categoryId"'])
       .where(`date BETWEEN :startDate AND :endDate`)
       .andWhere(`m.type = :type`)
       .andWhere(`m.user_id = :userId`)
@@ -87,7 +94,10 @@ export class TypeOrmSummaryRepository implements SummaryRepository {
         accountId: filter.account,
       })
       .limit(5)
-      .getRawMany<{ amount: number; categoryId: number }>();
+      .getRawMany<{ amount: string; categoryId: number }>()
+      .then((rows) =>
+        rows.map((row) => ({ ...row, amount: Number(row.amount) })),
+      );
 
     if (!data.length) {
       return [];

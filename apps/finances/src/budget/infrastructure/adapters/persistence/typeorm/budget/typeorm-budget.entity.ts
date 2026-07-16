@@ -1,4 +1,4 @@
-import { BaseEntity } from '@shared';
+import { BaseEntity, MoneyColumn } from '@shared';
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { TypeOrmAccountEntity } from '../../../../../../account/infrastructure/adapters/persistence/typeorm/account';
 import { TypeOrmCategoryEntity } from '../../../../../../category/infrastructure/adapters/persistence/typeorm/category';
@@ -9,7 +9,7 @@ export class TypeOrmBudgetEntity extends BaseEntity {
   @Column()
   name: string;
 
-  @Column()
+  @MoneyColumn()
   amount: number;
 
   @Column({ length: 3 })

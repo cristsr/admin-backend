@@ -1,4 +1,4 @@
-import { BaseEntity } from '@shared';
+import { BaseEntity, MoneyColumn } from '@shared';
 import { Column, Entity } from 'typeorm';
 
 @Entity('accounts')
@@ -6,7 +6,7 @@ export class TypeOrmAccountEntity extends BaseEntity {
   @Column()
   name: string;
 
-  @Column({ name: 'initial_balance', nullable: true })
+  @MoneyColumn({ name: 'initial_balance', nullable: true })
   initialBalance: number;
 
   @Column({ length: 3 })
