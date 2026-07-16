@@ -13,6 +13,7 @@ import { CategoryModule } from 'app/category/category.module';
 import { MovementModule } from 'app/movement/movement.module';
 import { ScheduledModule } from 'app/scheduled/scheduled.module';
 import { SummaryModule } from 'app/summary/summary.module';
+import { WebhookModule } from 'app/webhook/webhook.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { SummaryModule } from 'app/summary/summary.module';
     SummaryModule,
     BudgetModule,
     ScheduledModule,
+    WebhookModule,
   ],
   controllers: [AppController],
 })

@@ -39,6 +39,9 @@ export class Environment {
 
   @IsString()
   USERS_API_URL: string;
+
+  @IsString()
+  WEBHOOK_API_KEY: string;
 }
 
 export const ENV = mapEnvironmentKeys(Environment);

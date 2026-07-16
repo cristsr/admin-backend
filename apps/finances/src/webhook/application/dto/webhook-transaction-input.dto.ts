@@ -1,0 +1,46 @@
+import { IsIn, IsNotEmpty, IsOptional } from 'class-validator';
+import { MovementType } from '../../../movement/domain/movement';
+
+/**
+ * Generic, provider-agnostic contract for an externally reconciled
+ * transaction (e.g. the future `WebhookPublisher` on the Rust ingestion
+ * side, built from its `Transaction`/`Extraction` types: date, amount,
+ * currency, merchant, category, payment_method, reference). Field names
+ * here intentionally mirror that shape so wiring the real publisher later
+ * needs no reshaping — only mapping merchant->description and
+ * category/subcategory names against this system's own taxonomy.
+ */
+export class WebhookTransactionInputDto {
+  /** Stable id from the source system, used for idempotent delivery. */
+  @IsNotEmpty()
+  externalReference: string;
+
+  date: Date;
+
+  amount: number;
+
+  @IsNotEmpty()
+  currency: string;
+
+  /** Merchant/comprobante description. */
+  @IsNotEmpty()
+  merchant: string;
+
+  /** Category name — matched case-insensitively against existing taxonomy. */
+  @IsNotEmpty()
+  category: string;
+
+  @IsOptional()
+  subcategory?: string;
+
+  @IsOptional()
+  paymentMethod?: string;
+
+  @IsOptional()
+  @IsIn(['INCOME', 'EXPENSE'])
+  type?: MovementType;
+
+  account: number;
+
+  user: number;
+}
