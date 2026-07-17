@@ -17,7 +17,7 @@ export class TypeOrmScheduledMapper {
       categoryId: entity.categoryId,
       subcategoryId: entity.subcategoryId,
       accountId: entity.accountId,
-      repeat: entity.repeat,
+      frequency: entity.frequency,
       user: entity.user,
     });
   }
@@ -30,7 +30,7 @@ export class TypeOrmScheduledMapper {
       description: scheduled.description,
       amount: scheduled.amount,
       currency: scheduled.currency,
-      repeat: scheduled.repeat,
+      frequency: scheduled.frequency,
       category: { id: scheduled.categoryId } as TypeOrmScheduledEntity['category'],
       subcategory: { id: scheduled.subcategoryId } as TypeOrmScheduledEntity['subcategory'],
       account: { id: scheduled.accountId } as TypeOrmScheduledEntity['account'],

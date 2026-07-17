@@ -5,11 +5,11 @@ import {
   MovementRepository,
   MovementSource,
 } from '../../../movement/domain/movement';
-import { ScheduledRepository } from '../../domain/scheduled';
+import { Scheduled, ScheduledRepository } from '../../domain/scheduled';
 
 /**
- * Materializes due recurring `Scheduled` entries into real `Movement`s.
- * Triggered every minute by `ScheduledScheduler`.
+ * Materializes due `Scheduled` entries into real `Movement`s and rolls each one
+ * to its next occurrence. Triggered every minute by `ScheduledScheduler`.
  */
 @Injectable()
 export class GenerateScheduledMovementsUsecase {
@@ -21,33 +21,52 @@ export class GenerateScheduledMovementsUsecase {
   ) {}
 
   async execute(): Promise<void> {
-    this.#logger.log('Generating movements');
+    const due = await this.scheduledRepository.findDue(DateTime.utc().toJSDate());
 
-    const utc = DateTime.utc();
-    const due = await this.scheduledRepository.findDueAt(
-      utc.startOf('minute').toJSDate(),
-      utc.endOf('minute').toJSDate(),
-    );
+    if (!due.length) return;
+
+    this.#logger.log(`Generating ${due.length} scheduled movement(s)`);
 
     for (const schedule of due) {
-      const movement = Movement.create({
-        description: schedule.description,
-        amount: schedule.amount,
-        currency: schedule.currency,
-        type: schedule.type,
-        date: schedule.date,
-        categoryId: schedule.categoryId,
-        subcategoryId: schedule.subcategoryId,
-        accountId: schedule.accountId,
-        user: schedule.user,
-        source: MovementSource.SCHEDULED,
-      } as Movement);
+      await this.materialize(schedule);
+    }
+  }
 
-      await this.movementRepository.save(movement).catch((error) => {
-        this.#logger.error(`Error creating movement ${error.message}`);
-      });
+  /**
+   * Creates the movement for the occurrence that just came due, and only then
+   * rolls the entry forward: a recurring one moves to its next date, a ONCE one
+   * is done and gets removed. If the movement fails to save the entry is left
+   * untouched, so the occurrence is retried instead of being silently skipped.
+   */
+  private async materialize(schedule: Scheduled): Promise<void> {
+    const movement = Movement.create({
+      description: schedule.description,
+      amount: schedule.amount,
+      currency: schedule.currency,
+      type: schedule.type,
+      date: schedule.date,
+      categoryId: schedule.categoryId,
+      subcategoryId: schedule.subcategoryId,
+      accountId: schedule.accountId,
+      user: schedule.user,
+      source: MovementSource.SCHEDULED,
+    } as Movement);
+
+    try {
+      await this.movementRepository.save(movement);
+    } catch (error) {
+      this.#logger.error(
+        `Error creating movement for scheduled ${schedule.id}: ${error.message}`,
+      );
+      return;
     }
 
-    this.#logger.log('Movements generated');
+    if (!schedule.recurs()) {
+      await this.scheduledRepository.remove(schedule.id, schedule.user);
+      return;
+    }
+
+    schedule.advance();
+    await this.scheduledRepository.save(schedule);
   }
 }

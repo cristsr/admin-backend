@@ -16,7 +16,7 @@ export class ScheduledMapper {
       categoryId: scheduled.categoryId,
       subcategoryId: scheduled.subcategoryId,
       accountId: scheduled.accountId,
-      repeat: scheduled.repeat,
+      frequency: scheduled.frequency,
       user: scheduled.user,
     };
   }

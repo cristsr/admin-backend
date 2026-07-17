@@ -1,4 +1,5 @@
 import { MovementType } from '../../../movement/domain/movement';
+import { Frequency } from '../../domain/scheduled';
 
 export class ScheduledOutputDto {
   id: number;
@@ -25,7 +26,7 @@ export class ScheduledOutputDto {
 
   accountId: number;
 
-  repeat: boolean;
+  frequency: Frequency;
 
   user: number;
 }

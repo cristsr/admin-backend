@@ -1,5 +1,6 @@
-import { IsNotEmpty, IsOptional, Min } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, Min } from 'class-validator';
 import { MovementType } from '../../../movement/domain/movement';
+import { Frequency } from '../../domain/scheduled';
 
 export class ScheduledInputDto {
   @IsOptional()
@@ -23,5 +24,6 @@ export class ScheduledInputDto {
   @IsNotEmpty()
   currency: string;
 
-  repeat: boolean;
+  @IsEnum(Frequency)
+  frequency: Frequency;
 }

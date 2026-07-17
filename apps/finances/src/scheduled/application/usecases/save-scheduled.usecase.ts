@@ -50,7 +50,7 @@ export class SaveScheduledUsecase {
       description: input.description,
       amount: input.amount,
       currency: input.currency,
-      repeat: input.repeat,
+      frequency: input.frequency,
       categoryId: category.id,
       subcategoryId: subcategory.id,
       accountId: account.id,

@@ -4,6 +4,7 @@ import { TypeOrmAccountEntity } from '../../../../../../account/infrastructure/a
 import { TypeOrmCategoryEntity } from '../../../../../../category/infrastructure/adapters/persistence/typeorm/category';
 import { TypeOrmSubcategoryEntity } from '../../../../../../category/infrastructure/adapters/persistence/typeorm/subcategory';
 import { MovementType } from '../../../../../../movement/domain/movement';
+import { Frequency } from '../../../../../domain/scheduled';
 
 /**
  * Declares its own columns instead of extending TypeOrmMovementEntity: a
@@ -54,6 +55,6 @@ export class TypeOrmScheduledEntity extends BaseEntity {
   @Column({ name: 'user_id', nullable: true })
   user: number;
 
-  @Column({ nullable: true })
-  repeat: boolean;
+  @Column({ type: 'varchar' })
+  frequency: Frequency;
 }

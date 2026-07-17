@@ -17,7 +17,8 @@ export abstract class ScheduledRepository {
 
   abstract findAll(filter: ScheduledQuery): Promise<Scheduled[]>;
 
-  abstract findDueAt(minuteStart: Date, minuteEnd: Date): Promise<Scheduled[]>;
+  /** Entries whose next occurrence has come due (at or before `now`). */
+  abstract findDue(now: Date): Promise<Scheduled[]>;
 
   abstract save(scheduled: Scheduled): Promise<Scheduled>;
 

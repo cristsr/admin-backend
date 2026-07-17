@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Nullable } from '@shared';
-import { Between, Repository } from 'typeorm';
+import { LessThanOrEqual, Repository } from 'typeorm';
 import {
   Scheduled,
   ScheduledQuery,
@@ -42,12 +42,14 @@ export class TypeOrmScheduledRepository implements ScheduledRepository {
     return entities.map(TypeOrmScheduledMapper.toDomain);
   }
 
-  async findDueAt(minuteStart: Date, minuteEnd: Date): Promise<Scheduled[]> {
+  // `date <= now` rather than an exact-minute window: if the app was down the
+  // pending occurrences are still picked up on the next tick instead of being
+  // skipped forever. Soft-deleted rows are excluded by TypeORM.
+  async findDue(now: Date): Promise<Scheduled[]> {
     const entities = await this.repository.find({
       where: {
-        date: Between(minuteStart, minuteEnd),
+        date: LessThanOrEqual(now),
         active: true,
-        repeat: true,
       },
     });
     return entities.map(TypeOrmScheduledMapper.toDomain);
