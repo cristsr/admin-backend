@@ -107,7 +107,7 @@ export class TypeOrmMovementRepository implements MovementRepository {
         startDate: query.startDate,
         endDate: query.endDate,
       })
-      .andWhere('m.active = true');
+      .andWhere('m.deleted_at IS NULL');
 
     if (query.account) {
       builder.andWhere('m.account_id = :account', { account: query.account });

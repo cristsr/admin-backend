@@ -5,7 +5,6 @@ export class TypeOrmScheduledMapper {
   static toDomain(entity: TypeOrmScheduledEntity): Scheduled {
     return Scheduled.create({
       id: entity.id,
-      active: entity.active,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       deletedAt: entity.deletedAt,

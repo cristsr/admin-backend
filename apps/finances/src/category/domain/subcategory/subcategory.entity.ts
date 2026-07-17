@@ -3,8 +3,6 @@ import { PropertiesOnly } from '@shared';
 export class Subcategory {
   id: number;
 
-  active: boolean;
-
   createdAt: Date;
 
   updatedAt: Date;

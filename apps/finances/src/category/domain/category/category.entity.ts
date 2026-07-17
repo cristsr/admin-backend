@@ -4,8 +4,6 @@ import { Subcategory } from '../subcategory/subcategory.entity';
 export class Category {
   id: number;
 
-  active: boolean;
-
   createdAt: Date;
 
   updatedAt: Date;

@@ -10,8 +10,6 @@ import {
 export class MovementOutputDto {
   id: number;
 
-  active: boolean;
-
   createdAt: Date;
 
   updatedAt: Date;

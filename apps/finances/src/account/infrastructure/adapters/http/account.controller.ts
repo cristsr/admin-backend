@@ -1,6 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { AuthenticatedUser, CurrentUser } from '@shared';
-import { AccountFilterDto, AccountInputDto, AccountOutputDto, UserAccountFilterDto } from '../../../application/dto';
+import { AccountInputDto, AccountOutputDto, UserAccountFilterDto } from '../../../application/dto';
 import { AccountMapper } from '../../../application/mappers';
 import { FindAccountUsecase, FindAllAccountsUsecase, RemoveAccountUsecase, SaveAccountUsecase } from '../../../application/usecases';
 
@@ -25,9 +25,8 @@ export class AccountController {
   @Get('/query')
   async findAll(
     @CurrentUser() user: AuthenticatedUser,
-    @Query() filter: AccountFilterDto,
   ): Promise<AccountOutputDto[]> {
-    const accounts = await this.findAllAccountsUsecase.execute(filter, user.id);
+    const accounts = await this.findAllAccountsUsecase.execute(user.id);
     return accounts.map(AccountMapper.toOutput);
   }
 

@@ -7,7 +7,7 @@ export abstract class AccountRepository {
     user: number,
   ): Promise<Nullable<Account>>;
 
-  abstract findAllByUser(active: boolean, user: number): Promise<Account[]>;
+  abstract findAllByUser(user: number): Promise<Account[]>;
 
   abstract save(account: Account): Promise<Account>;
 

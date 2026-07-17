@@ -1,8 +1,6 @@
 export class AccountOutputDto {
   id: number;
 
-  active: boolean;
-
   createdAt: Date;
 
   updatedAt: Date;

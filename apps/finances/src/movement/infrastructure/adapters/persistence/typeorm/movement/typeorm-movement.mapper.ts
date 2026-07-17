@@ -5,7 +5,6 @@ export class TypeOrmMovementMapper {
   static toDomain(entity: TypeOrmMovementEntity): Movement {
     return Movement.create({
       id: entity.id,
-      active: entity.active,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       deletedAt: entity.deletedAt,

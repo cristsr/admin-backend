@@ -4,8 +4,6 @@ import { Frequency } from '../../domain/scheduled';
 export class ScheduledOutputDto {
   id: number;
 
-  active: boolean;
-
   createdAt: Date;
 
   updatedAt: Date;

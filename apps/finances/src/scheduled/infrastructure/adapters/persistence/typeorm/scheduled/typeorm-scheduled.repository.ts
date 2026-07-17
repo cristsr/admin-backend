@@ -33,7 +33,6 @@ export class TypeOrmScheduledRepository implements ScheduledRepository {
       where: {
         user: filter.user,
         account: { id: filter.account },
-        active: filter.active,
       },
       relations: ['category', 'subcategory'],
       take: filter.take,
@@ -49,7 +48,6 @@ export class TypeOrmScheduledRepository implements ScheduledRepository {
     const entities = await this.repository.find({
       where: {
         date: LessThanOrEqual(now),
-        active: true,
       },
     });
     return entities.map(TypeOrmScheduledMapper.toDomain);

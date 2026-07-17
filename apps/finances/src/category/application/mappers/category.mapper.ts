@@ -6,7 +6,6 @@ export class CategoryMapper {
   static toOutput(category: Category): CategoryOutputDto {
     return {
       id: category.id,
-      active: category.active,
       createdAt: category.createdAt,
       updatedAt: category.updatedAt,
       name: category.name,

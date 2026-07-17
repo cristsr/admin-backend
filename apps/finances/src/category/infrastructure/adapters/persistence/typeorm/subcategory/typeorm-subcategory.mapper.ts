@@ -5,7 +5,6 @@ export class TypeOrmSubcategoryMapper {
   static toDomain(entity: TypeOrmSubcategoryEntity): Subcategory {
     return Subcategory.create({
       id: entity.id,
-      active: entity.active,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       deletedAt: entity.deletedAt,

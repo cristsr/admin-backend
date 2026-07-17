@@ -52,13 +52,12 @@ export class TypeOrmSummaryRepository implements SummaryRepository {
             // Without this the sums covered every account the user owns while
             // initial_balance came from just one, so the balance mixed them.
             .andWhere('account_id = :accountId')
-            .andWhere('active = :active')
+            .andWhere('deleted_at IS NULL')
             .setParameters({
               userId: filter.user,
               accountId: filter.account,
               startDate: filter.startDate,
               endDate: filter.endDate,
-              active: true,
             }),
         'result',
       );
@@ -87,7 +86,7 @@ export class TypeOrmSummaryRepository implements SummaryRepository {
       .where(`date BETWEEN :startDate AND :endDate`)
       .andWhere(`m.type = :type`)
       .andWhere(`m.user_id = :userId`)
-      .andWhere(`m.active = :active`)
+      .andWhere(`m.deleted_at IS NULL`)
       .andWhere(`m.account_id = :accountId`)
       .groupBy('m.category_id')
       .orderBy('amount', 'DESC')
@@ -96,7 +95,6 @@ export class TypeOrmSummaryRepository implements SummaryRepository {
         endDate: filter.endDate,
         type: MovementType.EXPENSE,
         userId: filter.user,
-        active: true,
         accountId: filter.account,
       })
       .limit(5)
@@ -137,7 +135,6 @@ export class TypeOrmSummaryRepository implements SummaryRepository {
       where: {
         account: { id: filter.account },
         user: filter.user,
-        active: true,
       },
       order: {
         date: 'DESC',

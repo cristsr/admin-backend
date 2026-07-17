@@ -19,8 +19,8 @@ export class TypeOrmAccountRepository implements AccountRepository {
     return entity ? TypeOrmAccountMapper.toDomain(entity) : null;
   }
 
-  async findAllByUser(active: boolean, user: number): Promise<Account[]> {
-    const entities = await this.repository.find({ where: { active, user } });
+  async findAllByUser(user: number): Promise<Account[]> {
+    const entities = await this.repository.find({ where: { user } });
     return entities.map(TypeOrmAccountMapper.toDomain);
   }
 

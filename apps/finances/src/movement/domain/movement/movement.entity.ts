@@ -11,8 +11,6 @@ import {
 export class Movement {
   id: number;
 
-  active: boolean;
-
   createdAt: Date;
 
   updatedAt: Date;

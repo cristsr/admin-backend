@@ -1,5 +1,4 @@
 import {
-  Column,
   CreateDateColumn,
   DeleteDateColumn,
   PrimaryGeneratedColumn,
@@ -10,9 +9,6 @@ import { TransformDate } from '../decorators';
 export class BaseEntity {
   @PrimaryGeneratedColumn()
   id: number;
-
-  @Column({ default: true })
-  active: boolean;
 
   @CreateDateColumn({
     name: 'created_at',

@@ -5,7 +5,6 @@ export class AccountMapper {
   static toOutput(account: Account): AccountOutputDto {
     return {
       id: account.id,
-      active: account.active,
       createdAt: account.createdAt,
       updatedAt: account.updatedAt,
       name: account.name,

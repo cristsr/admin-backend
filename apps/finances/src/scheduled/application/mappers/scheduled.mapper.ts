@@ -5,7 +5,6 @@ export class ScheduledMapper {
   static toOutput(scheduled: Scheduled): ScheduledOutputDto {
     return {
       id: scheduled.id,
-      active: scheduled.active,
       createdAt: scheduled.createdAt,
       updatedAt: scheduled.updatedAt,
       date: scheduled.date,

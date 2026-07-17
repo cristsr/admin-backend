@@ -5,7 +5,6 @@ export class MovementMapper {
   static toOutput(movement: Movement): MovementOutputDto {
     return {
       id: movement.id,
-      active: movement.active,
       createdAt: movement.createdAt,
       updatedAt: movement.updatedAt,
       date: movement.date,

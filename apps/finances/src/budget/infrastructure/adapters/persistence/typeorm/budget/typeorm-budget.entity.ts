@@ -9,6 +9,15 @@ export class TypeOrmBudgetEntity extends BaseEntity {
   @Column()
   name: string;
 
+  /**
+   * Whether this budget is the current period. When a repeating budget rolls
+   * over, the previous one is deactivated and kept as history. This is not a
+   * deletion — that is what deleted_at is for — which is why it lives here and
+   * not on BaseEntity.
+   */
+  @Column({ default: true })
+  active: boolean;
+
   @MoneyColumn()
   amount: number;
 

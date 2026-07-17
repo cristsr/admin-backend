@@ -6,8 +6,6 @@ import { Frequency } from './frequency.enum';
 export class Scheduled {
   id: number;
 
-  active: boolean;
-
   createdAt: Date;
 
   updatedAt: Date;

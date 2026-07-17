@@ -6,7 +6,6 @@ export class TypeOrmCategoryMapper {
   static toDomain(entity: TypeOrmCategoryEntity): Category {
     return Category.create({
       id: entity.id,
-      active: entity.active,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
       deletedAt: entity.deletedAt,
