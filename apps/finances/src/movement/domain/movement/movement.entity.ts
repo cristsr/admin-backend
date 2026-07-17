@@ -56,6 +56,10 @@ export class Movement {
    * delivery, and is not a pointer to the invoice document. */
   externalReference?: string;
 
+  /** Ties the two legs of a transfer together. Both legs share it, so one can
+   * be reached from the other. */
+  transferGroup?: string;
+
   /** Source invoice this movement was extracted from, when there is one.
    * One invoice maps to exactly one movement. */
   invoiceNumber?: string;

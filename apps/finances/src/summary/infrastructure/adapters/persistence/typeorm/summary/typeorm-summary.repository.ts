@@ -40,12 +40,18 @@ export class TypeOrmSummaryRepository implements SummaryRepository {
           qb
             .select([
               `COALESCE((SELECT initial_balance FROM accounts WHERE id = :accountId and user_id = :userId), 0) AS initial_balance`,
-              `COALESCE(SUM(CASE WHEN date <= :endDate THEN CASE WHEN type = 'INCOME' THEN amount ELSE -amount END END), 0) AS accumulated_balance`,
+              // Transfers move this account's balance (IN adds, OUT subtracts)
+              // but are left out of incomes/expenses: moving your own money
+              // between accounts is neither earning nor spending.
+              `COALESCE(SUM(CASE WHEN date <= :endDate THEN CASE WHEN type IN ('INCOME', 'TRANSFER_IN') THEN amount ELSE -amount END END), 0) AS accumulated_balance`,
               `COALESCE(SUM(CASE WHEN type = 'INCOME' AND date BETWEEN :startDate and :endDate THEN amount END), 0) AS incomes`,
               `COALESCE(SUM(CASE WHEN type = 'EXPENSE' AND date BETWEEN :startDate and :endDate THEN amount END), 0) AS expenses`,
             ])
             .from(TypeOrmMovementEntity, 'm')
             .where('user_id = :userId')
+            // Without this the sums covered every account the user owns while
+            // initial_balance came from just one, so the balance mixed them.
+            .andWhere('account_id = :accountId')
             .andWhere('active = :active')
             .setParameters({
               userId: filter.user,

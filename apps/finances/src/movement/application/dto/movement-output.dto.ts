@@ -34,6 +34,8 @@ export class MovementOutputDto {
 
   source: MovementSource;
 
+  transferGroup?: string;
+
   invoiceNumber?: string;
 
   invoiceIssuer?: string;

@@ -38,6 +38,7 @@ export class TypeOrmMovementMapper {
       },
       user: entity.user,
       externalReference: entity.externalReference,
+      transferGroup: entity.transferGroup,
       invoiceNumber: entity.invoiceNumber,
       invoiceIssuer: entity.invoiceIssuer,
       invoiceUrl: entity.invoiceUrl,
@@ -57,13 +58,18 @@ export class TypeOrmMovementMapper {
       currency: movement.currency,
       paymentMethod: movement.paymentMethod,
       source: movement.source,
-      category: { id: movement.categoryId } as TypeOrmMovementEntity['category'],
+      // Null-checked because a transfer has no category: the previous
+      // unconditional { id: undefined } was not a valid relation.
+      category: movement.categoryId
+        ? ({ id: movement.categoryId } as TypeOrmMovementEntity['category'])
+        : null,
       subcategory: movement.subcategoryId
         ? ({ id: movement.subcategoryId } as TypeOrmMovementEntity['subcategory'])
         : null,
       account: { id: movement.accountId } as TypeOrmMovementEntity['account'],
       user: movement.user,
       externalReference: movement.externalReference,
+      transferGroup: movement.transferGroup,
       invoiceNumber: movement.invoiceNumber,
       invoiceIssuer: movement.invoiceIssuer,
       invoiceUrl: movement.invoiceUrl,

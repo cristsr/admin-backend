@@ -1,9 +1,28 @@
-export const movementTypes = ['INCOME', 'EXPENSE'] as const;
+export const movementTypes = [
+  'INCOME',
+  'EXPENSE',
+  'TRANSFER_IN',
+  'TRANSFER_OUT',
+] as const;
 
+/**
+ * The two TRANSFER types are the legs of a transfer between the user's own
+ * accounts. They move an account's balance like any other movement, but they
+ * are neither income nor expense: money the user already had did not become
+ * earnings by changing account, so the reports must leave them out.
+ */
 export enum MovementType {
   INCOME = 'INCOME',
   EXPENSE = 'EXPENSE',
+  TRANSFER_IN = 'TRANSFER_IN',
+  TRANSFER_OUT = 'TRANSFER_OUT',
 }
+
+/** Types that count as real earnings/spending in the reports. */
+export const reportableMovementTypes = [
+  MovementType.INCOME,
+  MovementType.EXPENSE,
+];
 
 /**
  * How the money moved. Independent from the account: the same account can

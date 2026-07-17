@@ -17,6 +17,7 @@ export class MovementMapper {
       currency: movement.currency,
       paymentMethod: movement.paymentMethod,
       source: movement.source,
+      transferGroup: movement.transferGroup,
       invoiceNumber: movement.invoiceNumber,
       invoiceIssuer: movement.invoiceIssuer,
       invoiceUrl: movement.invoiceUrl,

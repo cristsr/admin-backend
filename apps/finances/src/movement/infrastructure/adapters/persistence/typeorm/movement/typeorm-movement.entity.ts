@@ -66,6 +66,9 @@ export class TypeOrmMovementEntity extends BaseEntity {
   @Column({ name: 'external_reference', nullable: true })
   externalReference: string;
 
+  @Column({ name: 'transfer_group', nullable: true })
+  transferGroup: string;
+
   @Column({ name: 'invoice_number', nullable: true })
   invoiceNumber: string;
 

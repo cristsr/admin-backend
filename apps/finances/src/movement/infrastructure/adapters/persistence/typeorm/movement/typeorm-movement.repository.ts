@@ -79,6 +79,18 @@ export class TypeOrmMovementRepository implements MovementRepository {
     return TypeOrmMovementMapper.toDomain(entity);
   }
 
+  async saveAll(movements: Movement[]): Promise<Movement[]> {
+    return this.repository.manager.transaction(async (manager) => {
+      const saved = await manager.save(
+        TypeOrmMovementEntity,
+        movements.map(TypeOrmMovementMapper.toEntity),
+      );
+      return saved.map((entity) =>
+        TypeOrmMovementMapper.toDomain(entity as TypeOrmMovementEntity),
+      );
+    });
+  }
+
   async remove(id: number, user: number): Promise<boolean> {
     const result = await this.repository.softDelete({ id, user });
     return !!result.affected;

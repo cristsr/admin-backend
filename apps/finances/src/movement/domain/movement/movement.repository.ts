@@ -38,6 +38,10 @@ export abstract class MovementRepository {
 
   abstract save(movement: Movement): Promise<Movement>;
 
+  /** Saves several movements atomically. The legs of a transfer must both
+   * exist or neither: half a transfer would make money disappear. */
+  abstract saveAll(movements: Movement[]): Promise<Movement[]>;
+
   abstract remove(id: number, user: number): Promise<boolean>;
 
   abstract sumAmount(query: MovementSumQuery): Promise<number>;
