@@ -24,7 +24,7 @@ export class TypeOrmBudgetEntity extends BaseEntity {
   @Column()
   repeat: boolean;
 
-  @Column({ type: 'enum', enum: Period })
+  @Column({ type: 'varchar' })
   period: Period;
 
   @ManyToOne(() => TypeOrmCategoryEntity, { onDelete: 'SET NULL' })
