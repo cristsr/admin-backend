@@ -1,12 +1,12 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { AuthenticatedUser, CurrentUser } from '@shared';
 import {
-  BalanceFilterDto,
+  ConsolidatedBalanceFilterDto,
   ExpenseFilterDto,
   LastMovementFilterDto,
 } from '../../../application/dto';
 import {
-  GetBalanceUsecase,
+  GetConsolidatedBalanceUsecase,
   GetExpensesUsecase,
   GetLastMovementsUsecase,
 } from '../../../application/usecases';
@@ -14,7 +14,7 @@ import {
 @Controller('summary')
 export class SummaryController {
   constructor(
-    private readonly getBalanceUsecase: GetBalanceUsecase,
+    private readonly getConsolidatedBalanceUsecase: GetConsolidatedBalanceUsecase,
     private readonly getExpensesUsecase: GetExpensesUsecase,
     private readonly getLastMovementsUsecase: GetLastMovementsUsecase,
   ) {}
@@ -22,9 +22,13 @@ export class SummaryController {
   @Get('balance')
   balance(
     @CurrentUser() user: AuthenticatedUser,
-    @Query() filter: BalanceFilterDto,
+    @Query() filter: ConsolidatedBalanceFilterDto,
   ) {
-    return this.getBalanceUsecase.execute(filter, user.id);
+    return this.getConsolidatedBalanceUsecase.execute(
+      filter,
+      user.id,
+      user.presentationCurrency,
+    );
   }
 
   @Get('expenses')

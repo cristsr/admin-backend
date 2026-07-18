@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -12,6 +13,7 @@ import {
   ScheduledFilterDto,
   ScheduledInputDto,
   ScheduledOutputDto,
+  ScheduledPatchDto,
 } from '../../../application/dto';
 import { ScheduledMapper } from '../../../application/mappers';
 import {
@@ -19,6 +21,7 @@ import {
   FindScheduledUsecase,
   RemoveScheduledUsecase,
   SaveScheduledUsecase,
+  UpdateScheduledUsecase,
 } from '../../../application/usecases';
 
 @Controller('scheduled')
@@ -27,6 +30,7 @@ export class ScheduledController {
     private readonly findScheduledUsecase: FindScheduledUsecase,
     private readonly findAllScheduledUsecase: FindAllScheduledUsecase,
     private readonly saveScheduledUsecase: SaveScheduledUsecase,
+    private readonly updateScheduledUsecase: UpdateScheduledUsecase,
     private readonly removeScheduledUsecase: RemoveScheduledUsecase,
   ) {}
 
@@ -57,6 +61,20 @@ export class ScheduledController {
     @Body() input: ScheduledInputDto,
   ): Promise<ScheduledOutputDto> {
     const scheduled = await this.saveScheduledUsecase.execute(input, user.id);
+    return ScheduledMapper.toOutput(scheduled);
+  }
+
+  @Patch(':id')
+  async update(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: number,
+    @Body() patch: ScheduledPatchDto,
+  ): Promise<ScheduledOutputDto> {
+    const scheduled = await this.updateScheduledUsecase.execute(
+      id,
+      patch,
+      user.id,
+    );
     return ScheduledMapper.toOutput(scheduled);
   }
 

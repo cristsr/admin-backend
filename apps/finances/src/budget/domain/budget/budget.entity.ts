@@ -1,4 +1,5 @@
 import { PropertiesOnly } from '@shared';
+import { BudgetThreshold } from './budget-threshold.enum';
 import { Period } from './period.enum';
 
 export class Budget {
@@ -25,6 +26,11 @@ export class Budget {
   repeat: boolean;
 
   period: Period;
+
+  /** Hasta qué umbral se notificó en el período vigente. `null`/undefined = aún
+   * no se notificó ninguno. Al renovar un presupuesto repetible, el nuevo nace
+   * limpio (AC-1). */
+  notifiedThreshold?: BudgetThreshold;
 
   categoryId: number;
 

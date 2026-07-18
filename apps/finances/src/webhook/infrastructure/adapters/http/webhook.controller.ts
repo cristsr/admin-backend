@@ -1,10 +1,14 @@
-import { Body, Controller, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
 import { Public } from '@shared';
 import {
+  MovementReversalOutputDto,
   WebhookTransactionInputDto,
   WebhookTransactionOutputDto,
 } from '../../../application/dto';
-import { ReceiveWebhookTransactionUsecase } from '../../../application/usecases';
+import {
+  ReceiveWebhookTransactionUsecase,
+  ReverseWebhookTransactionUsecase,
+} from '../../../application/usecases';
 import { WebhookApiKeyGuard } from './webhook-api-key.guard';
 
 @Controller('webhooks')
@@ -13,6 +17,7 @@ import { WebhookApiKeyGuard } from './webhook-api-key.guard';
 export class WebhookController {
   constructor(
     private readonly receiveWebhookTransactionUsecase: ReceiveWebhookTransactionUsecase,
+    private readonly reverseWebhookTransactionUsecase: ReverseWebhookTransactionUsecase,
   ) {}
 
   @Post('transactions')
@@ -20,5 +25,12 @@ export class WebhookController {
     @Body() input: WebhookTransactionInputDto,
   ): Promise<WebhookTransactionOutputDto> {
     return this.receiveWebhookTransactionUsecase.execute(input);
+  }
+
+  @Post('transactions/:externalReference/reversal')
+  async reverseTransaction(
+    @Param('externalReference') externalReference: string,
+  ): Promise<MovementReversalOutputDto> {
+    return this.reverseWebhookTransactionUsecase.execute(externalReference);
   }
 }

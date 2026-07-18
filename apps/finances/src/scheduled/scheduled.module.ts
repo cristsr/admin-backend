@@ -17,6 +17,7 @@ import {
   GenerateScheduledMovementsUsecase,
   RemoveScheduledUsecase,
   SaveScheduledUsecase,
+  UpdateScheduledUsecase,
 } from './application/usecases';
 
 @Module({
@@ -32,6 +33,7 @@ import {
     FindScheduledUsecase,
     FindAllScheduledUsecase,
     SaveScheduledUsecase,
+    UpdateScheduledUsecase,
     RemoveScheduledUsecase,
     GenerateScheduledMovementsUsecase,
     ScheduledScheduler,

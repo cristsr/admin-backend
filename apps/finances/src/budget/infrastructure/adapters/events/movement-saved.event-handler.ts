@@ -13,6 +13,13 @@ import {
   BudgetThresholdExceededPayload,
 } from '../../../application/budget.constants';
 
+/** Orden de severidad de los umbrales; se notifica solo si el alcanzado supera
+ * al ya notificado en este período. */
+const THRESHOLD_RANK: Record<BudgetThreshold, number> = {
+  [BudgetThreshold.WARNING]: 1,
+  [BudgetThreshold.EXCEEDED]: 2,
+};
+
 /**
  * Reacts to every saved movement (via event, not a direct module dependency,
  * to avoid a movement<->budget circular import) and checks whether any
@@ -52,6 +59,16 @@ export class MovementSavedEventHandler {
       );
 
       if (!threshold) continue;
+
+      // Notificar cada umbral una sola vez por período: si el alcanzado no
+      // supera al ya notificado, no reemitir (AC-1).
+      const alreadyRank = budget.notifiedThreshold
+        ? THRESHOLD_RANK[budget.notifiedThreshold]
+        : 0;
+      if (THRESHOLD_RANK[threshold] <= alreadyRank) continue;
+
+      budget.notifiedThreshold = threshold;
+      await this.budgetRepository.save(budget);
 
       this.eventEmitter.emit(BudgetThresholdExceeded, {
         budgetId: budget.id,

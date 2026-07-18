@@ -47,6 +47,18 @@ export class TypeOrmMovementRepository implements MovementRepository {
     return entity ? TypeOrmMovementMapper.toDomain(entity) : null;
   }
 
+  async findByTransferGroup(
+    transferGroup: string,
+    user: number,
+  ): Promise<Movement[]> {
+    const entities = await this.repository.find({
+      where: { transferGroup, user },
+      relations: ['category', 'subcategory'],
+      order: { type: 'ASC' },
+    });
+    return entities.map(TypeOrmMovementMapper.toDomain);
+  }
+
   async findAll(filter: MovementQuery): Promise<Movement[]> {
     const entities = await this.repository.find({
       where: {

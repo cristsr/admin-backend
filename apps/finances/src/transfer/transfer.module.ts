@@ -1,16 +1,20 @@
 import { Module } from '@nestjs/common';
 import { AccountModule } from '../account/account.module';
+import { ExchangeModule } from '../exchange/exchange.module';
 import { MovementModule } from '../movement/movement.module';
-import { CreateTransferUsecase } from './application/usecases';
+import {
+  CreateTransferUsecase,
+  ReverseTransferUsecase,
+} from './application/usecases';
 import { TransferController } from './infrastructure/adapters/http';
 
 /**
  * A transfer owns no table: it is recorded as a linked pair of movements, so
- * this module only orchestrates the account and movement ports.
+ * this module only orchestrates the account, movement and exchange-rate ports.
  */
 @Module({
-  imports: [AccountModule, MovementModule],
+  imports: [AccountModule, MovementModule, ExchangeModule],
   controllers: [TransferController],
-  providers: [CreateTransferUsecase],
+  providers: [CreateTransferUsecase, ReverseTransferUsecase],
 })
 export class TransferModule {}

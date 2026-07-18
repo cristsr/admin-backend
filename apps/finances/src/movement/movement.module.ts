@@ -13,6 +13,7 @@ import {
   FindMovementUsecase,
   RemoveMovementUsecase,
   SaveMovementUsecase,
+  UpdateMovementUsecase,
 } from './application/usecases';
 
 @Module({
@@ -27,6 +28,7 @@ import {
     FindMovementUsecase,
     FindAllMovementsUsecase,
     SaveMovementUsecase,
+    UpdateMovementUsecase,
     RemoveMovementUsecase,
   ],
   exports: [MovementRepository],

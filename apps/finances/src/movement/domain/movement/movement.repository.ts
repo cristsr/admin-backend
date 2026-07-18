@@ -34,6 +34,13 @@ export abstract class MovementRepository {
     externalReference: string,
   ): Promise<Nullable<Movement>>;
 
+  /** Both legs (or the compensating pair) that share a transferGroup, scoped
+   * to the user. */
+  abstract findByTransferGroup(
+    transferGroup: string,
+    user: number,
+  ): Promise<Movement[]>;
+
   abstract findAll(filter: MovementQuery): Promise<Movement[]>;
 
   abstract save(movement: Movement): Promise<Movement>;

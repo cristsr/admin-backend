@@ -16,4 +16,13 @@ export abstract class AccountRepository {
   /** Whether the account has any (non-deleted) movement recorded against it.
    * Deleting an account with history is refused. */
   abstract hasMovements(id: number): Promise<boolean>;
+
+  /** Signed sum of the account's movements: INCOME/TRANSFER_IN add,
+   * EXPENSE/TRANSFER_OUT subtract; excludes soft-deleted. Does NOT include
+   * initialBalance. */
+  abstract movementBalance(accountId: number, user: number): Promise<number>;
+
+  /** Same as movementBalance but for every account of the user, keyed by
+   * account id. Accounts with no movements are absent from the map. */
+  abstract movementBalancesByUser(user: number): Promise<Record<number, number>>;
 }

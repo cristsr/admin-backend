@@ -2,7 +2,7 @@ import { BaseEntity, MoneyColumn } from '@shared';
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { TypeOrmAccountEntity } from '../../../../../../account/infrastructure/adapters/persistence/typeorm/account';
 import { TypeOrmCategoryEntity } from '../../../../../../category/infrastructure/adapters/persistence/typeorm/category';
-import { Period } from '../../../../../domain/budget';
+import { BudgetThreshold, Period } from '../../../../../domain/budget';
 
 @Entity('budgets')
 export class TypeOrmBudgetEntity extends BaseEntity {
@@ -35,6 +35,9 @@ export class TypeOrmBudgetEntity extends BaseEntity {
 
   @Column({ type: 'varchar' })
   period: Period;
+
+  @Column({ name: 'notified_threshold', type: 'varchar', nullable: true })
+  notifiedThreshold: BudgetThreshold | null;
 
   @ManyToOne(() => TypeOrmCategoryEntity, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'category_id' })

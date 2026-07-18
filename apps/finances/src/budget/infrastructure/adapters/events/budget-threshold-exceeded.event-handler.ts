@@ -1,22 +1,22 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import {
-  BudgetThresholdExceeded,
+  BudgetNotificationPublisher,
   BudgetThresholdExceededPayload,
-} from '../../../application/budget.constants';
+} from '../../../domain/budget';
+import { BudgetThresholdExceeded } from '../../../application/budget.constants';
 
 /**
- * Placeholder for the eventual delivery channel (email/push/etc). For now it
- * only logs — wiring a real notifier just means listening to the same event.
+ * Entrega la alerta de umbral por el canal real (cola PGMQ) en vez de solo
+ * loguearla. La deduplicación "una vez por umbral y período" ya la garantiza
+ * MovementSavedEventHandler vía budgets.notified_threshold (AC-1).
  */
 @Injectable()
 export class BudgetThresholdExceededEventHandler {
-  #logger = new Logger(BudgetThresholdExceededEventHandler.name);
+  constructor(private readonly publisher: BudgetNotificationPublisher) {}
 
   @OnEvent(BudgetThresholdExceeded)
-  handle(payload: BudgetThresholdExceededPayload): void {
-    this.#logger.warn(
-      `Budget ${payload.budgetId} (user ${payload.user}) reached ${payload.percentage}% — threshold ${payload.threshold}`,
-    );
+  async handle(payload: BudgetThresholdExceededPayload): Promise<void> {
+    await this.publisher.publish(payload);
   }
 }

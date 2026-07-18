@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
 } from '@nestjs/common';
@@ -12,6 +13,7 @@ import {
   MovementFilterDto,
   MovementInputDto,
   MovementOutputDto,
+  MovementPatchDto,
 } from '../../../application/dto';
 import { MovementMapper } from '../../../application/mappers';
 import {
@@ -19,6 +21,7 @@ import {
   FindMovementUsecase,
   RemoveMovementUsecase,
   SaveMovementUsecase,
+  UpdateMovementUsecase,
 } from '../../../application/usecases';
 
 @Controller('movements')
@@ -27,6 +30,7 @@ export class MovementController {
     private readonly findMovementUsecase: FindMovementUsecase,
     private readonly findAllMovementsUsecase: FindAllMovementsUsecase,
     private readonly saveMovementUsecase: SaveMovementUsecase,
+    private readonly updateMovementUsecase: UpdateMovementUsecase,
     private readonly removeMovementUsecase: RemoveMovementUsecase,
   ) {}
 
@@ -57,6 +61,16 @@ export class MovementController {
     @Body() input: MovementInputDto,
   ): Promise<MovementOutputDto> {
     const movement = await this.saveMovementUsecase.execute(input, user.id);
+    return MovementMapper.toOutput(movement);
+  }
+
+  @Patch(':id')
+  async update(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: number,
+    @Body() patch: MovementPatchDto,
+  ): Promise<MovementOutputDto> {
+    const movement = await this.updateMovementUsecase.execute(id, patch, user.id);
     return MovementMapper.toOutput(movement);
   }
 

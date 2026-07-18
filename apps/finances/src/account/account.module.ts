@@ -9,6 +9,7 @@ import {
 import {
   FindAccountUsecase,
   FindAllAccountsUsecase,
+  GetAccountBalanceUsecase,
   RemoveAccountUsecase,
   SaveAccountUsecase,
 } from './application/usecases';
@@ -20,6 +21,7 @@ import {
     { provide: AccountRepository, useClass: TypeOrmAccountRepository },
     FindAccountUsecase,
     FindAllAccountsUsecase,
+    GetAccountBalanceUsecase,
     SaveAccountUsecase,
     RemoveAccountUsecase,
   ],

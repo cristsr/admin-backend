@@ -1,11 +1,21 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { Body, Controller, Param, Post } from '@nestjs/common';
 import { AuthenticatedUser, CurrentUser } from '@shared';
-import { TransferInputDto, TransferOutputDto } from '../../../application/dto';
-import { CreateTransferUsecase } from '../../../application/usecases';
+import {
+  TransferInputDto,
+  TransferOutputDto,
+  TransferReversalOutputDto,
+} from '../../../application/dto';
+import {
+  CreateTransferUsecase,
+  ReverseTransferUsecase,
+} from '../../../application/usecases';
 
 @Controller('transfers')
 export class TransferController {
-  constructor(private readonly createTransferUsecase: CreateTransferUsecase) {}
+  constructor(
+    private readonly createTransferUsecase: CreateTransferUsecase,
+    private readonly reverseTransferUsecase: ReverseTransferUsecase,
+  ) {}
 
   @Post()
   async create(
@@ -13,5 +23,13 @@ export class TransferController {
     @Body() input: TransferInputDto,
   ): Promise<TransferOutputDto> {
     return this.createTransferUsecase.execute(input, user.id);
+  }
+
+  @Post(':transferGroup/reversal')
+  async reverse(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('transferGroup') transferGroup: string,
+  ): Promise<TransferReversalOutputDto> {
+    return this.reverseTransferUsecase.execute(transferGroup, user.id);
   }
 }

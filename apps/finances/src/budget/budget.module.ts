@@ -3,12 +3,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AccountModule } from '../account/account.module';
 import { CategoryModule } from '../category/category.module';
 import { MovementModule } from '../movement/movement.module';
-import { BudgetRepository } from './domain/budget';
+import { BudgetNotificationPublisher, BudgetRepository } from './domain/budget';
 import {
   BudgetThresholdExceededEventHandler,
   GenerateBudgetsEventHandler,
   MovementSavedEventHandler,
 } from './infrastructure/adapters/events';
+import { PgmqBudgetNotificationPublisher } from './infrastructure/adapters/messaging/pgmq-budget-notification.publisher';
 import { BudgetController } from './infrastructure/adapters/http';
 import {
   TypeOrmBudgetEntity,
@@ -44,6 +45,10 @@ import {
     GenerateBudgetsEventHandler,
     MovementSavedEventHandler,
     BudgetThresholdExceededEventHandler,
+    {
+      provide: BudgetNotificationPublisher,
+      useClass: PgmqBudgetNotificationPublisher,
+    },
   ],
   exports: [BudgetRepository],
 })
