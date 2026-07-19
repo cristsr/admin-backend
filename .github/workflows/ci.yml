@@ -35,17 +35,10 @@ jobs:
       - name: Install dependencies
         run: npm ci --legacy-peer-deps
 
-      - name: Create users database
-        run: |
-          PGPASSWORD=admin psql -h localhost -U postgres -c "CREATE DATABASE users;"
-
-      # exchanges/gateway are excluded: exchanges has a pre-existing unrelated
-      # broken import (../env), gateway no longer exists.
+      # `finances` is now the single monolith: it owns the users and exchanges
+      # tables, so one build/migration/test pass covers everything.
       - name: Build finances
         run: npx nx build finances
-
-      - name: Build users
-        run: npx nx build users
 
       - name: Run finances migrations against a fresh database
         env:
@@ -55,15 +48,5 @@ jobs:
           NODE_OPTIONS="-r tsconfig-paths/register" \
           npx typeorm-ts-node-commonjs migration:run -d apps/finances/src/database/data-source.ts
 
-      - name: Run users migrations against a fresh database
-        run: |
-          TS_NODE_PROJECT=apps/users/tsconfig.app.json \
-          NODE_OPTIONS="-r tsconfig-paths/register" \
-          npx typeorm-ts-node-commonjs migration:run -d apps/users/src/config/database/data-source.ts
-        env:
-          DB_URI: postgres://postgres:admin@localhost:5432/users
-
-      # users/gateway have a pre-existing, unrelated jest moduleNameMapper
-      # issue (tracked separately) — only finances' suite is green today.
       - name: Test finances
         run: npx nx test finances

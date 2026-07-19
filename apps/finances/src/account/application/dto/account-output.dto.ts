@@ -11,8 +11,14 @@ export class AccountOutputDto {
 
   currency: string;
 
-  /** Saldo vivo = initialBalance + suma firmada de movimientos. Se adjunta al
-   * listar/leer cuentas; ausente en respuestas que no lo calculan (ej. alta). */
+  /** AC-1 (sm-0003) — whether this account may hold a negative balance. */
+  allowNegativeBalance: boolean;
+
+  /**
+   * Live balance = initialBalance + signed sum of movements. Attached when
+   * listing/reading accounts; absent in responses that don't compute it
+   * (e.g. creation).
+   */
   balance?: number;
 
   user: number;

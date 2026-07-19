@@ -10,10 +10,10 @@ import {
 const round = (value: number) => Math.round(value * 100) / 100;
 
 /**
- * Consolida el balance de todas las cuentas del usuario en su moneda de
- * presentación, convirtiendo las de otra moneda con tasas históricas (AC-2).
- * La moneda de presentación llega como claim del JWT; si falta, se usa la moneda
- * de la primera cuenta.
+ * Consolidates the balance of all the user's accounts into their presentation
+ * currency, converting the ones in another currency with historical rates
+ * (AC-2). The presentation currency arrives as a JWT claim; if missing, the
+ * first account's currency is used.
  */
 @Injectable()
 export class GetConsolidatedBalanceUsecase {

@@ -15,11 +15,15 @@ import { DatabaseModule } from 'app/database/';
 import { ENV, Environment } from 'app/env';
 import { AccountModule } from 'app/account/account.module';
 import { BudgetModule } from 'app/budget/budget.module';
+import { CategorizationRuleModule } from 'app/categorization-rule/categorization-rule.module';
 import { CategoryModule } from 'app/category/category.module';
+import { IdempotencyModule } from 'app/idempotency/idempotency.module';
 import { MovementModule } from 'app/movement/movement.module';
+import { OutboxModule } from 'app/outbox/outbox.module';
 import { ScheduledModule } from 'app/scheduled/scheduled.module';
 import { SummaryModule } from 'app/summary/summary.module';
 import { TransferModule } from 'app/transfer/transfer.module';
+import { UserModule } from 'app/user/user.module';
 import { WebhookModule } from 'app/webhook/webhook.module';
 
 @Module({
@@ -53,7 +57,11 @@ import { WebhookModule } from 'app/webhook/webhook.module';
     BudgetModule,
     ScheduledModule,
     TransferModule,
+    UserModule,
     WebhookModule,
+    OutboxModule,
+    IdempotencyModule,
+    CategorizationRuleModule,
   ],
   controllers: [AppController],
   providers: [{ provide: APP_FILTER, useClass: ExceptionFilter }],

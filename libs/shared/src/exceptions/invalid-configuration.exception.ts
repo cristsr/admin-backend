@@ -1,5 +1,5 @@
-import { BaseException, BaseExceptionOptions } from './base.exception';
 import { ObjectLiteral } from '../types';
+import { BaseException, BaseExceptionOptions } from './base.exception';
 
 /**
  * Thrown at startup when the environment does not satisfy its schema.

@@ -9,7 +9,7 @@ const payload = {
 };
 
 describe('PgmqBudgetNotificationPublisher (AC-1)', () => {
-  it('publica en la cola configurada con el payload serializado', async () => {
+  it('publishes to the configured queue with the serialized payload', async () => {
     const dataSource = { query: jest.fn().mockResolvedValue([]) } as any;
     const config = { get: jest.fn().mockReturnValue('budget_threshold') } as any;
     const publisher = new PgmqBudgetNotificationPublisher(dataSource, config);
@@ -22,7 +22,7 @@ describe('PgmqBudgetNotificationPublisher (AC-1)', () => {
     ]);
   });
 
-  it('no propaga el error si la cola falla (no rompe el guardado del movimiento)', async () => {
+  it('does not propagate the error if the queue fails (does not break the movement save)', async () => {
     const dataSource = {
       query: jest.fn().mockRejectedValue(new Error('pgmq missing')),
     } as any;

@@ -1,13 +1,13 @@
 export class TransferReversalOutputDto {
-  /** transferGroup de la transferencia original anulada. */
+  /** transferGroup of the original reversed transfer. */
   originalTransferGroup: string;
 
-  /** transferGroup del par compensatorio creado. */
+  /** transferGroup of the created compensating pair. */
   reversalTransferGroup: string;
 
-  /** Movimiento compensatorio de la pata origen. */
+  /** Compensating movement for the source leg. */
   fromMovementId: number;
 
-  /** Movimiento compensatorio de la pata destino. */
+  /** Compensating movement for the destination leg. */
   toMovementId: number;
 }

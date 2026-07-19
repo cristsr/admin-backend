@@ -6,18 +6,18 @@ export class TransferOutputDto {
 
   toMovementId: number;
 
-  /** Monto debitado del origen, en la moneda del origen. */
+  /** Amount debited from the source, in the source currency. */
   amount: number;
 
   currency: string;
 
-  /** Monto acreditado en el destino (= amount * exchangeRate). */
+  /** Amount credited to the destination (= amount * exchangeRate). */
   toAmount: number;
 
-  /** Moneda del destino. */
+  /** Destination currency. */
   toCurrency: string;
 
-  /** Tasa aplicada origen→destino (1 si es la misma moneda). */
+  /** Rate applied source→destination (1 if it is the same currency). */
   exchangeRate: number;
 
   date: Date;

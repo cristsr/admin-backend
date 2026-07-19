@@ -2,10 +2,10 @@ import { IsEnum, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-valida
 import { PaymentMethod } from '../../domain/movement';
 
 /**
- * Edición parcial de un movimiento (AC-4). Todos los campos son opcionales.
- * No incluye `type` (inmutable) ni permite editar patas de transferencia.
- * En movimientos con source=WEBHOOK solo se aceptan notes, category,
- * subcategory y paymentMethod (el usecase rechaza el resto).
+ * Partial edit of a movement (AC-4). All fields are optional. Excludes `type`
+ * (immutable) and does not allow editing transfer legs. On movements with
+ * source=WEBHOOK only notes, category, subcategory and paymentMethod are
+ * accepted (the usecase rejects the rest).
  */
 export class MovementPatchDto {
   @IsOptional()

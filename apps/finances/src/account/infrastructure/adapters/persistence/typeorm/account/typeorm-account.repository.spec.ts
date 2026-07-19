@@ -1,7 +1,7 @@
 import { TypeOrmAccountRepository } from './typeorm-account.repository';
 
-describe('TypeOrmAccountRepository saldo (AC-3)', () => {
-  it('movementBalance devuelve la suma firmada como número', async () => {
+describe('TypeOrmAccountRepository balance (AC-3)', () => {
+  it('movementBalance returns the signed sum as a number', async () => {
     const dataSource = {
       query: jest.fn().mockResolvedValue([{ total: '150.00' }]),
     } as any;
@@ -16,7 +16,7 @@ describe('TypeOrmAccountRepository saldo (AC-3)', () => {
     );
   });
 
-  it('movementBalancesByUser indexa por account_id', async () => {
+  it('movementBalancesByUser indexes by account_id', async () => {
     const dataSource = {
       query: jest.fn().mockResolvedValue([
         { account_id: 1, total: '150.00' },

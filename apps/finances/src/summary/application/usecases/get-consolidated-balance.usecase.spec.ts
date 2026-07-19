@@ -28,7 +28,7 @@ describe('GetConsolidatedBalanceUsecase (AC-2)', () => {
     );
   });
 
-  it('consolida en la moneda de presentación convirtiendo las de otra moneda', async () => {
+  it('consolidates in the presentation currency converting the ones in another currency', async () => {
     const result = await usecase.execute({}, 7, 'COP');
 
     // COP: rate 1 → 1000; USD: rate 4000 → 2*4000 = 8000; total 9000
@@ -44,13 +44,13 @@ describe('GetConsolidatedBalanceUsecase (AC-2)', () => {
     expect(usd?.balanceInPresentationCurrency).toBe(8000);
   });
 
-  it('no llama al provider para cuentas ya en la moneda de presentación', async () => {
+  it('does not call the provider for accounts already in the presentation currency', async () => {
     accountRepository.findAllByUser.mockResolvedValue([{ id: 1, currency: 'COP' }]);
     await usecase.execute({}, 7, 'COP');
     expect(exchangeRateProvider.getRate).not.toHaveBeenCalled();
   });
 
-  it('sin claim de moneda usa la moneda de la primera cuenta', async () => {
+  it('without a currency claim uses the currency of the first account', async () => {
     accountRepository.findAllByUser.mockResolvedValue([{ id: 1, currency: 'EUR' }]);
     const result = await usecase.execute({}, 7, undefined);
     expect(result.presentationCurrency).toBe('EUR');

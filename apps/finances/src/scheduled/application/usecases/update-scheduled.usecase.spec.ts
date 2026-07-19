@@ -42,14 +42,14 @@ describe('UpdateScheduledUsecase (AC-5)', () => {
     );
   });
 
-  it('404 si el programado es de otro usuario', async () => {
+  it('404 when the scheduled belongs to another user', async () => {
     scheduledRepository.findByIdAndUser.mockResolvedValue(null);
     await expect(usecase.execute(1, { amount: 10 }, 7)).rejects.toThrow(
       ScheduledNotFoundException,
     );
   });
 
-  it('actualiza monto y frecuencia sin tocar el type', async () => {
+  it('updates amount and frequency without touching the type', async () => {
     scheduledRepository.findByIdAndUser.mockResolvedValue(buildScheduled());
     const result = await usecase.execute(
       1,
@@ -62,10 +62,10 @@ describe('UpdateScheduledUsecase (AC-5)', () => {
     expect(scheduledRepository.save).toHaveBeenCalled();
   });
 
-  it('no genera ni modifica movimientos ya materializados (solo edita el template)', async () => {
+  it('does not create or modify already-materialized movements (only edits the template)', async () => {
     scheduledRepository.findByIdAndUser.mockResolvedValue(buildScheduled());
     await usecase.execute(1, { amount: 10 }, 7);
-    // el usecase solo persiste el template; no toca la tabla movements
+    // the usecase only persists the template; it does not touch the movements table
     expect(scheduledRepository.save).toHaveBeenCalledTimes(1);
   });
 });

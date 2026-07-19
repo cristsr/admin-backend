@@ -1,6 +1,6 @@
 /**
- * Umbral de gasto de un presupuesto. Enum-like guardado como varchar; los
- * valores permitidos viven en la capa de aplicación/dominio, no en la DB.
+ * Spending threshold of a budget. Enum-like, stored as varchar; the allowed
+ * values live in the application/domain layer, not in the DB.
  */
 export enum BudgetThreshold {
   WARNING = 'WARNING',

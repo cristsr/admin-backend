@@ -9,7 +9,9 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * is the current period. When a repeating budget rolls over, the previous one
  * is deactivated and kept as history — that is not a deletion.
  */
-export class DropActiveExceptBudgets1784073600016 implements MigrationInterface {
+export class DropActiveExceptBudgets1784073600016
+  implements MigrationInterface
+{
   name = 'DropActiveExceptBudgets1784073600016';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

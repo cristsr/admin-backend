@@ -31,7 +31,7 @@ export default {
     // (e.g. inside @shared/auth), mis-mapping it to this env.ts and creating a
     // circular init (`mapEnvironmentKeys is not a function`).
     '^env$': '<rootDir>/src/env',
-    'app/(.*)': '<rootDir>/src/app/$1',
+    '^app/(.*)$': '<rootDir>/src/$1',
     'database/(.*)': '<rootDir>/src/database/$1',
   },
 };

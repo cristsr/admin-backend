@@ -1,6 +1,6 @@
-import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
 import { AuthenticatedUser, CurrentUser } from '@shared';
-import { AccountBalanceOutputDto, AccountInputDto, AccountOutputDto, UserAccountFilterDto } from '../../../application/dto';
+import { AccountArchivedOutputDto, AccountBalanceOutputDto, AccountInputDto, AccountOutputDto, UserAccountFilterDto } from '../../../application/dto';
 import { AccountMapper } from '../../../application/mappers';
 import { FindAccountUsecase, FindAllAccountsUsecase, GetAccountBalanceUsecase, RemoveAccountUsecase, SaveAccountUsecase } from '../../../application/usecases';
 
@@ -47,11 +47,11 @@ export class AccountController {
   }
 
   @Delete(':id')
+  @HttpCode(200)
   async remove(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: number,
-  ): Promise<{ status: boolean }> {
-    const status = await this.removeAccountUsecase.execute(id, user.id);
-    return { status };
+  ): Promise<AccountArchivedOutputDto> {
+    return this.removeAccountUsecase.execute(id, user.id);
   }
 }

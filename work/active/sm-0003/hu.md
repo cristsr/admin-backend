@@ -17,10 +17,12 @@ Hoy se puede transferir más de lo que hay en la cuenta origen. El sistema debe 
 aplicar una política sobre saldo insuficiente en transferencias.
 
 - Al crear una transferencia, el sistema evalúa si la cuenta origen tiene saldo suficiente.
-- El comportamiento ante saldo insuficiente sigue una política definida (rechazar / permitir saldo negativo).
-
-[NEEDS CLARIFICATION: ¿la política es global, por cuenta, o configurable por usuario? (algunas cuentas — tarjetas de crédito — deberían permitir saldo negativo)]
-[NEEDS CLARIFICATION: el saldo a validar depende del "saldo vivo" definido en `sm-0001` AC-3; ¿esta historia asume ese cálculo disponible?]
+- La política de saldo insuficiente se define **por cuenta**: cada cuenta declara si admite
+  saldo negativo (p. ej. una tarjeta de crédito lo admite; una cuenta de débito no).
+- Si la cuenta origen no admite saldo negativo y la transferencia la dejaría en negativo, el
+  sistema rechaza la operación. Si la cuenta admite saldo negativo, la transferencia procede.
+- El saldo evaluado es el "saldo vivo" definido en `sm-0001` AC-3; esta historia **reutiliza**
+  ese cálculo (dependencia explícita), no implementa uno propio.
 
 ### AC-2: Patrón Outbox transaccional para eventos de dominio
 
@@ -28,12 +30,14 @@ aplicar una política sobre saldo insuficiente en transferencias.
 del movimiento y la ejecución del handler, el cruce de presupuesto se pierde. El sistema debe
 persistir los eventos de dominio de forma transaccional con el cambio que los origina.
 
+- **Todo evento de dominio** que hoy se emite con `EventEmitter2` se persiste en la tabla
+  outbox dentro de la misma transacción que el cambio que lo origina (mecanismo genérico, no
+  limitado a `movement.saved`/`BudgetThresholdExceeded`).
 - El evento se persiste en la misma transacción que el movimiento que lo dispara.
-- Un proceso relee la tabla outbox y entrega los eventos pendientes de forma confiable, con reintentos.
+- Un **cron interno** (scheduler dentro de la app `finances`, patrón de
+  `infrastructure/adapters/schedulers/`) relee la tabla outbox y entrega los eventos
+  pendientes de forma confiable, con reintentos.
 - Un evento no entregado no se pierde ante una caída del proceso.
-
-[NEEDS CLARIFICATION: ¿qué eventos entran al outbox — solo `movement.saved`/`BudgetThresholdExceeded`, o todo evento de dominio?]
-[NEEDS CLARIFICATION: ¿el relay del outbox es un cron interno, o un proceso/worker separado?]
 
 ### AC-3: Idempotencia en escrituras de usuario
 
@@ -42,9 +46,11 @@ duplicados. El sistema debe aceptar una `Idempotency-Key` en las escrituras de u
 
 - `POST /movements` y `POST /transfers` aceptan un header `Idempotency-Key`.
 - Dos requests con la misma clave y el mismo cuerpo producen un solo registro y devuelven el mismo resultado.
-
-[NEEDS CLARIFICATION: ¿cuánto tiempo se retiene una `Idempotency-Key` antes de expirar?]
-[NEEDS CLARIFICATION: ¿qué pasa si llega la misma clave con un cuerpo distinto — error 422, o se ignora y devuelve el original?]
+- Una `Idempotency-Key` se retiene **24 horas**; pasado ese plazo expira y puede reutilizarse.
+  Un job de limpieza purga las claves vencidas.
+- Si llega la misma clave (aún vigente) con un **cuerpo distinto** al del request original, el
+  sistema responde **422** (conflicto de idempotencia); no crea un registro nuevo ni devuelve
+  el original silenciosamente.
 
 ### AC-4: Reglas de auto-categorización
 
@@ -52,24 +58,42 @@ Al llegar un movimiento por webhook sin categoría, el sistema puede asignarle u
 automáticamente según reglas por `merchant` o patrón de descripción definidas por el usuario.
 
 - El usuario puede definir reglas (patrón → categoría/subcategoría).
+- Una regla matchea si su patrón aparece como **substring case-insensitive** en el `merchant`
+  o en la descripción del movimiento. Si varias reglas matchean, gana la de mayor **prioridad
+  explícita** (campo de orden/prioridad definido por el usuario).
+- Las reglas se aplican a **cualquier movimiento sin categoría**, tanto los entrantes por
+  webhook como los creados manualmente sin categoría (nunca pisan una categoría ya asignada).
 - Un movimiento entrante sin categoría que matchea una regla queda categorizado automáticamente.
-- Si ninguna regla matchea, el movimiento queda sin categoría (o con una categoría por defecto).
-
-[NEEDS CLARIFICATION: ¿las reglas se aplican solo a movimientos de webhook, o también a los manuales?]
-[NEEDS CLARIFICATION: ¿el match es por igualdad de `merchant`, por substring, o por expresión más rica? ¿Qué gana si varias reglas matchean?]
-[NEEDS CLARIFICATION: ¿existe una categoría "Sin categorizar" por defecto, o el campo queda nulo?]
+- Si ninguna regla matchea, el movimiento se asigna a una categoría por defecto **"Sin
+  categorizar"** (categoría sistémica), no queda con el campo nulo.
 
 ### AC-5: Política de cierre/archivado de cuentas con movimientos
 
 Hoy `DELETE` de cuenta es soft-delete, sin definir qué pasa con sus movimientos y las
 transferencias enlazadas. El sistema debe aplicar una política explícita.
 
-- Al eliminar/archivar una cuenta, el sistema aplica una regla definida sobre sus movimientos
-  y sobre las transferencias donde participa.
+- Al eliminar/archivar una cuenta se hace **soft-delete en cascada**: la cuenta se archiva y
+  sus movimientos quedan soft-deleted junto con ella.
+- Un movimiento soft-deleted **no se tiene en cuenta en ningún cálculo** (saldo, reportes,
+  totales de movimientos): se preserva el historial pero deja de contar.
 - La operación no deja transferencias con una sola pata válida.
+- Si una transferencia de la cuenta archivada tiene su contraparte en una cuenta que sigue
+  activa, se **soft-deletea el par completo** (ambas patas del `transferGroup`), aunque la
+  otra cuenta permanezca activa. Nunca queda una transferencia con una sola pata.
 
-[NEEDS CLARIFICATION: ¿la política es bloquear el borrado si la cuenta tiene saldo o movimientos, archivar en cascada, o reasignar los movimientos a otra cuenta?]
-[NEEDS CLARIFICATION: ¿qué pasa con una transferencia cuya contraparte sigue en una cuenta activa?]
+## Resolución de Ambigüedades
+
+- **AC-1:** ¿A qué nivel se define la política de saldo insuficiente? → Configurable **por cuenta**: cada cuenta declara si admite saldo negativo (tarjeta de crédito sí, débito no).
+- **AC-1:** ¿De dónde sale el saldo a validar? → **Reutiliza** el "saldo vivo" de `sm-0001` AC-3 (dependencia explícita), no implementa cálculo propio.
+- **AC-2:** ¿Qué eventos entran al outbox? → **Todo evento de dominio** hoy emitido con `EventEmitter2` (mecanismo genérico).
+- **AC-2:** ¿Cómo corre el relay? → **Cron interno** (scheduler en la app `finances`, patrón de `infrastructure/adapters/schedulers/`), no un worker separado.
+- **AC-3:** ¿Cuánto se retiene una `Idempotency-Key`? → **24 horas**, luego expira; un job purga las vencidas.
+- **AC-3:** ¿Misma clave con cuerpo distinto? → Responde **422** (conflicto de idempotencia), no crea registro ni devuelve el original en silencio.
+- **AC-4:** ¿Cómo matchea una regla y quién gana? → **Substring case-insensitive** sobre `merchant`/descripción; ante empate gana la de mayor **prioridad explícita**.
+- **AC-4:** ¿A qué movimientos aplica? → A **cualquier movimiento sin categoría** (webhook y manual); nunca pisa una categoría ya asignada.
+- **AC-4:** ¿Sin match, cómo queda? → Categoría por defecto **"Sin categorizar"** (categoría sistémica), no campo nulo.
+- **AC-5:** ¿Política al archivar una cuenta con movimientos? → **Soft-delete en cascada**; los movimientos soft-deleted **no cuentan en ningún cálculo** (saldo/reportes), se preserva el historial.
+- **AC-5:** ¿Transferencia con contraparte en cuenta activa? → Se **soft-deletea el par completo** (ambas patas del `transferGroup`); nunca queda una sola pata.
 
 ## Reglas de Negocio
 
@@ -82,3 +106,29 @@ transferencias enlazadas. El sistema debe aplicar una política explícita.
 
 - El canal de entrega de notificaciones que consumirá el outbox — se define en `sm-0001` (AC-1).
   Esta historia garantiza la persistencia y el relay confiable, no el destino final.
+
+## Technical Context
+
+### Microservicio objetivo
+- `apps/finances` — toda la historia (AC-1 a AC-5) cae en esta app; sus módulos
+  (`account`, `movement`/`transfer`, `budget`, `category`) más lo nuevo para outbox
+  e idempotencia.
+
+### Patrones obligatorios
+- Los patrones ya establecidos en el proyecto: arquitectura hexagonal por módulo
+  (`domain`/`application`/`infrastructure/adapters`), puertos como `abstract class`
+  para DI, DTOs `*-input`/`*-output`, columnas tipo-enum como varchar.
+- Para idempotencia, aplicar validaciones sobre el body del request (el hash/comparación
+  del cuerpo forma parte de la verificación de la `Idempotency-Key`).
+
+### Restricciones técnicas
+- No usar enums de PostgreSQL (valores permitidos solo en la capa de aplicación).
+- No romper los contratos de API existentes (webhook y endpoints actuales).
+- No tocar el flujo de cálculo de saldo de `sm-0001` más allá de consumirlo.
+- El relay del outbox no debe bloquear el request HTTP que origina el evento.
+
+### Integraciones conocidas
+- Se reutiliza **PGMQ** (el componente de mensajería que ya vive en la base de datos,
+  usado por el publisher de presupuestos); no se introducen componentes nuevos.
+- El mecanismo de mensajería debe quedar **detrás de una abstracción** (puerto) para
+  poder intercambiarlo fácilmente más adelante (p. ej. RabbitMQ) sin reescribir el dominio.

@@ -1,7 +1,7 @@
 import { FindAllAccountsUsecase } from './find-all-accounts.usecase';
 
-describe('FindAllAccountsUsecase (AC-3 saldo embebido)', () => {
-  it('adjunta el saldo vivo a cada cuenta', async () => {
+describe('FindAllAccountsUsecase (AC-3 embedded balance)', () => {
+  it('attaches the live balance to each account', async () => {
     const accountRepository = {
       findAllByUser: jest.fn().mockResolvedValue([
         { id: 1, name: 'A', initialBalance: 100, currency: 'COP', user: 7 },
@@ -14,7 +14,7 @@ describe('FindAllAccountsUsecase (AC-3 saldo embebido)', () => {
     const result = await usecase.execute(7);
 
     expect(result[0].balance).toBe(150);
-    // cuenta sin movimientos: balance = initialBalance
+    // account with no movements: balance = initialBalance
     expect(result[1].balance).toBe(0);
   });
 });

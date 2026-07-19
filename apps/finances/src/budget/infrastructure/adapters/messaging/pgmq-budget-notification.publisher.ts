@@ -8,12 +8,13 @@ import {
 } from '../../../domain/budget';
 
 /**
- * Publica la alerta en una cola PGMQ (Postgres Message Queue) sobre la misma DB,
- * de la que un consumidor externo la toma. No se suma un broker externo (AC-1).
+ * Publishes the alert on a PGMQ (Postgres Message Queue) queue over the same
+ * DB, from which an external consumer takes it. No external broker is added
+ * (AC-1).
  *
- * ⚠️ Requiere la extensión `pgmq` instalada en Postgres y la cola creada
- * (`SELECT pgmq.create('budget_threshold');`). Sin ella, `publish` registra el
- * fallo pero no interrumpe el flujo del movimiento que la originó.
+ * ⚠️ Requires the `pgmq` extension installed in Postgres and the queue created
+ * (`SELECT pgmq.create('budget_threshold');`). Without it, `publish` logs the
+ * failure but does not interrupt the flow of the movement that triggered it.
  */
 @Injectable()
 export class PgmqBudgetNotificationPublisher
@@ -35,8 +36,8 @@ export class PgmqBudgetNotificationPublisher
         JSON.stringify(payload),
       ]);
     } catch (error) {
-      // No romper el guardado del movimiento por un fallo de entrega: la
-      // notificación se reintenta/consume aparte.
+      // Do not break the movement save because of a delivery failure: the
+      // notification is retried/consumed separately.
       this.#logger.error(
         `Failed to publish budget threshold notification to queue "${queue}": ${error}`,
       );

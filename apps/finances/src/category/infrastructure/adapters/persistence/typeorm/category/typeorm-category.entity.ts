@@ -13,6 +13,9 @@ export class TypeOrmCategoryEntity extends BaseEntity {
   @Column()
   color: string;
 
+  @Column({ type: 'boolean', default: false })
+  system: boolean;
+
   @OneToMany(() => TypeOrmSubcategoryEntity, (t) => t.category)
   subcategories: TypeOrmSubcategoryEntity[];
 }

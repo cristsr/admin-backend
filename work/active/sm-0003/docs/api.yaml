@@ -1,0 +1,495 @@
+openapi: 3.1.0
+info:
+  title: sm-0003 API
+  version: "1.0.0"
+  description: >
+    Contrato generado por /design para sm-0003: Robustez del dominio y consistencia.
+    Cubre validación de saldo en transferencias (AC-1), idempotencia en escrituras de
+    usuario (AC-3), reglas de auto-categorización (AC-4) y archivado de cuentas en
+    cascada (AC-5). AC-2 (patrón Outbox) no expone endpoints — es infraestructura interna.
+tags:
+  - name: accounts
+    description: Cuentas — política de saldo negativo y archivado en cascada
+  - name: transfers
+    description: Transferencias — validación de saldo e idempotencia
+  - name: movements
+    description: Movimientos — idempotencia y categoría opcional (auto-categorización)
+  - name: categorization-rules
+    description: Reglas de auto-categorización definidas por el usuario
+
+components:
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      description: >
+        Clave de idempotencia opcional. Dos requests del mismo usuario con la misma
+        clave y el mismo cuerpo producen un único registro y devuelven la misma
+        respuesta. La clave se retiene 24h. Ver respuestas 409/422.
+      schema:
+        type: string
+        maxLength: 255
+
+  schemas:
+    ErrorResponse:
+      type: object
+      description: Formato de error del ExceptionFilter global de @shared.
+      required: [statusCode, message]
+      properties:
+        statusCode:
+          type: integer
+        message:
+          type: string
+        error:
+          type: string
+
+    AccountInput:
+      type: object
+      required: [name, currency]
+      properties:
+        name:
+          type: string
+        initialBalance:
+          type: number
+          description: Saldo inicial de la cuenta.
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+          description: Código ISO de moneda (3 letras).
+        allowNegativeBalance:
+          type: boolean
+          default: false
+          description: >
+            AC-1 — si es true, la cuenta admite saldo negativo (p. ej. tarjeta de
+            crédito) y las transferencias que la dejen en negativo no se rechazan.
+
+    AccountOutput:
+      type: object
+      required: [id, name, currency, allowNegativeBalance]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        initialBalance:
+          type: number
+        currency:
+          type: string
+        allowNegativeBalance:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    AccountArchivedOutput:
+      type: object
+      description: AC-5 — resultado del archivado en cascada de una cuenta.
+      required: [accountId, archivedMovements, archivedTransfers]
+      properties:
+        accountId:
+          type: integer
+        archivedMovements:
+          type: integer
+          description: Movimientos de la cuenta que quedaron soft-deleted.
+        archivedTransfers:
+          type: integer
+          description: Pares de transferencia (transferGroup) soft-deleted por completo.
+
+    MovementInput:
+      type: object
+      description: >
+        Contrato de creación de movimiento manual. Esta historia lo modifica en un
+        único punto — categoryId pasa a ser OPCIONAL (AC-4): si se omite, se aplican
+        las reglas de auto-categorización y, sin match, la categoría por defecto
+        "Sin categorizar". El resto de campos es el contrato existente.
+      required: [date, type, amount, currency, accountId]
+      properties:
+        date:
+          type: string
+          format: date-time
+        type:
+          type: string
+          description: Tipo de movimiento (MovementType, enum-like en la capa app).
+        description:
+          type: string
+        merchant:
+          type: string
+        notes:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+          minLength: 3
+          maxLength: 3
+        paymentMethod:
+          type: string
+          description: PaymentMethod (enum-like en la capa app).
+        categoryId:
+          type: integer
+          description: >
+            AC-4 — opcional. Si se omite, ApplyCategorizationRulesUsecase asigna la
+            categoría según reglas del usuario, o la categoría por defecto sin match.
+        subcategoryId:
+          type: integer
+        accountId:
+          type: integer
+
+    MovementOutput:
+      type: object
+      required: [id, date, type, amount, currency, accountId, categoryId]
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+          format: date-time
+        type:
+          type: string
+        description:
+          type: string
+        merchant:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        categoryId:
+          type: integer
+        subcategoryId:
+          type: integer
+        accountId:
+          type: integer
+        transferGroup:
+          type: string
+
+    TransferInput:
+      type: object
+      description: >
+        Contrato existente de TransferInputDto. Esta historia NO modifica el body;
+        solo agrega el header Idempotency-Key y la respuesta 422 por saldo insuficiente
+        (AC-1). Campos según el uso en CreateTransferUsecase.
+      required: [sourceAccountId, targetAccountId, amount, date]
+      properties:
+        sourceAccountId:
+          type: integer
+        targetAccountId:
+          type: integer
+        amount:
+          type: number
+        date:
+          type: string
+          format: date-time
+        description:
+          type: string
+        notes:
+          type: string
+
+    TransferOutput:
+      type: object
+      required: [transferGroup]
+      properties:
+        transferGroup:
+          type: string
+        outMovementId:
+          type: integer
+        inMovementId:
+          type: integer
+
+    CategorizationRuleInput:
+      type: object
+      required: [pattern, categoryId]
+      properties:
+        pattern:
+          type: string
+          description: >
+            Substring a buscar (case-insensitive) en merchant o descripción del movimiento.
+        categoryId:
+          type: integer
+        subcategoryId:
+          type: integer
+        priority:
+          type: integer
+          default: 0
+          description: A mayor prioridad, gana ante varias reglas que matcheen.
+
+    CategorizationRuleUpdateInput:
+      type: object
+      description: Actualización parcial de una regla (todos los campos opcionales).
+      properties:
+        pattern:
+          type: string
+        categoryId:
+          type: integer
+        subcategoryId:
+          type: integer
+        priority:
+          type: integer
+
+    CategorizationRuleOutput:
+      type: object
+      required: [id, pattern, categoryId, priority]
+      properties:
+        id:
+          type: integer
+        pattern:
+          type: string
+        categoryId:
+          type: integer
+        subcategoryId:
+          type: integer
+        priority:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+paths:
+  /accounts:
+    post:
+      tags: [accounts]
+      operationId: createAccount
+      summary: Crear cuenta, declarando si admite saldo negativo (AC-1)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountInput'
+      responses:
+        '201':
+          description: Cuenta creada con su política de saldo negativo.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountOutput'
+
+  /accounts/{id}:
+    patch:
+      tags: [accounts]
+      operationId: updateAccount
+      summary: Actualizar cuenta, incluyendo allowNegativeBalance (AC-1)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccountInput'
+      responses:
+        '200':
+          description: Cuenta actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountOutput'
+        '404':
+          description: La cuenta no existe o no pertenece al usuario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [accounts]
+      operationId: archiveAccount
+      summary: Archivar cuenta en cascada (AC-5)
+      description: >
+        Reemplaza el bloqueo por AccountHasMovementsException. Soft-deletea la cuenta,
+        sus movimientos, y ambas patas de cada transferencia donde participa (aunque la
+        contraparte siga en una cuenta activa). Lo soft-deleted deja de contar en saldos
+        y reportes.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Cuenta y sus movimientos/transferencias archivados en cascada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccountArchivedOutput'
+        '404':
+          description: La cuenta no existe o no pertenece al usuario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /movements:
+    post:
+      tags: [movements]
+      operationId: createMovement
+      summary: Crear movimiento (idempotente y con categoría opcional)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovementInput'
+      responses:
+        '201':
+          description: Movimiento creado (categorizado por regla o categoría por defecto si se omitió categoryId).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovementOutput'
+        '200':
+          description: Replay idempotente — misma Idempotency-Key y mismo cuerpo ya procesados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovementOutput'
+        '409':
+          description: Ya hay un request en curso con la misma Idempotency-Key (aún no completado).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: La Idempotency-Key ya se usó con un cuerpo distinto (conflicto de idempotencia).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /transfers:
+    post:
+      tags: [transfers]
+      operationId: createTransfer
+      summary: Crear transferencia (valida saldo e idempotencia)
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferInput'
+      responses:
+        '201':
+          description: Transferencia creada como par de movimientos enlazados por transferGroup.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferOutput'
+        '200':
+          description: Replay idempotente — misma Idempotency-Key y mismo cuerpo ya procesados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferOutput'
+        '409':
+          description: Ya hay un request en curso con la misma Idempotency-Key (aún no completado).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '422':
+          description: >
+            Saldo insuficiente en la cuenta origen que no admite saldo negativo (AC-1),
+            o la Idempotency-Key ya se usó con un cuerpo distinto (AC-3). El campo message
+            distingue el caso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /categorization-rules:
+    post:
+      tags: [categorization-rules]
+      operationId: createCategorizationRule
+      summary: Crear una regla de auto-categorización (AC-4)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategorizationRuleInput'
+      responses:
+        '201':
+          description: Regla creada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategorizationRuleOutput'
+        '404':
+          description: La categoría o subcategoría referenciada no existe.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      tags: [categorization-rules]
+      operationId: listCategorizationRules
+      summary: Listar las reglas del usuario, ordenadas por prioridad descendente
+      responses:
+        '200':
+          description: Reglas del usuario autenticado.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CategorizationRuleOutput'
+
+  /categorization-rules/{id}:
+    patch:
+      tags: [categorization-rules]
+      operationId: updateCategorizationRule
+      summary: Actualizar una regla de auto-categorización (AC-4)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategorizationRuleUpdateInput'
+      responses:
+        '200':
+          description: Regla actualizada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CategorizationRuleOutput'
+        '404':
+          description: La regla no existe o no pertenece al usuario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [categorization-rules]
+      operationId: deleteCategorizationRule
+      summary: Eliminar una regla de auto-categorización (AC-4)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Regla eliminada.
+        '404':
+          description: La regla no existe o no pertenece al usuario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'

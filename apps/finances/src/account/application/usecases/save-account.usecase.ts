@@ -20,6 +20,8 @@ export class SaveAccountUsecase {
       name: input.name,
       initialBalance: input.initialBalance,
       currency: input.currency,
+      allowNegativeBalance:
+        input.allowNegativeBalance ?? existing?.allowNegativeBalance ?? false,
       user,
     } as Account);
 

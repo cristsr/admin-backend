@@ -8,9 +8,17 @@ export class MovementInputDto {
 
   date: Date;
 
-  category: number;
+  /**
+   * AC-4 (sm-0003) — optional. When omitted, auto-categorization rules assign a
+   * category, falling back to the default "Sin categorizar".
+   */
+  @IsOptional()
+  @Min(1)
+  category?: number;
 
-  subcategory: number;
+  @IsOptional()
+  @Min(1)
+  subcategory?: number;
 
   account: number;
 

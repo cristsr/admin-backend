@@ -12,11 +12,11 @@ import {
 import { TransferReversalOutputDto } from '../dto/transfer-reversal-output.dto';
 
 /**
- * Anula una transferencia con una reversa compensatoria: crea un par de
- * movimientos que compensan las patas originales (tipo invertido), sin borrar
- * nada. Idempotencia sin columna nueva: el par compensatorio usa
- * `reversal:{transferGroup}` como su propio transferGroup; un segundo intento
- * lo encuentra y falla con 409.
+ * Cancels a transfer with a compensating reversal: creates a pair of movements
+ * that offset the original legs (inverted type), without deleting anything.
+ * Idempotency without a new column: the compensating pair uses
+ * `reversal:{transferGroup}` as its own transferGroup; a second attempt finds
+ * it and fails with 409.
  */
 @Injectable()
 export class ReverseTransferUsecase {

@@ -2,9 +2,9 @@ import { IsEnum, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-valida
 import { Frequency } from '../../domain/scheduled';
 
 /**
- * Edición parcial de un movimiento programado (AC-5). Todos los campos son
- * opcionales. No incluye `type` (inmutable). El cambio solo afecta ocurrencias
- * futuras; los movimientos ya materializados no se modifican.
+ * Partial edit of a scheduled movement (AC-5). All fields are optional.
+ * Excludes `type` (immutable). The change only affects future occurrences;
+ * already-materialized movements are not modified.
  */
 export class ScheduledPatchDto {
   @IsOptional()

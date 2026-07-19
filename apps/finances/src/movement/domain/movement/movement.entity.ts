@@ -23,8 +23,10 @@ export class Movement {
 
   description: string;
 
-  /** Who charged. Kept apart from `description` so editing the note never
-   * destroys the merchant the ingestion extracted. */
+  /**
+   * Who charged. Kept apart from `description` so editing the note never
+   * destroys the merchant the ingestion extracted.
+   */
   merchant?: string;
 
   /** Free-form note owned by the user. */
@@ -50,16 +52,22 @@ export class Movement {
 
   account?: MovementAccountSummary;
 
-  /** Id of the transaction in the source system — exists for idempotent
-   * delivery, and is not a pointer to the invoice document. */
+  /**
+   * Id of the transaction in the source system — exists for idempotent
+   * delivery, and is not a pointer to the invoice document.
+   */
   externalReference?: string;
 
-  /** Ties the two legs of a transfer together. Both legs share it, so one can
-   * be reached from the other. */
+  /**
+   * Ties the two legs of a transfer together. Both legs share it, so one can
+   * be reached from the other.
+   */
   transferGroup?: string;
 
-  /** Source invoice this movement was extracted from, when there is one.
-   * One invoice maps to exactly one movement. */
+  /**
+   * Source invoice this movement was extracted from, when there is one.
+   * One invoice maps to exactly one movement.
+   */
   invoiceNumber?: string;
 
   invoiceIssuer?: string;

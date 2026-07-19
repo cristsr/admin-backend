@@ -31,6 +31,14 @@ export class TypeOrmCategoryRepository implements CategoryRepository {
     return entity ? TypeOrmCategoryMapper.toDomain(entity) : null;
   }
 
+  async findSystemDefault(): Promise<Nullable<Category>> {
+    const entity = await this.repository.findOne({
+      where: { system: true },
+      order: { id: 'ASC' },
+    });
+    return entity ? TypeOrmCategoryMapper.toDomain(entity) : null;
+  }
+
   async findAll(query?: CategoryQuery): Promise<Category[]> {
     const entities = await this.repository.find({
       relations: ['subcategories'],

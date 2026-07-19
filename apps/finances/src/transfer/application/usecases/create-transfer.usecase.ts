@@ -11,7 +11,10 @@ import {
   MovementSource,
   MovementType,
 } from '../../../movement/domain/movement';
-import { SameAccountTransferException } from '../../domain';
+import {
+  InsufficientBalanceException,
+  SameAccountTransferException,
+} from '../../domain';
 import { TransferInputDto } from '../dto/transfer-input.dto';
 import { TransferOutputDto } from '../dto/transfer-output.dto';
 
@@ -21,9 +24,10 @@ import { TransferOutputDto } from '../dto/transfer-output.dto';
  * share a transfer group, rather than as a loose expense plus a loose income
  * that the reports would count as real spending and earning.
  *
- * Cross-currency: el usuario indica el monto en la moneda origen; el destino se
- * calcula con la tasa de `exchanges` a la fecha (AC-2). Si no hay tasa, el
- * provider lanza ExchangeRateUnavailableException (422).
+ * Cross-currency: the user provides the amount in the source currency; the
+ * destination is computed with the `exchanges` rate at the given date (AC-2).
+ * If there is no rate, the provider throws ExchangeRateUnavailableException
+ * (422).
  */
 @Injectable()
 export class CreateTransferUsecase {
@@ -54,6 +58,21 @@ export class CreateTransferUsecase {
 
     if (!to) {
       throw new AccountNotFoundException('Destination account not found');
+    }
+
+    // AC-1: reject only when the source forbids going negative and the live
+    // balance (initialBalance + signed movements) cannot cover the amount.
+    if (!from.allowNegativeBalance) {
+      const movementBalance = await this.accountRepository.movementBalance(
+        from.id,
+        user,
+      );
+      const liveBalance = (from.initialBalance ?? 0) + movementBalance;
+      if (liveBalance - input.amount < 0) {
+        throw new InsufficientBalanceException(
+          `Account ${from.id} has insufficient balance for this transfer`,
+        );
+      }
     }
 
     let exchangeRate = 1;

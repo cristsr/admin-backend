@@ -12,6 +12,13 @@ export class TypeOrmAccountEntity extends BaseEntity {
   @Column({ length: 3 })
   currency: string;
 
+  @Column({
+    name: 'allow_negative_balance',
+    type: 'boolean',
+    default: false,
+  })
+  allowNegativeBalance: boolean;
+
   @Column({ name: 'user_id', nullable: true })
   user: number;
 }

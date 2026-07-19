@@ -10,6 +10,7 @@ export class AccountMapper {
       name: account.name,
       initialBalance: account.initialBalance,
       currency: account.currency,
+      allowNegativeBalance: account.allowNegativeBalance,
       user: account.user,
     };
   }

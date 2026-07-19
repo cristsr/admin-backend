@@ -16,6 +16,12 @@ export class Category {
 
   color: string;
 
+  /**
+   * AC-4 (sm-0003) — marks a system-managed category (e.g. the default
+   * "Sin categorizar"). System categories cannot be deleted via the API.
+   */
+  system: boolean;
+
   subcategories?: Subcategory[];
 
   private constructor(payload?: Partial<Category>) {

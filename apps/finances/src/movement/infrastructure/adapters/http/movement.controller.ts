@@ -7,8 +7,10 @@ import {
   Patch,
   Post,
   Query,
+  UseInterceptors,
 } from '@nestjs/common';
 import { AuthenticatedUser, CurrentUser } from '@shared';
+import { IdempotencyInterceptor } from '../../../../idempotency/infrastructure/adapters/http';
 import {
   MovementFilterDto,
   MovementInputDto,
@@ -56,6 +58,7 @@ export class MovementController {
   }
 
   @Post()
+  @UseInterceptors(IdempotencyInterceptor)
   async save(
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: MovementInputDto,

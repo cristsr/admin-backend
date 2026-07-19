@@ -11,6 +11,7 @@ export class TypeOrmAccountMapper {
       name: entity.name,
       initialBalance: entity.initialBalance,
       currency: entity.currency,
+      allowNegativeBalance: entity.allowNegativeBalance,
       user: entity.user,
     });
   }

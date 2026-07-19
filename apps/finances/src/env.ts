@@ -43,17 +43,20 @@ export class Environment {
   @IsString()
   WEBHOOK_API_KEY: string;
 
-  /** Cola PGMQ donde se publican las alertas de umbral de presupuesto (AC-1).
-   * Opcional: sin PGMQ configurado, el publisher usa un default. */
+  /**
+   * PGMQ queue where budget threshold alerts are published (AC-1). Optional:
+   * with no PGMQ configured, the publisher falls back to a default.
+   */
   @IsOptional()
   @IsString()
   PGMQ_BUDGET_QUEUE?: string;
 
-  /** Base URL del microservicio de tasas de cambio (AC-2). Opcional mientras
-   * `exchanges` no esté reactivado. */
-  @IsOptional()
+  /**
+   * Base URL scraped by the in-process exchange service to source historical
+   * rates (AC-2). See {@link ExRatesService}.
+   */
   @IsString()
-  EXCHANGES_API_URL?: string;
+  EXCHANGE_RATES_URL: string;
 }
 
 export const ENV = mapEnvironmentKeys(Environment);

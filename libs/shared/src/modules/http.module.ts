@@ -8,7 +8,7 @@ import {
   Type,
 } from '@nestjs/common';
 
-// Interfaces separadas siguiendo el principio de segregación de interfaces
+// Interfaces split following the interface segregation principle
 export interface HttpOptions extends HttpModuleOptions {
   name: string;
 }
@@ -44,7 +44,7 @@ export type HttpAsyncOptions =
   | HttpAsyncOptionsFactoryExisting
   | HttpAsyncOptionsFactory;
 
-// Factory para crear proveedores siguiendo el principio de responsabilidad única
+// Factory that creates providers following the single responsibility principle
 class HttpProviderFactory {
   static createNamedHttpServiceProvider(name: string): Provider {
     return {

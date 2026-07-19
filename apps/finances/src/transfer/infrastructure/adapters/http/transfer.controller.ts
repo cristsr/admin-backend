@@ -1,5 +1,6 @@
-import { Body, Controller, Param, Post } from '@nestjs/common';
+import { Body, Controller, Param, Post, UseInterceptors } from '@nestjs/common';
 import { AuthenticatedUser, CurrentUser } from '@shared';
+import { IdempotencyInterceptor } from '../../../../idempotency/infrastructure/adapters/http';
 import {
   TransferInputDto,
   TransferOutputDto,
@@ -18,6 +19,7 @@ export class TransferController {
   ) {}
 
   @Post()
+  @UseInterceptors(IdempotencyInterceptor)
   async create(
     @CurrentUser() user: AuthenticatedUser,
     @Body() input: TransferInputDto,

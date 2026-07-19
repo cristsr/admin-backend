@@ -11,6 +11,12 @@ export abstract class CategoryRepository {
 
   abstract findByName(name: string): Promise<Nullable<Category>>;
 
+  /**
+   * The system default category ("Sin categorizar", AC-4). Used as the fallback
+   * when no auto-categorization rule matches.
+   */
+  abstract findSystemDefault(): Promise<Nullable<Category>>;
+
   abstract findAll(query?: CategoryQuery): Promise<Category[]>;
 
   abstract save(category: Category): Promise<Category>;

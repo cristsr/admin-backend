@@ -43,14 +43,14 @@ describe('UpdateMovementUsecase (AC-4)', () => {
     );
   });
 
-  it('404 si el movimiento es de otro usuario', async () => {
+  it('404 when the movement belongs to another user', async () => {
     movementRepository.findByIdAndUser.mockResolvedValue(null);
     await expect(usecase.execute(1, { notes: 'y' }, 7)).rejects.toThrow(
       MovementNotFoundException,
     );
   });
 
-  it('422 si el movimiento es una pata de transferencia', async () => {
+  it('422 when the movement is a transfer leg', async () => {
     movementRepository.findByIdAndUser.mockResolvedValue(
       buildMovement({ type: MovementType.TRANSFER_OUT }),
     );
@@ -59,7 +59,7 @@ describe('UpdateMovementUsecase (AC-4)', () => {
     );
   });
 
-  it('422 si source=WEBHOOK y se intenta editar amount (dato de ingesta)', async () => {
+  it('422 when source=WEBHOOK and editing amount is attempted (ingestion data)', async () => {
     movementRepository.findByIdAndUser.mockResolvedValue(
       buildMovement({ source: MovementSource.WEBHOOK }),
     );
@@ -68,7 +68,7 @@ describe('UpdateMovementUsecase (AC-4)', () => {
     );
   });
 
-  it('permite editar notes/categoría en un movimiento WEBHOOK', async () => {
+  it('allows editing notes/category on a WEBHOOK movement', async () => {
     movementRepository.findByIdAndUser.mockResolvedValue(
       buildMovement({ source: MovementSource.WEBHOOK }),
     );
@@ -77,13 +77,13 @@ describe('UpdateMovementUsecase (AC-4)', () => {
     expect(movementRepository.save).toHaveBeenCalled();
   });
 
-  it('editar notes no borra el merchant extraído por la ingesta', async () => {
+  it('editing notes does not erase the merchant extracted by ingestion', async () => {
     movementRepository.findByIdAndUser.mockResolvedValue(buildMovement());
     const result = await usecase.execute(1, { notes: 'nuevo' }, 7);
     expect((result as any).merchant).toBe('Uber');
   });
 
-  it('valida subcategoría ∈ categoría al reasignar', async () => {
+  it('validates subcategory ∈ category when reassigning', async () => {
     movementRepository.findByIdAndUser.mockResolvedValue(buildMovement());
     subcategoryRepository.findByIdAndCategory.mockResolvedValue(null);
     await expect(

@@ -27,14 +27,14 @@ describe('ReverseWebhookTransactionUsecase (AC-6)', () => {
     usecase = new ReverseWebhookTransactionUsecase(movementRepository);
   });
 
-  it('404 si no existe movimiento con ese externalReference', async () => {
+  it('404 when no movement exists with that externalReference', async () => {
     movementRepository.findByExternalReference.mockResolvedValue(null);
     await expect(usecase.execute('ext-1')).rejects.toThrow(
       MovementNotFoundException,
     );
   });
 
-  it('crea un movimiento compensatorio con el tipo invertido', async () => {
+  it('creates a compensating movement with the inverted type', async () => {
     movementRepository.findByExternalReference
       .mockResolvedValueOnce(original)
       .mockResolvedValueOnce(null);
@@ -51,7 +51,7 @@ describe('ReverseWebhookTransactionUsecase (AC-6)', () => {
     expect(compensation.externalReference).toBe('reversal:ext-1');
   });
 
-  it('es idempotente: segunda llamada devuelve la reversa existente sin duplicar', async () => {
+  it('is idempotent: a second call returns the existing reversal without duplicating', async () => {
     movementRepository.findByExternalReference
       .mockResolvedValueOnce(original)
       .mockResolvedValueOnce({ id: 9, externalReference: 'reversal:ext-1' });

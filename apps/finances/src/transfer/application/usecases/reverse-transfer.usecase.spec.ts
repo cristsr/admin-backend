@@ -38,14 +38,14 @@ describe('ReverseTransferUsecase (AC-5)', () => {
     usecase = new ReverseTransferUsecase(movementRepository);
   });
 
-  it('404 si el transferGroup no existe para el usuario', async () => {
+  it('404 when the transferGroup does not exist for the user', async () => {
     movementRepository.findByTransferGroup.mockResolvedValue([]);
     await expect(usecase.execute('grp', 7)).rejects.toThrow(
       TransferNotFoundException,
     );
   });
 
-  it('crea un par compensatorio con reversalTransferGroup derivado', async () => {
+  it('creates a compensating pair with a derived reversalTransferGroup', async () => {
     movementRepository.findByTransferGroup
       .mockResolvedValueOnce(originalLegs)
       .mockResolvedValueOnce([]);
@@ -55,7 +55,7 @@ describe('ReverseTransferUsecase (AC-5)', () => {
     expect(result.reversalTransferGroup).toBe('reversal:grp');
     expect(result.originalTransferGroup).toBe('grp');
     const savedLegs = movementRepository.saveAll.mock.calls[0][0];
-    // tipos invertidos respecto a las patas originales
+    // types inverted relative to the original legs
     expect(savedLegs[0].type).toBe(MovementType.TRANSFER_IN);
     expect(savedLegs[1].type).toBe(MovementType.TRANSFER_OUT);
     expect(savedLegs.every((l: any) => l.transferGroup === 'reversal:grp')).toBe(
@@ -63,7 +63,7 @@ describe('ReverseTransferUsecase (AC-5)', () => {
     );
   });
 
-  it('409 si la transferencia ya fue anulada', async () => {
+  it('409 when the transfer was already reversed', async () => {
     movementRepository.findByTransferGroup
       .mockResolvedValueOnce(originalLegs)
       .mockResolvedValueOnce([{ id: 20, transferGroup: 'reversal:grp' }]);

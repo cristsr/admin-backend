@@ -3,24 +3,24 @@ export class ConsolidatedAccountBalanceDto {
 
   currency: string;
 
-  /** Saldo en la moneda de la cuenta. */
+  /** Balance in the account's own currency. */
   balance: number;
 
-  /** Mismo saldo convertido a la moneda de presentación. */
+  /** Same balance converted to the presentation currency. */
   balanceInPresentationCurrency: number;
 }
 
 export class ConsolidatedBalanceOutputDto {
-  /** Moneda de presentación del usuario (claim del JWT). */
+  /** User's presentation currency (JWT claim). */
   presentationCurrency: string;
 
-  /** Saldo consolidado de todas las cuentas en la moneda de presentación. */
+  /** Consolidated balance of all accounts in the presentation currency. */
   total: number;
 
-  /** Ingresos consolidados en moneda de presentación. */
+  /** Consolidated incomes in the presentation currency. */
   incomes: number;
 
-  /** Gastos consolidados en moneda de presentación. */
+  /** Consolidated expenses in the presentation currency. */
   expenses: number;
 
   accounts: ConsolidatedAccountBalanceDto[];

@@ -36,6 +36,51 @@ export class TypeOrmAccountRepository implements AccountRepository {
     return !!result.affected;
   }
 
+  // Raw queries again to avoid the module cycle with movement (see hasMovements).
+  async archiveCascade(
+    id: number,
+    user: number,
+  ): Promise<{ archivedMovements: number; archivedTransfers: number }> {
+    return this.dataSource.transaction(async (manager) => {
+      // 1. Soft-delete every movement of this account (transfer legs included).
+      const movements: Array<{ transfer_group: string | null }> =
+        await manager.query(
+          `UPDATE movements SET deleted_at = NOW()
+           WHERE account_id = $1 AND user_id = $2 AND deleted_at IS NULL
+           RETURNING transfer_group`,
+          [id, user],
+        );
+
+      const archivedMovements = movements.length;
+      const groups = [
+        ...new Set(
+          movements
+            .map((movement) => movement.transfer_group)
+            .filter((group): group is string => !!group),
+        ),
+      ];
+
+      // 2. Soft-delete the counterpart legs so no transfer is left half-valid,
+      //    even if the other account is still active.
+      if (groups.length > 0) {
+        await manager.query(
+          `UPDATE movements SET deleted_at = NOW()
+           WHERE user_id = $1 AND deleted_at IS NULL AND transfer_group = ANY($2)`,
+          [user, groups],
+        );
+      }
+
+      // 3. Soft-delete the account itself.
+      await manager.query(
+        `UPDATE accounts SET deleted_at = NOW()
+         WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
+        [id, user],
+      );
+
+      return { archivedMovements, archivedTransfers: groups.length };
+    });
+  }
+
   // Raw query on the movements table instead of the movement repository:
   // account is a leaf module that everything else depends on, so importing
   // the movement module here would create a cycle. The FK already couples

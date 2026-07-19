@@ -15,6 +15,12 @@ export class Account {
 
   currency: string;
 
+  /**
+   * AC-1 (sm-0003) — per-account policy for negative balance. When true (e.g. a
+   * credit card), transfers that would leave the account negative are allowed.
+   */
+  allowNegativeBalance: boolean;
+
   user: number;
 
   private constructor(payload?: Partial<Account>) {

@@ -13,8 +13,10 @@ import {
 } from '../../domain/movement';
 import { MovementPatchDto } from '../dto';
 
-/** Campos que un movimiento de ingesta (WEBHOOK) permite editar: solo lo que
- * es del usuario, nunca lo extraído por la ingesta. */
+/**
+ * Fields an ingested (WEBHOOK) movement allows editing: only what belongs to
+ * the user, never what was extracted by ingestion.
+ */
 const WEBHOOK_EDITABLE = new Set([
   'notes',
   'category',

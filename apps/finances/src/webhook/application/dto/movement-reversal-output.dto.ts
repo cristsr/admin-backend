@@ -3,6 +3,6 @@ export class MovementReversalOutputDto {
 
   originalMovementId: number;
 
-  /** Id del movimiento compensatorio que anula el original. */
+  /** Id of the compensating movement that cancels the original. */
   reversalMovementId: number;
 }

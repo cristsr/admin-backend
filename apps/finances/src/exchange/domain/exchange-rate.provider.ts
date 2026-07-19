@@ -1,9 +1,10 @@
 /**
- * Provee la tasa de conversión entre dos monedas a una fecha dada. La fuente es
- * el microservicio `exchanges` (a reactivar). Política carry-forward: si no hay
- * tasa exacta para la fecha, se usa la más cercana anterior (AC-2).
+ * Provides the conversion rate between two currencies at a given date. The
+ * source is the `exchanges` microservice (to be re-enabled). Carry-forward
+ * policy: if there is no exact rate for the date, the closest earlier one is
+ * used (AC-2).
  */
 export abstract class ExchangeRateProvider {
-  /** Tasa para convertir un monto de `from` a `to` en `date`. */
+  /** Rate to convert an amount from `from` to `to` on `date`. */
   abstract getRate(from: string, to: string, date: Date): Promise<number>;
 }

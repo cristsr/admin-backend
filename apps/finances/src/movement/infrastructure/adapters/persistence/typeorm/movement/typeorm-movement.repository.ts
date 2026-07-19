@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Nullable } from '@shared';
-import { Between, In, Repository } from 'typeorm';
+import { Between, EntityManager, In, Repository } from 'typeorm';
 import {
   Movement,
   MovementQuery,
@@ -85,6 +85,27 @@ export class TypeOrmMovementRepository implements MovementRepository {
       TypeOrmMovementMapper.toEntity(movement),
     );
     const entity = await this.repository.findOne({
+      where: { id: saved.id },
+      relations: ['category', 'subcategory'],
+    });
+    return TypeOrmMovementMapper.toDomain(entity);
+  }
+
+  async runInTransaction<T>(
+    work: (manager: EntityManager) => Promise<T>,
+  ): Promise<T> {
+    return this.repository.manager.transaction(work);
+  }
+
+  async saveWithManager(
+    manager: EntityManager,
+    movement: Movement,
+  ): Promise<Movement> {
+    const saved = await manager.save(
+      TypeOrmMovementEntity,
+      TypeOrmMovementMapper.toEntity(movement),
+    );
+    const entity = await manager.findOne(TypeOrmMovementEntity, {
       where: { id: saved.id },
       relations: ['category', 'subcategory'],
     });

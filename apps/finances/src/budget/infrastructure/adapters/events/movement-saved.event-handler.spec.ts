@@ -21,7 +21,7 @@ const buildBudget = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-describe('MovementSavedEventHandler idempotencia de umbral (AC-1)', () => {
+describe('MovementSavedEventHandler threshold idempotency (AC-1)', () => {
   let budgetRepository: any;
   let movementRepository: any;
   let eventEmitter: any;
@@ -41,7 +41,7 @@ describe('MovementSavedEventHandler idempotencia de umbral (AC-1)', () => {
     );
   });
 
-  it('al cruzar 80% por primera vez persiste WARNING y emite', async () => {
+  it('crossing 80% for the first time persists WARNING and emits', async () => {
     budgetRepository.findActiveMatching.mockResolvedValue([buildBudget()]);
     movementRepository.sumAmount.mockResolvedValue(80);
 
@@ -53,7 +53,7 @@ describe('MovementSavedEventHandler idempotencia de umbral (AC-1)', () => {
     expect(eventEmitter.emit).toHaveBeenCalledTimes(1);
   });
 
-  it('no reemite si un segundo movimiento mantiene el 80% ya notificado', async () => {
+  it('does not re-emit if a second movement stays at the already-notified 80%', async () => {
     budgetRepository.findActiveMatching.mockResolvedValue([
       buildBudget({ notifiedThreshold: BudgetThreshold.WARNING }),
     ]);
@@ -65,7 +65,7 @@ describe('MovementSavedEventHandler idempotencia de umbral (AC-1)', () => {
     expect(eventEmitter.emit).not.toHaveBeenCalled();
   });
 
-  it('emite EXCEEDED al cruzar 100% aunque WARNING ya se haya notificado', async () => {
+  it('emits EXCEEDED when crossing 100% even if WARNING was already notified', async () => {
     budgetRepository.findActiveMatching.mockResolvedValue([
       buildBudget({ notifiedThreshold: BudgetThreshold.WARNING }),
     ]);

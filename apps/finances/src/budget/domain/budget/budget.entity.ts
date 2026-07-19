@@ -27,9 +27,11 @@ export class Budget {
 
   period: Period;
 
-  /** Hasta qué umbral se notificó en el período vigente. `null`/undefined = aún
-   * no se notificó ninguno. Al renovar un presupuesto repetible, el nuevo nace
-   * limpio (AC-1). */
+  /**
+   * Highest threshold already notified in the current period. `null`/undefined
+   * = none notified yet. When a repeatable budget renews, the new one starts
+   * clean (AC-1).
+   */
   notifiedThreshold?: BudgetThreshold;
 
   categoryId: number;

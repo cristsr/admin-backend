@@ -12,6 +12,7 @@ export class TypeOrmCategoryMapper {
       name: entity.name,
       icon: entity.icon,
       color: entity.color,
+      system: entity.system,
       subcategories: entity.subcategories?.map(
         TypeOrmSubcategoryMapper.toDomain,
       ),
@@ -24,6 +25,7 @@ export class TypeOrmCategoryMapper {
       name: category.name,
       icon: category.icon,
       color: category.color,
+      system: category.system,
     };
   }
 }

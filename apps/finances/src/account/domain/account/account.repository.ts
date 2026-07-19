@@ -13,16 +13,32 @@ export abstract class AccountRepository {
 
   abstract softRemove(id: number, user: number): Promise<boolean>;
 
-  /** Whether the account has any (non-deleted) movement recorded against it.
-   * Deleting an account with history is refused. */
+  /**
+   * AC-5 (sm-0003) — soft-delete the account in cascade: its movements and both
+   * legs of every transfer it participates in (even when the counterpart account
+   * is still active), all in one transaction. Returns how much was archived.
+   */
+  abstract archiveCascade(
+    id: number,
+    user: number,
+  ): Promise<{ archivedMovements: number; archivedTransfers: number }>;
+
+  /**
+   * Whether the account has any (non-deleted) movement recorded against it.
+   * Deleting an account with history is refused.
+   */
   abstract hasMovements(id: number): Promise<boolean>;
 
-  /** Signed sum of the account's movements: INCOME/TRANSFER_IN add,
+  /**
+   * Signed sum of the account's movements: INCOME/TRANSFER_IN add,
    * EXPENSE/TRANSFER_OUT subtract; excludes soft-deleted. Does NOT include
-   * initialBalance. */
+   * initialBalance.
+   */
   abstract movementBalance(accountId: number, user: number): Promise<number>;
 
-  /** Same as movementBalance but for every account of the user, keyed by
-   * account id. Accounts with no movements are absent from the map. */
+  /**
+   * Same as movementBalance but for every account of the user, keyed by
+   * account id. Accounts with no movements are absent from the map.
+   */
   abstract movementBalancesByUser(user: number): Promise<Record<number, number>>;
 }

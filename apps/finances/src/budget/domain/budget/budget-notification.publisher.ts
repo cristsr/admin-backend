@@ -1,6 +1,6 @@
 import { BudgetThreshold } from './budget-threshold.enum';
 
-/** Datos que viajan cuando un presupuesto cruza un umbral de gasto. */
+/** Data carried when a budget crosses a spending threshold. */
 export interface BudgetThresholdExceededPayload {
   budgetId: number;
   percentage: number;
@@ -9,9 +9,9 @@ export interface BudgetThresholdExceededPayload {
 }
 
 /**
- * Publica la alerta de umbral de presupuesto en un canal que un consumidor
- * externo (front / servicio de notificaciones) lee. Reemplaza el log
- * placeholder: conectar un canal real es implementar este puerto (AC-1).
+ * Publishes the budget threshold alert on a channel an external consumer
+ * (frontend / notification service) reads. Replaces the placeholder log:
+ * wiring a real channel means implementing this port (AC-1).
  */
 export abstract class BudgetNotificationPublisher {
   abstract publish(payload: BudgetThresholdExceededPayload): Promise<void>;

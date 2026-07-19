@@ -7,9 +7,10 @@ import {
 import { BudgetThresholdExceeded } from '../../../application/budget.constants';
 
 /**
- * Entrega la alerta de umbral por el canal real (cola PGMQ) en vez de solo
- * loguearla. La deduplicación "una vez por umbral y período" ya la garantiza
- * MovementSavedEventHandler vía budgets.notified_threshold (AC-1).
+ * Delivers the threshold alert through the real channel (PGMQ queue) instead of
+ * only logging it. The "once per threshold and period" deduplication is already
+ * guaranteed by MovementSavedEventHandler via budgets.notified_threshold
+ * (AC-1).
  */
 @Injectable()
 export class BudgetThresholdExceededEventHandler {

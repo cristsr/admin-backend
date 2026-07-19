@@ -9,10 +9,7 @@
     "test": "nx test",
     "migration:generate:finances": "typeorm-ts-node-commonjs migration:generate -d apps/finances/src/database/data-source.ts",
     "migration:run:finances": "typeorm-ts-node-commonjs migration:run -d apps/finances/src/database/data-source.ts",
-    "migration:revert:finances": "typeorm-ts-node-commonjs migration:revert -d apps/finances/src/database/data-source.ts",
-    "migration:generate:users": "typeorm-ts-node-commonjs migration:generate -d apps/users/src/config/database/data-source.ts",
-    "migration:run:users": "typeorm-ts-node-commonjs migration:run -d apps/users/src/config/database/data-source.ts",
-    "migration:revert:users": "typeorm-ts-node-commonjs migration:revert -d apps/users/src/config/database/data-source.ts"
+    "migration:revert:finances": "typeorm-ts-node-commonjs migration:revert -d apps/finances/src/database/data-source.ts"
   },
   "private": true,
   "dependencies": {
@@ -83,6 +80,7 @@
     "eslint": "9.5.0",
     "eslint-config-prettier": "10.0.0",
     "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jsdoc": "^63.1.0",
     "jest": "29.7.0",
     "jest-environment-jsdom": "29.7.0",
     "jest-environment-node": "^29.7.0",

@@ -26,9 +26,13 @@ export class WebhookTransactionInputDto {
   @IsNotEmpty()
   merchant: string;
 
-  /** Category name — matched case-insensitively against existing taxonomy. */
-  @IsNotEmpty()
-  category: string;
+  /**
+   * Category name — matched case-insensitively against existing taxonomy.
+   * AC-4 (sm-0003): optional. When omitted, auto-categorization rules assign a
+   * category, falling back to the default "Sin categorizar".
+   */
+  @IsOptional()
+  category?: string;
 
   @IsOptional()
   subcategory?: string;

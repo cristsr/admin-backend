@@ -1,4 +1,5 @@
 import { Nullable } from '@shared';
+import { EntityManager } from 'typeorm';
 import { Movement } from './movement.entity';
 import { MovementType } from './movement.types';
 
@@ -34,8 +35,10 @@ export abstract class MovementRepository {
     externalReference: string,
   ): Promise<Nullable<Movement>>;
 
-  /** Both legs (or the compensating pair) that share a transferGroup, scoped
-   * to the user. */
+  /**
+   * Both legs (or the compensating pair) that share a transferGroup, scoped
+   * to the user.
+   */
   abstract findByTransferGroup(
     transferGroup: string,
     user: number,
@@ -45,8 +48,24 @@ export abstract class MovementRepository {
 
   abstract save(movement: Movement): Promise<Movement>;
 
-  /** Saves several movements atomically. The legs of a transfer must both
-   * exist or neither: half a transfer would make money disappear. */
+  /**
+   * Runs `work` inside a single database transaction, exposing the manager so
+   * the movement and its outbox event commit together (AC-2, sm-0003).
+   */
+  abstract runInTransaction<T>(
+    work: (manager: EntityManager) => Promise<T>,
+  ): Promise<T>;
+
+  /** Saves a movement using the given transaction manager. */
+  abstract saveWithManager(
+    manager: EntityManager,
+    movement: Movement,
+  ): Promise<Movement>;
+
+  /**
+   * Saves several movements atomically. The legs of a transfer must both
+   * exist or neither: half a transfer would make money disappear.
+   */
   abstract saveAll(movements: Movement[]): Promise<Movement[]>;
 
   abstract remove(id: number, user: number): Promise<boolean>;

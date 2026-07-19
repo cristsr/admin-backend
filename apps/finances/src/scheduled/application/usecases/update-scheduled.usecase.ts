@@ -15,9 +15,9 @@ import {
 import { ScheduledPatchDto } from '../dto';
 
 /**
- * Edita el template de un movimiento programado. Solo afecta ocurrencias
- * futuras: los movimientos ya materializados en el pasado son filas `movements`
- * aparte y no se recalculan (AC-5).
+ * Edits the template of a scheduled movement. Only affects future occurrences:
+ * movements already materialized in the past are separate `movements` rows and
+ * are not recomputed (AC-5).
  */
 @Injectable()
 export class UpdateScheduledUsecase {
