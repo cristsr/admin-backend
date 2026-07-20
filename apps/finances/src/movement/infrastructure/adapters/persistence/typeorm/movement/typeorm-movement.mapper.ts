@@ -57,8 +57,7 @@ export class TypeOrmMovementMapper {
       currency: movement.money.currency,
       paymentMethod: movement.paymentMethod,
       source: movement.source,
-      // Null-checked because a transfer has no category: the previous
-      // unconditional { id: undefined } was not a valid relation.
+      // A transfer has no category; `{ id: undefined }` is not a valid relation.
       category: movement.categoryId
         ? ({ id: movement.categoryId } as TypeOrmMovementEntity['category'])
         : null,

@@ -11,10 +11,8 @@ export class RemoveAccountUsecase {
   constructor(private readonly accountRepository: AccountRepository) {}
 
   /**
-   * Archiving an account soft-deletes it in cascade instead of
-   * blocking when it has movements: its movements and both legs of every
-   * transfer it participates in are soft-deleted too, so no transfer is left
-   * half-valid and archived rows stop counting in balances.
+   * Soft-deletes the account in cascade: its movements and both legs of every
+   * transfer it participates in go too, so no transfer is left half-valid.
    */
   async execute(id: number, user: number): Promise<AccountArchivedOutputDto> {
     const account = await this.accountRepository.firstMatching(

@@ -24,7 +24,7 @@ describe('Account', () => {
     });
   });
 
-  describe('ensureCanWithdraw (AC-1)', () => {
+  describe('ensureCanWithdraw', () => {
     it('refuses a withdrawal the balance cannot cover', () => {
       expect(() =>
         buildAccount().ensureCanWithdraw(Money.of(150, 'COP'), 0),
@@ -49,7 +49,6 @@ describe('Account', () => {
     });
 
     it('counts the movements, not just the opening balance', () => {
-      // opened with 100, spent 80 → only 20 left
       expect(() =>
         buildAccount().ensureCanWithdraw(Money.of(50, 'COP'), -80),
       ).toThrow(InsufficientBalanceException);

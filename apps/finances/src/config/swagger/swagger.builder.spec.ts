@@ -1,6 +1,6 @@
 import { buildSwaggerDocument } from './swagger.builder';
 
-describe('Swagger document builder (AC-1)', () => {
+describe('Swagger document builder', () => {
   const app: any = { get: () => ({ SHOW_DOCS: true }) };
 
   it('declares bearerAuth + webhookApiKey security schemes with the shapes from docs/api.yaml', () => {

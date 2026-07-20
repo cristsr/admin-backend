@@ -39,9 +39,7 @@ import {
     UpdateMovementUsecase,
     RemoveMovementUsecase,
   ],
-  // RecordMovementService is exported so every module that records a movement
-  // (the ingestion webhook today) goes through the same rules instead of
-  // rebuilding them against the repository.
+  // Exported so every module records movements through the same rules.
   exports: [MovementRepository, RecordMovementService],
 })
 export class MovementModule {}

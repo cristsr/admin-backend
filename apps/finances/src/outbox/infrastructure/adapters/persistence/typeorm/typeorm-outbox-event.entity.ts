@@ -8,10 +8,6 @@ import {
 } from 'typeorm';
 import { OutboxStatus } from '@app/outbox/domain/outbox-event';
 
-/**
- * Persistence shape of an outbox event. `status` is a varchar (enum-like lives
- * in the app layer). The (status, available_at) index feeds the relay polling.
- */
 @Entity('outbox_events')
 @Index('idx_outbox_events_pending', ['status', 'availableAt'])
 export class TypeOrmOutboxEventEntity {

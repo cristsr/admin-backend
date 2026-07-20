@@ -9,30 +9,15 @@ import {
   SubcategoryNotFoundException,
   SubcategoryRepository,
 } from '@app/category/domain/subcategory';
-import {
-  CategorizationInput,
-  CategorizationService,
-  CategoryAssignment,
-} from './categorization.service';
-
-/** A category picked by id, the way the manual API refers to it. */
-export interface CategorySelectionByIds {
-  categoryId?: number;
-  subcategoryId?: number;
-}
-
-/** A category named in plain text, the way ingestion providers send it. */
-export interface CategorySelectionByNames {
-  category?: string;
-  subcategory?: string;
-}
+import { CategorizationInput } from './categorization-input.type';
+import { CategorizationService } from './categorization.service';
+import { CategoryAssignment } from './category-assignment.type';
+import { CategorySelectionByIds } from './category-selection-by-ids.type';
+import { CategorySelectionByNames } from './category-selection-by-names.type';
 
 /**
- * Settles the category of an incoming movement. The rule is the same wherever
- * the movement comes from: an explicit category is honored but must exist,
- * and no category at all means the auto-categorization rules decide (AC-4).
- * Providers name their categories while the API refers to them by id, which is
- * the only difference between the two entry points.
+ * Settles the category of an incoming movement: an explicit category is
+ * validated, otherwise the auto-categorization rules decide.
  */
 @Injectable()
 export class CategoryResolver {
@@ -55,14 +40,7 @@ export class CategoryResolver {
       this.categoryRepository.firstMatching(
         CategoryCriteria.byId(selection.categoryId),
       ),
-      selection.subcategoryId
-        ? this.subcategoryRepository.firstMatching(
-            SubcategoryCriteria.byIdAndCategory(
-              selection.subcategoryId,
-              selection.categoryId,
-            ),
-          )
-        : null,
+      this.findSubcategoryByIds(selection.categoryId, selection.subcategoryId),
     ]);
 
     if (!category) {
@@ -74,6 +52,22 @@ export class CategoryResolver {
     }
 
     return { categoryId: category.id, subcategoryId: subcategory?.id };
+  }
+
+  private async findSubcategoryByIds(categoryId: number, subcategoryId?: number) {
+    if (!subcategoryId) return null;
+
+    return this.subcategoryRepository.firstMatching(
+      SubcategoryCriteria.byIdAndCategory(subcategoryId, categoryId),
+    );
+  }
+
+  private async findSubcategoryByNames(categoryId: number, subcategory?: string) {
+    if (!subcategory) return null;
+
+    return this.subcategoryRepository.firstMatching(
+      SubcategoryCriteria.byNameAndCategory(subcategory, categoryId),
+    );
   }
 
   async resolveByNames(
@@ -95,14 +89,10 @@ export class CategoryResolver {
       );
     }
 
-    const subcategory = selection.subcategory
-      ? await this.subcategoryRepository.firstMatching(
-          SubcategoryCriteria.byNameAndCategory(
-            selection.subcategory,
-            category.id,
-          ),
-        )
-      : null;
+    const subcategory = await this.findSubcategoryByNames(
+      category.id,
+      selection.subcategory,
+    );
 
     if (selection.subcategory && !subcategory) {
       throw new SubcategoryNotFoundException(

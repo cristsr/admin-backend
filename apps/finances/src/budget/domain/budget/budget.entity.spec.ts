@@ -30,7 +30,7 @@ describe('Budget', () => {
     });
   });
 
-  describe('claimThresholdBreach (AC-1)', () => {
+  describe('claimThresholdBreach', () => {
     it('claims WARNING the first time 80% is crossed', () => {
       const budget = buildBudget();
       budget.recordSpending(Money.of(80, 'COP'));
@@ -80,7 +80,7 @@ describe('Budget', () => {
   describe('renew', () => {
     const now = DateTime.utc(2026, 8, 15);
 
-    it('starts the successor with a clean notification state (AC-1)', () => {
+    it('starts the successor with a clean notification state', () => {
       const budget = buildBudget({
         notifiedThreshold: BudgetThreshold.EXCEEDED,
       });

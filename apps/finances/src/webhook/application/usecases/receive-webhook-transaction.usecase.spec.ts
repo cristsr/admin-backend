@@ -5,7 +5,7 @@ import { Money } from '@app/shared/domain';
 import { WebhookTransactionInputDto } from '../dto/webhook-transaction-input.dto';
 import { ReceiveWebhookTransactionUsecase } from './receive-webhook-transaction.usecase';
 
-describe('ReceiveWebhookTransactionUsecase (AC-4 auto-categorization)', () => {
+describe('ReceiveWebhookTransactionUsecase', () => {
   let movementRepository: any;
   let accountRepository: any;
   let categoryResolver: any;
@@ -90,7 +90,7 @@ describe('ReceiveWebhookTransactionUsecase (AC-4 auto-categorization)', () => {
     expect(saved.money.currency).toBe('USD');
   });
 
-  it('emits a movement.saved outbox event carrying the correlationId when the trace crosses the webhook boundary (AC-4)', async () => {
+  it('emits a movement.saved outbox event carrying the correlationId when the trace crosses the webhook boundary', async () => {
     await usecase.execute(baseInput, 'corr-test');
 
     expect(outboxPublisher.publish).toHaveBeenCalledWith(

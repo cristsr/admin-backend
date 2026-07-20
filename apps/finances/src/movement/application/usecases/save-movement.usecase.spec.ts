@@ -8,7 +8,7 @@ import { MovementSaved } from '../movement.constants';
 import { RecordMovementService } from '../services';
 import { SaveMovementUsecase } from './save-movement.usecase';
 
-describe('SaveMovementUsecase (AC-2 transactional outbox)', () => {
+describe('SaveMovementUsecase', () => {
   let movementRepository: any;
   let accountRepository: any;
   let categoryResolver: any;
@@ -52,8 +52,7 @@ describe('SaveMovementUsecase (AC-2 transactional outbox)', () => {
         .mockResolvedValue({ categoryId: 5, subcategoryId: 9 }),
     };
     outboxPublisher = { publish: jest.fn() };
-    // The real service, not a double: the transactional guarantee it provides
-    // is exactly what these tests are about.
+    // Real service, not a double: its transactional guarantee is what these tests cover.
     usecase = new SaveMovementUsecase(
       movementRepository,
       accountRepository,
@@ -85,7 +84,7 @@ describe('SaveMovementUsecase (AC-2 transactional outbox)', () => {
     expect(publishManager).toBe(savedManager);
   });
 
-  it('falls back to the request id when there is no active trace (AC-4)', async () => {
+  it('falls back to the request id when there is no active trace', async () => {
     await usecase.execute(input, 42, 'corr-abc');
 
     expect(outboxPublisher.publish).toHaveBeenCalledWith(
@@ -112,11 +111,6 @@ describe('SaveMovementUsecase (AC-2 transactional outbox)', () => {
       trace.disable();
     });
 
-    /**
-     * The point of deriving the id from the span: nothing hands it to the use
-     * case, and the outbox still carries the id the collector knows the request
-     * by — so the relay re-emits under the same trace.
-     */
     it('takes the trace id from context, with no id passed in', async () => {
       const tracer = trace.getTracer('save-movement-spec');
 
@@ -165,7 +159,7 @@ describe('SaveMovementUsecase (AC-2 transactional outbox)', () => {
     );
   });
 
-  it('hands the category selection and the description to the resolver (AC-4)', async () => {
+  it('hands the category selection and the description to the resolver', async () => {
     categoryResolver.resolveByIds.mockResolvedValue({
       categoryId: 77,
       subcategoryId: 88,

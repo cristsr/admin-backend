@@ -8,17 +8,14 @@ export const SWAGGER_SECURITY = {
 } as const;
 
 /**
- * Base OpenAPI config (AC-1): title, version and the two security schemes that
- * mirror `docs/api.yaml`'s `securitySchemes`, plus the global bearer
- * requirement so private endpoints default to JWT. Paths are filled in by
- * `SwaggerModule.createDocument` when the UI is mounted; taxonomy and health
- * endpoints override the default with `security: []` at the operation level.
+ * Title, version and the security schemes mirroring `docs/api.yaml`, plus the
+ * global bearer requirement; paths are filled in when the UI is mounted.
  */
 function baseDocumentConfig(): Omit<OpenAPIObject, 'paths'> {
   return new DocumentBuilder()
     .setTitle('Finances API')
     .setDescription(
-      'admin-back · finances — contrato generado desde el código (AC-1, sm-0004).',
+      'admin-back · finances — contrato generado desde el código.',
     )
     .setVersion('1.0.0')
     .addBearerAuth(
@@ -34,20 +31,12 @@ function baseDocumentConfig(): Omit<OpenAPIObject, 'paths'> {
     .build();
 }
 
-/**
- * Returns the OpenAPI document base — the security schemes and the global
- * requirement — independent of the running app, so the contract's security
- * shape is verifiable in isolation (AC-1).
- */
+/** The security shape of the contract, independent of the running app. */
 export function buildSwaggerDocument(_app?: INestApplication): OpenAPIObject {
   return baseDocumentConfig() as OpenAPIObject;
 }
 
-/**
- * Mounts the navigable Swagger UI at `/docs` only when `SHOW_DOCS` is true
- * (dev/staging). The full document — including the scanned paths — is generated
- * here; production keeps the UI off while the contract can still be produced.
- */
+/** Mounts the Swagger UI at `/docs` only when `showDocs` is true. */
 export function maybeMountSwagger(
   app: INestApplication,
   showDocs: boolean,

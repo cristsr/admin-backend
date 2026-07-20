@@ -9,7 +9,6 @@ import {
   criteriaFromQuery,
 } from '@shared';
 
-/** Every account attribute a criteria may name. */
 export type AccountField =
   | 'id'
   | 'user'
@@ -28,7 +27,6 @@ export const ACCOUNT_CRITERIA_SCHEMA: CriteriaSchema<AccountField> = {
   createdAt: { type: CriteriaValueType.DATE, isSortable: true },
 };
 
-/** Named queries over accounts. */
 export class AccountCriteria {
   static ownedBy(user: number): Criteria<AccountField> {
     return Criteria.none<AccountField>().equals('user', user);

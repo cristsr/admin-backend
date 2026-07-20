@@ -24,7 +24,7 @@ const buildMovement = (overrides: Partial<Movement> = {}) =>
     ...overrides,
   } as Movement);
 
-describe('UpdateMovementUsecase (AC-4)', () => {
+describe('UpdateMovementUsecase', () => {
   let movementRepository: any;
   let subcategoryRepository: any;
   let usecase: UpdateMovementUsecase;

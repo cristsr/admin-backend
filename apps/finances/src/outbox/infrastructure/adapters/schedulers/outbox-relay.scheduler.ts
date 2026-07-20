@@ -4,10 +4,8 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { OutboxRepository } from '@app/outbox/domain/outbox-event';
 
 /**
- * Reads pending outbox rows and re-emits each domain event in-process via
- * EventEmitter2, so the existing handlers run reliably even if the process died
- * after the original transaction committed (AC-2, sm-0003). Delivery failures
- * are retried with exponential backoff instead of being lost.
+ * Re-emits pending outbox events in-process via EventEmitter2; failures retry
+ * with exponential backoff instead of being lost.
  */
 @Injectable()
 export class OutboxRelayScheduler {
@@ -29,9 +27,7 @@ export class OutboxRelayScheduler {
     );
 
     for (const event of events) {
-      // AC-4: restore the trace id embedded at publish time so the re-emitted
-      // event (and its handlers) log under the same correlation as the request
-      // that produced it, across the request → cron boundary.
+      // Restore the publish-time trace id so handlers log under the request's correlation.
       const correlationId = (event.payload as { correlationId?: string })
         .correlationId;
       this.logger.log(

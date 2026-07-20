@@ -30,7 +30,7 @@ export class WebhookController {
     @Body() input: WebhookTransactionInputDto,
     @Req() req: { id?: string },
   ): Promise<WebhookTransactionOutputDto> {
-    // `req.id` is the correlation id pino attaches from X-Request-Id (AC-4).
+    // `req.id` is the correlation id pino attaches from X-Request-Id.
     return this.receiveWebhookTransactionUsecase.execute(input, req.id);
   }
 

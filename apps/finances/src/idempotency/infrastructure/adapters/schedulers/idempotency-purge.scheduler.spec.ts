@@ -1,6 +1,6 @@
 import { IdempotencyPurgeScheduler } from './idempotency-purge.scheduler';
 
-describe('IdempotencyPurgeScheduler (AC-3)', () => {
+describe('IdempotencyPurgeScheduler', () => {
   it('deletes idempotency keys whose expires_at is in the past', async () => {
     const repo = { deleteExpired: jest.fn().mockResolvedValue(3) } as any;
     const scheduler = new IdempotencyPurgeScheduler(repo);

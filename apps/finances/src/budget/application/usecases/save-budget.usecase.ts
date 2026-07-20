@@ -68,8 +68,7 @@ export class SaveBudgetUsecase {
 
     const saved = await this.budgetRepository.save(budget);
 
-    // A budget that was just created or edited has nothing spent against it yet
-    // as far as the caller is concerned; the next read computes the real figure.
+    // A freshly saved budget reports zero spent; the next read computes it.
     saved.recordSpending(Money.zero(saved.money.currency));
 
     return saved;

@@ -8,7 +8,7 @@ const fakeDecodedToken = {
   header: { kid: 'kid-1' },
 };
 
-describe('JwtStrategy lazy OIDC discovery (AC-3)', () => {
+describe('JwtStrategy lazy OIDC discovery', () => {
   const buildStrategy = async (
     discovery: OidcDiscoveryCache,
   ): Promise<JwtStrategy> => {

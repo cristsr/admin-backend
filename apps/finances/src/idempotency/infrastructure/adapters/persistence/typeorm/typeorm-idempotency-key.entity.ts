@@ -9,10 +9,6 @@ import {
 } from 'typeorm';
 import { IdempotencyStatus } from '@app/idempotency/domain/idempotency-key';
 
-/**
- * Persistence shape of an idempotency record (AC-3, sm-0003). Unique per
- * (user, key); the expires_at index feeds the purge job.
- */
 @Entity('idempotency_keys')
 @Unique('uq_idempotency_user_key', ['userId', 'idempotencyKey'])
 @Index('idx_idempotency_expires_at', ['expiresAt'])

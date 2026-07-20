@@ -5,7 +5,7 @@ import { GetConsolidatedBalanceUsecase } from './get-consolidated-balance.usecas
 const accountIn = (id: number, currency: string) =>
   Account.create({ id, initialBalance: Money.zero(currency) } as Account);
 
-describe('GetConsolidatedBalanceUsecase (AC-2)', () => {
+describe('GetConsolidatedBalanceUsecase', () => {
   let accountRepository: any;
   let summaryRepository: any;
   let exchangeRateProvider: any;
@@ -35,7 +35,7 @@ describe('GetConsolidatedBalanceUsecase (AC-2)', () => {
   it('consolidates in the presentation currency converting the ones in another currency', async () => {
     const result = await usecase.execute({}, 7, 'COP');
 
-    // COP: rate 1 → 1000; USD: rate 4000 → 2*4000 = 8000; total 9000
+    // COP 1000 at rate 1 + USD 2 at rate 4000 → total 9000
     expect(result.presentationCurrency).toBe('COP');
     expect(result.total).toBe(9000);
     expect(exchangeRateProvider.getRate).toHaveBeenCalledWith(

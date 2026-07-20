@@ -10,9 +10,7 @@ import { ENV } from '@app/env';
       useFactory: (configService: ConfigService) => ({
         type: configService.get<any>(ENV.DB_TYPE),
         url: configService.get(ENV.DB_URI),
-        // Compared against true on purpose: an untyped get() can hand back the
-        // string 'false', which is truthy and would let TypeORM rewrite the
-        // schema on boot, dropping whatever the entities no longer declare.
+        // Strict === true: an untyped get() can return the truthy string 'false'.
         synchronize: configService.get<boolean>(ENV.DB_SYNCHRONIZE) === true,
         autoLoadEntities: true,
         debug: true,

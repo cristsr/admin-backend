@@ -1,6 +1,6 @@
 import { GenerateScheduledMovementsUsecase } from './generate-scheduled-movements.usecase';
 
-describe('GenerateScheduledMovementsUsecase (AC-4 cron metrics)', () => {
+describe('GenerateScheduledMovementsUsecase (cron metrics)', () => {
   it('logs a structured line with scheduledMaterialized and a generated correlationId for the run', async () => {
     const scheduledRepository: any = {
       matching: jest.fn().mockResolvedValue([

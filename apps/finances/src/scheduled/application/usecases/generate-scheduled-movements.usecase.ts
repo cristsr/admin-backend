@@ -8,12 +8,7 @@ import {
   ScheduledRepository,
 } from '@app/scheduled/domain/scheduled';
 
-/**
- * Materializes due `Scheduled` entries into real `Movement`s and rolls each one
- * to its next occurrence. Triggered every minute by `ScheduledScheduler`. AC-4
- * (sm-0004): each run logs a structured counters line keyed by a per-run
- * correlation id.
- */
+/** Materializes due scheduled entries into real movements, rolling each forward. */
 @Injectable()
 export class GenerateScheduledMovementsUsecase {
   private readonly logger: Logger;
@@ -33,8 +28,7 @@ export class GenerateScheduledMovementsUsecase {
 
     if (!due.length) return;
 
-    // The run gets its own span, so the id below is the trace id every log line
-    // and every downstream call in this run already shares.
+    // Own span per run: its id is the trace id all run log lines share.
     return withSpan('scheduled.generate', async () => {
       const runId = correlationId();
       this.logger.log(
@@ -54,10 +48,9 @@ export class GenerateScheduledMovementsUsecase {
   }
 
   /**
-   * Creates the movement for the occurrence that just came due, and only then
-   * rolls the entry forward: a recurring one moves to its next date, a ONCE one
-   * is done and gets removed. If the movement fails to save the entry is left
-   * untouched, so the occurrence is retried instead of being silently skipped.
+   * Saves the due occurrence's movement, then rolls the entry forward (or
+   * removes a ONCE one). On save failure the entry is left untouched so the
+   * occurrence is retried instead of skipped.
    */
   private async materialize(schedule: Scheduled): Promise<void> {
     try {

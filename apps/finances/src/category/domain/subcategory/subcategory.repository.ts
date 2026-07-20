@@ -2,10 +2,7 @@ import { Criteria, Nullable } from '@shared';
 import { SubcategoryField } from './subcategory.criteria';
 import { Subcategory } from './subcategory.entity';
 
-/**
- * Reads take a criteria; the questions themselves live in
- * `SubcategoryCriteria`, stated in domain terms.
- */
+/** Queries are stated in domain terms via `SubcategoryCriteria`. */
 export abstract class SubcategoryRepository {
   abstract matching(
     criteria: Criteria<SubcategoryField>,

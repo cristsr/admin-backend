@@ -1,6 +1,6 @@
 import { OidcDiscoveryCache } from './oidc-discovery-cache';
 
-describe('OidcDiscoveryCache (AC-3)', () => {
+describe('OidcDiscoveryCache', () => {
   const fallbackDefaultTtl = 60_000;
 
   const buildCache = (

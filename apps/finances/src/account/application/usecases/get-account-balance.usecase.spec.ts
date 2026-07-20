@@ -2,7 +2,7 @@ import { Account, AccountNotFoundException } from '@app/account/domain/account';
 import { Money } from '@app/shared/domain';
 import { GetAccountBalanceUsecase } from './get-account-balance.usecase';
 
-describe('GetAccountBalanceUsecase (AC-3)', () => {
+describe('GetAccountBalanceUsecase', () => {
   const account = Account.create({
     id: 1,
     initialBalance: Money.of(100, 'COP'),

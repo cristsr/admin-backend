@@ -3,12 +3,8 @@ import { HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
 import { OIDC_DISCOVERY_CACHE, OidcDiscoveryCache } from '@shared';
 
 /**
- * Readiness probe for the OIDC provider. Reuses the same lazy discovery cache
- * that backs the `JwtStrategy`: a successful readiness warms up the cache, so
- * the first real token validation never pays the discovery cost, and the IdP
- * being unreachable at boot never blocks startup (AC-2 + AC-3). The check is
- * bounded by a short timeout so a slow IdP does not stall the readiness
- * endpoint.
+ * Readiness probe for the OIDC provider. Reuses the JwtStrategy's discovery
+ * cache, so a successful probe warms it up for the first token validation.
  */
 export class OidcHealthIndicator extends HealthIndicator {
   constructor(

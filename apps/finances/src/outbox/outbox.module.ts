@@ -8,11 +8,6 @@ import {
 } from './infrastructure/adapters/persistence/typeorm';
 import { OutboxRelayScheduler } from './infrastructure/adapters/schedulers/outbox-relay.scheduler';
 
-/**
- * Transactional outbox (AC-2, sm-0003): a durable store for domain events plus
- * an in-process relay. Exports the publisher so use cases can enqueue events
- * within their own transaction.
- */
 @Module({
   imports: [TypeOrmModule.forFeature([TypeOrmOutboxEventEntity])],
   providers: [

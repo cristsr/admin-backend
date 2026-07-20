@@ -4,26 +4,14 @@ import {
   CategoryNotFoundException,
   CategoryRepository,
 } from '@app/category/domain/category';
+import { CategorizationInput } from './categorization-input.type';
 import { CategorizationRuleCriteria } from './categorization-rule.criteria';
 import { CategorizationRuleRepository } from './categorization-rule.repository';
-
-/** What is known about a movement that arrived without a category. */
-export interface CategorizationInput {
-  merchant?: string;
-  description?: string;
-}
-
-/** The category a movement ends up filed under. */
-export interface CategoryAssignment {
-  categoryId: number;
-  subcategoryId?: number;
-}
+import { CategoryAssignment } from './category-assignment.type';
 
 /**
- * AC-4 (sm-0003) — decides the category of a movement that arrived without
- * one. The first rule (highest priority) that claims it wins; if none does, the
- * movement falls back to the system default category ("Sin categorizar") so it
- * is never left uncategorized.
+ * Decides the category of an uncategorized movement: the highest-priority
+ * matching rule wins, else the system default category.
  */
 @Injectable()
 export class CategorizationService {

@@ -1,4 +1,4 @@
-import { BaseEntity, MoneyColumn } from '@shared';
+import { BaseEntity, MoneyColumn, Nullable } from '@shared';
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
 import { TypeOrmAccountEntity } from '@app/account/infrastructure/adapters/persistence/typeorm/account';
 import { BudgetThreshold, Period } from '@app/budget/domain/budget';
@@ -9,12 +9,7 @@ export class TypeOrmBudgetEntity extends BaseEntity {
   @Column()
   name: string;
 
-  /**
-   * Whether this budget is the current period. When a repeating budget rolls
-   * over, the previous one is deactivated and kept as history. This is not a
-   * deletion — that is what deleted_at is for — which is why it lives here and
-   * not on BaseEntity.
-   */
+  /** False marks a superseded period kept as history; not a deletion. */
   @Column({ default: true })
   active: boolean;
 
@@ -37,7 +32,7 @@ export class TypeOrmBudgetEntity extends BaseEntity {
   period: Period;
 
   @Column({ name: 'notified_threshold', type: 'varchar', nullable: true })
-  notifiedThreshold: BudgetThreshold | null;
+  notifiedThreshold: Nullable<BudgetThreshold>;
 
   @ManyToOne(() => TypeOrmCategoryEntity, { onDelete: 'SET NULL' })
   @JoinColumn({ name: 'category_id' })

@@ -4,9 +4,8 @@ import { EntityManager } from 'typeorm';
 import { OutboxRepository } from '@app/outbox/domain/outbox-event';
 
 /**
- * Single entry point through which use cases record a domain event in the
- * outbox, within the same transaction as the change that produced it (AC-2,
- * sm-0003). The relay later re-emits it in-process.
+ * Records a domain event in the outbox within the same transaction as the
+ * change that produced it; the relay later re-emits it in-process.
  */
 @Injectable()
 export class DomainEventOutboxPublisher {

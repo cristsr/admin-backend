@@ -40,7 +40,9 @@ export class TypeOrmAccountRepository implements AccountRepository {
       this.#criteria.toFindOptions(criteria),
     );
 
-    return entity ? TypeOrmAccountMapper.toDomain(entity) : null;
+    if (!entity) return null;
+
+    return TypeOrmAccountMapper.toDomain(entity);
   }
 
   async save(account: Account): Promise<Account> {
@@ -50,14 +52,13 @@ export class TypeOrmAccountRepository implements AccountRepository {
     return TypeOrmAccountMapper.toDomain(saved as TypeOrmAccountEntity);
   }
 
-  // Raw queries again to avoid the module cycle with movement (see the port).
+  // Raw queries avoid the module cycle with movement (see the port).
   async archiveCascade(
     id: number,
     user: number,
   ): Promise<AccountArchiveResult> {
     return this.dataSource.transaction(async (manager) => {
-      // 1. Soft-delete every movement of this account (transfer legs included).
-      const movements: Array<{ transfer_group: string | null }> =
+      const movements: Array<{ transfer_group: Nullable<string> }> =
         await manager.query(
           `UPDATE movements SET deleted_at = NOW()
            WHERE account_id = $1 AND user_id = $2 AND deleted_at IS NULL
@@ -74,8 +75,7 @@ export class TypeOrmAccountRepository implements AccountRepository {
         ),
       ];
 
-      // 2. Soft-delete the counterpart legs so no transfer is left half-valid,
-      //    even if the other account is still active.
+      // Counterpart legs too, so no transfer is left half-valid.
       if (groups.length > 0) {
         await manager.query(
           `UPDATE movements SET deleted_at = NOW()
@@ -84,7 +84,6 @@ export class TypeOrmAccountRepository implements AccountRepository {
         );
       }
 
-      // 3. Soft-delete the account itself.
       await manager.query(
         `UPDATE accounts SET deleted_at = NOW()
          WHERE id = $1 AND user_id = $2 AND deleted_at IS NULL`,
@@ -95,8 +94,6 @@ export class TypeOrmAccountRepository implements AccountRepository {
     });
   }
 
-  // Signed sum over the movements table. INCOME/TRANSFER_IN add,
-  // EXPENSE/TRANSFER_OUT subtract; soft-deleted rows are excluded.
   private static readonly SIGNED_SUM =
     `COALESCE(SUM(CASE ` +
     `WHEN type IN ('INCOME','TRANSFER_IN') THEN amount ` +

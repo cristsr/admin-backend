@@ -1,10 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/**
- * AC-2 (sm-0003) — transactional outbox. Domain events are written here in the
- * same transaction as the change that produced them; a relay re-emits pending
- * rows. Status is varchar (enum-like lives in the app layer).
- */
+/** Creates the outbox_events table for the transactional outbox. */
 export class CreateOutboxEventsTable1784073600021
   implements MigrationInterface
 {

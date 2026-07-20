@@ -1,5 +1,5 @@
 import { HttpStatus } from '@nestjs/common';
-import { BaseExceptionOptions } from './base.exception';
+import { BaseExceptionOptions } from './base-exception-options.type';
 import { DomainException } from './domain.exception';
 
 export class DomainNotFoundException extends DomainException {

@@ -1,9 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/**
- * AC-4 (sm-0003) — marks system-managed categories and seeds the default
- * "Sin categorizar", assigned to movements that match no categorization rule.
- */
+/** Adds categories.system and seeds the default "Sin categorizar" category. */
 export class AddCategorySystemAndSeedDefault1784073600023
   implements MigrationInterface
 {

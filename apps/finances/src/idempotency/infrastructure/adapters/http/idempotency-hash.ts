@@ -1,10 +1,7 @@
 import { createHash } from 'crypto';
 import { ObjectLiteral } from '@shared';
 
-/**
- * Stable SHA-256 of a request body: keys are sorted so an equivalent body always
- * hashes the same, and a different body produces a different hash (AC-3).
- */
+/** SHA-256 of a request body with sorted keys, so equivalent bodies hash the same. */
 export function hashRequestBody(body: ObjectLiteral | undefined): string {
   return createHash('sha256').update(stableStringify(body ?? {})).digest('hex');
 }

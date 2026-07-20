@@ -45,7 +45,6 @@ export class ScheduledController {
     return scheduled && ScheduledMapper.toOutput(scheduled);
   }
 
-  /** Filters follow the shared criteria contract; see `CriteriaQueryDto`. */
   @Get()
   async findAll(
     @CurrentUser() user: AuthenticatedUser,

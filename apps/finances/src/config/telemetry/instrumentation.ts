@@ -3,15 +3,8 @@ import { NodeSDK } from '@opentelemetry/sdk-node';
 import { buildNodeSDK, isTelemetryEnabled } from './telemetry.config';
 
 /**
- * Starts OpenTelemetry. This module must be loaded before anything else in the
- * process: the auto-instrumentations work by patching modules as they are
- * required, so anything imported earlier (http, express, pg, pino) is already
- * loaded and stays invisible to tracing. That is why `main.ts` imports this
- * first, ahead of even `AppModule`.
- *
- * Failing to reach the collector must never take the service down — telemetry
- * is a diagnostic, not a dependency — so startup errors are reported through
- * the OTel diagnostic channel and the process carries on uninstrumented.
+ * Starts OpenTelemetry; must load first, since auto-instrumentations patch
+ * modules at require time. Collector failures never take the service down.
  */
 function startTelemetry(): void {
   if (!isTelemetryEnabled(process.env)) return;
@@ -28,8 +21,7 @@ function startTelemetry(): void {
     return;
   }
 
-  // Flush whatever is buffered before the process goes away, otherwise the
-  // spans of the request that triggered the shutdown are lost.
+  // Flush buffered spans before exit, otherwise the triggering request's spans are lost.
   const shutdown = () => {
     sdk
       .shutdown()

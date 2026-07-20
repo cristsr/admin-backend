@@ -8,11 +8,8 @@ import { Money } from '@app/shared/domain';
 import { Budget } from './budget.entity';
 
 /**
- * Loads what has been spent against a budget during its own period and hands it
- * to the budget to record. Lives in the domain because "what counts as spending
- * for a budget" — expenses only, same category, same account, inside the period
- * and in the budget's own currency — is a business rule, not a query detail,
- * and every read of a budget must answer it the same way.
+ * Records on a budget what has been spent against it; what counts as
+ * spending is a business rule shared by every read of a budget.
  */
 @Injectable()
 export class BudgetSpendingService {
@@ -33,8 +30,7 @@ export class BudgetSpendingService {
       }),
     );
 
-    // The repository answers a bare total; the currency it is expressed in is
-    // the one this service just filtered by, so labelling it belongs here.
+    // The bare total is in the currency just filtered by; label it here.
     budget.recordSpending(Money.of(total, currency));
   }
 

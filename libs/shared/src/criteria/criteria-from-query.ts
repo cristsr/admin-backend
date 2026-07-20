@@ -1,8 +1,8 @@
 import { Nullable } from '../types/nullable.type';
 import { Criteria } from './criteria';
+import { CriteriaFieldDefinition } from './criteria-field-definition.type';
 import { CriteriaQueryDto } from './criteria-query.dto';
 import {
-  CriteriaFieldDefinition,
   CriteriaSchema,
   CriteriaValueType,
   allowedOperators,
@@ -20,15 +20,9 @@ const TRUTHY = ['true', '1'];
 const FALSY = ['false', '0'];
 
 /**
- * Turns the query string of a list endpoint into a criteria, validating every
- * field and operator against `schema` on the way.
- *
- * `base` carries the conditions the server imposes and the caller cannot
- * negotiate — ownership being the important one. It is applied first, and
- * since a criteria is append-only, nothing parsed from the query can drop it.
- *
- * @throws InvalidCriteriaException when the caller names an unknown field, an
- * operator the field does not accept, or a value that will not coerce.
+ * Builds a criteria from a list-endpoint query string, validating fields and
+ * operators against the schema. `base` carries server-imposed conditions
+ * (ownership) that no caller-supplied filter can drop.
  */
 export function criteriaFromQuery<TField extends string>(
   query: Nullable<CriteriaQueryDto>,
@@ -43,14 +37,23 @@ export function criteriaFromQuery<TField extends string>(
     base,
   );
 
-  const ordered = query?.orderBy
-    ? filtered.orderBy(
-        sortableField(query.orderBy as TField, schema),
-        query.order ?? OrderType.ASC,
-      )
-    : filtered;
+  return applyOrder(filtered, query, schema).paginate({
+    limit: query?.limit,
+    offset: query?.offset,
+  });
+}
 
-  return ordered.paginate({ limit: query?.limit, offset: query?.offset });
+function applyOrder<TField extends string>(
+  criteria: Criteria<TField>,
+  query: Nullable<CriteriaQueryDto>,
+  schema: CriteriaSchema<TField>,
+): Criteria<TField> {
+  if (!query?.orderBy) return criteria;
+
+  return criteria.orderBy(
+    sortableField(query.orderBy as TField, schema),
+    query.order ?? OrderType.ASC,
+  );
 }
 
 function buildFilter<TField extends string>(
@@ -72,7 +75,7 @@ function buildFilter<TField extends string>(
     return Filter.of(field, operator);
   }
 
-  if (raw === undefined || raw === null || raw === '') {
+  if (!raw) {
     throw new InvalidCriteriaException(
       `Filter on "${field}" requires a value`,
       { context: { field, operator } },
@@ -116,7 +119,6 @@ function sortableField<TField extends string>(
   return field;
 }
 
-/** A repeated query parameter on a scalar operator is a caller mistake. */
 function toSingle(raw: string | string[], field: string): string {
   if (!Array.isArray(raw)) return raw;
 
@@ -128,8 +130,9 @@ function toSingle(raw: string | string[], field: string): string {
 
 /** Accepts both `value=A,B` and repeated `value[]=A&value[]=B`. */
 function toList(raw: string | string[]): string[] {
-  const members = Array.isArray(raw) ? raw : raw.split(',');
-  return members.map((member) => member.trim()).filter(Boolean);
+  if (!Array.isArray(raw)) return toList(raw.split(','));
+
+  return raw.map((member) => member.trim()).filter(Boolean);
 }
 
 function coerce(

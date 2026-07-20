@@ -12,10 +12,6 @@ export class AccountInputDto {
   @IsNotEmpty()
   currency: string;
 
-  /**
-   * AC-1 (sm-0003) — if true, the account may hold a negative balance. Defaults
-   * to false when omitted.
-   */
   @IsOptional()
   @IsBoolean()
   allowNegativeBalance?: boolean;

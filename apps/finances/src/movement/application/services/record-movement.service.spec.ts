@@ -7,7 +7,7 @@ import { Money } from '@app/shared/domain';
 import { MovementSaved } from '../movement.constants';
 import { RecordMovementService } from './record-movement.service';
 
-describe('RecordMovementService (AC-1 funding rule, AC-2 transactional outbox)', () => {
+describe('RecordMovementService', () => {
   let movementRepository: any;
   let accountRepository: any;
   let outboxPublisher: any;
@@ -88,11 +88,6 @@ describe('RecordMovementService (AC-1 funding rule, AC-2 transactional outbox)',
       ).rejects.toThrow(InsufficientBalanceException);
     });
 
-    /**
-     * The movement being replaced already moved the balance, so a raise is only
-     * checked for the difference. Without discounting it, editing an $80 expense
-     * to $90 on a $100 account would be rejected as if $170 were leaving.
-     */
     it('discounts the movement being replaced before judging an edit', async () => {
       accountRepository.movementBalance.mockResolvedValue(-80);
 

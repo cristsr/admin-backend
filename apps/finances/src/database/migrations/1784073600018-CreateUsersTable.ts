@@ -1,10 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/**
- * Creates the `users` table in the finances database. Brought over from the
- * former standalone `users` service when it was folded into this monolith;
- * schema mirrors {@link UserEntity}.
- */
+/** Creates the users table. */
 export class CreateUsersTable1784073600018 implements MigrationInterface {
   name = 'CreateUsersTable1784073600018';
 

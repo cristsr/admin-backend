@@ -1,14 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/**
- * `active` sat on every table next to `deleted_at`, with no rule telling the
- * two apart, and every query had to filter both. Soft-delete already says
- * whether a row is gone, so the flag is dropped everywhere it meant nothing.
- *
- * budgets keeps it, where it means something else entirely: whether the budget
- * is the current period. When a repeating budget rolls over, the previous one
- * is deactivated and kept as history — that is not a deletion.
- */
+/** Drops the redundant active column from all tables except budgets. */
 export class DropActiveExceptBudgets1784073600016
   implements MigrationInterface
 {

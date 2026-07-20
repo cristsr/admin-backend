@@ -6,13 +6,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-/**
- * Machine-to-machine guard for the webhook receiver — separate from the
- * user-facing JWT guard, since callers here (e.g. the Rust ingestion
- * pipeline) don't hold an end-user token. A shared API key is the simplest
- * contract that works regardless of which identity provider users
- * authenticate through.
- */
+/** Machine-to-machine auth: webhook callers hold a shared API key, not a user JWT. */
 @Injectable()
 export class WebhookApiKeyGuard implements CanActivate {
   constructor(private readonly configService: ConfigService) {}

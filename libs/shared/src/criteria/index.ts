@@ -4,6 +4,7 @@ export * from './order-type';
 export * from './order';
 export * from './criteria';
 export * from './criteria-schema';
+export * from './criteria-field-definition.type';
 export * from './criteria-query.dto';
 export * from './criteria-from-query';
 export * from './invalid-criteria.exception';

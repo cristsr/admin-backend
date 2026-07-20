@@ -56,7 +56,7 @@ describe('Movement', () => {
     });
   });
 
-  describe('applyPatch (AC-4)', () => {
+  describe('applyPatch', () => {
     it('applies only the fields present in the patch', () => {
       const movement = buildMovement();
 
@@ -102,7 +102,6 @@ describe('Movement', () => {
 
       expect(ingested.notes).toBe('mine');
       expect(ingested.categoryId).toBe(12);
-      // what ingestion extracted survives the edit
       expect(ingested.merchant).toBe('UBER TRIP');
     });
 

@@ -8,7 +8,7 @@ const payload = {
   user: 7,
 };
 
-describe('PgmqBudgetNotificationPublisher (AC-1)', () => {
+describe('PgmqBudgetNotificationPublisher', () => {
   it('publishes to the configured queue with the serialized payload', async () => {
     const dataSource = { query: jest.fn().mockResolvedValue([]) } as any;
     const config = { get: jest.fn().mockReturnValue('budget_threshold') } as any;

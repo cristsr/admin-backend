@@ -4,21 +4,25 @@ import { Params } from 'nestjs-pino';
 
 export const CORRELATION_HEADER = 'X-Request-Id'.toLowerCase();
 
+/** Node joins repeated headers into an array; only the first value matters. */
+function firstHeaderValue(
+  header: string | string[] | undefined,
+): string | undefined {
+  if (Array.isArray(header)) return header[0];
+
+  return header;
+}
+
 /**
- * Structured logger based on `nestjs-pino`. The correlation id is taken from
- * the incoming `X-Request-Id` when the edge (NGINX) supplies it; otherwise the
- * service generates one, so every request — including tests, crons and internal
- * calls — carries a trace id (AC-4). The id is attached to log lines via the
- * standard pino `req.id` field, and downstream handlers reuse it for the trace
- * propagation across the outbox boundary.
+ * Correlation id comes from `X-Request-Id` when the edge supplies it,
+ * otherwise one is generated; it rides on pino's `req.id`.
  */
 export function buildPinoModuleOptions(): Params {
   return {
     pinoHttp: {
       genReqId: (req: IncomingMessage) => {
-        const header = req.headers?.[CORRELATION_HEADER];
-        const value = Array.isArray(header) ? header[0] : header;
-        return value ?? randomUUID();
+        const header = firstHeaderValue(req.headers?.[CORRELATION_HEADER]);
+        return header ?? randomUUID();
       },
       customProps: (req: IncomingMessage & { id?: string }) => ({
         correlationId: req.id,

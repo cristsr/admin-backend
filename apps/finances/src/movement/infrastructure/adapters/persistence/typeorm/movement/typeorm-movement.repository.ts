@@ -43,7 +43,9 @@ export class TypeOrmMovementRepository implements MovementRepository {
       relations: RELATIONS,
     });
 
-    return entity ? TypeOrmMovementMapper.toDomain(entity) : null;
+    if (!entity) return null;
+
+    return TypeOrmMovementMapper.toDomain(entity);
   }
 
   async countMatching(criteria: Criteria<MovementField>): Promise<number> {

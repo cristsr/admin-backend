@@ -15,10 +15,8 @@ import {
 const DEFAULT_PRESENTATION_CURRENCY = 'USD';
 
 /**
- * Consolidates the balance of all the user's accounts into their presentation
- * currency, converting the ones in another currency with historical rates
- * (AC-2). The presentation currency arrives as a JWT claim; if missing, the
- * first account's currency is used.
+ * Consolidates the user's account balances into the presentation currency
+ * (JWT claim, else the first account's currency) using historical rates.
  */
 @Injectable()
 export class GetConsolidatedBalanceUsecase {
@@ -33,8 +31,7 @@ export class GetConsolidatedBalanceUsecase {
     user: number,
     presentationCurrency?: string,
   ): Promise<ConsolidatedBalanceOutputDto> {
-    // Every account, unpaginated: a consolidated total that silently left a
-    // page of accounts out would simply be wrong.
+    // Unpaginated on purpose: a total missing a page of accounts would be wrong.
     const accounts = await this.accountRepository.matching(
       AccountCriteria.ownedBy(user),
     );
@@ -89,7 +86,6 @@ export class GetConsolidatedBalanceUsecase {
     };
   }
 
-  /** An account already in the presentation currency needs no rate lookup. */
   private async rateFor(
     from: string,
     to: string,

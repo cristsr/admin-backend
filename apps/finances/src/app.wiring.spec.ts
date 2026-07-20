@@ -1,12 +1,9 @@
-/* eslint-disable import-x/order -- load order carries meaning here: the environment must be set before anything under src is pulled in. */
+/* eslint-disable import-x/order -- the environment must be set before anything under src is imported. */
 import { Global, Module } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getDataSourceToken, getEntityManagerToken } from '@nestjs/typeorm';
 
-/**
- * Every value the config validator demands. Set before the modules load,
- * because ConfigModule validates at import time.
- */
+/** Every value the config validator demands; must be set before the modules load. */
 const environment: Record<string, string> = {
   ENV: 'test',
   PORT: '3000',
@@ -25,8 +22,8 @@ const environment: Record<string, string> = {
 
 Object.assign(process.env, environment);
 
-// Required rather than imported: the config validator runs at module load, so
-// nothing under src may be pulled in before the environment above is in place.
+// Required, not imported: the config validator runs at module load and needs
+// the env above set first.
 const { AppModule } = require('./app.module');
 const { BudgetSpendingService } = require('./budget/domain/budget');
 const {
@@ -45,10 +42,8 @@ const {
 } = require('./webhook/application/usecases');
 
 /**
- * A DataSource that hands out inert repositories. `TypeOrmModule.forFeature`
- * builds its repository providers by calling `getRepository` on whatever the
- * DataSource token resolves to, so this is enough for every `forFeature` in the
- * app to wire up without a database behind it.
+ * Inert DataSource: `forFeature` providers only call `getRepository` on it,
+ * so the app wires up without a database.
  */
 const dataSource = {
   getRepository: () => ({}),
@@ -71,10 +66,8 @@ const dataSource = {
 class StubDatabaseModule {}
 
 /**
- * Compiles the whole application graph with the database swapped out. Unit
- * tests instantiate use cases by hand and so never notice a provider missing
- * from a module; this does, because Nest resolves every controller, use case,
- * domain service, event handler and scheduler for real.
+ * Compiles the whole application graph with the database swapped out, so a
+ * provider missing from a module fails here instead of at runtime.
  */
 describe('Application wiring', () => {
   let moduleRef: TestingModule;

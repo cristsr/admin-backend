@@ -2,9 +2,8 @@ import { CriteriaFieldMap } from '@shared';
 import { MovementField } from '@app/movement/domain/movement';
 
 /**
- * Where each movement field lives in the TypeORM model. Relations are reached
- * through their id (`account.id`) so a criteria can filter by a foreign key
- * without the domain ever naming a column.
+ * Where each movement field lives in the TypeORM model; relations are reached
+ * through their id (`account.id`) so criteria can filter by foreign key.
  */
 export const MOVEMENT_CRITERIA_FIELDS: CriteriaFieldMap<MovementField> = {
   id: 'id',

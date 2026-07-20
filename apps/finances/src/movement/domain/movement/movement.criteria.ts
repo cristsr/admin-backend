@@ -9,9 +9,10 @@ import {
   OrderType,
   criteriaFromQuery,
 } from '@shared';
-import { MovementType, reportableMovementTypes } from './movement.types';
+import { MovementPeriodScope } from './movement-period-scope.type';
+import { MovementSpendingScope } from './movement-spending-scope.type';
+import { reportableMovementTypes } from './movement.types';
 
-/** Every movement attribute a criteria may name. */
 export type MovementField =
   | 'id'
   | 'user'
@@ -31,11 +32,8 @@ export type MovementField =
   | 'createdAt';
 
 /**
- * The subset a REST caller may drive. `user`, `transferGroup` and
- * `externalReference` are missing on purpose: the first is pinned by the use
- * case from the authenticated principal, and the other two are internal
- * correlation keys — letting a client probe them turns them into an oracle for
- * rows it does not own.
+ * Fields a REST caller may filter by. `user`, `transferGroup` and
+ * `externalReference` stay internal on purpose.
  */
 export const MOVEMENT_CRITERIA_SCHEMA: CriteriaSchema<MovementField> = {
   date: { type: CriteriaValueType.DATE, isSortable: true },
@@ -65,36 +63,8 @@ export const MOVEMENT_CRITERIA_SCHEMA: CriteriaSchema<MovementField> = {
   id: { type: CriteriaValueType.NUMBER, operators: COMPARABLE_OPERATORS },
 };
 
-/** What a budget has to count against its limit. */
-export interface MovementSpendingScope {
-  user: number;
-  category: number;
-  type: MovementType;
-  startDate: Date;
-  endDate: Date;
-  /**
-   * Required whenever the matches will be *added up*: totalling amounts held
-   * in different currencies produces a number nobody can interpret. Listing
-   * them is a different question and may leave it out.
-   */
-  currency?: string;
-  account?: number;
-}
-
-export interface MovementPeriodScope {
-  user: number;
-  account: number;
-  startDate: Date;
-  endDate: Date;
-}
-
-/**
- * Named queries over movements. Each one states an intent the domain cares
- * about, so use cases read as business language while the repository only ever
- * learns about `Criteria`.
- */
+/** Named movement queries, so use cases read as business language. */
 export class MovementCriteria {
-  /** Everything the given user owns, and nothing else. */
   static ownedBy(user: number): Criteria<MovementField> {
     return Criteria.none<MovementField>().equals('user', user);
   }
@@ -108,9 +78,8 @@ export class MovementCriteria {
   }
 
   /**
-   * The movement a provider webhook already produced. Not scoped to a user:
-   * the reference is what proves the payload is a replay, and the delivery
-   * carries no principal.
+   * The movement a webhook delivery already produced. Not user-scoped: the
+   * reference is what proves a replay.
    */
   static byExternalReference(
     externalReference: string,
@@ -121,7 +90,6 @@ export class MovementCriteria {
     );
   }
 
-  /** Both legs of a transfer (or its compensating pair). */
   static byTransferGroup(
     transferGroup: string,
     user: number,
@@ -132,10 +100,8 @@ export class MovementCriteria {
   }
 
   /**
-   * A user-facing listing. Query filters are layered on top of the ownership
-   * filter, never instead of it, and a caller that states no ordering gets the
-   * newest first — with `createdAt` breaking ties so two movements on the same
-   * day keep a stable page boundary.
+   * User-facing listing: filters layer on top of ownership, never instead of
+   * it. Defaults to newest first, with `createdAt` breaking date ties.
    */
   static list(
     query: Nullable<CriteriaQueryDto>,
@@ -164,7 +130,6 @@ export class MovementCriteria {
       .orderBy('date', OrderType.DESC);
   }
 
-  /** The newest movements of an account, for the dashboard strip. */
   static latestForAccount(
     user: number,
     account: number,

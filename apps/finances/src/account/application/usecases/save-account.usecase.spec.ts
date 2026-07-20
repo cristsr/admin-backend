@@ -1,7 +1,7 @@
 import { AccountInputDto } from '../dto/account-input.dto';
 import { SaveAccountUsecase } from './save-account.usecase';
 
-describe('SaveAccountUsecase (AC-1 allowNegativeBalance)', () => {
+describe('SaveAccountUsecase', () => {
   it('persists allowNegativeBalance when creating an account', async () => {
     const accountRepository = {
       findByIdAndUser: jest.fn(),

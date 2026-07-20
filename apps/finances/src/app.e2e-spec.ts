@@ -3,11 +3,10 @@ import * as request from 'supertest';
 import { buildE2eApp } from './testing/e2e-app';
 
 /**
- * Auth happy path against a real lab IdP (Keycloak) wired through the same
- * docker-compose definition used locally and in CI (AC-6, sm-0004). Requires
+ * Auth happy path against a real lab Keycloak. Requires
  * `docker compose up -d keycloak postgres` and the Keycloak env vars below.
  */
-describe('Auth happy path e2e (AC-6)', () => {
+describe('Auth happy path e2e', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
@@ -30,8 +29,7 @@ describe('Auth happy path e2e (AC-6)', () => {
       .get('/accounts')
       .set('Authorization', `Bearer ${token}`)
       .expect((res) => {
-        // The guard accepts the token; the downstream user lookup may still 403,
-        // but a 401 (rejected token) must never happen with a valid JWT.
+        // A valid JWT must never 401; the downstream user lookup may still 403.
         expect([200, 403]).toContain(res.status);
       });
   });

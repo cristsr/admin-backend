@@ -3,32 +3,13 @@ import { Account, AccountRepository } from '@app/account/domain/account';
 import { currentTraceId } from '@app/config/telemetry/correlation';
 import { Movement, MovementRepository } from '@app/movement/domain/movement';
 import { DomainEventOutboxPublisher } from '@app/outbox/application/services/domain-event-outbox.publisher';
-import { MovementSaved, MovementSavedPayload } from '../movement.constants';
-
-/** What the caller knows about the write that the movement itself does not. */
-export interface RecordMovementOptions {
-  /**
-   * Correlation id of the request that caused the write, used only when there
-   * is no active trace to take it from.
-   */
-  requestId?: string;
-
-  /**
-   * Effect on the account balance of the movement this write overwrites, taken
-   * from {@link Movement.signedAmount} *before* the edit is applied. A caller
-   * that edits in place must read it up front — once the movement carries the
-   * new amount, the old one is gone.
-   */
-  replacedBalanceEffect?: number;
-}
+import { MovementSavedPayload } from '../movement-saved-payload.type';
+import { MovementSaved } from '../movement.constants';
+import { RecordMovementOptions } from './record-movement-options.type';
 
 /**
- * The single way a movement reaches the database. Every entry point — the
- * manual API, the ingestion webhook — records through here, so the two rules
- * that must hold for *any* movement hold in one place instead of once per
- * caller: an account has to be able to fund what it pays out (AC-1, sm-0003),
- * and the movement commits together with the `movement.saved` event that
- * announces it, so a crash after commit can never lose the event (AC-2).
+ * Single entry point for recording a movement: enforces account funding and
+ * commits the movement together with its `movement.saved` outbox event.
  */
 @Injectable()
 export class RecordMovementService {
@@ -39,9 +20,8 @@ export class RecordMovementService {
   ) {}
 
   /**
-   * The correlation id is read from the ambient trace rather than passed down,
-   * so nothing between the controller and here has to carry it; `requestId` is
-   * the fallback for when telemetry is off.
+   * Correlation id comes from the ambient trace; `requestId` is the fallback
+   * when telemetry is off.
    */
   async record(
     movement: Movement,
@@ -79,14 +59,8 @@ export class RecordMovementService {
   }
 
   /**
-   * Only the account can say whether it funds a withdrawal; the live balance it
-   * needs for that is the one thing only the repository knows. An account that
-   * tolerates a negative balance funds anything, so its balance is not even
-   * queried.
-   *
-   * A movement being replaced is already part of that balance, so it is
-   * discounted first — otherwise raising a $10 expense to $11 would be checked
-   * as if $21 were leaving the account.
+   * Withdrawals must be fundable by the account; the replaced movement's
+   * effect is discounted so an edit is checked only for the difference.
    */
   private async ensureAccountCanFund(
     movement: Movement,

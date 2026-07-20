@@ -4,6 +4,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { passportJwtSecret } from 'jwks-rsa';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { firstValueFrom, map } from 'rxjs';
+import { Nullable } from '../types/nullable.type';
 import {
   JWT_STRATEGY_OPTIONS,
   OIDC_DISCOVERY_CACHE,
@@ -11,32 +12,17 @@ import {
 } from './auth.constants';
 import { AuthenticatedUser } from './authenticated-user.type';
 import { IdentityResolver } from './identity-resolver';
+import { JwtStrategyOptions } from './jwt-strategy-options.type';
 import { OidcDiscoveryCache } from './oidc-discovery-cache';
 
-export interface JwtStrategyOptions {
-  issuer: string;
-  audience: string;
-  /** Kept for backwards-compatibility; ignored when {@link discovery} is set. */
-  jwksUri?: string;
-  /**
-   * Lazy discovery cache. When set, the JWKS endpoint is resolved on the first
-   * token validation instead of at bootstrap.
-   */
-  discovery?: OidcDiscoveryCache;
-}
-
 /**
- * JWKS resolution driven lazily by the {@link OidcDiscoveryCache}. The
- * `jwks-rsa` client stays cached and keyed by the resolved `jwks_uri`; if the
- * cache re-resolves a different URI after TTL expiry (an IdP-side rotation),
- * the client is rebuilt transparently. App bootstrap no longer hits the IdP,
- * so the service starts even when the provider is momentarily unreachable
- * (AC-3).
+ * Lazily resolves the JWKS endpoint through the discovery cache, so app
+ * bootstrap never hits the IdP and a URI rotation rebuilds the client.
  */
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  private jwksClient: ReturnType<typeof passportJwtSecret> | null = null;
-  private resolvedJwksUri: string | null = null;
+  private jwksClient: Nullable<ReturnType<typeof passportJwtSecret>> = null;
+  private resolvedJwksUri: Nullable<string> = null;
   private readonly discovery?: OidcDiscoveryCache;
   private readonly fallbackJwksUri: string;
 
@@ -55,17 +41,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       algorithms: ['RS256'],
     });
 
-    // The discovery cache is injected via DI but can also be supplied inline
-    // through the options (used by unit tests); the inline value wins.
+    // Inline discovery (used by unit tests) wins over the DI-injected cache.
     this.discovery = options.discovery ?? injectedDiscovery;
     this.fallbackJwksUri = options.jwksUri ?? '';
   }
 
-  /**
-   * Resolves the signing key for each incoming token. The JWKS endpoint is
-   * discovered lazily on first use, so a slow or unreachable IdP never blocks
-   * startup — only the individual request that needs it (AC-3).
-   */
   async secretOrKeyProvider(
     request: any,
     rawJwtToken: any,
@@ -79,17 +59,11 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
   }
 
-  /**
-   * Returns the `jwks-rsa` client for the currently-resolved JWKS endpoint,
-   * rebuilding it only when the discovery cache hands back a different URI
-   * (rotation absorbed without a restart).
-   */
+  /** Rebuilds the client only when the resolved JWKS URI changes. */
   private async resolveJwksClient(): Promise<
     ReturnType<typeof passportJwtSecret>
   > {
-    const jwksUri = this.discovery
-      ? await this.discovery.getJwksUri()
-      : this.fallbackJwksUri;
+    const jwksUri = await this.resolveJwksUri();
 
     if (!this.jwksClient || this.resolvedJwksUri !== jwksUri) {
       this.jwksClient = passportJwtSecret({
@@ -102,6 +76,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     }
 
     return this.jwksClient;
+  }
+
+  /** Prefers lazy discovery; falls back to the statically configured URI. */
+  private resolveJwksUri(): Promise<string> {
+    if (!this.discovery) return Promise.resolve(this.fallbackJwksUri);
+
+    return this.discovery.getJwksUri();
   }
 
   validate(payload: Record<string, any>): Promise<AuthenticatedUser> {

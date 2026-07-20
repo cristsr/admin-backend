@@ -49,8 +49,7 @@ export class MovementController {
 
   /**
    * Filters follow the shared criteria contract, e.g.
-   * `?filters[0][field]=amount&filters[0][operator]=gte&filters[0][value]=1000`
-   * `&orderBy=date&order=desc&limit=20`.
+   * `?filters[0][field]=amount&filters[0][operator]=gte&filters[0][value]=1000`.
    */
   @Get()
   async findAll(

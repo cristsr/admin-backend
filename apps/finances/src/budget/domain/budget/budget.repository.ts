@@ -2,10 +2,7 @@ import { Criteria, Nullable } from '@shared';
 import { BudgetField } from './budget.criteria';
 import { Budget } from './budget.entity';
 
-/**
- * Reads take a criteria; the questions themselves live in `BudgetCriteria`,
- * stated in domain terms.
- */
+/** Persistence port for budgets; reads are expressed via `BudgetCriteria`. */
 export abstract class BudgetRepository {
   abstract matching(criteria: Criteria<BudgetField>): Promise<Budget[]>;
 
@@ -18,9 +15,6 @@ export abstract class BudgetRepository {
   /** Soft-deletes every match and answers how many rows it touched. */
   abstract removeMatching(criteria: Criteria<BudgetField>): Promise<number>;
 
-  /**
-   * Marks a budget as no longer the current period. Not a deletion and not a
-   * criteria: it targets the one budget whose successor has just been created.
-   */
+  /** Marks a budget as no longer the current period; not a deletion. */
   abstract deactivate(id: number): Promise<void>;
 }

@@ -18,7 +18,7 @@ const buildAccount = (overrides: Partial<Account> = {}) =>
     ...overrides,
   } as Account);
 
-describe('CreateTransferUsecase (AC-2 cross-currency)', () => {
+describe('CreateTransferUsecase (cross-currency)', () => {
   let accountRepository: any;
   let movementRepository: any;
   let exchangeRateProvider: any;
@@ -93,7 +93,6 @@ describe('CreateTransferUsecase (AC-2 cross-currency)', () => {
 
     expect(result.toCurrency).toBe('USD');
     expect(result.toAmount).toBeCloseTo(25);
-    // destination leg is saved in the converted currency and amount
     const legs = movementRepository.saveAll.mock.calls[0][0];
     const incoming = legs.find((l: any) => l.type === MovementType.TRANSFER_IN);
     expect(incoming.money.currency).toBe('USD');
@@ -117,7 +116,7 @@ describe('CreateTransferUsecase (AC-2 cross-currency)', () => {
   });
 });
 
-describe('CreateTransferUsecase (AC-1 balance validation)', () => {
+describe('CreateTransferUsecase (balance validation)', () => {
   let accountRepository: any;
   let movementRepository: any;
   let usecase: CreateTransferUsecase;

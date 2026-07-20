@@ -1,9 +1,8 @@
 import { ExecutionContext, Logger } from '@nestjs/common';
 
 /**
- * The authenticated user the guard attached to the request. HTTP is the only
- * transport this API speaks; anything else means the decorator was used
- * somewhere it cannot work, which is worth a log rather than a silent null.
+ * Reads the user the guard attached to the request. Non-HTTP contexts log an
+ * error and return null instead of failing silently.
  */
 export function extractUserFromContext<T>(ctx: ExecutionContext): T {
   if (ctx.getType() === 'http') {

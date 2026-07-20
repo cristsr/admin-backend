@@ -2,7 +2,7 @@ import { Account } from '@app/account/domain/account';
 import { Money } from '@app/shared/domain';
 import { FindAllAccountsUsecase } from './find-all-accounts.usecase';
 
-describe('FindAllAccountsUsecase (AC-3 embedded balance)', () => {
+describe('FindAllAccountsUsecase', () => {
   it('attaches the live balance to each account', async () => {
     const accountRepository = {
       matching: jest.fn().mockResolvedValue([

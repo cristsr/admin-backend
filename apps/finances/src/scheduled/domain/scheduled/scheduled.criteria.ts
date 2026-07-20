@@ -9,7 +9,6 @@ import {
   criteriaFromQuery,
 } from '@shared';
 
-/** Every scheduled-entry attribute a criteria may name. */
 export type ScheduledField =
   | 'id'
   | 'user'
@@ -42,7 +41,6 @@ export const SCHEDULED_CRITERIA_SCHEMA: CriteriaSchema<ScheduledField> = {
   },
 };
 
-/** Named queries over scheduled entries. */
 export class ScheduledCriteria {
   static ownedBy(user: number): Criteria<ScheduledField> {
     return Criteria.none<ScheduledField>().equals('user', user);
@@ -68,10 +66,8 @@ export class ScheduledCriteria {
   }
 
   /**
-   * Occurrences that have come due. `date <= now` rather than an exact-minute
-   * window: if the app was down, the pending ones are still picked up on the
-   * next tick instead of being skipped forever. Oldest first, so a backlog is
-   * materialized in the order it accumulated.
+   * `date <= now` so entries missed while the app was down are still picked up;
+   * oldest first so a backlog materializes in order.
    */
   static due(now: Date): Criteria<ScheduledField> {
     return Criteria.none<ScheduledField>()

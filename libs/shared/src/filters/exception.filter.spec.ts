@@ -38,10 +38,6 @@ describe('ExceptionFilter', () => {
     });
   });
 
-  /**
-   * The filter used to wrap every failure in a gRPC status envelope, so a 404
-   * went out as `{ code: 10 }` — gRPC's ABORTED — to HTTP clients.
-   */
   it('emits no gRPC status envelope', () => {
     const { host, body } = capture();
 

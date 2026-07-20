@@ -58,8 +58,7 @@ import { WebhookModule } from './webhook/webhook.module';
     DatabaseModule,
     AuthModule.forRootAsync({
       inject: [ConfigService],
-      // Selected here (not inside useFactory) because the resolver class
-      // must be known at module-registration time, before DI runs.
+      // The resolver class must be known at registration time, before DI runs.
       identityResolver:
         process.env.AUTH_IDENTITY_PROVIDER === 'auth0'
           ? Auth0IdentityResolver

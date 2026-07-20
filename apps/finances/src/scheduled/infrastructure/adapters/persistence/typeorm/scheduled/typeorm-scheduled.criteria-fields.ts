@@ -1,7 +1,6 @@
 import { CriteriaFieldMap } from '@shared';
 import { ScheduledField } from '@app/scheduled/domain/scheduled';
 
-/** Where each scheduled-entry field lives in the TypeORM model. */
 export const SCHEDULED_CRITERIA_FIELDS: CriteriaFieldMap<ScheduledField> = {
   id: 'id',
   user: 'user',

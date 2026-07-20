@@ -19,7 +19,6 @@ export class RemoveCategoryUsecase {
       throw new CategoryNotFoundException('Category not found');
     }
 
-    // AC-4: the default "Sin categorizar" (and any system category) is protected.
     if (category.system) {
       throw new CategoryIsSystemException(
         'System categories cannot be deleted',

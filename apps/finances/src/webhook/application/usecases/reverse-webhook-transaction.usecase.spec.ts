@@ -7,7 +7,7 @@ import {
 import { Money } from '@app/shared/domain';
 import { ReverseWebhookTransactionUsecase } from './reverse-webhook-transaction.usecase';
 
-describe('ReverseWebhookTransactionUsecase (AC-6)', () => {
+describe('ReverseWebhookTransactionUsecase', () => {
   let movementRepository: any;
   let usecase: ReverseWebhookTransactionUsecase;
 

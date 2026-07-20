@@ -25,12 +25,8 @@ import {
 import { ObjectLiteral } from '../types/object-literal';
 
 /**
- * Maps every domain field of an aggregate to the TypeORM property path that
- * backs it — `'account'` to `'account.id'`, `'user'` to `'user'`.
- *
- * The `Record` is total on purpose: adding a name to the field union breaks
- * compilation here until the adapter says where it lives, so a criteria can
- * never reach the database with a field nobody mapped.
+ * Maps each domain field to its TypeORM property path. Total on purpose: an
+ * unmapped field fails compilation instead of reaching the database.
  */
 export type CriteriaFieldMap<TField extends string> = Readonly<
   Record<TField, string>
@@ -42,11 +38,8 @@ const ORDER_DIRECTION: Readonly<Record<OrderType, 'ASC' | 'DESC'>> = {
 };
 
 /**
- * Translates a criteria into the `find` options of a TypeORM repository.
- *
- * It resolves the *what* of a query and nothing else: relations to eager-load
- * and the entity being queried stay with the repository, which is the only
- * place that knows which shape its mapper needs.
+ * Translates a criteria into TypeORM `find` options. Relations to eager-load
+ * and the entity itself stay with the repository.
  */
 export class TypeOrmCriteriaConverter<
   TEntity extends ObjectLiteral,
@@ -63,10 +56,7 @@ export class TypeOrmCriteriaConverter<
     };
   }
 
-  /**
-   * The `where` alone, for the repository operations that take one without
-   * ordering or paging — `count`, `sum`, `softDelete`.
-   */
+  /** The `where` alone, for operations without ordering or paging (`count`, `sum`). */
   toWhere(criteria: Criteria<TField>): FindOptionsWhere<TEntity> {
     return criteria.filters.reduce<ObjectLiteral>(
       (where, filter) =>
@@ -101,10 +91,8 @@ export class TypeOrmCriteriaConverter<
   }
 
   /**
-   * Writes `value` at a dotted path, creating the intermediate objects a
-   * relation filter needs (`account.id` becomes `{ account: { id } }`).
-   * Two conditions on the same column are ANDed rather than overwriting, so
-   * `amount > 10` and `amount < 100` compose into a real range.
+   * Writes `value` at a dotted path (`account.id` becomes `{ account: { id } }`).
+   * Two conditions on the same column are ANDed, composing real ranges.
    */
   private assign(
     target: ObjectLiteral,

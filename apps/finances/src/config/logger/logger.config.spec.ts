@@ -1,17 +1,14 @@
 import { Options } from 'pino-http';
 import { CORRELATION_HEADER, buildPinoModuleOptions } from './logger.config';
 
-/**
- * `pinoHttp` is typed as options, a destination stream, or both — this config
- * always builds the options form, so the assertions narrow to it once here.
- */
+/** `pinoHttp` may be options or a stream; this config always builds the options form. */
 const genReqId = () => {
   const { pinoHttp } = buildPinoModuleOptions();
 
   return (pinoHttp as Options).genReqId;
 };
 
-describe('pino logger config (AC-4)', () => {
+describe('pino logger config', () => {
   it('uses X-Request-Id from the incoming headers when the edge supplies it', () => {
     const req = { headers: { [CORRELATION_HEADER]: 'abc-123' } } as any;
 

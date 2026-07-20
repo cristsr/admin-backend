@@ -8,25 +8,9 @@ import {
 } from '@nestjs/common';
 import { DomainException } from '../exceptions';
 import { ObjectLiteral } from '../types';
+import { ErrorResponseBody } from './error-response-body.type';
 
-/** The body every failed request answers with, whatever went wrong. */
-export interface ErrorResponseBody {
-  statusCode: number;
-  /** Class of the failure, e.g. `AccountNotFoundException`. */
-  error: string;
-  message: string;
-  /** Domain code, when the failure carries one, so clients can branch on it. */
-  code?: string;
-  path: string;
-  timestamp: string;
-}
-
-/**
- * Turns anything thrown into a single HTTP error shape. It used to emit a gRPC
- * status envelope (`{ code: 10, metadata }`) left over from when these services
- * spoke gRPC — so every HTTP failure, a 404 included, answered with gRPC's
- * ABORTED code.
- */
+/** Turns any thrown error into the standard HTTP error body. */
 @Catch()
 export class ExceptionFilter implements IExceptionFilter {
   #logger = new Logger(ExceptionFilter.name);
@@ -49,8 +33,7 @@ export class ExceptionFilter implements IExceptionFilter {
     http.getResponse().status(body.statusCode).json(this.compact(body));
   }
 
-  // Domain exceptions carry their own HTTP status; without this they fell
-  // through to a generic 500 (a "not found" answered 500 instead of 404).
+  // Domain exceptions carry their own HTTP status; otherwise they became 500.
   private toHttpException(exception: Error): HttpException {
     if (exception instanceof HttpException) {
       return exception;
@@ -63,7 +46,6 @@ export class ExceptionFilter implements IExceptionFilter {
     return new InternalServerErrorException(exception.message);
   }
 
-  /** Keeps optional fields out of the payload entirely when they are absent. */
   private compact(body: ErrorResponseBody): ObjectLiteral {
     return Object.fromEntries(
       Object.entries(body).filter(([, value]) => value !== undefined),

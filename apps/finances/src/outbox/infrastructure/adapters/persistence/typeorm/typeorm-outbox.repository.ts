@@ -28,10 +28,7 @@ export class TypeOrmOutboxRepository implements OutboxRepository {
     });
   }
 
-  /**
-   * Claims deliverable rows inside a transaction with FOR UPDATE SKIP LOCKED so
-   * concurrent relay ticks never grab the same event.
-   */
+  /** FOR UPDATE SKIP LOCKED so concurrent relay ticks never grab the same event. */
   async claimPendingBatch(limit: number): Promise<OutboxEvent[]> {
     return this.repository.manager.transaction(async (manager) => {
       const rows = await manager

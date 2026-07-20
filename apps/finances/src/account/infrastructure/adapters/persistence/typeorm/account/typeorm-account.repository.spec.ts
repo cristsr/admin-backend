@@ -1,6 +1,6 @@
 import { TypeOrmAccountRepository } from './typeorm-account.repository';
 
-describe('TypeOrmAccountRepository balance (AC-3)', () => {
+describe('TypeOrmAccountRepository balance', () => {
   it('movementBalance returns the signed sum as a number', async () => {
     const dataSource = {
       query: jest.fn().mockResolvedValue([{ total: '150.00' }]),

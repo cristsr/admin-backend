@@ -1,11 +1,8 @@
 import { ColumnOptions, getMetadataArgsStorage } from 'typeorm';
 
 /**
- * Money is stored as numeric(14,2): exact decimal arithmetic, never float.
- * The driver returns numeric as a string to avoid precision loss, so the
- * transformer maps it back to number for the domain. Aggregation must stay
- * in Postgres (SUM over numeric) — accumulating money in JS reintroduces
- * the float error this column type exists to avoid.
+ * Money column as numeric(14,2): exact decimal, never float. The driver
+ * returns numeric as string, so the transformer maps it back to number.
  */
 export function MoneyColumn(options?: ColumnOptions): PropertyDecorator {
   return function (object: any, propertyName: string) {
@@ -19,7 +16,12 @@ export function MoneyColumn(options?: ColumnOptions): PropertyDecorator {
         scale: 2,
         transformer: {
           to: (value: number) => value,
-          from: (value: string) => (value === null ? null : Number(value)),
+          from: (value: string) => {
+            // The driver hands back null for NULL rows despite the string type.
+            if (!value) return null;
+
+            return Number(value);
+          },
         },
         ...options,
       },

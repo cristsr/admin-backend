@@ -42,7 +42,9 @@ export class TypeOrmBudgetRepository implements BudgetRepository {
       relations: RELATIONS,
     });
 
-    return entity ? TypeOrmBudgetMapper.toDomain(entity) : null;
+    if (!entity) return null;
+
+    return TypeOrmBudgetMapper.toDomain(entity);
   }
 
   async save(budget: Budget): Promise<Budget> {

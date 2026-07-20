@@ -18,11 +18,6 @@ import {
   TypeOrmCategorizationRuleRepository,
 } from './infrastructure/adapters/persistence/typeorm';
 
-/**
- * AC-4 (sm-0003) — user-defined auto-categorization rules and the matcher that
- * applies them. Exports the category resolver so movement ingestion (webhook
- * and manual) settles the category of every incoming movement the same way.
- */
 @Module({
   imports: [
     TypeOrmModule.forFeature([TypeOrmCategorizationRuleEntity]),

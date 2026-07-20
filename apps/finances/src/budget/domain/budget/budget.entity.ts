@@ -4,17 +4,15 @@ import { Money } from '@app/shared/domain';
 import { BudgetThreshold } from './budget-threshold.enum';
 import { Period } from './period.enum';
 
-/**
- * Percentage of the budget's amount at which each threshold fires.
- */
+/** Percentage of the budget's amount at which each threshold fires. */
 const THRESHOLD_LIMITS: Record<BudgetThreshold, number> = {
   [BudgetThreshold.WARNING]: 80,
   [BudgetThreshold.EXCEEDED]: 100,
 };
 
 /**
- * Severity order of the thresholds. A budget that already warned must not warn
- * again, but it must still be able to report that it went on to be exceeded.
+ * Severity order: a fired threshold blocks re-firing at the same or lower
+ * rank, but a more severe one may still be reported.
  */
 const THRESHOLD_RANK: Record<BudgetThreshold, number> = {
   [BudgetThreshold.WARNING]: 1,
@@ -40,7 +38,6 @@ export class Budget {
 
   name: string;
 
-  /** The cap for the period, in the currency the budget is expressed in. */
   money: Money;
 
   startDate: Date;
@@ -51,11 +48,7 @@ export class Budget {
 
   period: Period;
 
-  /**
-   * Highest threshold already notified in the current period. `null`/undefined
-   * = none notified yet. When a repeatable budget renews, the new one starts
-   * clean (AC-1).
-   */
+  /** Highest threshold already notified in the current period. */
   notifiedThreshold?: BudgetThreshold;
 
   categoryId: number;
@@ -64,7 +57,6 @@ export class Budget {
 
   user: number;
 
-  /** Spent so far in the period. Only populated once {@link recordSpending} runs. */
   spent?: Money;
 
   percentage?: number;
@@ -82,9 +74,8 @@ export class Budget {
   }
 
   /**
-   * Registers how much has been spent against this budget in its period, which
-   * is what `percentage` is derived from. Reading either without calling this
-   * first only ever reports the budget as untouched.
+   * Registers what has been spent in the period and derives `percentage`;
+   * both stay unset until this runs.
    */
   recordSpending(spent: Money): void {
     this.spent = spent;
@@ -92,13 +83,8 @@ export class Budget {
   }
 
   /**
-   * Claims the threshold this budget has just crossed, if any, and marks it as
-   * notified so a later movement in the same period cannot re-announce it
-   * (AC-1). Returns `null` when nothing new was crossed — including the case
-   * where a more severe threshold was already claimed.
-   *
-   * Claiming mutates the budget, so the caller is expected to persist it; the
-   * "once per period" guarantee lives in that saved state.
+   * Claims the threshold just crossed, if any, and marks it as notified.
+   * Mutates the budget; the caller must persist it for "once per period" to hold.
    */
   claimThresholdBreach(): Nullable<BudgetThreshold> {
     const reached = THRESHOLDS_BY_SEVERITY.find(
@@ -118,11 +104,7 @@ export class Budget {
     return reached;
   }
 
-  /**
-   * The budget for the period that follows the one ending now. The successor
-   * starts with a clean notification state (AC-1): crossing 80% last month
-   * says nothing about this month.
-   */
+  /** The budget for the following period, with a clean notification state. */
   renew(now: DateTime): Budget {
     const { startDate, endDate } = this.nextPeriodDates(now);
 
@@ -140,8 +122,8 @@ export class Budget {
   }
 
   /**
-   * A CUSTOM (or weekly) period keeps its original span and is re-anchored to
-   * today; the calendar periods simply snap to the current day, month or year.
+   * CUSTOM and WEEKLY keep their original span re-anchored to today; calendar
+   * periods snap to the current day, month or year.
    */
   private nextPeriodDates(now: DateTime): { startDate: Date; endDate: Date } {
     switch (this.period) {

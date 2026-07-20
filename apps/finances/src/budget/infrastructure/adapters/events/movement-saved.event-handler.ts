@@ -7,12 +7,12 @@ import {
   BudgetRepository,
   BudgetSpendingService,
 } from '@app/budget/domain/budget';
-import { MovementSaved, MovementSavedPayload } from '@app/movement/application/movement.constants';
+import { MovementSavedPayload } from '@app/movement/application/movement-saved-payload.type';
+import { MovementSaved } from '@app/movement/application/movement.constants';
 
 /**
- * Reacts to every saved movement (via event, not a direct module dependency,
- * to avoid a movement<->budget circular import) and lets each matching budget
- * decide whether it just crossed a spending threshold.
+ * Event-based (not a direct dependency) to avoid a movement<->budget
+ * circular import; lets each matching budget report a crossed threshold.
  */
 @Injectable()
 export class MovementSavedEventHandler {
@@ -45,9 +45,8 @@ export class MovementSavedEventHandler {
   }
 
   /**
-   * The budget owns both the arithmetic and the "notify once per threshold and
-   * period" rule; a claimed breach is persisted before it is announced, so a
-   * crash in between cannot turn into a duplicate alert.
+   * A claimed breach is persisted before it is announced, so a crash in
+   * between cannot turn into a duplicate alert.
    */
   private async review(
     budget: Budget,

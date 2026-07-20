@@ -1,6 +1,6 @@
 import { OidcHealthIndicator } from './oidc-health.indicator';
 
-describe('OidcHealthIndicator (AC-2 + AC-3)', () => {
+describe('OidcHealthIndicator', () => {
   it('reports up when the discovery resolves (cache hit o primer warm-up)', async () => {
     const discovery = {
       getJwksUri: jest.fn().mockResolvedValue('https://idp/jwks'),

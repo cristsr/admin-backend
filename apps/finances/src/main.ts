@@ -1,7 +1,5 @@
-// MUST stay the first import of the process: the auto-instrumentations patch
-// modules as they are required, so anything loaded above this line would never
-// be traced. Side-effect imports are not reordered by import-x/order, but do
-// not move it by hand either.
+// MUST stay the first import: auto-instrumentations patch modules as they are
+// required, so anything loaded earlier is never traced.
 import './config/telemetry/instrumentation';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -15,17 +13,13 @@ import { maybeMountSwagger } from './config/swagger/swagger.builder';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    // `nestjs-pino` (LoggerModule in AppModule) owns the HTTP access logs; the
-    // buffered bootstrap logs are flushed once its logger is wired below.
+    // Bootstrap logs are buffered until the pino logger is wired below.
     bufferLogs: true,
   });
 
-  // AC-5: trust the proxy chain so `request.ip` resolves the real client IP
-  // from X-Forwarded-For (the throttler counts against the actual caller, not
-  // NGINX).
+  // Trust the proxy chain so `request.ip` is the real client IP, not NGINX.
   app.set('trust proxy', true);
 
-  // AC-4: route every Nest log line through the structured pino logger.
   app.useLogger(app.get(PinoLogger));
   app.flushLogs();
 
@@ -40,8 +34,7 @@ async function bootstrap() {
 
   const config = app.get(ConfigService);
 
-  // AC-1: generate the OpenAPI contract; mount the navigable UI only outside
-  // production (SHOW_DOCS).
+  // Mount the Swagger UI only outside production.
   maybeMountSwagger(app, config.get<boolean>(ENV.SHOW_DOCS) === true);
 
   const port = config.get(ENV.PORT);

@@ -12,10 +12,8 @@ import { TransferInputDto } from '../dto/transfer-input.dto';
 import { TransferOutputDto } from '../dto/transfer-output.dto';
 
 /**
- * Moving money between the user's own accounts. It is recorded as two linked
- * movements (TRANSFER_OUT on the source, TRANSFER_IN on the destination) that
- * share a transfer group, rather than as a loose expense plus a loose income
- * that the reports would count as real spending and earning.
+ * Moves money between the user's own accounts as two linked movements sharing
+ * a transfer group, so reports don't count it as spending and earning.
  */
 @Injectable()
 export class CreateTransferUsecase {
@@ -74,10 +72,7 @@ export class CreateTransferUsecase {
     };
   }
 
-  /**
-   * AC-1: the account decides whether it can fund the transfer; the live
-   * balance it needs for that is the one thing only the repository knows.
-   */
+  /** The account decides; the live balance it needs is only known by the repository. */
   private async ensureSourceCanFund(
     from: Account,
     amount: Money,

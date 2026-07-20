@@ -34,17 +34,13 @@ export class UpdateMovementUsecase {
 
     await this.ensureSubcategoryBelongsToCategory(patch, movement);
 
-    // The movement decides what of this it accepts: transfer legs and
-    // ingestion-owned fields refuse the edit.
+    // The entity itself refuses edits to transfer legs and ingestion-owned fields.
     movement.applyPatch(UpdateMovementUsecase.toDomainPatch(patch));
 
     return this.movementRepository.save(movement);
   }
 
-  /**
-   * A subcategory only exists under a category, so it is validated against the
-   * category the movement will end up with — the patched one when it changes.
-   */
+  /** Validates the subcategory against the category the movement will end up with. */
   private async ensureSubcategoryBelongsToCategory(
     patch: MovementPatchDto,
     movement: Movement,

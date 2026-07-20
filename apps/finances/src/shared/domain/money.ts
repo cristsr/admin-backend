@@ -6,13 +6,8 @@ const DECIMALS = 2;
 const SCALE = 10 ** DECIMALS;
 
 /**
- * An amount tied to the currency it is expressed in. Immutable: every operation
- * returns a new instance, so an amount can never be mutated behind the back of
- * whoever holds it.
- *
- * Combining two amounts requires them to share a currency — the alternative is
- * a number that silently means nothing. Crossing currencies is only possible
- * through {@link convertTo}, which demands an explicit rate.
+ * An amount tied to its currency. Immutable: every operation returns a new
+ * instance; combining two amounts requires a shared currency.
  */
 export class Money {
   private constructor(
@@ -46,11 +41,7 @@ export class Money {
     return Money.of(this.amount - other.amount, this.currency);
   }
 
-  /**
-   * Restates the amount in another currency. The rate is passed in rather than
-   * looked up, so the domain stays free of the exchange provider and the caller
-   * stays in control of which date's rate applies.
-   */
+  /** Restates the amount in another currency; the rate is supplied by the caller. */
   convertTo(currency: string, rate: number): Money {
     if (rate <= 0) {
       throw new InvalidMoneyException(
@@ -61,10 +52,7 @@ export class Money {
     return Money.of(this.amount * rate, currency);
   }
 
-  /**
-   * How much of `total` this amount represents, floored — a budget at 99.6% has
-   * not reached 100% yet. Returns 0 for a zero total instead of NaN.
-   */
+  /** Percentage of `total`, floored; returns 0 for a zero total instead of NaN. */
   percentageOf(total: Money): number {
     this.ensureSameCurrency(total);
 

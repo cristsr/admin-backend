@@ -15,14 +15,6 @@ import { MAX_PAGE_SIZE } from '../functions/pagination';
 import { FilterOperator } from './filter-operator';
 import { OrderType } from './order-type';
 
-/**
- * One filter as it arrives on the query string:
- * `?filters[0][field]=amount&filters[0][operator]=gte&filters[0][value]=1000`.
- *
- * Values stay raw here — a query string only carries text. `criteriaFromQuery`
- * coerces them against the endpoint's schema, which is the only place that
- * knows a given field is a date rather than a number.
- */
 export class CriteriaFilterQueryDto {
   @ApiProperty({ description: 'Field to filter on.' })
   @IsString()
@@ -42,7 +34,6 @@ export class CriteriaFilterQueryDto {
   value?: string | string[];
 }
 
-/** The criteria half of any list endpoint: filters, sorting and paging. */
 export class CriteriaQueryDto {
   @ApiPropertyOptional({ type: [CriteriaFilterQueryDto] })
   @IsOptional()

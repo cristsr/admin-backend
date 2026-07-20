@@ -30,12 +30,8 @@ export class CategoryController {
     private readonly getTaxonomyUsecase: GetTaxonomyUsecase,
   ) {}
 
-  /**
-   * Consumed by the Rust ingestion pipeline's `CategoryProvider` — must stay
-   * registered before `:id` so it isn't swallowed by that route.
-   */
-  // Public taxonomy: override the class-level bearer requirement with an empty
-  // security requirement so the contract shows it needs no auth (AC-1).
+  /** Route order matters: must stay before `:id` so it isn't swallowed by it. */
+  // Empty security requirement marks this public route as unauthenticated in the OpenAPI docs.
   @ApiSecurity({})
   @Public()
   @Get('taxonomy')
@@ -50,7 +46,6 @@ export class CategoryController {
     return category && CategoryMapper.toOutput(category);
   }
 
-  /** Filters follow the shared criteria contract; see `CriteriaQueryDto`. */
   @Get()
   async findAll(
     @Query() query: CriteriaQueryDto,

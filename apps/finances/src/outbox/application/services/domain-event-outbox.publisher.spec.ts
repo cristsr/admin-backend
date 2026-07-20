@@ -1,7 +1,7 @@
 import { EntityManager } from 'typeorm';
 import { DomainEventOutboxPublisher } from './domain-event-outbox.publisher';
 
-describe('DomainEventOutboxPublisher (AC-2)', () => {
+describe('DomainEventOutboxPublisher', () => {
   it('writes the event to the outbox using the provided transaction manager', async () => {
     const outboxRepository = { saveWithinTransaction: jest.fn() } as any;
     const publisher = new DomainEventOutboxPublisher(outboxRepository);

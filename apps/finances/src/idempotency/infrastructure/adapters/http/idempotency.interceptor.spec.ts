@@ -45,7 +45,7 @@ const completed = (over: Partial<IdempotencyKey> = {}) =>
     ...over,
   } as IdempotencyKey);
 
-describe('IdempotencyInterceptor (AC-3)', () => {
+describe('IdempotencyInterceptor', () => {
   let repo: any;
   let interceptor: IdempotencyInterceptor;
 
@@ -103,11 +103,7 @@ describe('IdempotencyInterceptor (AC-3)', () => {
     ).rejects.toBeInstanceOf(IdempotencyConflictException);
   });
 
-  /**
-   * A handler that failed rolled its work back, so there is nothing to replay.
-   * Holding the reservation would answer every retry of that key with 409 until
-   * the record expired a day later.
-   */
+  // A failed handler must free the key; otherwise retries get 409 until expiry.
   describe('when the handler fails', () => {
     const failing = (reason: Error) => ({
       handle: () => {

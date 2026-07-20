@@ -9,11 +9,7 @@ import {
 import { Public } from '@shared';
 import { OidcHealthIndicator } from './oidc-health.indicator';
 
-/**
- * Two independent health endpoints (AC-2). Both are public — neither sits
- * behind the JWT global guard, so an external probe (NGINX / orchestrator) can
- * reach them without credentials.
- */
+/** Public liveness/readiness endpoints; not behind the global JWT guard. */
 @ApiTags('finances-health')
 @ApiSecurity({})
 @Controller('health')
@@ -24,10 +20,7 @@ export class HealthController {
     private readonly oidc: OidcHealthIndicator,
   ) {}
 
-  /**
-   * Liveness: the process is alive. Touches no dependencies, so a DB/OIDC
-   * outage never kills the pod.
-   */
+  /** Liveness: touches no dependencies, so a dependency outage never kills the pod. */
   @Get('live')
   @Public()
   @ApiOperation({
@@ -39,11 +32,7 @@ export class HealthController {
     return this.health.check([]);
   }
 
-  /**
-   * Readiness: DB + OIDC reachability. Terminus maps a failed indicator to a
-   * 503 automatically, and to 200 with `{ status, ..., details: { db, oidc } }`
-   * when both are up.
-   */
+  /** Readiness: DB + OIDC reachability; a failed indicator maps to 503. */
   @Get('ready')
   @Public()
   @ApiOperation({

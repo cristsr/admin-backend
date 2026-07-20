@@ -1,23 +1,9 @@
-import { ThrottlerOptions } from '@nestjs/throttler';
-
-export interface ThrottlerEnv {
-  THROTTLE_AUTH_TTL_MS?: number | string;
-  THROTTLE_AUTH_LIMIT?: number | string;
-  THROTTLE_WEBHOOK_TTL_MS?: number | string;
-  THROTTLE_WEBHOOK_LIMIT?: number | string;
-}
-
-/** Object-form throttler config (has `throttlers`, unlike the array form). */
-export interface ThrottlerConfig {
-  readonly throttlers: ThrottlerOptions[];
-  readonly errorMessage: string;
-}
+import { ThrottlerConfig } from './throttler-config.type';
+import { ThrottlerEnv } from './throttler-env.type';
 
 /**
- * `@nestjs/throttler` config — a single in-memory store (no Redis yet). Two
- * named throttlers cover the two AC-5 rates (auth 5/min, webhook 60/min); the
- * values come from env so they can be tuned per deployment without a code
- * change. Empty or missing values fall back to the conservative defaults.
+ * Two named throttlers (auth 5/min, webhook 60/min by default), tunable via
+ * env; empty or missing values fall back to the defaults.
  */
 export function buildThrottlerOptions(env: ThrottlerEnv): ThrottlerConfig {
   const auth = {
@@ -41,6 +27,9 @@ export function buildThrottlerOptions(env: ThrottlerEnv): ThrottlerConfig {
 /** Parses an env value to a number, falling back when empty/undefined/NaN. */
 function toNumber(value: number | string | undefined, fallback: number): number {
   if (value === undefined || value === '') return fallback;
+
   const parsed = Number(value);
-  return Number.isNaN(parsed) ? fallback : parsed;
+  if (Number.isNaN(parsed)) return fallback;
+
+  return parsed;
 }

@@ -42,7 +42,9 @@ export class TypeOrmCategorizationRuleRepository
       this.#criteria.toFindOptions(criteria),
     );
 
-    return entity ? TypeOrmCategorizationRuleMapper.toDomain(entity) : null;
+    if (!entity) return null;
+
+    return TypeOrmCategorizationRuleMapper.toDomain(entity);
   }
 
   async save(rule: CategorizationRule): Promise<CategorizationRule> {

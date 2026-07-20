@@ -21,7 +21,7 @@ const buildScheduled = (overrides: Partial<Scheduled> = {}) =>
     ...overrides,
   } as Scheduled);
 
-describe('UpdateScheduledUsecase (AC-5)', () => {
+describe('UpdateScheduledUsecase', () => {
   let scheduledRepository: any;
   let subcategoryRepository: any;
   let accountRepository: any;
@@ -74,7 +74,6 @@ describe('UpdateScheduledUsecase (AC-5)', () => {
   it('does not create or modify already-materialized movements (only edits the template)', async () => {
     scheduledRepository.firstMatching.mockResolvedValue(buildScheduled());
     await usecase.execute(1, { amount: 10 }, 7);
-    // the usecase only persists the template; it does not touch the movements table
     expect(scheduledRepository.save).toHaveBeenCalledTimes(1);
   });
 });

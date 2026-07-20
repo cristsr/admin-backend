@@ -20,8 +20,7 @@ export class TypeOrmIdempotencyRepository implements IdempotencyRepository {
   async reserve(
     reservation: IdempotencyReservation,
   ): Promise<{ created: boolean; row: IdempotencyKey }> {
-    // INSERT ... ON CONFLICT DO NOTHING: the unique (user_id, key) index makes
-    // concurrent duplicates race-safe — the loser gets `created: false`.
+    // The unique index + ON CONFLICT DO NOTHING keeps concurrent inserts race-safe.
     const insert = await this.repository
       .createQueryBuilder()
       .insert()
@@ -38,7 +37,7 @@ export class TypeOrmIdempotencyRepository implements IdempotencyRepository {
       .returning(['id'])
       .execute();
 
-    // ON CONFLICT DO NOTHING returns no rows when the key already existed.
+    // No rows returned when the key already existed.
     const created = Array.isArray(insert.raw) && insert.raw.length > 0;
 
     const entity = await this.repository.findOne({

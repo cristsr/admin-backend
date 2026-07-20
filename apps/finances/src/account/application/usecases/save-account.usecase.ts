@@ -26,7 +26,6 @@ export class SaveAccountUsecase {
     const account = Account.create({
       ...existing,
       name: input.name,
-      // An account created without a declared opening balance starts at zero.
       initialBalance: Money.of(input.initialBalance ?? 0, input.currency),
       allowNegativeBalance:
         input.allowNegativeBalance ?? existing?.allowNegativeBalance ?? false,

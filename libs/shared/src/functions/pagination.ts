@@ -1,15 +1,8 @@
+import { PaginationInput } from './pagination-input.type';
+import { Pagination } from './pagination.type';
+
 export const DEFAULT_PAGE_SIZE = 50;
 export const MAX_PAGE_SIZE = 200;
-
-export interface PaginationInput {
-  limit?: number;
-  offset?: number;
-}
-
-export interface Pagination {
-  take: number;
-  skip: number;
-}
 
 export function normalizePagination(input: PaginationInput): Pagination {
   return {

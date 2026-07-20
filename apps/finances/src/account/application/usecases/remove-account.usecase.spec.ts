@@ -1,7 +1,7 @@
 import { AccountNotFoundException } from '@app/account/domain/account';
 import { RemoveAccountUsecase } from './remove-account.usecase';
 
-describe('RemoveAccountUsecase — cascade archive (AC-5)', () => {
+describe('RemoveAccountUsecase — cascade archive', () => {
   let accountRepository: any;
   let usecase: RemoveAccountUsecase;
 

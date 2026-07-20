@@ -12,7 +12,7 @@ const buildRule = (overrides: Partial<CategorizationRule> = {}) =>
     ...overrides,
   } as CategorizationRule);
 
-describe('CategorizationService (AC-4)', () => {
+describe('CategorizationService', () => {
   let ruleRepository: any;
   let categoryRepository: any;
   let service: CategorizationService;

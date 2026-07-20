@@ -1,18 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/**
- * Adds the data the ingestion already sends but had nowhere to land
- * (merchant, payment method) plus the invoice the movement came from, and
- * records where each movement originated.
- *
- * Also drops `external_reference` from `scheduled`: it was never meant to be
- * there — the column existed only because the scheduled entity inherited the
- * movement one. A scheduled movement is a template and has no source invoice.
- *
- * Enum-like columns (type, payment_method, source) are stored as varchar, not
- * Postgres enums: the allowed values live in the application layer. `type`
- * therefore stays the varchar it already was.
- */
+/** Adds merchant, invoice and source columns to movements. */
 export class EnrichMovements1784073600012 implements MigrationInterface {
   name = 'EnrichMovements1784073600012';
 
@@ -40,14 +28,12 @@ export class EnrichMovements1784073600012 implements MigrationInterface {
       `ALTER TABLE "movements" ADD "invoice_issued_at" TIMESTAMP WITH TIME ZONE`,
     );
 
-    // Rows that already carry an external reference came from the webhook.
+    // Rows carrying an external reference came from the webhook.
     await queryRunner.query(
       `UPDATE "movements" SET "source" = 'WEBHOOK' WHERE "external_reference" IS NOT NULL`,
     );
 
-    // IF EXISTS: the migrations never created this column — it only exists in
-    // databases that `synchronize` touched, where the scheduled entity used to
-    // inherit it from the movement one.
+    // IF EXISTS: only synchronize-managed databases ever had this column.
     await queryRunner.query(
       `ALTER TABLE "scheduled" DROP COLUMN IF EXISTS "external_reference"`,
     );

@@ -18,10 +18,8 @@ const IDEMPOTENCY_HEADER = 'idempotency-key';
 const RETENTION_MS = 24 * 60 * 60 * 1000;
 
 /**
- * AC-3 (sm-0003) — makes a user write idempotent. On the first use of a key it
- * runs the handler and stores the response; a replay of the same key + body
- * returns the stored response, a different body is rejected (422), and a key
- * still in progress is rejected (409). Requests without the header pass through.
+ * Makes a write endpoint idempotent: replays the stored response for a repeated
+ * key + body; rejects a different body (422) or a key still in progress (409).
  */
 @Injectable()
 export class IdempotencyInterceptor implements NestInterceptor {
@@ -71,7 +69,6 @@ export class IdempotencyInterceptor implements NestInterceptor {
         );
       }
 
-      // COMPLETED: replay the stored response verbatim.
       response.status(row.responseStatus);
       return row.responseBody;
     }
@@ -79,11 +76,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
     return this.runAndStore(next, row.id, response);
   }
 
-  /**
-   * A failed handler must give the key back. Its work was rolled back, so
-   * nothing is left to replay — and holding the reservation would answer every
-   * retry of that key with 409 until the record expired a day later.
-   */
+  /** Gives the key back when the handler fails, so retries aren't stuck on 409. */
   private async runAndStore(
     next: CallHandler,
     rowId: number,
@@ -103,11 +96,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
     }
   }
 
-  /**
-   * Releasing is best-effort: it must never replace the failure the caller is
-   * about to receive with one about our own bookkeeping. The expiry sweep
-   * removes the row anyway if this does not.
-   */
+  /** Best-effort: never masks the original failure; the expiry sweep removes leftovers. */
   private async release(rowId: number): Promise<void> {
     try {
       await this.idempotencyRepository.release(rowId);

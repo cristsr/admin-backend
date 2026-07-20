@@ -5,11 +5,8 @@ import {
 } from '@app/category/domain/category';
 
 /**
- * Flat list of "Category" and "Category/Subcategory" strings, matching the
- * folder-taxonomy contract already used by the Rust ingestion pipeline's
- * `CategoryProvider` (`shared::analysis::HttpCategoryProvider` expects
- * `{ categories: string[] }`, historically sourced from scanning the Finanzas
- * folder up to two levels deep).
+ * Flat list of "Category" and "Category/Subcategory" strings, the contract
+ * the ingestion pipeline's category provider consumes.
  */
 @Injectable()
 export class GetTaxonomyUsecase {

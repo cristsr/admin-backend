@@ -1,12 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/**
- * Creates the `exchanges` table in the finances database. Brought over from the
- * former standalone `exchanges` service (which relied on schema
- * synchronization) when it was folded into this monolith; schema mirrors
- * {@link ExchangeEntity} plus the shared `BaseEntity` audit columns. The
- * `from`/`to` columns are quoted because they are SQL reserved words.
- */
+/** Creates the exchanges table. */
 export class CreateExchangesTable1784073600019 implements MigrationInterface {
   name = 'CreateExchangesTable1784073600019';
 

@@ -1,6 +1,6 @@
 import { buildThrottlerOptions } from './throttler.config';
 
-describe('throttler config (AC-5)', () => {
+describe('throttler config', () => {
   const baseEnv = {
     THROTTLE_AUTH_TTL_MS: '60000',
     THROTTLE_AUTH_LIMIT: '5',
@@ -26,7 +26,7 @@ describe('throttler config (AC-5)', () => {
     expect(webhook.ttl).toBe(60_000);
   });
 
-  it('limit values are adjustable from env (AC-5: "valores ajustables por configuración")', () => {
+  it('limit values are adjustable from env', () => {
     const opts = buildThrottlerOptions({
       ...baseEnv,
       THROTTLE_AUTH_LIMIT: '10',

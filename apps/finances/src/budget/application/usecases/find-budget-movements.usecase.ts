@@ -21,8 +21,7 @@ export class FindBudgetMovementsUsecase {
 
     if (!budget) return [];
 
-    // No currency filter: this lists what the budget covers rather than
-    // totalling it, so a movement in another currency is still worth showing.
+    // No currency filter: this lists what the budget covers, not its total.
     return this.movementRepository.matching(
       MovementCriteria.spendingIn({
         user,

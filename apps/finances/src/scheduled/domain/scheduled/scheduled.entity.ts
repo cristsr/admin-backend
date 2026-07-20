@@ -3,34 +3,8 @@ import { DateTime } from 'luxon';
 import { Movement, MovementType } from '@app/movement/domain/movement';
 import { Money } from '@app/shared/domain';
 import { Frequency } from './frequency.enum';
-
-/** Everything a scheduled entry needs to exist. */
-export interface NewScheduled {
-  date: Date;
-  type: MovementType;
-  description: string;
-  money: Money;
-  frequency: Frequency;
-  categoryId: number;
-  subcategoryId: number;
-  accountId: number;
-  user: number;
-}
-
-/**
- * What a user is allowed to change on an existing entry. Editing only affects
- * future occurrences: movements already materialized are separate rows and are
- * never recomputed (AC-5).
- */
-export interface ScheduledPatch {
-  date?: Date;
-  description?: string;
-  amount?: number;
-  frequency?: Frequency;
-  categoryId?: number;
-  subcategoryId?: number;
-  accountId?: number;
-}
+import { NewScheduled } from './new-scheduled.type';
+import { ScheduledPatch } from './scheduled-patch.type';
 
 export class Scheduled {
   id: number;
@@ -47,7 +21,6 @@ export class Scheduled {
 
   description: string;
 
-  /** How much each occurrence moves, in the currency of the target account. */
   money: Money;
 
   categoryId: number;
@@ -58,14 +31,13 @@ export class Scheduled {
 
   user: number;
 
-  /** How often this repeats. `date` always holds the next occurrence. */
   frequency: Frequency;
 
   private constructor(payload?: Partial<Scheduled>) {
     Object.assign(this, payload);
   }
 
-  /** Rehydrates an entry from stored state. */
+  /** Rehydrates from stored state. */
   static create(payload: PropertiesOnly<Scheduled>): Scheduled {
     return new Scheduled(payload);
   }
@@ -79,10 +51,7 @@ export class Scheduled {
     Object.assign(this, payload);
   }
 
-  /**
-   * Applies a user edit. The currency is not part of the patch: an entry keeps
-   * the currency of the account it feeds, so only the amount can move.
-   */
+  /** Applies a user edit; currency is not patchable, only the amount. */
   applyPatch(patch: ScheduledPatch): void {
     this.date = patch.date ?? this.date;
     this.description = patch.description ?? this.description;
@@ -96,11 +65,7 @@ export class Scheduled {
     }
   }
 
-  /**
-   * The movement for the occurrence that just came due. The schedule is the
-   * template; this is the real money moving, marked as cron-generated so it is
-   * never mistaken for something the user typed.
-   */
+  /** The real movement for the occurrence that just came due. */
   materialize(): Movement {
     return Movement.fromSchedule({
       date: this.date,
@@ -114,16 +79,11 @@ export class Scheduled {
     });
   }
 
-  /** A ONCE entry is done as soon as it is materialized; the rest roll on. */
   recurs(): boolean {
     return this.frequency !== Frequency.ONCE;
   }
 
-  /**
-   * Moves `date` to the next occurrence. Called after the current one has been
-   * materialized, so a recurring entry is never generated twice for the same
-   * date.
-   */
+  /** Moves `date` to the next occurrence; call only after materializing. */
   advance(): void {
     const current = DateTime.fromJSDate(this.date);
 

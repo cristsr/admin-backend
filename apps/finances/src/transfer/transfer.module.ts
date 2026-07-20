@@ -10,10 +10,6 @@ import {
 import { TransferFactory } from './domain';
 import { TransferController } from './infrastructure/adapters/http';
 
-/**
- * A transfer owns no table: it is recorded as a linked pair of movements, so
- * this module only orchestrates the account, movement and exchange-rate ports.
- */
 @Module({
   imports: [AccountModule, MovementModule, ExchangeModule, IdempotencyModule],
   controllers: [TransferController],

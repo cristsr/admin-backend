@@ -57,9 +57,7 @@ export class SaveMovementUsecase {
         user,
       );
 
-    // Read before `build`, which overwrites the existing movement in place:
-    // afterwards its old amount — the part already counted in the account's
-    // balance — is no longer recoverable.
+    // Must be read before `build` overwrites the existing movement.
     const replacedBalanceEffect = existing?.signedAmount() ?? 0;
 
     const movement = SaveMovementUsecase.build(
@@ -84,12 +82,7 @@ export class SaveMovementUsecase {
     });
   }
 
-  /**
-   * Re-saving an existing movement keeps the source that recorded it — a
-   * webhook movement does not become manual because it was saved again — while
-   * a brand new one is manual by definition: this is the endpoint the user
-   * types into.
-   */
+  /** Re-saving keeps the original source; only a new movement is manual. */
   private static build(
     attributes: NewMovement,
     existing: Nullable<Movement>,

@@ -44,7 +44,9 @@ export class TypeOrmCategoryRepository implements CategoryRepository {
       relations: RELATIONS,
     });
 
-    return entity ? TypeOrmCategoryMapper.toDomain(entity) : null;
+    if (!entity) return null;
+
+    return TypeOrmCategoryMapper.toDomain(entity);
   }
 
   async save(category: Category): Promise<Category> {

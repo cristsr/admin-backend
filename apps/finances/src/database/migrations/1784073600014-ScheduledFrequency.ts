@@ -1,14 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/**
- * Replaces scheduled.repeat (a boolean that said something recurred but never
- * how often) with a real cadence. `date` now holds the next occurrence, which
- * the generator advances after materializing each one.
- *
- * Existing rows: repeat = true had no cadence to recover, so they become
- * MONTHLY — the most common case and the one a user is most likely to have
- * meant; everything else becomes a one-off.
- */
+/** Replaces the scheduled.repeat boolean with a frequency column. */
 export class ScheduledFrequency1784073600014 implements MigrationInterface {
   name = 'ScheduledFrequency1784073600014';
 

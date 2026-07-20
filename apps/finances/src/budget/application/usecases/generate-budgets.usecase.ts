@@ -7,11 +7,7 @@ import {
 } from '@app/budget/domain/budget';
 import { correlationId, withSpan } from '@app/config/telemetry/correlation';
 
-/**
- * AC-4 (sm-0004): logs a structured counters line per run, keyed by a per-run
- * correlation id, so the cron's work is measurable from the logs alone. There
- * is no `/metrics` endpoint in this story.
- */
+/** Regenerates repeating budgets whose period has closed, logging per-run counters. */
 @Injectable()
 export class GenerateBudgetsUsecase {
   private readonly logger: Logger;
@@ -24,8 +20,6 @@ export class GenerateBudgetsUsecase {
   }
 
   async execute(): Promise<void> {
-    // The run gets its own span, so the id below is the trace id every log line
-    // and every downstream call in this run already shares.
     return withSpan('budgets.generate', async () => {
       const runId = correlationId();
       this.logger.log(`budgetsCronStart correlationId=${runId}`);
@@ -48,9 +42,8 @@ export class GenerateBudgetsUsecase {
   }
 
   /**
-   * The expired budget is only deactivated once its successor exists: failing
-   * in between would leave the user with no budget at all, so a failed save
-   * leaves the current one running and the next run retries it.
+   * The expired budget is only deactivated once its successor exists, so a
+   * failed save leaves the current one running for the next run to retry.
    */
   private async renew(budget: Budget, now: DateTime): Promise<boolean> {
     try {

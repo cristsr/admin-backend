@@ -5,16 +5,13 @@ import {
 } from './filter-operator';
 import { InvalidCriteriaException } from './invalid-criteria.exception';
 
-/** A value a filter can compare against. */
 export type FilterScalar = string | number | boolean | Date;
 
 export type FilterValue = FilterScalar | readonly FilterScalar[];
 
 /**
- * One `field operator value` condition. Instances are immutable and always
- * valid: `Filter.of` refuses a combination the adapters could not honour
- * (a `BETWEEN` without both bounds, an `IN` with no members), so no adapter
- * has to re-check it.
+ * One `field operator value` condition. Immutable and always valid:
+ * `Filter.of` rejects combinations adapters could not honour.
  */
 export class Filter<TField extends string = string> {
   private constructor(
@@ -60,8 +57,10 @@ export class Filter<TField extends string = string> {
     return new Filter(field, operator, value);
   }
 
-  /** The value as a list, for the operators that carry one. */
+  /** Scalar values are wrapped as a single-member list. */
   get values(): readonly FilterScalar[] {
-    return Array.isArray(this.value) ? this.value : [this.value as FilterScalar];
+    if (Array.isArray(this.value)) return this.value;
+
+    return [this.value as FilterScalar];
   }
 }

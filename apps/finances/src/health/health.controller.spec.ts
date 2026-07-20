@@ -1,6 +1,6 @@
 import { HealthController } from './health.controller';
 
-describe('HealthController (AC-2)', () => {
+describe('HealthController', () => {
   const build = (
     healthCheckService: any,
     typeOrmHealthIndicator: any,
@@ -40,8 +40,7 @@ describe('HealthController (AC-2)', () => {
 
     await ctrl.ready();
 
-    // The controller passes indicator callbacks to `check`; invoke them to
-    // assert the right indicators are wired.
+    // Invoke the indicator callbacks passed to `check` to assert the wiring.
     const indicators = healthCheckService.check.mock.calls[0][0];
     await Promise.all(indicators.map((fn: () => unknown) => fn()));
 

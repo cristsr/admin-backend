@@ -1,12 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/**
- * Converts budgets.period from a Postgres enum to varchar. Enum-like columns
- * are kept as text at the database level; the allowed values live in the
- * application layer (the Period enum). This is the one enum left from before
- * that convention, so it is migrated forward rather than editing the original
- * create-table migration.
- */
+/** Converts budgets.period from a Postgres enum to varchar. */
 export class PeriodAsVarchar1784073600013 implements MigrationInterface {
   name = 'PeriodAsVarchar1784073600013';
 

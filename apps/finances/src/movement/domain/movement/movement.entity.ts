@@ -1,5 +1,7 @@
 import { PropertiesOnly } from '@shared';
 import { Money } from '@app/shared/domain';
+import { IngestedMovement } from './ingested-movement.type';
+import { MovementPatch } from './movement-patch.type';
 import { MovementNotEditableException } from './movement.exception';
 import {
   MovementAccountSummary,
@@ -9,11 +11,10 @@ import {
   MovementType,
   PaymentMethod,
 } from './movement.types';
+import { NewMovement } from './new-movement.type';
+import { TransferLeg } from './transfer-leg.type';
 
-/**
- * Fields an ingested (WEBHOOK) movement allows editing: only what belongs to
- * the user, never what was extracted by ingestion.
- */
+/** Patch fields an ingested (WEBHOOK) movement allows: only user-owned ones. */
 const INGESTION_EDITABLE = new Set<keyof MovementPatch>([
   'notes',
   'categoryId',
@@ -32,52 +33,6 @@ const WITHDRAWAL_TYPES = new Set<MovementType>([
   MovementType.TRANSFER_OUT,
 ]);
 
-/** What a user is allowed to change on an existing movement. */
-export interface MovementPatch {
-  date?: Date;
-  description?: string;
-  notes?: string;
-  amount?: number;
-  paymentMethod?: PaymentMethod;
-  categoryId?: number;
-  subcategoryId?: number;
-}
-
-/** Everything a movement needs to exist, whatever recorded it. */
-export interface NewMovement {
-  date: Date;
-  type: MovementType;
-  description: string;
-  money: Money;
-  accountId: number;
-  user: number;
-  categoryId?: number;
-  subcategoryId?: number;
-  notes?: string;
-  paymentMethod?: PaymentMethod;
-}
-
-/** A movement ingested from an external provider, invoice data included. */
-interface IngestedMovement extends NewMovement {
-  merchant: string;
-  externalReference: string;
-  invoiceNumber?: string;
-  invoiceIssuer?: string;
-  invoiceUrl?: string;
-  invoiceIssuedAt?: Date;
-}
-
-/** One side of a transfer; both sides share the same group. */
-interface TransferLeg {
-  date: Date;
-  type: MovementType;
-  description: string;
-  money: Money;
-  accountId: number;
-  user: number;
-  transferGroup: string;
-}
-
 export class Movement {
   id: number;
 
@@ -93,16 +48,11 @@ export class Movement {
 
   description: string;
 
-  /**
-   * Who charged. Kept apart from `description` so editing the note never
-   * destroys the merchant the ingestion extracted.
-   */
+  /** Who charged; kept apart from `description` so user edits never lose it. */
   merchant?: string;
 
-  /** Free-form note owned by the user. */
   notes?: string;
 
-  /** How much moved, in the currency of the account holding it. */
   money: Money;
 
   paymentMethod?: PaymentMethod;
@@ -121,22 +71,12 @@ export class Movement {
 
   account?: MovementAccountSummary;
 
-  /**
-   * Id of the transaction in the source system — exists for idempotent
-   * delivery, and is not a pointer to the invoice document.
-   */
+  /** Source-system transaction id, for idempotent delivery. */
   externalReference?: string;
 
-  /**
-   * Ties the two legs of a transfer together. Both legs share it, so one can
-   * be reached from the other.
-   */
   transferGroup?: string;
 
-  /**
-   * Source invoice this movement was extracted from, when there is one.
-   * One invoice maps to exactly one movement.
-   */
+  /** Source invoice; one invoice maps to exactly one movement. */
   invoiceNumber?: string;
 
   invoiceIssuer?: string;
@@ -152,33 +92,26 @@ export class Movement {
   }
 
   /**
-   * Rehydrates a movement from stored state. Recording a *new* movement goes
-   * through one of the named constructors instead, so its source can never be
-   * left to the caller's memory.
+   * Rehydrates from stored state; new movements use a named constructor so the
+   * source is never left to the caller.
    */
   static create(payload: PropertiesOnly<Movement>): Movement {
     return new Movement(payload);
   }
 
-  /** Recorded by the user by hand. */
   static manual(payload: NewMovement): Movement {
     return new Movement({ ...payload, source: MovementSource.MANUAL });
   }
 
-  /** Ingested from an external provider through the webhook. */
   static fromWebhook(payload: IngestedMovement): Movement {
     return new Movement({ ...payload, source: MovementSource.WEBHOOK });
   }
 
-  /** Materialized by the cron from a scheduled entry. */
   static fromSchedule(payload: NewMovement): Movement {
     return new Movement({ ...payload, source: MovementSource.SCHEDULED });
   }
 
-  /**
-   * One leg of a transfer. A leg is never income or expense — the reports skip
-   * both types — and it belongs to a group, not to a category.
-   */
+  /** One leg of a transfer: belongs to a group, not to a category. */
   static transferLeg(payload: TransferLeg): Movement {
     return new Movement({ ...payload, source: MovementSource.MANUAL });
   }
@@ -191,33 +124,25 @@ export class Movement {
     return TRANSFER_TYPES.has(this.type);
   }
 
-  /**
-   * Money leaves the account: a spend, or the outgoing leg of a transfer. This
-   * is what an account has to be able to fund before the movement is recorded.
-   */
+  /** Whether money leaves the account and must be funded before recording. */
   isWithdrawal(): boolean {
     return WITHDRAWAL_TYPES.has(this.type);
   }
 
-  /**
-   * The effect this movement has on its account's balance — negative when the
-   * money left. Lets a caller discount a movement it is about to replace,
-   * instead of re-deriving the sign from the type on its own.
-   */
+  /** Effect on the account balance: negative when the money left. */
   signedAmount(): number {
-    return this.isWithdrawal() ? -this.money.amount : this.money.amount;
+    if (this.isWithdrawal()) return -this.money.amount;
+
+    return this.money.amount;
   }
 
-  /** Its data was extracted by ingestion, so most of it is not the user's to edit. */
   isIngested(): boolean {
     return this.source === MovementSource.WEBHOOK;
   }
 
   /**
-   * Applies a user edit, refusing anything that would break an invariant: a
-   * transfer leg is only undone by reversing the transfer, and an ingested
-   * movement only exposes the fields the user owns (AC-4). `type` and currency
-   * are absent from the patch by design — neither is editable.
+   * Applies a user edit. Refuses changes that break invariants: transfer legs
+   * cannot be edited and ingestion-owned fields are read-only.
    */
   applyPatch(patch: MovementPatch): void {
     this.ensureEditable(patch);
@@ -235,9 +160,8 @@ export class Movement {
   }
 
   /**
-   * The compensating leg that cancels this one: same amount on the same
-   * account, opposite direction, filed under the reversal's own group so a
-   * second attempt can be recognized as a duplicate.
+   * The compensating leg that cancels this one: same amount and account,
+   * opposite direction, under the reversal's own group so retries are recognized.
    */
   reversalLeg(transferGroup: string, description: string): Movement {
     return Movement.transferLeg({
@@ -252,10 +176,8 @@ export class Movement {
   }
 
   /**
-   * The compensating movement that cancels an ingested one that should never
-   * have been recorded: same amount and category, opposite direction. It keeps
-   * its own external reference, derived from the original, which is what makes
-   * a repeated reversal recognizable instead of duplicated.
+   * The compensating movement that cancels an ingested one. Its own external
+   * reference makes a repeated reversal recognizable.
    */
   reversal(externalReference: string): Movement {
     return Movement.fromWebhook({

@@ -9,8 +9,7 @@ import {
 import { WebhookController } from './infrastructure/adapters/http';
 
 @Module({
-  // The outbox is reached through MovementModule's RecordMovementService now,
-  // so this module no longer knows that recording a movement emits an event.
+  // The outbox is reached via MovementModule's RecordMovementService, not imported here.
   imports: [MovementModule, AccountModule, CategorizationRuleModule],
   controllers: [WebhookController],
   providers: [

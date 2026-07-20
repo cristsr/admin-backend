@@ -1,9 +1,6 @@
 /**
- * Comparison a filter applies between a field and a value.
- *
- * The string values double as the public wire format: a REST caller writes
- * `filters[0][operator]=gte`. Keeping the enum free of ORM vocabulary is what
- * lets a criteria be honoured by any adapter, not just the TypeORM one.
+ * Comparison a filter applies. The string values are the public wire format
+ * (`filters[0][operator]=gte`), free of ORM vocabulary.
  */
 export enum FilterOperator {
   EQUAL = 'eq',
@@ -16,11 +13,7 @@ export enum FilterOperator {
   BETWEEN = 'between',
   /** Case-insensitive substring match. */
   CONTAINS = 'contains',
-  /**
-   * Case-insensitive equality. Distinct from `CONTAINS`: resolving a category
-   * by the name a provider sent must match the whole name, not any name that
-   * happens to contain it.
-   */
+  /** Case-insensitive whole-value equality (unlike CONTAINS). */
   EQUALS_IGNORE_CASE = 'ieq',
   /** Membership; the value is a non-empty list. */
   IN = 'in',

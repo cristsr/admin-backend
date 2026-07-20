@@ -2,10 +2,7 @@ import { Criteria, Nullable } from '@shared';
 import { CategorizationRuleField } from './categorization-rule.criteria';
 import { CategorizationRule } from './categorization-rule.entity';
 
-/**
- * Reads take a criteria; the questions themselves live in
- * `CategorizationRuleCriteria`, stated in domain terms.
- */
+/** Queries are stated in domain terms via `CategorizationRuleCriteria`. */
 export abstract class CategorizationRuleRepository {
   abstract matching(
     criteria: Criteria<CategorizationRuleField>,

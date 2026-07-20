@@ -36,12 +36,6 @@ export class UserQuery {
   auth0Id?: string;
 }
 
-/** An entity addressed by its id. */
-export interface Id {
-  id: number;
-}
-
-/** Whether the operation went through. */
 export class Status {
   status: boolean;
 }

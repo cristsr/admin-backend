@@ -1,14 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/**
- * Money was stored as integer, which silently rounds any decimal amount
- * (10.50 -> 11) with no error. Postgres numeric(14,2) is exact and is the
- * only safe representation for money here.
- *
- * Widening integer -> numeric is lossless, so `up` needs no data migration.
- * `down` is lossy by nature (it must round), and is written to be explicit
- * about that rather than silently truncating.
- */
+/** Stores money columns as numeric(14,2) instead of integer. */
 export class MoneyAsNumeric1784073600011 implements MigrationInterface {
   name = 'MoneyAsNumeric1784073600011';
 

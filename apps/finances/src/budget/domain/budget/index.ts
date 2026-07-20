@@ -1,5 +1,6 @@
 export * from './period.enum';
 export * from './budget-threshold.enum';
+export * from './budget-threshold-exceeded-payload.type';
 export * from './budget.entity';
 export * from './budget.criteria';
 export * from './budget.repository';

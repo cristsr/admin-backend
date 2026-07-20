@@ -2,10 +2,7 @@ import { Criteria, Nullable } from '@shared';
 import { CategoryField } from './category.criteria';
 import { Category } from './category.entity';
 
-/**
- * Reads take a criteria; the questions themselves live in `CategoryCriteria`,
- * stated in domain terms.
- */
+/** Queries are stated in domain terms via `CategoryCriteria`. */
 export abstract class CategoryRepository {
   abstract matching(criteria: Criteria<CategoryField>): Promise<Category[]>;
 

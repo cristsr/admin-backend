@@ -2,9 +2,8 @@ import { ObjectLiteral, PropertiesOnly } from '@shared';
 import { IdempotencyStatus } from './idempotency-key.types';
 
 /**
- * A user-scoped idempotency record (AC-3, sm-0003). The first request reserves
- * the key as PENDING; on completion its response is stored so a replay of the
- * same key + body returns the same result, and a different body is rejected.
+ * User-scoped idempotency record: the first request reserves the key, and its
+ * stored response is replayed when the same key and body arrive again.
  */
 export class IdempotencyKey {
   id: number;

@@ -23,7 +23,6 @@ import {
   SummaryRepository,
 } from '@app/summary/domain/summary';
 
-/** How many movements the dashboard strip shows. */
 const LAST_MOVEMENTS_LIMIT = 5;
 
 @Injectable()
@@ -54,17 +53,14 @@ export class TypeOrmSummaryRepository implements SummaryRepository {
           qb
             .select([
               `COALESCE((SELECT initial_balance FROM accounts WHERE id = :accountId and user_id = :userId), 0) AS initial_balance`,
-              // Transfers move this account's balance (IN adds, OUT subtracts)
-              // but are left out of incomes/expenses: moving your own money
-              // between accounts is neither earning nor spending.
+              // Transfers move the balance but are not income/expense.
               `COALESCE(SUM(CASE WHEN date <= :endDate THEN CASE WHEN type IN ('INCOME', 'TRANSFER_IN') THEN amount ELSE -amount END END), 0) AS accumulated_balance`,
               `COALESCE(SUM(CASE WHEN type = 'INCOME' AND date BETWEEN :startDate and :endDate THEN amount END), 0) AS incomes`,
               `COALESCE(SUM(CASE WHEN type = 'EXPENSE' AND date BETWEEN :startDate and :endDate THEN amount END), 0) AS expenses`,
             ])
             .from(TypeOrmMovementEntity, 'm')
             .where('user_id = :userId')
-            // Without this the sums covered every account the user owns while
-            // initial_balance came from just one, so the balance mixed them.
+            // Without this the sums span every account while initial_balance is for one.
             .andWhere('account_id = :accountId')
             .andWhere('deleted_at IS NULL')
             .setParameters({
@@ -76,8 +72,7 @@ export class TypeOrmSummaryRepository implements SummaryRepository {
         'result',
       );
 
-    // numeric comes back from the driver as string, so it is mapped
-    // explicitly — the aggregation itself stays exact inside Postgres.
+    // numeric arrives as string from the driver; map it explicitly.
     const raw = await query.getRawOne<{
       incomes: string;
       expenses: string;
@@ -144,9 +139,8 @@ export class TypeOrmSummaryRepository implements SummaryRepository {
   }
 
   /**
-   * Reuses `MovementCriteria` rather than re-stating "the newest movements of
-   * an account" in a second place: the dashboard strip and the movements list
-   * must not drift apart on what "newest" means.
+   * Reuses `MovementCriteria` so the dashboard strip and the movements list
+   * agree on what "newest" means.
    */
   async lastMovements(filter: LastMovementsQuery): Promise<Movement[]> {
     const criteria = MovementCriteria.latestForAccount(

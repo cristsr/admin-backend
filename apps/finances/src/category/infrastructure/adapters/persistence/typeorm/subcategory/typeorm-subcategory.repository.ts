@@ -40,7 +40,9 @@ export class TypeOrmSubcategoryRepository implements SubcategoryRepository {
       this.#criteria.toFindOptions(criteria),
     );
 
-    return entity ? TypeOrmSubcategoryMapper.toDomain(entity) : null;
+    if (!entity) return null;
+
+    return TypeOrmSubcategoryMapper.toDomain(entity);
   }
 
   async save(subcategory: Subcategory): Promise<Subcategory> {

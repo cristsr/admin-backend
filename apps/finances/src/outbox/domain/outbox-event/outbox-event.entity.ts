@@ -2,9 +2,8 @@ import { ObjectLiteral, PropertiesOnly } from '@shared';
 import { OutboxStatus } from './outbox-event.types';
 
 /**
- * A domain event persisted transactionally with the change that produced it
- * (AC-2, sm-0003). A relay re-emits it in-process so no event is lost if the
- * process dies between the commit and the handler.
+ * Domain event persisted with the change that produced it; a relay re-emits it
+ * so nothing is lost if the process dies after the commit.
  */
 export class OutboxEvent {
   id: number;

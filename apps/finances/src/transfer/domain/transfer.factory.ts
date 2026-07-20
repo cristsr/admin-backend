@@ -4,23 +4,12 @@ import { Account } from '@app/account/domain/account';
 import { ExchangeRateProvider } from '@app/exchange/domain';
 import { Movement, MovementType } from '@app/movement/domain/movement';
 import { Money } from '@app/shared/domain';
+import { TransferCommand } from './transfer-command.type';
 import { SameAccountTransferException } from './transfer.exception';
 
-/** Prefix that turns a transfer group into the group of its compensating pair. */
 const REVERSAL_PREFIX = 'reversal:';
 
-export interface TransferCommand {
-  from: Account;
-  to: Account;
-  amount: Money;
-  date: Date;
-  description?: string;
-}
-
-/**
- * The two movements a transfer is made of, plus what the conversion cost. Both
- * legs share a group so either one can be reached from the other.
- */
+/** The two legs of a transfer and the applied rate. */
 export class TransferPair {
   constructor(
     readonly transferGroup: string,
@@ -35,19 +24,14 @@ export class TransferPair {
 }
 
 /**
- * Builds the movements that represent moving money between a user's own
- * accounts. A transfer is deliberately not an expense plus an income — money
- * the user already had did not become spending by changing account — so it is
- * recorded as two linked legs the reports know to skip.
+ * Builds the two linked legs of a transfer; they are not expense/income, so
+ * reports know to skip them.
  */
 @Injectable()
 export class TransferFactory {
   constructor(private readonly exchangeRateProvider: ExchangeRateProvider) {}
 
-  /**
-   * Cross-currency transfers are converted with the rate of the transfer's own
-   * date (AC-2); when there is none, the provider refuses rather than guessing.
-   */
+  /** Cross-currency legs are converted with the rate of the transfer's own date. */
   async pair(command: TransferCommand): Promise<TransferPair> {
     const { from, to, amount, date } = command;
 
@@ -84,9 +68,8 @@ export class TransferFactory {
   }
 
   /**
-   * The compensating movements that cancel an existing transfer. Nothing is
-   * deleted: the original legs stay, offset by an inverted pair filed under the
-   * reversal's own group, which is also what makes a second attempt detectable.
+   * Compensating movements that cancel a transfer; filed under the reversal's
+   * own group, which makes a second attempt detectable.
    */
   reversalOf(legs: Movement[], transferGroup: string): Movement[] {
     const reversalGroup = TransferFactory.reversalGroupFor(transferGroup);

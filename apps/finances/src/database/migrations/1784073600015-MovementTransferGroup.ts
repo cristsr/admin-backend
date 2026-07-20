@@ -1,10 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/**
- * Ties the two legs of a transfer together. Until now moving money between
- * accounts was a loose expense plus a loose income with nothing linking them,
- * and the reports counted both as real spending and earning.
- */
+/** Adds transfer_group to movements to link the two legs of a transfer. */
 export class MovementTransferGroup1784073600015 implements MigrationInterface {
   name = 'MovementTransferGroup1784073600015';
 

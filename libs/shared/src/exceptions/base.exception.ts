@@ -1,9 +1,5 @@
 import { ObjectLiteral } from '../types';
-
-export interface BaseExceptionOptions {
-  cause?: Error;
-  context?: ObjectLiteral;
-}
+import { BaseExceptionOptions } from './base-exception-options.type';
 
 export abstract class BaseException extends Error {
   abstract readonly code: string;

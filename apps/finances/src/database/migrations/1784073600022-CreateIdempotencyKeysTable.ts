@@ -1,10 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/**
- * AC-3 (sm-0003) — idempotency records for user writes. Unique per (user, key);
- * the response is stored so a replay returns the same result. Retained 24h and
- * purged by a cron.
- */
+/** Creates the idempotency_keys table for idempotent user writes. */
 export class CreateIdempotencyKeysTable1784073600022
   implements MigrationInterface
 {

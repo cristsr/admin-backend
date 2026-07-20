@@ -42,7 +42,9 @@ export class TypeOrmScheduledRepository implements ScheduledRepository {
       relations: RELATIONS,
     });
 
-    return entity ? TypeOrmScheduledMapper.toDomain(entity) : null;
+    if (!entity) return null;
+
+    return TypeOrmScheduledMapper.toDomain(entity);
   }
 
   async save(scheduled: Scheduled): Promise<Scheduled> {

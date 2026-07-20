@@ -7,11 +7,8 @@ import {
 import { MovementReversalOutputDto } from '../dto';
 
 /**
- * Reverses a movement created by a mis-reconciled webhook by creating a
- * compensating movement (inverted type), without deleting the original.
- * Idempotent without a new column: the reversal uses
- * `reversal:{externalReference}` as its own externalReference; a second call
- * finds it and returns the same result without duplicating.
+ * Reverses a webhook movement via a compensating movement keyed
+ * `reversal:{externalReference}`, so retries return the same reversal.
  */
 @Injectable()
 export class ReverseWebhookTransactionUsecase {

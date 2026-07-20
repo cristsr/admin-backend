@@ -18,9 +18,8 @@ export type CategoryField =
   | 'createdAt';
 
 /**
- * Categories are a shared taxonomy rather than user-owned data, so the whole
- * useful surface is public. `isSystem` stays out: whether a category ships with
- * the product is an implementation detail of the seed, not a facet to browse by.
+ * Public query surface over the shared taxonomy. `isSystem` stays out: it is
+ * a seed detail, not a facet to browse by.
  */
 export const CATEGORY_CRITERIA_SCHEMA: CriteriaSchema<CategoryField> = {
   name: { type: CriteriaValueType.STRING, isSortable: true },
@@ -34,17 +33,14 @@ export class CategoryCriteria {
     return Criteria.none<CategoryField>().equals('id', id);
   }
 
-  /**
-   * Resolution by the name a provider or an import sent. Case-insensitive but
-   * whole-name: a payload saying "Food" must not land in "Fast Food".
-   */
+  /** Case-insensitive whole-name resolution, so "Food" never lands in "Fast Food". */
   static byName(name: string): Criteria<CategoryField> {
     return Criteria.none<CategoryField>().equalsIgnoreCase('name', name);
   }
 
   /**
-   * The fallback category used when nothing else classifies a movement
-   * (AC-4). Lowest id wins so a stray duplicate cannot change the answer.
+   * Fallback when nothing else classifies a movement; lowest id wins so a
+   * stray duplicate cannot change the answer.
    */
   static systemDefault(): Criteria<CategoryField> {
     return Criteria.none<CategoryField>()
@@ -52,10 +48,7 @@ export class CategoryCriteria {
       .orderBy('id', OrderType.ASC);
   }
 
-  /**
-   * The whole taxonomy, unpaginated. The ingestion pipeline consumes it as a
-   * single flat list, so a page would silently cut categories out of it.
-   */
+  /** Whole taxonomy, unpaginated: the ingestion pipeline consumes it as one flat list. */
   static all(): Criteria<CategoryField> {
     return Criteria.none<CategoryField>().orderBy('name', OrderType.ASC);
   }

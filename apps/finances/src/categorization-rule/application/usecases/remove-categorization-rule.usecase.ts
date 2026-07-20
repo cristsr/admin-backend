@@ -14,8 +14,7 @@ export class RemoveCategorizationRuleUsecase {
       CategorizationRuleCriteria.byIdAndUser(id, user),
     );
 
-    // A rule that matched nothing was never this user's to delete; the caller
-    // gets the same 404 whether it never existed or belongs to somebody else.
+    // Same 404 whether the rule never existed or belongs to another user.
     if (!removed) {
       throw new CategorizationRuleNotFoundException(
         'Categorization rule not found',

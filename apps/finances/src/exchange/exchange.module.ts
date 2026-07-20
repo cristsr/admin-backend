@@ -9,12 +9,6 @@ import { ExRatesService, ExchangeRatesService } from './providers';
 import { ExchangeRepository } from './repositories';
 import { AppService } from './services';
 
-/**
- * Exchange rates for cross-currency transfers and consolidated balance (AC-2).
- * Exposes the `ExchangeRateProvider` port (consumed by TransferModule and
- * SummaryModule) backed by the in-process exchange service, plus the public
- * `exchanges` HTTP endpoint.
- */
 @Module({
   imports: [HttpModule, TypeOrmModule.forFeature([ExchangeEntity])],
   controllers: [ExchangeController],

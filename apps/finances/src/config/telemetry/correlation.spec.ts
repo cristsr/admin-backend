@@ -39,8 +39,7 @@ describe('correlation ids', () => {
       tracer.startActiveSpan('unit-of-work', (span) => {
         const expected = span.spanContext().traceId;
 
-        // Read from a nested async call: the point is that nothing had to
-        // thread the id through the call chain.
+        // Read from a nested call: nothing had to thread the id through.
         const observed = (() => currentTraceId())();
 
         expect(observed).toBe(expected);

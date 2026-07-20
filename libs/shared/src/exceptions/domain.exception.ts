@@ -2,10 +2,7 @@ import { ObjectLiteral } from '../types';
 import { BaseException } from './base.exception';
 
 export abstract class DomainException extends BaseException {
-  /**
-   * HTTP status this domain failure maps to. The global filter reads it so
-   * a domain exception no longer falls through to a generic 500.
-   */
+  /** HTTP status the global filter maps this failure to. */
   abstract readonly status: number;
 
   format(): ObjectLiteral {

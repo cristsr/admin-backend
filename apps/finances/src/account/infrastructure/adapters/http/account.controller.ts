@@ -37,11 +37,6 @@ export class AccountController {
     private readonly removeAccountUsecase: RemoveAccountUsecase,
   ) {}
 
-  /**
-   * Filters follow the shared criteria contract; see `CriteriaQueryDto`.
-   * Replaces the former `GET /accounts/query`, and the single-account read
-   * moved from `GET /accounts?account=:id` to `GET /accounts/:id`.
-   */
   @Get()
   async findAll(
     @CurrentUser() user: AuthenticatedUser,

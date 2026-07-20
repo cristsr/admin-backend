@@ -6,10 +6,8 @@ export const movementTypes = [
 ] as const;
 
 /**
- * The two TRANSFER types are the legs of a transfer between the user's own
- * accounts. They move an account's balance like any other movement, but they
- * are neither income nor expense: money the user already had did not become
- * earnings by changing account, so the reports must leave them out.
+ * TRANSFER legs move balance between the user's own accounts but are neither
+ * income nor expense, so reports leave them out.
  */
 export enum MovementType {
   INCOME = 'INCOME',
@@ -24,10 +22,7 @@ export const reportableMovementTypes = [
   MovementType.EXPENSE,
 ];
 
-/**
- * How the money moved. Independent from the account: the same account can
- * hold debit and credit operations.
- */
+/** How the money moved; independent from the account holding it. */
 export enum PaymentMethod {
   CASH = 'CASH',
   DEBIT = 'DEBIT',
@@ -36,10 +31,6 @@ export enum PaymentMethod {
   OTHER = 'OTHER',
 }
 
-/**
- * Where the movement came from. Until now this could only be guessed from
- * `externalReference` being set, which said nothing about cron-generated ones.
- */
 export enum MovementSource {
   MANUAL = 'MANUAL',
   WEBHOOK = 'WEBHOOK',

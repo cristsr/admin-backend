@@ -11,9 +11,8 @@ import {
 import { TransferReversalOutputDto } from '../dto/transfer-reversal-output.dto';
 
 /**
- * Cancels a transfer with a compensating reversal instead of deleting anything.
- * Idempotency without a new column: the compensating pair has its own transfer
- * group, so a second attempt finds it and fails with 409.
+ * Cancels a transfer with a compensating pair instead of deleting; the pair's
+ * own transfer group makes a second attempt fail with 409.
  */
 @Injectable()
 export class ReverseTransferUsecase {

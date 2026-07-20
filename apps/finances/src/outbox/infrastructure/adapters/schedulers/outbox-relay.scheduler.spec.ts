@@ -13,7 +13,7 @@ const outboxEvent = (over: Partial<OutboxEvent> = {}): OutboxEvent =>
     ...over,
   } as OutboxEvent);
 
-describe('OutboxRelayScheduler (AC-2)', () => {
+describe('OutboxRelayScheduler', () => {
   let outboxRepository: any;
   let eventEmitter: any;
   let scheduler: OutboxRelayScheduler;
@@ -43,7 +43,7 @@ describe('OutboxRelayScheduler (AC-2)', () => {
     expect(outboxRepository.markFailed).not.toHaveBeenCalled();
   });
 
-  it('re-emits the event with its correlationId intact so the trace survives the request → cron boundary (AC-4)', async () => {
+  it('re-emits the event with its correlationId intact so the trace survives the request → cron boundary', async () => {
     outboxRepository.claimPendingBatch.mockResolvedValue([
       outboxEvent({
         id: 9,

@@ -9,7 +9,6 @@ import {
   criteriaFromQuery,
 } from '@shared';
 
-/** Every budget attribute a criteria may name. */
 export type BudgetField =
   | 'id'
   | 'user'
@@ -26,9 +25,8 @@ export type BudgetField =
   | 'createdAt';
 
 /**
- * `user` and `isActive` are absent on purpose. Ownership is pinned by the use
- * case, and a caller must not be able to resurrect superseded periods: rolled
- * over budgets are kept as history, not as something to list.
+ * `user` and `isActive` are excluded on purpose: ownership is pinned by the
+ * use case and superseded periods must stay out of caller-driven queries.
  */
 export const BUDGET_CRITERIA_SCHEMA: CriteriaSchema<BudgetField> = {
   name: { type: CriteriaValueType.STRING, isSortable: true },
@@ -43,7 +41,6 @@ export const BUDGET_CRITERIA_SCHEMA: CriteriaSchema<BudgetField> = {
   createdAt: { type: CriteriaValueType.DATE, isSortable: true },
 };
 
-/** Named queries over budgets. */
 export class BudgetCriteria {
   static ownedBy(user: number): Criteria<BudgetField> {
     return Criteria.none<BudgetField>().equals('user', user);
@@ -70,9 +67,8 @@ export class BudgetCriteria {
   }
 
   /**
-   * The budgets a movement has to be counted against: same user, category and
-   * account, with `date` inside the period. Several may match — a user can run
-   * a weekly and a monthly budget over the same category.
+   * Budgets a movement must be counted against: same user, category and
+   * account, with `date` inside the period. Several may match.
    */
   static activeCovering(params: {
     user: number;
@@ -88,10 +84,7 @@ export class BudgetCriteria {
       .greaterOrEqual('endDate', params.date);
   }
 
-  /**
-   * Repeating budgets whose period has closed, so the cron can roll them into
-   * the next one. Not scoped to a user: the job renews everybody's.
-   */
+  /** Repeating budgets whose period has closed; not scoped to a user. */
   static dueForRegeneration(now: Date): Criteria<BudgetField> {
     return Criteria.none<BudgetField>()
       .equals('isActive', true)

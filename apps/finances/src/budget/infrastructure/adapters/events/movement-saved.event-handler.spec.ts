@@ -23,7 +23,7 @@ const buildBudget = (notifiedThreshold?: BudgetThreshold) =>
     notifiedThreshold,
   } as Budget);
 
-describe('MovementSavedEventHandler threshold idempotency (AC-1)', () => {
+describe('MovementSavedEventHandler threshold idempotency', () => {
   let budgetRepository: any;
   let budgetSpending: any;
   let eventEmitter: any;

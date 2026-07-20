@@ -4,8 +4,8 @@ import { Criteria, OrderType } from '@shared';
 export type SubcategoryField = 'id' | 'name' | 'category' | 'createdAt';
 
 /**
- * Named queries over subcategories. There is no HTTP schema here: subcategories
- * are only ever reached through their category, never browsed on their own.
+ * Named queries over subcategories; no HTTP schema: they are only reached
+ * through their category.
  */
 export class SubcategoryCriteria {
   static byId(id: number): Criteria<SubcategoryField> {

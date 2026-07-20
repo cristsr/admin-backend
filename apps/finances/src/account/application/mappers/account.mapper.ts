@@ -15,11 +15,7 @@ export class AccountMapper {
     };
   }
 
-  /**
-   * The same output plus the live balance, for the reads that paid for the
-   * movement sum. The account resolves the balance itself, so every caller
-   * reports the same figure.
-   */
+  /** Same output plus the live balance, resolved by the account itself. */
   static toOutputWithBalance(
     account: Account,
     movementBalance: number,

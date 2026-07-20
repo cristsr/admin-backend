@@ -40,7 +40,6 @@ export class BudgetController {
     return budget && BudgetMapper.toOutput(budget);
   }
 
-  /** Filters follow the shared criteria contract; see `CriteriaQueryDto`. */
   @Get()
   async findAll(
     @CurrentUser() user: AuthenticatedUser,

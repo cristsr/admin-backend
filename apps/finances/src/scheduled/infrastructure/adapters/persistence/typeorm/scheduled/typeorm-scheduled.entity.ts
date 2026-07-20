@@ -6,13 +6,6 @@ import { TypeOrmSubcategoryEntity } from '@app/category/infrastructure/adapters/
 import { MovementType } from '@app/movement/domain/movement';
 import { Frequency } from '@app/scheduled/domain/scheduled';
 
-/**
- * Declares its own columns instead of extending TypeOrmMovementEntity: a
- * scheduled movement is a template, not a transaction, so it has no invoice
- * and no external reference. Inheriting the movement table's columns had
- * already dragged `external_reference` in here, and the concepts diverge
- * further with every field movements gains.
- */
 @Entity('scheduled')
 export class TypeOrmScheduledEntity extends BaseEntity {
   @DateColumn()

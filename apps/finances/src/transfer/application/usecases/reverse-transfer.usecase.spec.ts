@@ -7,7 +7,7 @@ import {
 } from '@app/transfer/domain';
 import { ReverseTransferUsecase } from './reverse-transfer.usecase';
 
-describe('ReverseTransferUsecase (AC-5)', () => {
+describe('ReverseTransferUsecase', () => {
   let movementRepository: any;
   let usecase: ReverseTransferUsecase;
 
@@ -57,7 +57,6 @@ describe('ReverseTransferUsecase (AC-5)', () => {
     expect(result.reversalTransferGroup).toBe('reversal:grp');
     expect(result.originalTransferGroup).toBe('grp');
     const savedLegs = movementRepository.saveAll.mock.calls[0][0];
-    // types inverted relative to the original legs
     expect(savedLegs[0].type).toBe(MovementType.TRANSFER_IN);
     expect(savedLegs[1].type).toBe(MovementType.TRANSFER_OUT);
     expect(savedLegs.every((l: any) => l.transferGroup === 'reversal:grp')).toBe(

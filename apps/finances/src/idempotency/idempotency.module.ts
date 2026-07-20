@@ -9,11 +9,8 @@ import {
 import { IdempotencyPurgeScheduler } from './infrastructure/adapters/schedulers/idempotency-purge.scheduler';
 
 /**
- * AC-3 (sm-0003) — idempotent user writes via an Idempotency-Key header. Exports
- * the interceptor so write controllers can opt in per endpoint, and the
- * repository it depends on: `@UseInterceptors(IdempotencyInterceptor)` makes
- * Nest instantiate the interceptor inside the *consumer's* module, so that
- * module has to be able to resolve the repository too.
+ * Exports the repository too: `@UseInterceptors(IdempotencyInterceptor)` makes
+ * Nest resolve the interceptor inside the consumer's module.
  */
 @Module({
   imports: [TypeOrmModule.forFeature([TypeOrmIdempotencyKeyEntity])],

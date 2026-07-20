@@ -1,5 +1,6 @@
 import { Observable } from 'rxjs';
-import { Id, Status, User, UserInput, UserQuery, Users } from './user.dto';
+import { Id } from './id.type';
+import { Status, User, UserInput, UserQuery, Users } from './user.dto';
 
 /** The operations the user module exposes, independent of who serves them. */
 export abstract class UserHandler {

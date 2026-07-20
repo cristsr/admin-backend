@@ -1,45 +1,16 @@
-/**
- * Utilities for validating configuration objects and introspecting configuration keys.
- *
- * This module provides:
- * - A validatorFactory that builds a reusable configuration validator function
- *   for a given class (Type) annotated with class-validator decorators.
- * - A mapEnvironmentKeys helper that derives a read-only map of property names
- *   from class-validator metadata, useful for enumerating expected environment/config keys.
- *
- * Implementation details:
- * - Uses NestJS Logger for warning logs.
- * - Uses class-transformer to create class instances from plain objects prior to validation.
- * - Uses class-validator to perform synchronous validation.
- */
-
 import { Type } from '@nestjs/common';
 import { plainToClass } from 'class-transformer';
 import { getMetadataStorage, validateSync } from 'class-validator';
 import { InvalidConfigurationException } from '../exceptions';
 
-/**
- * A readonly mapping type that reflects the keys of T.
- * Example: Keys<{ foo: string; bar: number }> -> { readonly foo: 'foo'; readonly bar: 'bar' }
- */
+/** Read-only map of each key of T to itself. */
 type Keys<T> = Readonly<{
   [key in keyof T]: key;
 }>;
 
 /**
- * Internal helper that validates an arbitrary config object against the provided Type.
- *
- * Behavior:
- * - Transforms the plain config into an instance of the given class using class-transformer.
- * - Runs synchronous validation with class-validator (does not skip missing properties).
- * - If any validation error is found, throws: the app must not boot on a config it
- *   could not validate.
- * - If validation succeeds, returns the transformed (and thus typed) config instance.
- *
- * This used to log a warning and return the *untransformed* config instead of
- * throwing. That turned a config typo into silent data loss: consumers kept
- * reading raw strings, and `synchronize: 'false'` is truthy, so TypeORM
- * rewrote the schema on boot. Config errors are always fatal here.
+ * Transforms and validates the config against the class. Any error is fatal:
+ * the app must not boot on a config it could not validate.
  */
 function configValidator(config: object, type: Type): Record<string, any> {
   const validatedConfig = plainToClass(type, config);
@@ -62,39 +33,14 @@ function configValidator(config: object, type: Type): Record<string, any> {
   return validatedConfig;
 }
 
-/**
- * Produces a reusable validator function bound to the provided class Type.
- *
- * Example:
- *   class AppConfig { @IsString() NODE_ENV!: string; }
- *   const validateAppConfig = validatorFactory(AppConfig);
- *   const safeConfig = validateAppConfig(process.env);
- *
- * @param type The class constructor decorated with class-validator rules.
- * @returns A function that validates a config object and returns either the validated instance
- *          (when valid) or the original input (when invalid), logging warnings on violations.
- */
+/** Builds a reusable config validator bound to a class-validator-decorated class. */
 export function validatorFactory(
   type: Type,
 ): (config: Record<string, any>) => Record<string, any> {
   return (config) => configValidator(config, type);
 }
 
-/**
- * Extracts a read-only map of the property names defined on a class-validator-decorated class.
- *
- * This is useful for:
- * - Enumerating the expected environment/configuration keys.
- * - Building whitelists or generating documentation based on validation metadata.
- *
- * Example:
- *   class AppConfig { @IsString() NODE_ENV!: string; @IsInt() PORT!: number; }
- *   const keys = mapEnvironmentKeys<AppConfig>(AppConfig);
- *   // keys -> { NODE_ENV: 'NODE_ENV', PORT: 'PORT' }
- *
- * @param type The class constructor decorated with class-validator rules.
- * @returns A frozen object where each property name maps to itself.
- */
+/** Derives a frozen key-to-key map from a class-validator-decorated class. */
 export function mapEnvironmentKeys<T>(type: Type<T>): Keys<T> {
   const metadataStorage = getMetadataStorage();
 

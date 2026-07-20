@@ -1,10 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/**
- * AC-4 (sm-0003) — user-defined auto-categorization rules. A rule maps a
- * substring pattern to a category (and optional subcategory) with a priority
- * for tie-breaking. Soft-deletable via deleted_at.
- */
+/** Creates the categorization_rules table for user-defined auto-categorization. */
 export class CreateCategorizationRulesTable1784073600024
   implements MigrationInterface
 {

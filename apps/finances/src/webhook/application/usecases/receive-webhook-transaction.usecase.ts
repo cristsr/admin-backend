@@ -16,12 +16,6 @@ import { Money } from '@app/shared/domain';
 import { WebhookTransactionInputDto } from '../dto/webhook-transaction-input.dto';
 import { WebhookTransactionOutputDto } from '../dto/webhook-transaction-output.dto';
 
-/**
- * AC-4 (sm-0004): the webhook path enqueues `movement.saved` in the outbox with
- * the correlation id pulled from the incoming request, so the trace crosses the
- * request → cron boundary and reaches the `BudgetThresholdExceeded` handler
- * with the same id.
- */
 @Injectable()
 export class ReceiveWebhookTransactionUsecase {
   constructor(
@@ -31,11 +25,7 @@ export class ReceiveWebhookTransactionUsecase {
     private readonly recordMovement: RecordMovementService,
   ) {}
 
-  /**
-   * `requestId` is only a fallback for the correlation id: when telemetry is
-   * on, the trace in context wins — and it already reflects any `traceparent`
-   * the caller sent, so the provider's own trace continues into ours.
-   */
+  /** `requestId` is a fallback; the telemetry trace in context wins when present. */
   async execute(
     input: WebhookTransactionInputDto,
     requestId?: string,
@@ -52,8 +42,7 @@ export class ReceiveWebhookTransactionUsecase {
       };
     }
 
-    // The provider names its categories, so they are resolved by name; when it
-    // sends none, the user's categorization rules decide (AC-4).
+    // Categories come as names; when absent, the user's categorization rules decide.
     const { categoryId, subcategoryId } =
       await this.categoryResolver.resolveByNames(
         { category: input.category, subcategory: input.subcategory },
