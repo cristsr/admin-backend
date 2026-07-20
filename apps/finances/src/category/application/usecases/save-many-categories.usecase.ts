@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Category, CategoryRepository } from '../../domain/category';
-import { Subcategory } from '../../domain/subcategory';
+import { Category, CategoryRepository } from '@app/category/domain/category';
+import { Subcategory } from '@app/category/domain/subcategory';
 import { CategoriesInputDto } from '../dto/categories-input.dto';
 
 @Injectable()

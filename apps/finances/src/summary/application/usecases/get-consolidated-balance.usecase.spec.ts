@@ -1,4 +1,9 @@
+import { Account } from '@app/account/domain/account';
+import { Money } from '@app/shared/domain';
 import { GetConsolidatedBalanceUsecase } from './get-consolidated-balance.usecase';
+
+const accountIn = (id: number, currency: string) =>
+  Account.create({ id, initialBalance: Money.zero(currency) } as Account);
 
 describe('GetConsolidatedBalanceUsecase (AC-2)', () => {
   let accountRepository: any;
@@ -8,10 +13,9 @@ describe('GetConsolidatedBalanceUsecase (AC-2)', () => {
 
   beforeEach(() => {
     accountRepository = {
-      findAllByUser: jest.fn().mockResolvedValue([
-        { id: 1, currency: 'COP' },
-        { id: 2, currency: 'USD' },
-      ]),
+      findAllByUser: jest
+        .fn()
+        .mockResolvedValue([accountIn(1, 'COP'), accountIn(2, 'USD')]),
     };
     summaryRepository = {
       balance: jest.fn().mockImplementation(({ account }) =>
@@ -45,13 +49,13 @@ describe('GetConsolidatedBalanceUsecase (AC-2)', () => {
   });
 
   it('does not call the provider for accounts already in the presentation currency', async () => {
-    accountRepository.findAllByUser.mockResolvedValue([{ id: 1, currency: 'COP' }]);
+    accountRepository.findAllByUser.mockResolvedValue([accountIn(1, 'COP')]);
     await usecase.execute({}, 7, 'COP');
     expect(exchangeRateProvider.getRate).not.toHaveBeenCalled();
   });
 
   it('without a currency claim uses the currency of the first account', async () => {
-    accountRepository.findAllByUser.mockResolvedValue([{ id: 1, currency: 'EUR' }]);
+    accountRepository.findAllByUser.mockResolvedValue([accountIn(1, 'EUR')]);
     const result = await usecase.execute({}, 7, undefined);
     expect(result.presentationCurrency).toBe('EUR');
   });

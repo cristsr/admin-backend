@@ -6,6 +6,8 @@ export interface BudgetThresholdExceededPayload {
   percentage: number;
   threshold: BudgetThreshold;
   user: number;
+  /** Trace id propagated from the originating request (AC-4, sm-0004). */
+  correlationId?: string;
 }
 
 /**

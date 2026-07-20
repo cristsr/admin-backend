@@ -4,15 +4,15 @@ import { AccountModule } from '../account/account.module';
 import { TypeOrmCategoryEntity } from '../category/infrastructure/adapters/persistence/typeorm/category';
 import { ExchangeModule } from '../exchange/exchange.module';
 import { TypeOrmMovementEntity } from '../movement/infrastructure/adapters/persistence/typeorm/movement';
-import { SummaryRepository } from './domain/summary';
-import { SummaryController } from './infrastructure/adapters/http';
-import { TypeOrmSummaryRepository } from './infrastructure/adapters/persistence/typeorm/summary';
 import {
   GetBalanceUsecase,
   GetConsolidatedBalanceUsecase,
   GetExpensesUsecase,
   GetLastMovementsUsecase,
 } from './application/usecases';
+import { SummaryRepository } from './domain/summary';
+import { SummaryController } from './infrastructure/adapters/http';
+import { TypeOrmSummaryRepository } from './infrastructure/adapters/persistence/typeorm/summary';
 
 @Module({
   imports: [

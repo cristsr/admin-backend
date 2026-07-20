@@ -1,26 +1,4 @@
-import { Type } from '@nestjs/common';
-import { Field, InputType, ObjectType } from '@nestjs/graphql';
-
+/** A response that wraps a collection under a `data` key. */
 export interface ListMixin<T> {
   data: T[];
-}
-
-export function ListInput<T>(classRef: Type<T>): Type<ListMixin<T>> {
-  @InputType({ isAbstract: true })
-  class BaseList implements ListMixin<T> {
-    @Field(() => [classRef])
-    data: T[];
-  }
-
-  return BaseList;
-}
-
-export function ListObject<T>(classRef: Type<T>): Type<ListMixin<T>> {
-  @ObjectType({ isAbstract: true })
-  class BaseList implements ListMixin<T> {
-    @Field(() => [classRef])
-    data: T[];
-  }
-
-  return BaseList;
 }

@@ -13,5 +13,22 @@ services:
       - admin-back-postgres-data:/var/lib/postgresql/data
       - ./docker/postgres/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
 
+  # Lab IdP for the auth e2e tests (AC-6, sm-0004). Imports a minimal `finances`
+  # realm on start; the same definition is used locally and in CI.
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0
+    container_name: admin-back-keycloak
+    command:
+      - start-dev
+      - --import-realm
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_DB: dev-file
+    ports:
+      - '8080:8080'
+    volumes:
+      - ./docker/keycloak/import:/opt/keycloak/data/import
+
 volumes:
   admin-back-postgres-data:

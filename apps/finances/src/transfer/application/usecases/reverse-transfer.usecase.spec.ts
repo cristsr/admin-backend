@@ -1,8 +1,10 @@
-import { MovementType } from '../../../movement/domain/movement';
+import { Movement, MovementType } from '@app/movement/domain/movement';
+import { Money } from '@app/shared/domain';
 import {
   TransferAlreadyReversedException,
+  TransferFactory,
   TransferNotFoundException,
-} from '../../domain';
+} from '@app/transfer/domain';
 import { ReverseTransferUsecase } from './reverse-transfer.usecase';
 
 describe('ReverseTransferUsecase (AC-5)', () => {
@@ -10,24 +12,22 @@ describe('ReverseTransferUsecase (AC-5)', () => {
   let usecase: ReverseTransferUsecase;
 
   const originalLegs = [
-    {
+    Movement.create({
       id: 10,
       type: MovementType.TRANSFER_OUT,
       accountId: 1,
-      amount: 100,
-      currency: 'COP',
+      money: Money.of(100, 'COP'),
       transferGroup: 'grp',
       user: 7,
-    },
-    {
+    } as Movement),
+    Movement.create({
       id: 11,
       type: MovementType.TRANSFER_IN,
       accountId: 2,
-      amount: 100,
-      currency: 'COP',
+      money: Money.of(100, 'COP'),
       transferGroup: 'grp',
       user: 7,
-    },
+    } as Movement),
   ];
 
   beforeEach(() => {
@@ -35,7 +35,10 @@ describe('ReverseTransferUsecase (AC-5)', () => {
       findByTransferGroup: jest.fn(),
       saveAll: jest.fn().mockResolvedValue([{ id: 20 }, { id: 21 }]),
     };
-    usecase = new ReverseTransferUsecase(movementRepository);
+    usecase = new ReverseTransferUsecase(
+      movementRepository,
+      new TransferFactory({ getRate: jest.fn() } as any),
+    );
   });
 
   it('404 when the transferGroup does not exist for the user', async () => {
@@ -61,6 +64,18 @@ describe('ReverseTransferUsecase (AC-5)', () => {
     expect(savedLegs.every((l: any) => l.transferGroup === 'reversal:grp')).toBe(
       true,
     );
+  });
+
+  it('compensates with the exact amount of each original leg', async () => {
+    movementRepository.findByTransferGroup
+      .mockResolvedValueOnce(originalLegs)
+      .mockResolvedValueOnce([]);
+
+    await usecase.execute('grp', 7);
+
+    const savedLegs = movementRepository.saveAll.mock.calls[0][0];
+    expect(savedLegs.map((l: any) => l.money.amount)).toEqual([100, 100]);
+    expect(savedLegs.map((l: any) => l.accountId)).toEqual([1, 2]);
   });
 
   it('409 when the transfer was already reversed', async () => {

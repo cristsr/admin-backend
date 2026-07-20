@@ -1,4 +1,5 @@
-import { Scheduled } from '../../../../../domain/scheduled';
+import { Scheduled } from '@app/scheduled/domain/scheduled';
+import { Money } from '@app/shared/domain';
 import { TypeOrmScheduledEntity } from './typeorm-scheduled.entity';
 
 export class TypeOrmScheduledMapper {
@@ -11,8 +12,7 @@ export class TypeOrmScheduledMapper {
       date: entity.date,
       type: entity.type,
       description: entity.description,
-      amount: entity.amount,
-      currency: entity.currency,
+      money: Money.of(entity.amount, entity.currency),
       categoryId: entity.categoryId,
       subcategoryId: entity.subcategoryId,
       accountId: entity.accountId,
@@ -27,8 +27,8 @@ export class TypeOrmScheduledMapper {
       date: scheduled.date,
       type: scheduled.type,
       description: scheduled.description,
-      amount: scheduled.amount,
-      currency: scheduled.currency,
+      amount: scheduled.money.amount,
+      currency: scheduled.money.currency,
       frequency: scheduled.frequency,
       category: { id: scheduled.categoryId } as TypeOrmScheduledEntity['category'],
       subcategory: { id: scheduled.subcategoryId } as TypeOrmScheduledEntity['subcategory'],

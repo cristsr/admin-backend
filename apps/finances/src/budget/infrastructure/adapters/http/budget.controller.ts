@@ -7,21 +7,24 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, CurrentUser } from '@shared';
 import {
   BudgetFilterDto,
   BudgetInputDto,
   BudgetOutputDto,
-} from '../../../application/dto';
-import { BudgetMapper } from '../../../application/mappers';
+} from '@app/budget/application/dto';
+import { BudgetMapper } from '@app/budget/application/mappers';
 import {
   FindAllBudgetsUsecase,
   FindBudgetMovementsUsecase,
   FindBudgetUsecase,
   RemoveBudgetUsecase,
   SaveBudgetUsecase,
-} from '../../../application/usecases';
+} from '@app/budget/application/usecases';
 
+@ApiTags('budgets')
+@ApiBearerAuth()
 @Controller('budgets')
 export class BudgetController {
   constructor(

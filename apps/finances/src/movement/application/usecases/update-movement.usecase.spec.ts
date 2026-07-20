@@ -1,28 +1,28 @@
-import { SubcategoryNotFoundException } from '../../../category/domain/subcategory';
+import { SubcategoryNotFoundException } from '@app/category/domain/subcategory';
 import {
+  Movement,
   MovementNotEditableException,
   MovementNotFoundException,
   MovementSource,
   MovementType,
-} from '../../domain/movement';
+} from '@app/movement/domain/movement';
+import { Money } from '@app/shared/domain';
 import { UpdateMovementUsecase } from './update-movement.usecase';
 
-const buildMovement = (overrides: Record<string, unknown> = {}) => ({
-  id: 1,
-  type: MovementType.EXPENSE,
-  source: MovementSource.MANUAL,
-  description: 'old',
-  notes: 'old note',
-  merchant: 'Uber',
-  amount: 100,
-  categoryId: 3,
-  subcategoryId: 9,
-  user: 7,
-  update(payload: Record<string, unknown>) {
-    Object.assign(this, payload);
-  },
-  ...overrides,
-});
+const buildMovement = (overrides: Partial<Movement> = {}) =>
+  Movement.create({
+    id: 1,
+    type: MovementType.EXPENSE,
+    source: MovementSource.MANUAL,
+    description: 'old',
+    notes: 'old note',
+    merchant: 'Uber',
+    money: Money.of(100, 'USD'),
+    categoryId: 3,
+    subcategoryId: 9,
+    user: 7,
+    ...overrides,
+  } as Movement);
 
 describe('UpdateMovementUsecase (AC-4)', () => {
   let movementRepository: any;
@@ -80,7 +80,14 @@ describe('UpdateMovementUsecase (AC-4)', () => {
   it('editing notes does not erase the merchant extracted by ingestion', async () => {
     movementRepository.findByIdAndUser.mockResolvedValue(buildMovement());
     const result = await usecase.execute(1, { notes: 'nuevo' }, 7);
-    expect((result as any).merchant).toBe('Uber');
+    expect(result.merchant).toBe('Uber');
+  });
+
+  it('editing the amount keeps the currency the movement was recorded in', async () => {
+    movementRepository.findByIdAndUser.mockResolvedValue(buildMovement());
+    const result = await usecase.execute(1, { amount: 250 }, 7);
+    expect(result.money.amount).toBe(250);
+    expect(result.money.currency).toBe('USD');
   });
 
   it('validates subcategory ∈ category when reassigning', async () => {

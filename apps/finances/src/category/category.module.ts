@@ -1,16 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { CategoryRepository } from './domain/category';
-import { SubcategoryRepository } from './domain/subcategory';
-import { CategoryController, SubcategoryController } from './infrastructure/adapters/http';
-import {
-  TypeOrmCategoryEntity,
-  TypeOrmCategoryRepository,
-} from './infrastructure/adapters/persistence/typeorm/category';
-import {
-  TypeOrmSubcategoryEntity,
-  TypeOrmSubcategoryRepository,
-} from './infrastructure/adapters/persistence/typeorm/subcategory';
 import {
   FindAllCategoriesUsecase,
   FindCategoryUsecase,
@@ -24,6 +13,17 @@ import {
   SaveManySubcategoriesUsecase,
   SaveSubcategoryUsecase,
 } from './application/usecases';
+import { CategoryRepository } from './domain/category';
+import { SubcategoryRepository } from './domain/subcategory';
+import { CategoryController, SubcategoryController } from './infrastructure/adapters/http';
+import {
+  TypeOrmCategoryEntity,
+  TypeOrmCategoryRepository,
+} from './infrastructure/adapters/persistence/typeorm/category';
+import {
+  TypeOrmSubcategoryEntity,
+  TypeOrmSubcategoryRepository,
+} from './infrastructure/adapters/persistence/typeorm/subcategory';
 
 @Module({
   imports: [

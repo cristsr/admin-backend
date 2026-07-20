@@ -1,11 +1,5 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { AccountRepository } from './domain/account';
-import { AccountController } from './infrastructure/adapters/http';
-import {
-  TypeOrmAccountEntity,
-  TypeOrmAccountRepository,
-} from './infrastructure/adapters/persistence/typeorm/account';
 import {
   FindAccountUsecase,
   FindAllAccountsUsecase,
@@ -13,6 +7,12 @@ import {
   RemoveAccountUsecase,
   SaveAccountUsecase,
 } from './application/usecases';
+import { AccountRepository } from './domain/account';
+import { AccountController } from './infrastructure/adapters/http';
+import {
+  TypeOrmAccountEntity,
+  TypeOrmAccountRepository,
+} from './infrastructure/adapters/persistence/typeorm/account';
 
 @Module({
   imports: [TypeOrmModule.forFeature([TypeOrmAccountEntity])],

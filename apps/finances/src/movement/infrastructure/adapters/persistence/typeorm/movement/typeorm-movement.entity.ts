@@ -1,13 +1,9 @@
 import { BaseEntity, DateColumn, MoneyColumn, TransformDate } from '@shared';
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
-import { TypeOrmAccountEntity } from '../../../../../../account/infrastructure/adapters/persistence/typeorm/account';
-import { TypeOrmCategoryEntity } from '../../../../../../category/infrastructure/adapters/persistence/typeorm/category';
-import { TypeOrmSubcategoryEntity } from '../../../../../../category/infrastructure/adapters/persistence/typeorm/subcategory';
-import {
-  MovementSource,
-  MovementType,
-  PaymentMethod,
-} from '../../../../../domain/movement';
+import { TypeOrmAccountEntity } from '@app/account/infrastructure/adapters/persistence/typeorm/account';
+import { TypeOrmCategoryEntity } from '@app/category/infrastructure/adapters/persistence/typeorm/category';
+import { TypeOrmSubcategoryEntity } from '@app/category/infrastructure/adapters/persistence/typeorm/subcategory';
+import { MovementSource, MovementType, PaymentMethod } from '@app/movement/domain/movement';
 
 @Entity('movements')
 export class TypeOrmMovementEntity extends BaseEntity {

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Nullable } from '@shared';
-import { Movement, MovementRepository } from '../../domain/movement';
+import { Movement, MovementRepository } from '@app/movement/domain/movement';
 
 @Injectable()
 export class FindMovementUsecase {

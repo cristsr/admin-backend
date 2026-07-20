@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { of } from 'rxjs';
-import { UserService } from 'app/user/services';
+import { UserService } from '../services/user.service';
 import { UserController } from './user.controller';
 
 describe('UserController', () => {

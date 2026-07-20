@@ -1,5 +1,6 @@
 import { Nullable } from '@shared';
 import { EntityManager } from 'typeorm';
+import { Money } from '@app/shared/domain';
 import { Movement } from './movement.entity';
 import { MovementType } from './movement.types';
 
@@ -20,6 +21,12 @@ export interface MovementSumQuery {
   startDate: Date;
   endDate: Date;
   type: MovementType;
+  /**
+   * Only movements held in this currency are summed. Adding amounts across
+   * currencies would produce a total that means nothing, so the caller states
+   * which currency the total must come back in.
+   */
+  currency: string;
   account?: number;
 }
 
@@ -70,5 +77,5 @@ export abstract class MovementRepository {
 
   abstract remove(id: number, user: number): Promise<boolean>;
 
-  abstract sumAmount(query: MovementSumQuery): Promise<number>;
+  abstract sumAmount(query: MovementSumQuery): Promise<Money>;
 }

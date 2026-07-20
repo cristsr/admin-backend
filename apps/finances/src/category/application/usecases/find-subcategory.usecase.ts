@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Nullable } from '@shared';
-import { Subcategory, SubcategoryRepository } from '../../domain/subcategory';
+import {
+  Subcategory,
+  SubcategoryRepository,
+} from '@app/category/domain/subcategory';
 
 @Injectable()
 export class FindSubcategoryUsecase {

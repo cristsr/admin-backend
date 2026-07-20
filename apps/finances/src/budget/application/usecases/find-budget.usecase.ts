@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { Nullable } from '@shared';
 import {
-  MovementRepository,
-  MovementType,
-} from '../../../movement/domain/movement';
-import { Budget, BudgetRepository } from '../../domain/budget';
+  Budget,
+  BudgetRepository,
+  BudgetSpendingService,
+} from '@app/budget/domain/budget';
 import { UserBudgetFilterDto } from '../dto/budget-filter.dto';
 
 @Injectable()
 export class FindBudgetUsecase {
   constructor(
     private readonly budgetRepository: BudgetRepository,
-    private readonly movementRepository: MovementRepository,
+    private readonly budgetSpending: BudgetSpendingService,
   ) {}
 
   async execute(
@@ -25,17 +25,7 @@ export class FindBudgetUsecase {
 
     if (!budget) return null;
 
-    const spent = await this.movementRepository.sumAmount({
-      user,
-      category: budget.categoryId,
-      account: budget.accountId,
-      startDate: budget.startDate,
-      endDate: budget.endDate,
-      type: MovementType.EXPENSE,
-    });
-
-    budget.spent = spent;
-    budget.percentage = Math.floor((spent / budget.amount) * 100);
+    await this.budgetSpending.recordSpending(budget);
 
     return budget;
   }

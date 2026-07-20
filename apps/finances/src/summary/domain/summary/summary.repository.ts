@@ -1,5 +1,5 @@
 import { Nullable } from '@shared';
-import { Movement } from '../../../movement/domain/movement';
+import { Movement } from '@app/movement/domain/movement';
 import {
   Balance,
   BalanceQuery,

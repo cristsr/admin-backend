@@ -1,4 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { Observable, defer, map, switchMap, tap } from 'rxjs';
 import {
   Id,
   Status,
@@ -7,9 +8,8 @@ import {
   UserInput,
   UserQuery,
   Users,
-} from '@core';
-import { Observable, defer, map, switchMap, tap } from 'rxjs';
-import { UserRepository } from 'app/user/repositories';
+} from '@app/user/dto';
+import { UserRepository } from '../repositories/user.repository';
 
 @Injectable()
 export class UserService implements UserHandler {

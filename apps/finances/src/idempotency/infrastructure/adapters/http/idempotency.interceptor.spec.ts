@@ -4,7 +4,7 @@ import {
   IdempotencyInProgressException,
   IdempotencyKey,
   IdempotencyStatus,
-} from '../../../domain/idempotency-key';
+} from '@app/idempotency/domain/idempotency-key';
 import { hashRequestBody } from './idempotency-hash';
 import { IdempotencyInterceptor } from './idempotency.interceptor';
 

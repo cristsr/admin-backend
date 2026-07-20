@@ -6,7 +6,7 @@ import {
   Scheduled,
   ScheduledQuery,
   ScheduledRepository,
-} from '../../../../../domain/scheduled';
+} from '@app/scheduled/domain/scheduled';
 import { TypeOrmScheduledEntity } from './typeorm-scheduled.entity';
 import { TypeOrmScheduledMapper } from './typeorm-scheduled.mapper';
 

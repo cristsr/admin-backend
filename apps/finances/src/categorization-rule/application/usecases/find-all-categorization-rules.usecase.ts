@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   CategorizationRule,
   CategorizationRuleRepository,
-} from '../../domain/categorization-rule';
+} from '@app/categorization-rule/domain/categorization-rule';
 
 @Injectable()
 export class FindAllCategorizationRulesUsecase {

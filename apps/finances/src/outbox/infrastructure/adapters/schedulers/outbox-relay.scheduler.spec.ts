@@ -1,4 +1,4 @@
-import { OutboxEvent, OutboxStatus } from '../../../domain/outbox-event';
+import { OutboxEvent, OutboxStatus } from '@app/outbox/domain/outbox-event';
 import { OutboxRelayScheduler } from './outbox-relay.scheduler';
 
 const outboxEvent = (over: Partial<OutboxEvent> = {}): OutboxEvent =>
@@ -41,6 +41,25 @@ describe('OutboxRelayScheduler (AC-2)', () => {
     });
     expect(outboxRepository.markDelivered).toHaveBeenCalledWith(7);
     expect(outboxRepository.markFailed).not.toHaveBeenCalled();
+  });
+
+  it('re-emits the event with its correlationId intact so the trace survives the request → cron boundary (AC-4)', async () => {
+    outboxRepository.claimPendingBatch.mockResolvedValue([
+      outboxEvent({
+        id: 9,
+        eventType: 'movement.saved',
+        payload: { movementId: 2, correlationId: 'corr-xyz' },
+      }),
+    ]);
+    eventEmitter.emitAsync.mockResolvedValue([]);
+
+    await scheduler.relay();
+
+    expect(eventEmitter.emitAsync).toHaveBeenCalledWith('movement.saved', {
+      movementId: 2,
+      correlationId: 'corr-xyz',
+    });
+    expect(outboxRepository.markDelivered).toHaveBeenCalledWith(9);
   });
 
   it('marks the event failed with backoff when a handler throws (no loss)', async () => {

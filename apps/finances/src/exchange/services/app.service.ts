@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { ExchangeRates, ExchangeRatesInput } from '@core';
 import { Observable, filter, from, map, of, switchMap } from 'rxjs';
-import { ExchangeRatesService } from 'app/exchange/providers';
-import { ExchangeRepository } from 'app/exchange/repositories';
+import { ExchangeRates, ExchangeRatesInput } from '@app/exchange/dto';
+import { ExchangeRatesService } from '@app/exchange/providers';
+import { ExchangeRepository } from '../repositories/exchange.repository';
 
 @Injectable()
 export class AppService {

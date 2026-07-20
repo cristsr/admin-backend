@@ -1,16 +1,19 @@
 import { Body, Controller, Param, Post, UseInterceptors } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, CurrentUser } from '@shared';
-import { IdempotencyInterceptor } from '../../../../idempotency/infrastructure/adapters/http';
+import { IdempotencyInterceptor } from '@app/idempotency/infrastructure/adapters/http';
 import {
   TransferInputDto,
   TransferOutputDto,
   TransferReversalOutputDto,
-} from '../../../application/dto';
+} from '@app/transfer/application/dto';
 import {
   CreateTransferUsecase,
   ReverseTransferUsecase,
-} from '../../../application/usecases';
+} from '@app/transfer/application/usecases';
 
+@ApiTags('transfers')
+@ApiBearerAuth()
 @Controller('transfers')
 export class TransferController {
   constructor(

@@ -2,32 +2,14 @@ import { Injectable } from '@nestjs/common';
 import {
   SubcategoryNotFoundException,
   SubcategoryRepository,
-} from '../../../category/domain/subcategory';
+} from '@app/category/domain/subcategory';
 import {
   Movement,
-  MovementNotEditableException,
   MovementNotFoundException,
+  MovementPatch,
   MovementRepository,
-  MovementSource,
-  MovementType,
-} from '../../domain/movement';
+} from '@app/movement/domain/movement';
 import { MovementPatchDto } from '../dto';
-
-/**
- * Fields an ingested (WEBHOOK) movement allows editing: only what belongs to
- * the user, never what was extracted by ingestion.
- */
-const WEBHOOK_EDITABLE = new Set([
-  'notes',
-  'category',
-  'subcategory',
-  'paymentMethod',
-]);
-
-const TRANSFER_TYPES = new Set<MovementType>([
-  MovementType.TRANSFER_IN,
-  MovementType.TRANSFER_OUT,
-]);
 
 @Injectable()
 export class UpdateMovementUsecase {
@@ -46,47 +28,46 @@ export class UpdateMovementUsecase {
       throw new MovementNotFoundException('Movement not found');
     }
 
-    if (TRANSFER_TYPES.has(movement.type)) {
-      throw new MovementNotEditableException(
-        'Transfer legs cannot be edited; reverse the transfer instead',
-      );
-    }
+    await this.ensureSubcategoryBelongsToCategory(patch, movement);
 
-    const touched = Object.keys(patch).filter(
-      (key) => patch[key] !== undefined,
-    );
-
-    if (movement.source === MovementSource.WEBHOOK) {
-      const forbidden = touched.filter((key) => !WEBHOOK_EDITABLE.has(key));
-      if (forbidden.length) {
-        throw new MovementNotEditableException(
-          `Fields extracted by ingestion are read-only: ${forbidden.join(', ')}`,
-        );
-      }
-    }
-
-    if (patch.subcategory !== undefined) {
-      const categoryId = patch.category ?? movement.categoryId;
-      const subcategory =
-        await this.subcategoryRepository.findByIdAndCategory(
-          patch.subcategory,
-          categoryId,
-        );
-      if (!subcategory) {
-        throw new SubcategoryNotFoundException('Subcategory not found');
-      }
-    }
-
-    movement.update({
-      date: patch.date ?? movement.date,
-      description: patch.description ?? movement.description,
-      notes: patch.notes ?? movement.notes,
-      amount: patch.amount ?? movement.amount,
-      paymentMethod: patch.paymentMethod ?? movement.paymentMethod,
-      categoryId: patch.category ?? movement.categoryId,
-      subcategoryId: patch.subcategory ?? movement.subcategoryId,
-    });
+    // The movement decides what of this it accepts: transfer legs and
+    // ingestion-owned fields refuse the edit.
+    movement.applyPatch(UpdateMovementUsecase.toDomainPatch(patch));
 
     return this.movementRepository.save(movement);
+  }
+
+  /**
+   * A subcategory only exists under a category, so it is validated against the
+   * category the movement will end up with — the patched one when it changes.
+   */
+  private async ensureSubcategoryBelongsToCategory(
+    patch: MovementPatchDto,
+    movement: Movement,
+  ): Promise<void> {
+    if (patch.subcategory === undefined) return;
+
+    const categoryId = patch.category ?? movement.categoryId;
+    const subcategory = await this.subcategoryRepository.findByIdAndCategory(
+      patch.subcategory,
+      categoryId,
+    );
+
+    if (!subcategory) {
+      throw new SubcategoryNotFoundException('Subcategory not found');
+    }
+  }
+
+  /** The transport names the relations `category`/`subcategory`; the domain holds ids. */
+  private static toDomainPatch(patch: MovementPatchDto): MovementPatch {
+    return {
+      date: patch.date,
+      description: patch.description,
+      notes: patch.notes,
+      amount: patch.amount,
+      paymentMethod: patch.paymentMethod,
+      categoryId: patch.category,
+      subcategoryId: patch.subcategory,
+    };
   }
 }

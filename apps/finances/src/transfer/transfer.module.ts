@@ -7,6 +7,7 @@ import {
   CreateTransferUsecase,
   ReverseTransferUsecase,
 } from './application/usecases';
+import { TransferFactory } from './domain';
 import { TransferController } from './infrastructure/adapters/http';
 
 /**
@@ -16,6 +17,6 @@ import { TransferController } from './infrastructure/adapters/http';
 @Module({
   imports: [AccountModule, MovementModule, ExchangeModule, IdempotencyModule],
   controllers: [TransferController],
-  providers: [CreateTransferUsecase, ReverseTransferUsecase],
+  providers: [TransferFactory, CreateTransferUsecase, ReverseTransferUsecase],
 })
 export class TransferModule {}

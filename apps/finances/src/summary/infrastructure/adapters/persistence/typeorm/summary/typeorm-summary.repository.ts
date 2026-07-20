@@ -2,12 +2,12 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Nullable } from '@shared';
 import { DataSource, In, Repository } from 'typeorm';
-import { TypeOrmCategoryEntity } from '../../../../../../category/infrastructure/adapters/persistence/typeorm/category';
-import { Movement, MovementType } from '../../../../../../movement/domain/movement';
+import { TypeOrmCategoryEntity } from '@app/category/infrastructure/adapters/persistence/typeorm/category';
+import { Movement, MovementType } from '@app/movement/domain/movement';
 import {
   TypeOrmMovementEntity,
   TypeOrmMovementMapper,
-} from '../../../../../../movement/infrastructure/adapters/persistence/typeorm/movement';
+} from '@app/movement/infrastructure/adapters/persistence/typeorm/movement';
 import {
   Balance,
   BalanceQuery,
@@ -15,7 +15,7 @@ import {
   ExpenseQuery,
   LastMovementsQuery,
   SummaryRepository,
-} from '../../../../../domain/summary';
+} from '@app/summary/domain/summary';
 
 @Injectable()
 export class TypeOrmSummaryRepository implements SummaryRepository {

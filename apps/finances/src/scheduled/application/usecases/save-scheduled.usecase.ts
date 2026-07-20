@@ -1,8 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import { AccountNotFoundException, AccountRepository } from '../../../account/domain/account';
-import { CategoryNotFoundException, CategoryRepository } from '../../../category/domain/category';
-import { SubcategoryNotFoundException, SubcategoryRepository } from '../../../category/domain/subcategory';
-import { Scheduled, ScheduledNotFoundException, ScheduledRepository } from '../../domain/scheduled';
+import {
+  AccountNotFoundException,
+  AccountRepository,
+} from '@app/account/domain/account';
+import {
+  CategoryNotFoundException,
+  CategoryRepository,
+} from '@app/category/domain/category';
+import {
+  SubcategoryNotFoundException,
+  SubcategoryRepository,
+} from '@app/category/domain/subcategory';
+import {
+  Scheduled,
+  ScheduledNotFoundException,
+  ScheduledRepository,
+} from '@app/scheduled/domain/scheduled';
+import { Money } from '@app/shared/domain';
 import { ScheduledInputDto } from '../dto/scheduled-input.dto';
 
 @Injectable()
@@ -43,19 +57,20 @@ export class SaveScheduledUsecase {
       throw new AccountNotFoundException('Account not found');
     }
 
-    const scheduled = Scheduled.create({
-      ...existing,
+    const attributes = {
       date: input.date,
       type: input.type,
       description: input.description,
-      amount: input.amount,
-      currency: input.currency,
+      money: Money.of(input.amount, input.currency),
       frequency: input.frequency,
       categoryId: category.id,
       subcategoryId: subcategory.id,
       accountId: account.id,
       user,
-    } as Scheduled);
+    };
+
+    const scheduled = existing ?? Scheduled.schedule(attributes);
+    existing?.update(attributes);
 
     return this.scheduledRepository.save(scheduled);
   }

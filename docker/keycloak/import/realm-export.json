@@ -1,0 +1,48 @@
+{
+  "realm": "finances",
+  "enabled": true,
+  "sslRequired": "none",
+  "accessTokenLifespan": 3600,
+  "clients": [
+    {
+      "clientId": "finances-test",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": ["*"],
+      "webOrigins": ["*"],
+      "protocol": "openid-connect",
+      "protocolMappers": [
+        {
+          "name": "finances-audience",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.custom.audience": "finances-api",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "test-user",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "test-user@example.com",
+      "firstName": "Test",
+      "lastName": "User",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "test-pass",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}

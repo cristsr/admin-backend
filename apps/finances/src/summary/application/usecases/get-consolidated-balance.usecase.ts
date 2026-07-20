@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
-import { AccountRepository } from '../../../account/domain/account';
-import { ExchangeRateProvider } from '../../../exchange/domain';
-import { SummaryRepository } from '../../domain/summary';
+import { AccountRepository } from '@app/account/domain/account';
+import { ExchangeRateProvider } from '@app/exchange/domain';
+import { Money } from '@app/shared/domain';
+import { SummaryRepository } from '@app/summary/domain/summary';
 import {
   ConsolidatedBalanceFilterDto,
   ConsolidatedBalanceOutputDto,
 } from '../dto';
 
-const round = (value: number) => Math.round(value * 100) / 100;
+/** Fallback presentation currency when the user has neither a claim nor accounts. */
+const DEFAULT_PRESENTATION_CURRENCY = 'USD';
 
 /**
  * Consolidates the balance of all the user's accounts into their presentation
@@ -31,12 +33,14 @@ export class GetConsolidatedBalanceUsecase {
     const accounts = await this.accountRepository.findAllByUser(user);
 
     const presentation =
-      presentationCurrency ?? accounts[0]?.currency ?? 'USD';
+      presentationCurrency ??
+      accounts[0]?.currencyCode() ??
+      DEFAULT_PRESENTATION_CURRENCY;
     const rateDate = filter.endDate ?? new Date();
 
-    let total = 0;
-    let incomes = 0;
-    let expenses = 0;
+    let total = Money.zero(presentation);
+    let incomes = Money.zero(presentation);
+    let expenses = Money.zero(presentation);
     const accountsOut = [];
 
     for (const account of accounts) {
@@ -46,36 +50,46 @@ export class GetConsolidatedBalanceUsecase {
         endDate: filter.endDate,
         user,
       });
-      const balance = period?.balance ?? 0;
 
-      const rate =
-        account.currency === presentation
-          ? 1
-          : await this.exchangeRateProvider.getRate(
-              account.currency,
-              presentation,
-              rateDate,
-            );
+      const currency = account.currencyCode();
+      const rate = await this.rateFor(currency, presentation, rateDate);
 
-      const converted = round(balance * rate);
-      total += converted;
-      incomes += round((period?.incomes ?? 0) * rate);
-      expenses += round((period?.expenses ?? 0) * rate);
+      const balance = Money.of(period?.balance ?? 0, currency);
+      const converted = balance.convertTo(presentation, rate);
+
+      total = total.add(converted);
+      incomes = incomes.add(
+        Money.of(period?.incomes ?? 0, currency).convertTo(presentation, rate),
+      );
+      expenses = expenses.add(
+        Money.of(period?.expenses ?? 0, currency).convertTo(presentation, rate),
+      );
 
       accountsOut.push({
         accountId: account.id,
-        currency: account.currency,
-        balance,
-        balanceInPresentationCurrency: converted,
+        currency,
+        balance: balance.amount,
+        balanceInPresentationCurrency: converted.amount,
       });
     }
 
     return {
       presentationCurrency: presentation,
-      total: round(total),
-      incomes: round(incomes),
-      expenses: round(expenses),
+      total: total.amount,
+      incomes: incomes.amount,
+      expenses: expenses.amount,
       accounts: accountsOut,
     };
+  }
+
+  /** An account already in the presentation currency needs no rate lookup. */
+  private async rateFor(
+    from: string,
+    to: string,
+    date: Date,
+  ): Promise<number> {
+    if (from === to) return 1;
+
+    return this.exchangeRateProvider.getRate(from, to, date);
   }
 }

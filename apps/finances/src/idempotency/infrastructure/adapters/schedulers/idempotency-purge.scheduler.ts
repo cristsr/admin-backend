@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { IdempotencyRepository } from '../../../domain/idempotency-key';
+import { IdempotencyRepository } from '@app/idempotency/domain/idempotency-key';
 
 /**
  * AC-3 (sm-0003) — enforces the 24h retention by deleting expired idempotency

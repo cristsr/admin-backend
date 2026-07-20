@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiSecurity, ApiTags } from '@nestjs/swagger';
 import { Public } from '@shared';
 import {
   CategoriesInputDto,
@@ -6,8 +7,8 @@ import {
   CategoryInputDto,
   CategoryOutputDto,
   TaxonomyOutputDto,
-} from '../../../application/dto';
-import { CategoryMapper } from '../../../application/mappers';
+} from '@app/category/application/dto';
+import { CategoryMapper } from '@app/category/application/mappers';
 import {
   FindAllCategoriesUsecase,
   FindCategoryUsecase,
@@ -15,8 +16,10 @@ import {
   RemoveCategoryUsecase,
   SaveCategoryUsecase,
   SaveManyCategoriesUsecase,
-} from '../../../application/usecases';
+} from '@app/category/application/usecases';
 
+@ApiTags('categories')
+@ApiBearerAuth()
 @Controller('categories')
 export class CategoryController {
   constructor(
@@ -32,6 +35,9 @@ export class CategoryController {
    * Consumed by the Rust ingestion pipeline's `CategoryProvider` — must stay
    * registered before `:id` so it isn't swallowed by that route.
    */
+  // Public taxonomy: override the class-level bearer requirement with an empty
+  // security requirement so the contract shows it needs no auth (AC-1).
+  @ApiSecurity({})
   @Public()
   @Get('taxonomy')
   async taxonomy(): Promise<TaxonomyOutputDto> {

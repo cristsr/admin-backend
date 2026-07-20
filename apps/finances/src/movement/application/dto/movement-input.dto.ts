@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty, IsOptional, Min } from 'class-validator';
-import { MovementType, PaymentMethod } from '../../domain/movement';
+import { MovementType, PaymentMethod } from '@app/movement/domain/movement';
 
 export class MovementInputDto {
   @IsOptional()

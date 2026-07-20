@@ -6,7 +6,7 @@ import {
   Budget,
   BudgetQuery,
   BudgetRepository,
-} from '../../../../../domain/budget';
+} from '@app/budget/domain/budget';
 import { TypeOrmBudgetEntity } from './typeorm-budget.entity';
 import { TypeOrmBudgetMapper } from './typeorm-budget.mapper';
 

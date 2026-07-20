@@ -1,10 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { AccountNotFoundException, AccountRepository } from '../../../account/domain/account';
-import { ApplyCategorizationRulesUsecase } from '../../../categorization-rule/application/usecases';
-import { CategoryNotFoundException, CategoryRepository } from '../../../category/domain/category';
-import { SubcategoryNotFoundException, SubcategoryRepository } from '../../../category/domain/subcategory';
-import { DomainEventOutboxPublisher } from '../../../outbox/application/services/domain-event-outbox.publisher';
-import { Movement, MovementNotFoundException, MovementRepository, MovementSource } from '../../domain/movement';
+import { Nullable } from '@shared';
+import {
+  AccountNotFoundException,
+  AccountRepository,
+} from '@app/account/domain/account';
+import { CategoryResolver } from '@app/categorization-rule/domain/categorization-rule';
+import { currentTraceId } from '@app/config/telemetry/correlation';
+import {
+  Movement,
+  MovementNotFoundException,
+  MovementRepository,
+  NewMovement,
+} from '@app/movement/domain/movement';
+import { DomainEventOutboxPublisher } from '@app/outbox/application/services/domain-event-outbox.publisher';
+import { Money } from '@app/shared/domain';
 import { MovementInputDto } from '../dto/movement-input.dto';
 import { MovementSaved, MovementSavedPayload } from '../movement.constants';
 
@@ -12,14 +21,23 @@ import { MovementSaved, MovementSavedPayload } from '../movement.constants';
 export class SaveMovementUsecase {
   constructor(
     private readonly movementRepository: MovementRepository,
-    private readonly categoryRepository: CategoryRepository,
-    private readonly subcategoryRepository: SubcategoryRepository,
     private readonly accountRepository: AccountRepository,
+    private readonly categoryResolver: CategoryResolver,
     private readonly outboxPublisher: DomainEventOutboxPublisher,
-    private readonly applyCategorizationRules: ApplyCategorizationRulesUsecase,
   ) {}
 
-  async execute(input: MovementInputDto, user: number): Promise<Movement> {
+  /**
+   * `requestId` is only a fallback: when telemetry is on, the trace id in
+   * context wins, because that is the id the collector knows this flow by. It
+   * is read here instead of being passed down, so nothing below has to carry it.
+   */
+  async execute(
+    input: MovementInputDto,
+    user: number,
+    requestId?: string,
+  ): Promise<Movement> {
+    const correlationId = currentTraceId() ?? requestId;
+
     const [existing, account] = await Promise.all([
       input.id
         ? this.movementRepository.findByIdAndUser(input.id, user)
@@ -35,26 +53,28 @@ export class SaveMovementUsecase {
       throw new AccountNotFoundException('Account not found');
     }
 
-    const { categoryId, subcategoryId } = await this.resolveCategory(
-      input,
-      user,
-    );
+    const { categoryId, subcategoryId } =
+      await this.categoryResolver.resolveByIds(
+        { categoryId: input.category, subcategoryId: input.subcategory },
+        { description: input.description },
+        user,
+      );
 
-    const movement = Movement.create({
-      ...existing,
-      date: input.date,
-      type: input.type,
-      description: input.description,
-      notes: input.notes,
-      amount: input.amount,
-      currency: input.currency,
-      paymentMethod: input.paymentMethod,
-      source: existing?.source ?? MovementSource.MANUAL,
-      categoryId,
-      subcategoryId,
-      accountId: account.id,
-      user,
-    } as Movement);
+    const movement = SaveMovementUsecase.build(
+      {
+        date: input.date,
+        type: input.type,
+        description: input.description,
+        notes: input.notes,
+        money: Money.of(input.amount, input.currency),
+        paymentMethod: input.paymentMethod,
+        categoryId,
+        subcategoryId,
+        accountId: account.id,
+        user,
+      },
+      existing,
+    );
 
     // AC-2: the movement and its domain event commit together. The outbox relay
     // re-emits movement.saved later, so a crash after commit never loses it.
@@ -70,8 +90,9 @@ export class SaveMovementUsecase {
           categoryId: saved.categoryId,
           accountId: saved.accountId,
           date: saved.date,
-          amount: saved.amount,
+          amount: saved.money.amount,
           user: saved.user,
+          correlationId,
         } as MovementSavedPayload,
       });
 
@@ -80,39 +101,19 @@ export class SaveMovementUsecase {
   }
 
   /**
-   * AC-4: when a category is given, validate it (and its subcategory); when it
-   * is omitted, resolve it from the user's categorization rules, falling back to
-   * the default "Sin categorizar".
+   * Re-saving an existing movement keeps the source that recorded it — a
+   * webhook movement does not become manual because it was saved again — while
+   * a brand new one is manual by definition: this is the endpoint the user
+   * types into.
    */
-  private async resolveCategory(
-    input: MovementInputDto,
-    user: number,
-  ): Promise<{ categoryId: number; subcategoryId?: number }> {
-    if (!input.category) {
-      return this.applyCategorizationRules.execute(
-        { description: input.description },
-        user,
-      );
-    }
+  private static build(
+    attributes: NewMovement,
+    existing: Nullable<Movement>,
+  ): Movement {
+    if (!existing) return Movement.manual(attributes);
 
-    const [category, subcategory] = await Promise.all([
-      this.categoryRepository.findById(input.category),
-      input.subcategory
-        ? this.subcategoryRepository.findByIdAndCategory(
-            input.subcategory,
-            input.category,
-          )
-        : null,
-    ]);
+    existing.update(attributes);
 
-    if (!category) {
-      throw new CategoryNotFoundException('Category not found');
-    }
-
-    if (input.subcategory && !subcategory) {
-      throw new SubcategoryNotFoundException('Subcategory not found');
-    }
-
-    return { categoryId: category.id, subcategoryId: subcategory?.id };
+    return existing;
   }
 }

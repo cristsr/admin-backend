@@ -8,22 +8,25 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, CurrentUser } from '@shared';
 import {
   ScheduledFilterDto,
   ScheduledInputDto,
   ScheduledOutputDto,
   ScheduledPatchDto,
-} from '../../../application/dto';
-import { ScheduledMapper } from '../../../application/mappers';
+} from '@app/scheduled/application/dto';
+import { ScheduledMapper } from '@app/scheduled/application/mappers';
 import {
   FindAllScheduledUsecase,
   FindScheduledUsecase,
   RemoveScheduledUsecase,
   SaveScheduledUsecase,
   UpdateScheduledUsecase,
-} from '../../../application/usecases';
+} from '@app/scheduled/application/usecases';
 
+@ApiTags('scheduled')
+@ApiBearerAuth()
 @Controller('scheduled')
 export class ScheduledController {
   constructor(

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { Movement } from '../../../movement/domain/movement';
-import { SummaryRepository } from '../../domain/summary';
+import { Movement } from '@app/movement/domain/movement';
+import { SummaryRepository } from '@app/summary/domain/summary';
 import { LastMovementFilterDto } from '../dto/last-movement-filter.dto';
 
 @Injectable()

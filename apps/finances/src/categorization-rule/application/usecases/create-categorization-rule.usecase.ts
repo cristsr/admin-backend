@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import {
-  CategoryNotFoundException,
-  CategoryRepository,
-} from '../../../category/domain/category';
-import {
   CategorizationRule,
   CategorizationRuleRepository,
-} from '../../domain/categorization-rule';
+} from '@app/categorization-rule/domain/categorization-rule';
+import {
+  CategoryNotFoundException,
+  CategoryRepository,
+} from '@app/category/domain/category';
 import { CategorizationRuleInputDto } from '../dto';
 
 @Injectable()

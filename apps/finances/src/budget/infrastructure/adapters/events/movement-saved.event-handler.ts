@@ -1,42 +1,34 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { MovementSaved, MovementSavedPayload } from '../../../../movement/application/movement.constants';
+import { BudgetThresholdExceeded, BudgetThresholdExceededPayload } from '@app/budget/application/budget.constants';
 import {
-  MovementRepository,
-  MovementType,
-} from '../../../../movement/domain/movement';
-import { BudgetRepository } from '../../../domain/budget';
-import {
-  BUDGET_THRESHOLD_LIMITS,
-  BudgetThreshold,
-  BudgetThresholdExceeded,
-  BudgetThresholdExceededPayload,
-} from '../../../application/budget.constants';
-
-/**
- * Severity order of the thresholds; only notify if the reached one is higher
- * than the one already notified in this period.
- */
-const THRESHOLD_RANK: Record<BudgetThreshold, number> = {
-  [BudgetThreshold.WARNING]: 1,
-  [BudgetThreshold.EXCEEDED]: 2,
-};
+  Budget,
+  BudgetRepository,
+  BudgetSpendingService,
+} from '@app/budget/domain/budget';
+import { MovementSaved, MovementSavedPayload } from '@app/movement/application/movement.constants';
 
 /**
  * Reacts to every saved movement (via event, not a direct module dependency,
- * to avoid a movement<->budget circular import) and checks whether any
- * matching active budget just crossed a spending threshold.
+ * to avoid a movement<->budget circular import) and lets each matching budget
+ * decide whether it just crossed a spending threshold.
  */
 @Injectable()
 export class MovementSavedEventHandler {
+  private readonly logger = new Logger(MovementSavedEventHandler.name);
+
   constructor(
     private readonly budgetRepository: BudgetRepository,
-    private readonly movementRepository: MovementRepository,
+    private readonly budgetSpending: BudgetSpendingService,
     private readonly eventEmitter: EventEmitter2,
   ) {}
 
   @OnEvent(MovementSaved)
   async handle(payload: MovementSavedPayload): Promise<void> {
+    this.logger.log(
+      `Movement saved event received correlationId=${payload.correlationId ?? '-'}`,
+    );
+
     const budgets = await this.budgetRepository.findActiveMatching(
       payload.categoryId,
       payload.accountId,
@@ -45,39 +37,33 @@ export class MovementSavedEventHandler {
     );
 
     for (const budget of budgets) {
-      const spent = await this.movementRepository.sumAmount({
-        user: budget.user,
-        category: budget.categoryId,
-        account: budget.accountId,
-        startDate: budget.startDate,
-        endDate: budget.endDate,
-        type: MovementType.EXPENSE,
-      });
-
-      const percentage = Math.floor((spent / budget.amount) * 100);
-
-      const threshold = [BudgetThreshold.EXCEEDED, BudgetThreshold.WARNING].find(
-        (candidate) => percentage >= BUDGET_THRESHOLD_LIMITS[candidate],
-      );
-
-      if (!threshold) continue;
-
-      // Notify each threshold only once per period: if the reached one does
-      // not exceed the already-notified one, do not re-emit (AC-1).
-      const alreadyRank = budget.notifiedThreshold
-        ? THRESHOLD_RANK[budget.notifiedThreshold]
-        : 0;
-      if (THRESHOLD_RANK[threshold] <= alreadyRank) continue;
-
-      budget.notifiedThreshold = threshold;
-      await this.budgetRepository.save(budget);
-
-      this.eventEmitter.emit(BudgetThresholdExceeded, {
-        budgetId: budget.id,
-        percentage,
-        threshold,
-        user: budget.user,
-      } as BudgetThresholdExceededPayload);
+      await this.review(budget, payload.correlationId);
     }
+  }
+
+  /**
+   * The budget owns both the arithmetic and the "notify once per threshold and
+   * period" rule; a claimed breach is persisted before it is announced, so a
+   * crash in between cannot turn into a duplicate alert.
+   */
+  private async review(
+    budget: Budget,
+    correlationId?: string,
+  ): Promise<void> {
+    await this.budgetSpending.recordSpending(budget);
+
+    const threshold = budget.claimThresholdBreach();
+
+    if (!threshold) return;
+
+    await this.budgetRepository.save(budget);
+
+    this.eventEmitter.emit(BudgetThresholdExceeded, {
+      budgetId: budget.id,
+      percentage: budget.percentage,
+      threshold,
+      user: budget.user,
+      correlationId,
+    } as BudgetThresholdExceededPayload);
   }
 }

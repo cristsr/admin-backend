@@ -7,6 +7,9 @@ import {
   ParseIntPipe,
   Post,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import { Public } from '@shared';
+import { Observable } from 'rxjs';
 import {
   Id,
   Status,
@@ -15,11 +18,11 @@ import {
   UserInput,
   UserQuery,
   Users,
-} from '@core';
-import { Public } from '@shared';
-import { Observable } from 'rxjs';
-import { UserService } from 'app/user/services';
+} from '@app/user/dto';
+import { UserService } from '../services/user.service';
 
+@ApiTags('users')
+@ApiBearerAuth()
 @Controller('users')
 export class UserController implements UserHandler {
   constructor(private userService: UserService) {}

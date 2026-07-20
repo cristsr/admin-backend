@@ -1,16 +1,19 @@
 import { Controller, Get, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, CurrentUser } from '@shared';
 import {
   ConsolidatedBalanceFilterDto,
   ExpenseFilterDto,
   LastMovementFilterDto,
-} from '../../../application/dto';
+} from '@app/summary/application/dto';
 import {
   GetConsolidatedBalanceUsecase,
   GetExpensesUsecase,
   GetLastMovementsUsecase,
-} from '../../../application/usecases';
+} from '@app/summary/application/usecases';
 
+@ApiTags('summary')
+@ApiBearerAuth()
 @Controller('summary')
 export class SummaryController {
   constructor(

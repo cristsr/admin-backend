@@ -1,12 +1,12 @@
+import { MovementSaved } from '@app/movement/application/movement.constants';
 import { WebhookTransactionInputDto } from '../dto/webhook-transaction-input.dto';
 import { ReceiveWebhookTransactionUsecase } from './receive-webhook-transaction.usecase';
 
 describe('ReceiveWebhookTransactionUsecase (AC-4 auto-categorization)', () => {
   let movementRepository: any;
-  let categoryRepository: any;
-  let subcategoryRepository: any;
   let accountRepository: any;
-  let applyCategorizationRules: any;
+  let categoryResolver: any;
+  let outboxPublisher: any;
   let usecase: ReceiveWebhookTransactionUsecase;
 
   const baseInput = {
@@ -20,46 +20,70 @@ describe('ReceiveWebhookTransactionUsecase (AC-4 auto-categorization)', () => {
   } as WebhookTransactionInputDto;
 
   beforeEach(() => {
+    const fakeManager = { id: 'manager' };
     movementRepository = {
       findByExternalReference: jest.fn().mockResolvedValue(null),
-      save: jest.fn().mockImplementation(async (m) => ({ ...m, id: 200 })),
+      runInTransaction: jest
+        .fn()
+        .mockImplementation((work) => work(fakeManager)),
+      saveWithManager: jest
+        .fn()
+        .mockImplementation(async (_manager, m) => ({ ...m, id: 200 })),
     };
-    categoryRepository = { findByName: jest.fn() };
-    subcategoryRepository = { findByNameAndCategory: jest.fn() };
     accountRepository = {
       findByIdAndUser: jest.fn().mockResolvedValue({ id: 3 }),
     };
-    applyCategorizationRules = { execute: jest.fn() };
+    categoryResolver = {
+      resolveByNames: jest.fn().mockResolvedValue({ categoryId: 55 }),
+    };
+    outboxPublisher = { publish: jest.fn().mockResolvedValue(undefined) };
     usecase = new ReceiveWebhookTransactionUsecase(
       movementRepository,
-      categoryRepository,
-      subcategoryRepository,
       accountRepository,
-      applyCategorizationRules,
+      categoryResolver,
+      outboxPublisher,
     );
   });
 
-  it('resolves the category by name when the webhook provides one', async () => {
-    categoryRepository.findByName.mockResolvedValue({ id: 10 });
+  it('resolves the category by name, passing the merchant as the categorization hint', async () => {
+    categoryResolver.resolveByNames.mockResolvedValue({ categoryId: 10 });
 
     await usecase.execute({ ...baseInput, category: 'Transport' } as any);
 
-    expect(categoryRepository.findByName).toHaveBeenCalledWith('Transport');
-    expect(applyCategorizationRules.execute).not.toHaveBeenCalled();
-    const saved = movementRepository.save.mock.calls[0][0];
-    expect(saved.categoryId).toBe(10);
-  });
-
-  it('applies categorization rules when the webhook has no category', async () => {
-    applyCategorizationRules.execute.mockResolvedValue({ categoryId: 55 });
-
-    await usecase.execute(baseInput);
-
-    expect(applyCategorizationRules.execute).toHaveBeenCalledWith(
+    expect(categoryResolver.resolveByNames).toHaveBeenCalledWith(
+      { category: 'Transport', subcategory: undefined },
       { merchant: 'UBER TRIP', description: 'UBER TRIP' },
       42,
     );
-    const saved = movementRepository.save.mock.calls[0][0];
+    const saved = movementRepository.saveWithManager.mock.calls[0][1];
+    expect(saved.categoryId).toBe(10);
+  });
+
+  it('files the movement under whatever the resolver decides when no category arrives', async () => {
+    await usecase.execute(baseInput);
+
+    const saved = movementRepository.saveWithManager.mock.calls[0][1];
     expect(saved.categoryId).toBe(55);
+  });
+
+  it('records the movement as ingested, in the currency the provider sent', async () => {
+    await usecase.execute(baseInput);
+
+    const saved = movementRepository.saveWithManager.mock.calls[0][1];
+    expect(saved.isIngested()).toBe(true);
+    expect(saved.money.amount).toBe(50);
+    expect(saved.money.currency).toBe('USD');
+  });
+
+  it('emits a movement.saved outbox event carrying the correlationId when the trace crosses the webhook boundary (AC-4)', async () => {
+    await usecase.execute(baseInput, 'corr-test');
+
+    expect(outboxPublisher.publish).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        eventType: MovementSaved,
+        payload: expect.objectContaining({ correlationId: 'corr-test' }),
+      }),
+    );
   });
 });

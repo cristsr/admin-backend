@@ -1,5 +1,5 @@
 import { IsEnum, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import { PaymentMethod } from '../../domain/movement';
+import { PaymentMethod } from '@app/movement/domain/movement';
 
 /**
  * Partial edit of a movement (AC-4). All fields are optional. Excludes `type`

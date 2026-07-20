@@ -6,7 +6,7 @@ import {
   OutboxEvent,
   OutboxRepository,
   OutboxStatus,
-} from '../../../../domain/outbox-event';
+} from '@app/outbox/domain/outbox-event';
 import { TypeOrmOutboxEventEntity } from './typeorm-outbox-event.entity';
 
 @Injectable()

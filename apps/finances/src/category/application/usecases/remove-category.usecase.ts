@@ -3,7 +3,7 @@ import {
   CategoryIsSystemException,
   CategoryNotFoundException,
   CategoryRepository,
-} from '../../domain/category';
+} from '@app/category/domain/category';
 
 @Injectable()
 export class RemoveCategoryUsecase {

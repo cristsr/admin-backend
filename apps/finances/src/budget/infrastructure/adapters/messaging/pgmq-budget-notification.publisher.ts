@@ -1,11 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
-import { ENV } from '../../../../env';
-import {
-  BudgetNotificationPublisher,
-  BudgetThresholdExceededPayload,
-} from '../../../domain/budget';
+import { BudgetNotificationPublisher, BudgetThresholdExceededPayload } from '@app/budget/domain/budget';
+import { ENV } from '@app/env';
 
 /**
  * Publishes the alert on a PGMQ (Postgres Message Queue) queue over the same

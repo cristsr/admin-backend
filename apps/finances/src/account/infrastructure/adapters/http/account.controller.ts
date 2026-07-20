@@ -1,9 +1,24 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, CurrentUser } from '@shared';
-import { AccountArchivedOutputDto, AccountBalanceOutputDto, AccountInputDto, AccountOutputDto, UserAccountFilterDto } from '../../../application/dto';
-import { AccountMapper } from '../../../application/mappers';
-import { FindAccountUsecase, FindAllAccountsUsecase, GetAccountBalanceUsecase, RemoveAccountUsecase, SaveAccountUsecase } from '../../../application/usecases';
+import {
+  AccountArchivedOutputDto,
+  AccountBalanceOutputDto,
+  AccountInputDto,
+  AccountOutputDto,
+  UserAccountFilterDto,
+} from '@app/account/application/dto';
+import { AccountMapper } from '@app/account/application/mappers';
+import {
+  FindAccountUsecase,
+  FindAllAccountsUsecase,
+  GetAccountBalanceUsecase,
+  RemoveAccountUsecase,
+  SaveAccountUsecase,
+} from '@app/account/application/usecases';
 
+@ApiTags('accounts')
+@ApiBearerAuth()
 @Controller('accounts')
 export class AccountController {
   constructor(

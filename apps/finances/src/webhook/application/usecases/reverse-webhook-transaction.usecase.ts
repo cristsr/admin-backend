@@ -1,11 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import {
-  Movement,
   MovementNotFoundException,
   MovementRepository,
-  MovementSource,
-  MovementType,
-} from '../../../movement/domain/movement';
+} from '@app/movement/domain/movement';
 import { MovementReversalOutputDto } from '../dto';
 
 /**
@@ -39,26 +36,9 @@ export class ReverseWebhookTransactionUsecase {
       };
     }
 
-    const flip = (type: MovementType) =>
-      type === MovementType.EXPENSE
-        ? MovementType.INCOME
-        : MovementType.EXPENSE;
-
-    const compensation = Movement.create({
-      date: new Date(),
-      type: flip(original.type),
-      description: `Reversal of ${externalReference}`,
-      amount: original.amount,
-      currency: original.currency,
-      categoryId: original.categoryId,
-      subcategoryId: original.subcategoryId,
-      accountId: original.accountId,
-      user: original.user,
-      source: MovementSource.WEBHOOK,
-      externalReference: reversalReference,
-    } as Movement);
-
-    const saved = await this.movementRepository.save(compensation);
+    const saved = await this.movementRepository.save(
+      original.reversal(reversalReference),
+    );
 
     return {
       externalReference,

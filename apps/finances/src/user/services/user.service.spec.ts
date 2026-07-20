@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { firstValueFrom } from 'rxjs';
-import { UserRepository } from 'app/user/repositories';
+import { UserRepository } from '../repositories/user.repository';
 import { UserService } from './user.service';
 
 describe('UserService', () => {

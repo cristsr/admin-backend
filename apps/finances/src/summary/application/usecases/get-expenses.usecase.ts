@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Expense, SummaryRepository } from '../../domain/summary';
+import { Expense, SummaryRepository } from '@app/summary/domain/summary';
 import { ExpenseFilterDto } from '../dto/expense-filter.dto';
 
 @Injectable()

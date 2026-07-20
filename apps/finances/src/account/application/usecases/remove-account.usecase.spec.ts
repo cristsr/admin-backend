@@ -1,4 +1,4 @@
-import { AccountNotFoundException } from '../../domain/account';
+import { AccountNotFoundException } from '@app/account/domain/account';
 import { RemoveAccountUsecase } from './remove-account.usecase';
 
 describe('RemoveAccountUsecase — cascade archive (AC-5)', () => {

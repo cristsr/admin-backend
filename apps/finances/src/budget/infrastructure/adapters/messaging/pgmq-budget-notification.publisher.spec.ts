@@ -1,4 +1,4 @@
-import { BudgetThreshold } from '../../../application/budget.constants';
+import { BudgetThreshold } from '@app/budget/application/budget.constants';
 import { PgmqBudgetNotificationPublisher } from './pgmq-budget-notification.publisher';
 
 const payload = {

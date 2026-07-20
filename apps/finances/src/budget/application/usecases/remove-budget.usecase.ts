@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { BudgetRepository } from '../../domain/budget';
+import { BudgetRepository } from '@app/budget/domain/budget';
 
 @Injectable()
 export class RemoveBudgetUsecase {

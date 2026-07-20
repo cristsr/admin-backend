@@ -7,7 +7,7 @@ import {
   PrimaryGeneratedColumn,
   Unique,
 } from 'typeorm';
-import { IdempotencyStatus } from '../../../../domain/idempotency-key';
+import { IdempotencyStatus } from '@app/idempotency/domain/idempotency-key';
 
 /**
  * Persistence shape of an idempotency record (AC-3, sm-0003). Unique per

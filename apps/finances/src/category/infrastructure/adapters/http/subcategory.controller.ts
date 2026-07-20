@@ -1,18 +1,21 @@
 import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import {
   SubcategoriesInputDto,
   SubcategoryInputDto,
   SubcategoryOutputDto,
-} from '../../../application/dto';
-import { SubcategoryMapper } from '../../../application/mappers';
+} from '@app/category/application/dto';
+import { SubcategoryMapper } from '@app/category/application/mappers';
 import {
   FindSubcategoriesByCategoryUsecase,
   FindSubcategoryUsecase,
   RemoveSubcategoryUsecase,
   SaveManySubcategoriesUsecase,
   SaveSubcategoryUsecase,
-} from '../../../application/usecases';
+} from '@app/category/application/usecases';
 
+@ApiTags('subcategories')
+@ApiBearerAuth()
 @Controller('subcategories')
 export class SubcategoryController {
   constructor(

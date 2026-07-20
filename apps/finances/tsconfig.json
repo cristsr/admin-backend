@@ -13,8 +13,8 @@
   "compilerOptions": {
     "paths": {
       "@shared": ["libs/shared/src/index.ts"],
-      "@core": ["libs/core/src/index.ts"],
-      "app/*": ["apps/finances/src/*"],
-    }
+      "@app/*": ["apps/finances/src/*"]
+    },
+    "ignoreDeprecations": "6.0"
   }
 }

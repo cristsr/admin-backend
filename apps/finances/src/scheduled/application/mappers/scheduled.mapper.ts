@@ -1,4 +1,4 @@
-import { Scheduled } from '../../domain/scheduled';
+import { Scheduled } from '@app/scheduled/domain/scheduled';
 import { ScheduledOutputDto } from '../dto/scheduled-output.dto';
 
 export class ScheduledMapper {
@@ -10,8 +10,8 @@ export class ScheduledMapper {
       date: scheduled.date,
       type: scheduled.type,
       description: scheduled.description,
-      amount: scheduled.amount,
-      currency: scheduled.currency,
+      amount: scheduled.money.amount,
+      currency: scheduled.money.currency,
       categoryId: scheduled.categoryId,
       subcategoryId: scheduled.subcategoryId,
       accountId: scheduled.accountId,

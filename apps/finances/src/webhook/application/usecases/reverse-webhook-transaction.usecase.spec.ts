@@ -1,23 +1,27 @@
 import {
+  Movement,
   MovementNotFoundException,
+  MovementSource,
   MovementType,
-} from '../../../movement/domain/movement';
+} from '@app/movement/domain/movement';
+import { Money } from '@app/shared/domain';
 import { ReverseWebhookTransactionUsecase } from './reverse-webhook-transaction.usecase';
 
 describe('ReverseWebhookTransactionUsecase (AC-6)', () => {
   let movementRepository: any;
   let usecase: ReverseWebhookTransactionUsecase;
 
-  const original = {
+  const original = Movement.create({
     id: 5,
     type: MovementType.EXPENSE,
-    amount: 30,
-    currency: 'COP',
+    source: MovementSource.WEBHOOK,
+    money: Money.of(30, 'COP'),
     categoryId: 3,
     accountId: 2,
     user: 7,
+    merchant: 'UBER TRIP',
     externalReference: 'ext-1',
-  };
+  } as Movement);
 
   beforeEach(() => {
     movementRepository = {
@@ -49,6 +53,20 @@ describe('ReverseWebhookTransactionUsecase (AC-6)', () => {
     const compensation = movementRepository.save.mock.calls[0][0];
     expect(compensation.type).toBe(MovementType.INCOME);
     expect(compensation.externalReference).toBe('reversal:ext-1');
+  });
+
+  it('compensates the exact amount, on the same account and category', async () => {
+    movementRepository.findByExternalReference
+      .mockResolvedValueOnce(original)
+      .mockResolvedValueOnce(null);
+
+    await usecase.execute('ext-1');
+
+    const compensation = movementRepository.save.mock.calls[0][0];
+    expect(compensation.money.amount).toBe(30);
+    expect(compensation.money.currency).toBe('COP');
+    expect(compensation.accountId).toBe(2);
+    expect(compensation.categoryId).toBe(3);
   });
 
   it('is idempotent: a second call returns the existing reversal without duplicating', async () => {

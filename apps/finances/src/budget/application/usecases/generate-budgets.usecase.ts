@@ -1,83 +1,66 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { DateTime } from 'luxon';
-import { Budget, BudgetRepository, Period } from '../../domain/budget';
+import { Budget, BudgetRepository } from '@app/budget/domain/budget';
+import { correlationId, withSpan } from '@app/config/telemetry/correlation';
 
+/**
+ * AC-4 (sm-0004): logs a structured counters line per run, keyed by a per-run
+ * correlation id, so the cron's work is measurable from the logs alone. There
+ * is no `/metrics` endpoint in this story.
+ */
 @Injectable()
 export class GenerateBudgetsUsecase {
-  #logger = new Logger(GenerateBudgetsUsecase.name);
+  private readonly logger: Logger;
 
-  constructor(private readonly budgetRepository: BudgetRepository) {}
-
-  async execute(): Promise<void> {
-    this.#logger.log('Generating budgets');
-
-    const utc = DateTime.utc();
-    const budgets = await this.budgetRepository.findDueForRegeneration(
-      utc.toJSDate(),
-    );
-
-    for (const budget of budgets) {
-      const { startDate, endDate } = this.nextPeriodDates(budget, utc);
-
-      const next = Budget.create({
-        name: budget.name,
-        amount: budget.amount,
-        currency: budget.currency,
-        categoryId: budget.categoryId,
-        accountId: budget.accountId,
-        repeat: budget.repeat,
-        period: budget.period,
-        user: budget.user,
-        startDate,
-        endDate,
-      } as Budget);
-
-      await this.budgetRepository.save(next).catch((error) => {
-        this.#logger.error(`Error creating budget ${error.message}`);
-      });
-
-      await this.budgetRepository.deactivate(budget.id);
-    }
-
-    this.#logger.log('Budgets generated');
+  constructor(
+    private readonly budgetRepository: BudgetRepository,
+    @Optional() logger?: Logger,
+  ) {
+    this.logger = logger ?? new Logger(GenerateBudgetsUsecase.name);
   }
 
-  private nextPeriodDates(
-    budget: Budget,
-    utc: DateTime,
-  ): { startDate: Date; endDate: Date } {
-    switch (budget.period) {
-      case Period.DAILY:
-        return {
-          startDate: utc.startOf('day').toJSDate(),
-          endDate: utc.endOf('day').toJSDate(),
-        };
+  async execute(): Promise<void> {
+    // The run gets its own span, so the id below is the trace id every log line
+    // and every downstream call in this run already shares.
+    return withSpan('budgets.generate', async () => {
+      const runId = correlationId();
+      this.logger.log(`budgetsCronStart correlationId=${runId}`);
 
-      case Period.WEEKLY:
-      case Period.CUSTOM: {
-        const startDate = DateTime.fromJSDate(budget.startDate);
-        const endDate = DateTime.fromJSDate(budget.endDate);
+      const utc = DateTime.utc();
+      const budgets = await this.budgetRepository.findDueForRegeneration(
+        utc.toJSDate(),
+      );
 
-        return {
-          startDate: utc.startOf('day').toJSDate(),
-          endDate: utc
-            .plus({ days: startDate.diff(endDate).days })
-            .endOf('day')
-            .toJSDate(),
-        };
+      let generated = 0;
+      for (const budget of budgets) {
+        const isRenewed = await this.renew(budget, utc);
+        if (isRenewed) generated += 1;
       }
 
-      case Period.MONTHLY:
-        return {
-          startDate: utc.startOf('month').toJSDate(),
-          endDate: utc.endOf('month').toJSDate(),
-        };
+      this.logger.log(
+        `budgetsCronDone budgetsGenerated=${generated} correlationId=${runId}`,
+      );
+    });
+  }
 
-      case Period.YEARLY:
-        return {
-          startDate: utc.startOf('year').toJSDate(),
-          endDate: utc.endOf('year').toJSDate(),
-        };
+  /**
+   * The expired budget is only deactivated once its successor exists: failing
+   * in between would leave the user with no budget at all, so a failed save
+   * leaves the current one running and the next run retries it.
+   */
+  private async renew(budget: Budget, now: DateTime): Promise<boolean> {
+    try {
+      await this.budgetRepository.save(budget.renew(now));
+    } catch (error) {
+      this.logger.error(
+        `Error creating budget ${budget.id}: ${error.message}`,
+        error.stack,
+      );
+      return false;
     }
+
+    await this.budgetRepository.deactivate(budget.id);
+
+    return true;
   }
 }

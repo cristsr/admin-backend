@@ -1,5 +1,5 @@
 import { IsEnum, IsIn, IsNotEmpty, IsOptional } from 'class-validator';
-import { MovementType, PaymentMethod } from '../../../movement/domain/movement';
+import { MovementType, PaymentMethod } from '@app/movement/domain/movement';
 
 /**
  * Generic, provider-agnostic contract for an externally reconciled

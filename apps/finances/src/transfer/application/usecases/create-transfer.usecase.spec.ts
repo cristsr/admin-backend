@@ -1,10 +1,22 @@
-import { ExchangeRateUnavailableException } from '../../../exchange/domain';
-import { MovementType } from '../../../movement/domain/movement';
+import { Account, InsufficientBalanceException } from '@app/account/domain/account';
+import { ExchangeRateUnavailableException } from '@app/exchange/domain';
+import { MovementType } from '@app/movement/domain/movement';
+import { Money } from '@app/shared/domain';
 import {
-  InsufficientBalanceException,
   SameAccountTransferException,
-} from '../../domain';
+  TransferFactory,
+} from '@app/transfer/domain';
 import { CreateTransferUsecase } from './create-transfer.usecase';
+
+const buildAccount = (overrides: Partial<Account> = {}) =>
+  Account.create({
+    id: 1,
+    name: 'Account',
+    initialBalance: Money.zero('COP'),
+    allowNegativeBalance: false,
+    user: 7,
+    ...overrides,
+  } as Account);
 
 describe('CreateTransferUsecase (AC-2 cross-currency)', () => {
   let accountRepository: any;
@@ -12,20 +24,16 @@ describe('CreateTransferUsecase (AC-2 cross-currency)', () => {
   let exchangeRateProvider: any;
   let usecase: CreateTransferUsecase;
 
-  const cop = {
+  const cop = buildAccount({
     id: 1,
     name: 'COP acc',
-    currency: 'COP',
-    initialBalance: 1_000_000,
-    allowNegativeBalance: false,
-  };
-  const usd = {
+    initialBalance: Money.of(1_000_000, 'COP'),
+  });
+  const usd = buildAccount({
     id: 2,
     name: 'USD acc',
-    currency: 'USD',
-    initialBalance: 0,
-    allowNegativeBalance: false,
-  };
+    initialBalance: Money.zero('USD'),
+  });
 
   beforeEach(() => {
     accountRepository = {
@@ -39,11 +47,13 @@ describe('CreateTransferUsecase (AC-2 cross-currency)', () => {
     usecase = new CreateTransferUsecase(
       accountRepository,
       movementRepository,
-      exchangeRateProvider,
+      new TransferFactory(exchangeRateProvider),
     );
   });
 
   it('rejects transferring to the same account', async () => {
+    accountRepository.findByIdAndUser.mockResolvedValue(cop);
+
     await expect(
       usecase.execute(
         { from: 1, to: 1, amount: 100, currency: 'COP', date: new Date() } as any,
@@ -55,7 +65,9 @@ describe('CreateTransferUsecase (AC-2 cross-currency)', () => {
   it('same currency: rate=1 and toAmount=amount, without calling the provider', async () => {
     accountRepository.findByIdAndUser
       .mockResolvedValueOnce(cop)
-      .mockResolvedValueOnce({ id: 3, name: 'COP2', currency: 'COP' });
+      .mockResolvedValueOnce(
+        buildAccount({ id: 3, name: 'COP2', initialBalance: Money.zero('COP') }),
+      );
 
     const result = await usecase.execute(
       { from: 1, to: 3, amount: 5000, currency: 'COP', date: new Date() } as any,
@@ -84,8 +96,8 @@ describe('CreateTransferUsecase (AC-2 cross-currency)', () => {
     // destination leg is saved in the converted currency and amount
     const legs = movementRepository.saveAll.mock.calls[0][0];
     const incoming = legs.find((l: any) => l.type === MovementType.TRANSFER_IN);
-    expect(incoming.currency).toBe('USD');
-    expect(incoming.amount).toBeCloseTo(25);
+    expect(incoming.money.currency).toBe('USD');
+    expect(incoming.money.amount).toBeCloseTo(25);
   });
 
   it('propagates 422 when no historical rate is available', async () => {
@@ -108,18 +120,11 @@ describe('CreateTransferUsecase (AC-2 cross-currency)', () => {
 describe('CreateTransferUsecase (AC-1 balance validation)', () => {
   let accountRepository: any;
   let movementRepository: any;
-  let exchangeRateProvider: any;
   let usecase: CreateTransferUsecase;
 
-  const source = (over: any = {}) => ({
-    id: 1,
-    name: 'Source',
-    currency: 'COP',
-    initialBalance: 100,
-    allowNegativeBalance: false,
-    ...over,
-  });
-  const dest = { id: 2, name: 'Dest', currency: 'COP', initialBalance: 0 };
+  const source = (overrides: Partial<Account> = {}) =>
+    buildAccount({ id: 1, name: 'Source', ...overrides });
+  const dest = buildAccount({ id: 2, name: 'Dest' });
 
   beforeEach(() => {
     accountRepository = {
@@ -129,17 +134,21 @@ describe('CreateTransferUsecase (AC-1 balance validation)', () => {
     movementRepository = {
       saveAll: jest.fn().mockResolvedValue([{ id: 10 }, { id: 11 }]),
     };
-    exchangeRateProvider = { getRate: jest.fn() };
     usecase = new CreateTransferUsecase(
       accountRepository,
       movementRepository,
-      exchangeRateProvider,
+      new TransferFactory({ getRate: jest.fn() } as any),
     );
   });
 
   it('rejects when the source has insufficient balance and disallows negative', async () => {
     accountRepository.findByIdAndUser
-      .mockResolvedValueOnce(source({ initialBalance: 100, allowNegativeBalance: false }))
+      .mockResolvedValueOnce(
+        source({
+          initialBalance: Money.of(100, 'COP'),
+          allowNegativeBalance: false,
+        }),
+      )
       .mockResolvedValueOnce(dest);
     accountRepository.movementBalance.mockResolvedValue(0); // live balance = 100
 
@@ -154,9 +163,13 @@ describe('CreateTransferUsecase (AC-1 balance validation)', () => {
 
   it('allows the transfer when the source account permits negative balance', async () => {
     accountRepository.findByIdAndUser
-      .mockResolvedValueOnce(source({ initialBalance: 0, allowNegativeBalance: true }))
+      .mockResolvedValueOnce(
+        source({
+          initialBalance: Money.zero('COP'),
+          allowNegativeBalance: true,
+        }),
+      )
       .mockResolvedValueOnce(dest);
-    accountRepository.movementBalance.mockResolvedValue(0);
 
     await usecase.execute(
       { from: 1, to: 2, amount: 150, currency: 'COP', date: new Date() } as any,
@@ -166,9 +179,27 @@ describe('CreateTransferUsecase (AC-1 balance validation)', () => {
     expect(movementRepository.saveAll).toHaveBeenCalled();
   });
 
+  it('does not even look up the balance when the account may go negative', async () => {
+    accountRepository.findByIdAndUser
+      .mockResolvedValueOnce(source({ allowNegativeBalance: true }))
+      .mockResolvedValueOnce(dest);
+
+    await usecase.execute(
+      { from: 1, to: 2, amount: 150, currency: 'COP', date: new Date() } as any,
+      7,
+    );
+
+    expect(accountRepository.movementBalance).not.toHaveBeenCalled();
+  });
+
   it('allows the transfer when the live balance covers the amount', async () => {
     accountRepository.findByIdAndUser
-      .mockResolvedValueOnce(source({ initialBalance: 500, allowNegativeBalance: false }))
+      .mockResolvedValueOnce(
+        source({
+          initialBalance: Money.of(500, 'COP'),
+          allowNegativeBalance: false,
+        }),
+      )
       .mockResolvedValueOnce(dest);
     accountRepository.movementBalance.mockResolvedValue(0);
 

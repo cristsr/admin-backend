@@ -1,4 +1,4 @@
-import { Category } from '../../../../../domain/category';
+import { Category } from '@app/category/domain/category';
 import { TypeOrmSubcategoryMapper } from '../subcategory/typeorm-subcategory.mapper';
 import { TypeOrmCategoryEntity } from './typeorm-category.entity';
 

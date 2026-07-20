@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { GenerateScheduledMovementsUsecase } from '../../../application/usecases';
-import { GenerateScheduledMovements } from '../../../application/scheduled.constants';
+import { GenerateScheduledMovements } from '@app/scheduled/application/scheduled.constants';
+import { GenerateScheduledMovementsUsecase } from '@app/scheduled/application/usecases';
 
 @Injectable()
 export class GenerateScheduledMovementsEventHandler {

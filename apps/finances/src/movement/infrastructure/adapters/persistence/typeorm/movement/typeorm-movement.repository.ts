@@ -7,7 +7,8 @@ import {
   MovementQuery,
   MovementRepository,
   MovementSumQuery,
-} from '../../../../../domain/movement';
+} from '@app/movement/domain/movement';
+import { Money } from '@app/shared/domain';
 import { TypeOrmMovementEntity } from './typeorm-movement.entity';
 import { TypeOrmMovementMapper } from './typeorm-movement.mapper';
 
@@ -129,13 +130,14 @@ export class TypeOrmMovementRepository implements MovementRepository {
     return !!result.affected;
   }
 
-  async sumAmount(query: MovementSumQuery): Promise<number> {
+  async sumAmount(query: MovementSumQuery): Promise<Money> {
     const builder = this.repository
       .createQueryBuilder('m')
       .select('COALESCE(SUM(m.amount), 0)', 'total')
       .where('m.user_id = :user', { user: query.user })
       .andWhere('m.category_id = :category', { category: query.category })
       .andWhere('m.type = :type', { type: query.type })
+      .andWhere('m.currency = :currency', { currency: query.currency })
       .andWhere('m.date BETWEEN :startDate AND :endDate', {
         startDate: query.startDate,
         endDate: query.endDate,
@@ -148,6 +150,6 @@ export class TypeOrmMovementRepository implements MovementRepository {
 
     const result = await builder.getRawOne<{ total: string }>();
 
-    return Number(result.total);
+    return Money.of(Number(result.total), query.currency);
   }
 }

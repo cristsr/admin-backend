@@ -5,6 +5,15 @@
     "sourceMap": true,
     "declaration": false,
     "moduleResolution": "node",
+    // TypeScript 6 turns `strict` on by default. This codebase has never been
+    // strict — DTOs and entities declare properties without initializers on
+    // purpose — so the previous behaviour is stated explicitly here rather than
+    // inherited. Turning it on is worth doing, but as its own change.
+    "strict": false,
+    // `baseUrl` and the node10 resolver are deprecated in 6 and removed in 7.
+    // Silenced for now so the upgrade lands; migrating the path setup is a
+    // separate change.
+    "ignoreDeprecations": "6.0",
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "importHelpers": true,
@@ -15,8 +24,12 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@shared": ["libs/shared/src/index.ts"]
-    }
+      "@shared": ["libs/shared/src/index.ts"],
+      "@app/*": ["apps/finances/src/*"]
+    },
+    "noUncheckedSideEffectImports": false,
+    "types": ["*"],
+    "esModuleInterop": false
   },
   "exclude": ["node_modules", "tmp"]
 }

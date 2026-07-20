@@ -36,4 +36,15 @@ export class CategorizationRule {
   update(payload: Partial<PropertiesOnly<CategorizationRule>>): void {
     Object.assign(this, payload);
   }
+
+  /**
+   * Whether this rule claims a movement. The pattern is looked for in the
+   * merchant and the description together, case-insensitively, so a rule for
+   * "uber" catches both "UBER TRIP" and a note reading "Uber to the airport".
+   */
+  matches(merchant?: string, description?: string): boolean {
+    const haystack = `${merchant ?? ''} ${description ?? ''}`.toLowerCase();
+
+    return haystack.includes(this.pattern.toLowerCase());
+  }
 }

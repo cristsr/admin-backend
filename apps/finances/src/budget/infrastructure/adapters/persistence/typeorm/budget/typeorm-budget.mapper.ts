@@ -1,4 +1,5 @@
-import { Budget } from '../../../../../domain/budget';
+import { Budget } from '@app/budget/domain/budget';
+import { Money } from '@app/shared/domain';
 import { TypeOrmBudgetEntity } from './typeorm-budget.entity';
 
 export class TypeOrmBudgetMapper {
@@ -10,8 +11,7 @@ export class TypeOrmBudgetMapper {
       updatedAt: entity.updatedAt,
       deletedAt: entity.deletedAt,
       name: entity.name,
-      amount: entity.amount,
-      currency: entity.currency,
+      money: Money.of(entity.amount, entity.currency),
       startDate: entity.startDate,
       endDate: entity.endDate,
       repeat: entity.repeat,
@@ -27,8 +27,8 @@ export class TypeOrmBudgetMapper {
     return {
       id: budget.id,
       name: budget.name,
-      amount: budget.amount,
-      currency: budget.currency,
+      amount: budget.money.amount,
+      currency: budget.money.currency,
       startDate: budget.startDate,
       endDate: budget.endDate,
       repeat: budget.repeat,

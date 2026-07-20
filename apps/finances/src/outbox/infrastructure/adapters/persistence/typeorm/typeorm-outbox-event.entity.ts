@@ -6,7 +6,7 @@ import {
   Index,
   PrimaryGeneratedColumn,
 } from 'typeorm';
-import { OutboxStatus } from '../../../../domain/outbox-event';
+import { OutboxStatus } from '@app/outbox/domain/outbox-event';
 
 /**
  * Persistence shape of an outbox event. `status` is a varchar (enum-like lives

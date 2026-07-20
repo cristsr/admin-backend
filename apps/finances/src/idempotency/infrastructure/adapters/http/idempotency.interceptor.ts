@@ -10,7 +10,7 @@ import {
   IdempotencyInProgressException,
   IdempotencyRepository,
   IdempotencyStatus,
-} from '../../../domain/idempotency-key';
+} from '@app/idempotency/domain/idempotency-key';
 import { hashRequestBody } from './idempotency-hash';
 
 const IDEMPOTENCY_HEADER = 'idempotency-key';

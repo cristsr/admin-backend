@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Nullable } from '@shared';
-import { Category, CategoryRepository } from '../../domain/category';
+import { Category, CategoryRepository } from '@app/category/domain/category';
 
 @Injectable()
 export class FindCategoryUsecase {

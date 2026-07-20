@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ObjectLiteral } from '@shared';
 import { EntityManager } from 'typeorm';
-import { OutboxRepository } from '../../domain/outbox-event';
+import { OutboxRepository } from '@app/outbox/domain/outbox-event';
 
 /**
  * Single entry point through which use cases record a domain event in the

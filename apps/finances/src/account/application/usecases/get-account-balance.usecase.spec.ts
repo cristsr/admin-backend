@@ -1,8 +1,12 @@
-import { AccountNotFoundException } from '../../domain/account';
+import { Account, AccountNotFoundException } from '@app/account/domain/account';
+import { Money } from '@app/shared/domain';
 import { GetAccountBalanceUsecase } from './get-account-balance.usecase';
 
 describe('GetAccountBalanceUsecase (AC-3)', () => {
-  const account = { id: 1, initialBalance: 100, currency: 'COP' };
+  const account = Account.create({
+    id: 1,
+    initialBalance: Money.of(100, 'COP'),
+  } as Account);
   let accountRepository: any;
   let usecase: GetAccountBalanceUsecase;
 

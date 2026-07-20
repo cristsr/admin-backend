@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
-import { AppService } from 'app/exchange/services';
 import {
   ExchangeRateProvider,
   ExchangeRateUnavailableException,
 } from '../domain';
+import { AppService } from '../services/app.service';
 
 /**
  * Resolves conversion rates against the in-process exchange service, replacing

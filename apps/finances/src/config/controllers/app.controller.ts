@@ -1,12 +1,9 @@
-import { Controller, Get, Logger } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 
+/**
+ * Root controller kept for module wiring only. Health endpoints live in the
+ * `HealthController` (AC-2, sm-0004); the old `GET /health` was removed because
+ * it unintentionally sat behind the global JWT guard.
+ */
 @Controller()
-export class AppController {
-  private readonly logger = new Logger(AppController.name);
-
-  @Get('health')
-  health() {
-    this.logger.log('Health check success');
-    return { status: 'ok' };
-  }
-}
+export class AppController {}

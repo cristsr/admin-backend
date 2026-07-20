@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { SubcategoryRepository } from '../../domain/subcategory';
+import { SubcategoryRepository } from '@app/category/domain/subcategory';
 
 @Injectable()
 export class RemoveSubcategoryUsecase {

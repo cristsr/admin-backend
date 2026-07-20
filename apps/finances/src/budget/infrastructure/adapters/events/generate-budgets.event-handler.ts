@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { GenerateBudgetsUsecase } from '../../../application/usecases';
-import { GenerateBudgets } from '../../../application/budget.constants';
+import { GenerateBudgets } from '@app/budget/application/budget.constants';
+import { GenerateBudgetsUsecase } from '@app/budget/application/usecases';
 
 @Injectable()
 export class GenerateBudgetsEventHandler {

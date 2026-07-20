@@ -1,4 +1,4 @@
-import { CategorizationRule } from '../../../../domain/categorization-rule';
+import { CategorizationRule } from '@app/categorization-rule/domain/categorization-rule';
 import { TypeOrmCategorizationRuleEntity } from './typeorm-categorization-rule.entity';
 
 export class TypeOrmCategorizationRuleMapper {

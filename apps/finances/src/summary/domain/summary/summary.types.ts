@@ -1,4 +1,4 @@
-import { MovementCategorySummary } from '../../../movement/domain/movement';
+import { MovementCategorySummary } from '@app/movement/domain/movement';
 
 export interface Balance {
   balance: number;

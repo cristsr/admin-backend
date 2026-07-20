@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { AccountRepository } from '../../domain/account';
-import { AccountMapper } from '../mappers';
+import { AccountRepository } from '@app/account/domain/account';
 import { AccountOutputDto } from '../dto';
+import { AccountMapper } from '../mappers';
 
 @Injectable()
 export class FindAllAccountsUsecase {
@@ -13,9 +13,8 @@ export class FindAllAccountsUsecase {
       this.accountRepository.movementBalancesByUser(user),
     ]);
 
-    return accounts.map((account) => ({
-      ...AccountMapper.toOutput(account),
-      balance: account.initialBalance + (balances[account.id] ?? 0),
-    }));
+    return accounts.map((account) =>
+      AccountMapper.toOutputWithBalance(account, balances[account.id] ?? 0),
+    );
   }
 }

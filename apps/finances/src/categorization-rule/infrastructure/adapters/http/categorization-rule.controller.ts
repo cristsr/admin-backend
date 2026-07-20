@@ -8,20 +8,23 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, CurrentUser } from '@shared';
 import {
   CategorizationRuleInputDto,
   CategorizationRuleOutputDto,
   CategorizationRuleUpdateInputDto,
-} from '../../../application/dto';
-import { CategorizationRuleMapper } from '../../../application/mappers';
+} from '@app/categorization-rule/application/dto';
+import { CategorizationRuleMapper } from '@app/categorization-rule/application/mappers';
 import {
   CreateCategorizationRuleUsecase,
   FindAllCategorizationRulesUsecase,
   RemoveCategorizationRuleUsecase,
   UpdateCategorizationRuleUsecase,
-} from '../../../application/usecases';
+} from '@app/categorization-rule/application/usecases';
 
+@ApiTags('categorization-rules')
+@ApiBearerAuth()
 @Controller('categorization-rules')
 export class CategorizationRuleController {
   constructor(

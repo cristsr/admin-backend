@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Nullable } from '@shared';
-import { Balance, SummaryRepository } from '../../domain/summary';
+import { Balance, SummaryRepository } from '@app/summary/domain/summary';
 import { BalanceFilterDto } from '../dto/balance-filter.dto';
 
 @Injectable()

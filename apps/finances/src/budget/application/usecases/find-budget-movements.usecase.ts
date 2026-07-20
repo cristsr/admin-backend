@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { Movement, MovementRepository, MovementType } from '../../../movement/domain/movement';
-import { BudgetRepository } from '../../domain/budget';
+import { BudgetRepository } from '@app/budget/domain/budget';
+import {
+  Movement,
+  MovementRepository,
+  MovementType,
+} from '@app/movement/domain/movement';
 
 @Injectable()
 export class FindBudgetMovementsUsecase {

@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { Account, AccountNotFoundException, AccountRepository } from '../../domain/account';
+import {
+  Account,
+  AccountNotFoundException,
+  AccountRepository,
+} from '@app/account/domain/account';
+import { Money } from '@app/shared/domain';
 import { AccountInputDto } from '../dto/account-input.dto';
 
 @Injectable()
@@ -18,8 +23,8 @@ export class SaveAccountUsecase {
     const account = Account.create({
       ...existing,
       name: input.name,
-      initialBalance: input.initialBalance,
-      currency: input.currency,
+      // An account created without a declared opening balance starts at zero.
+      initialBalance: Money.of(input.initialBalance ?? 0, input.currency),
       allowNegativeBalance:
         input.allowNegativeBalance ?? existing?.allowNegativeBalance ?? false,
       user,

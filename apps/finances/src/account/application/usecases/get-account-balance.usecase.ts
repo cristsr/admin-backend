@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   AccountNotFoundException,
   AccountRepository,
-} from '../../domain/account';
+} from '@app/account/domain/account';
 import { AccountBalanceOutputDto } from '../dto';
 
 @Injectable()
@@ -20,10 +20,12 @@ export class GetAccountBalanceUsecase {
       user,
     );
 
+    const balance = account.liveBalance(movementBalance);
+
     return {
       accountId: account.id,
-      balance: account.initialBalance + movementBalance,
-      currency: account.currency,
+      balance: balance.amount,
+      currency: balance.currency,
     };
   }
 }

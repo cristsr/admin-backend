@@ -1,5 +1,5 @@
 import { IsEnum, IsNotEmpty, IsOptional, Min } from 'class-validator';
-import { Period } from '../../domain/budget';
+import { Period } from '@app/budget/domain/budget';
 
 export class BudgetInputDto {
   @IsOptional()

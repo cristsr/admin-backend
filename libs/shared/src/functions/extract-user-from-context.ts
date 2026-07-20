@@ -1,20 +1,18 @@
 import { ExecutionContext, Logger } from '@nestjs/common';
-import { GqlExecutionContext } from '@nestjs/graphql';
 
+/**
+ * The authenticated user the guard attached to the request. HTTP is the only
+ * transport this API speaks; anything else means the decorator was used
+ * somewhere it cannot work, which is worth a log rather than a silent null.
+ */
 export function extractUserFromContext<T>(ctx: ExecutionContext): T {
-  const logger = new Logger(extractUserFromContext.name);
-
   if (ctx.getType() === 'http') {
-    const request = ctx.switchToHttp().getRequest();
-    return request.user;
+    return ctx.switchToHttp().getRequest().user;
   }
 
-  if (ctx.getType<string>() === 'graphql') {
-    const request = GqlExecutionContext.create(ctx).getContext().req;
-    return request.user;
-  }
-
-  logger.error('Unable to extract user from context');
+  new Logger(extractUserFromContext.name).error(
+    `Unable to extract user from a "${ctx.getType()}" context`,
+  );
 
   return null;
 }

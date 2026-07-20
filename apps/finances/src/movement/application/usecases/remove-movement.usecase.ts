@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { MovementRepository } from '../../domain/movement';
+import { MovementRepository } from '@app/movement/domain/movement';
 
 @Injectable()
 export class RemoveMovementUsecase {

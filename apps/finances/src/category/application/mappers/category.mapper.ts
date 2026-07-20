@@ -1,4 +1,4 @@
-import { Category } from '../../domain/category';
+import { Category } from '@app/category/domain/category';
 import { CategoryOutputDto } from '../dto/category-output.dto';
 import { SubcategoryMapper } from './subcategory.mapper';
 

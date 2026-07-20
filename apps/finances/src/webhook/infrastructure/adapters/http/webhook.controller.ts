@@ -1,19 +1,24 @@
-import { Body, Controller, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Param, Post, Req, UseGuards } from '@nestjs/common';
+import { ApiSecurity, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { Public } from '@shared';
 import {
   MovementReversalOutputDto,
   WebhookTransactionInputDto,
   WebhookTransactionOutputDto,
-} from '../../../application/dto';
+} from '@app/webhook/application/dto';
 import {
   ReceiveWebhookTransactionUsecase,
   ReverseWebhookTransactionUsecase,
-} from '../../../application/usecases';
+} from '@app/webhook/application/usecases';
 import { WebhookApiKeyGuard } from './webhook-api-key.guard';
 
+@ApiTags('webhooks')
+@ApiSecurity('webhookApiKey')
 @Controller('webhooks')
 @Public()
 @UseGuards(WebhookApiKeyGuard)
+@Throttle({ webhook: { limit: 60, ttl: 60_000 } })
 export class WebhookController {
   constructor(
     private readonly receiveWebhookTransactionUsecase: ReceiveWebhookTransactionUsecase,
@@ -23,8 +28,10 @@ export class WebhookController {
   @Post('transactions')
   async receiveTransaction(
     @Body() input: WebhookTransactionInputDto,
+    @Req() req: { id?: string },
   ): Promise<WebhookTransactionOutputDto> {
-    return this.receiveWebhookTransactionUsecase.execute(input);
+    // `req.id` is the correlation id pino attaches from X-Request-Id (AC-4).
+    return this.receiveWebhookTransactionUsecase.execute(input, req.id);
   }
 
   @Post('transactions/:externalReference/reversal')

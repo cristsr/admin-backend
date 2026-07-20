@@ -1,8 +1,8 @@
 import { BaseEntity, MoneyColumn } from '@shared';
 import { Column, Entity, JoinColumn, ManyToOne, RelationId } from 'typeorm';
-import { TypeOrmAccountEntity } from '../../../../../../account/infrastructure/adapters/persistence/typeorm/account';
-import { TypeOrmCategoryEntity } from '../../../../../../category/infrastructure/adapters/persistence/typeorm/category';
-import { BudgetThreshold, Period } from '../../../../../domain/budget';
+import { TypeOrmAccountEntity } from '@app/account/infrastructure/adapters/persistence/typeorm/account';
+import { BudgetThreshold, Period } from '@app/budget/domain/budget';
+import { TypeOrmCategoryEntity } from '@app/category/infrastructure/adapters/persistence/typeorm/category';
 
 @Entity('budgets')
 export class TypeOrmBudgetEntity extends BaseEntity {

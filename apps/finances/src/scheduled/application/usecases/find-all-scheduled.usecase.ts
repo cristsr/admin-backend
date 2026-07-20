@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { normalizePagination } from '@shared';
-import { Scheduled, ScheduledRepository } from '../../domain/scheduled';
+import {
+  Scheduled,
+  ScheduledRepository,
+} from '@app/scheduled/domain/scheduled';
 import { ScheduledFilterDto } from '../dto/scheduled-filter.dto';
 
 @Injectable()

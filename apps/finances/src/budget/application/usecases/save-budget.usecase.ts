@@ -1,7 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { AccountNotFoundException, AccountRepository } from '../../../account/domain/account';
-import { CategoryNotFoundException, CategoryRepository } from '../../../category/domain/category';
-import { Budget, BudgetNotFoundException, BudgetRepository } from '../../domain/budget';
+import {
+  AccountNotFoundException,
+  AccountRepository,
+} from '@app/account/domain/account';
+import {
+  Budget,
+  BudgetNotFoundException,
+  BudgetRepository,
+} from '@app/budget/domain/budget';
+import {
+  CategoryNotFoundException,
+  CategoryRepository,
+} from '@app/category/domain/category';
+import { Money } from '@app/shared/domain';
 import { BudgetInputDto } from '../dto/budget-input.dto';
 
 @Injectable()
@@ -34,8 +45,7 @@ export class SaveBudgetUsecase {
     const budget = Budget.create({
       ...existing,
       name: input.name,
-      amount: input.amount,
-      currency: input.currency,
+      money: Money.of(input.amount, input.currency),
       period: input.period,
       repeat: input.repeat,
       startDate: input.startDate,
@@ -46,8 +56,10 @@ export class SaveBudgetUsecase {
     } as Budget);
 
     const saved = await this.budgetRepository.save(budget);
-    saved.spent = 0;
-    saved.percentage = 0;
+
+    // A budget that was just created or edited has nothing spent against it yet
+    // as far as the caller is concerned; the next read computes the real figure.
+    saved.recordSpending(Money.zero(saved.money.currency));
 
     return saved;
   }

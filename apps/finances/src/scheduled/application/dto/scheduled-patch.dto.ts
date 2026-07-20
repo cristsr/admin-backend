@@ -1,5 +1,5 @@
 import { IsEnum, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import { Frequency } from '../../domain/scheduled';
+import { Frequency } from '@app/scheduled/domain/scheduled';
 
 /**
  * Partial edit of a scheduled movement (AC-5). All fields are optional.

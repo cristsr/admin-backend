@@ -1,4 +1,3 @@
-import { User } from '@core';
 import {
   Column,
   CreateDateColumn,
@@ -7,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
+import { User } from '@app/user/dto';
 
 @Entity('users')
 export class UserEntity implements User {

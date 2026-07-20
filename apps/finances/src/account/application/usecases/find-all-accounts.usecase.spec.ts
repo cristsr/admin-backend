@@ -1,11 +1,23 @@
+import { Account } from '@app/account/domain/account';
+import { Money } from '@app/shared/domain';
 import { FindAllAccountsUsecase } from './find-all-accounts.usecase';
 
 describe('FindAllAccountsUsecase (AC-3 embedded balance)', () => {
   it('attaches the live balance to each account', async () => {
     const accountRepository = {
       findAllByUser: jest.fn().mockResolvedValue([
-        { id: 1, name: 'A', initialBalance: 100, currency: 'COP', user: 7 },
-        { id: 2, name: 'B', initialBalance: 0, currency: 'COP', user: 7 },
+        Account.create({
+          id: 1,
+          name: 'A',
+          initialBalance: Money.of(100, 'COP'),
+          user: 7,
+        } as Account),
+        Account.create({
+          id: 2,
+          name: 'B',
+          initialBalance: Money.zero('COP'),
+          user: 7,
+        } as Account),
       ]),
       movementBalancesByUser: jest.fn().mockResolvedValue({ 1: 50 }),
     } as any;

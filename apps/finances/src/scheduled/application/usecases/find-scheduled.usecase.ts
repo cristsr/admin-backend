@@ -1,6 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { Nullable } from '@shared';
-import { Scheduled, ScheduledRepository } from '../../domain/scheduled';
+import {
+  Scheduled,
+  ScheduledRepository,
+} from '@app/scheduled/domain/scheduled';
 
 @Injectable()
 export class FindScheduledUsecase {

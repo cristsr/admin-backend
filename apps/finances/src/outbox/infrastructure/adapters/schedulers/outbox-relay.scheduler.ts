@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { OutboxRepository } from '../../../domain/outbox-event';
+import { OutboxRepository } from '@app/outbox/domain/outbox-event';
 
 /**
  * Reads pending outbox rows and re-emits each domain event in-process via
@@ -29,6 +29,15 @@ export class OutboxRelayScheduler {
     );
 
     for (const event of events) {
+      // AC-4: restore the trace id embedded at publish time so the re-emitted
+      // event (and its handlers) log under the same correlation as the request
+      // that produced it, across the request → cron boundary.
+      const correlationId = (event.payload as { correlationId?: string })
+        .correlationId;
+      this.logger.log(
+        `Relaying outbox event ${event.id} (${event.eventType}) correlationId=${correlationId ?? '-'}`,
+      );
+
       try {
         await this.eventEmitter.emitAsync(event.eventType, event.payload);
         await this.outboxRepository.markDelivered(event.id);
@@ -38,7 +47,7 @@ export class OutboxRelayScheduler {
           OutboxRelayScheduler.MAX_BACKOFF_SECONDS,
         );
         this.logger.warn(
-          `Outbox event ${event.id} (${event.eventType}) failed delivery: ${error}`,
+          `Outbox event ${event.id} (${event.eventType}) failed delivery correlationId=${correlationId ?? '-'}: ${error}`,
         );
         await this.outboxRepository.markFailed(event.id, String(error), backoff);
       }

@@ -2,16 +2,16 @@ import { Injectable } from '@nestjs/common';
 import {
   AccountNotFoundException,
   AccountRepository,
-} from '../../../account/domain/account';
+} from '@app/account/domain/account';
 import {
   SubcategoryNotFoundException,
   SubcategoryRepository,
-} from '../../../category/domain/subcategory';
+} from '@app/category/domain/subcategory';
 import {
   Scheduled,
   ScheduledNotFoundException,
   ScheduledRepository,
-} from '../../domain/scheduled';
+} from '@app/scheduled/domain/scheduled';
 import { ScheduledPatchDto } from '../dto';
 
 /**
@@ -59,14 +59,14 @@ export class UpdateScheduledUsecase {
       }
     }
 
-    scheduled.update({
-      date: patch.date ?? scheduled.date,
-      amount: patch.amount ?? scheduled.amount,
-      frequency: patch.frequency ?? scheduled.frequency,
-      description: patch.description ?? scheduled.description,
-      categoryId: patch.category ?? scheduled.categoryId,
-      subcategoryId: patch.subcategory ?? scheduled.subcategoryId,
-      accountId: patch.account ?? scheduled.accountId,
+    scheduled.applyPatch({
+      date: patch.date,
+      amount: patch.amount,
+      frequency: patch.frequency,
+      description: patch.description,
+      categoryId: patch.category,
+      subcategoryId: patch.subcategory,
+      accountId: patch.account,
     });
 
     return this.scheduledRepository.save(scheduled);

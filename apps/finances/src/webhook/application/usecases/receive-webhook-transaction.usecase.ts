@@ -1,25 +1,47 @@
 import { Injectable } from '@nestjs/common';
-import { AccountNotFoundException, AccountRepository } from '../../../account/domain/account';
-import { ApplyCategorizationRulesUsecase } from '../../../categorization-rule/application/usecases';
-import { CategoryNotFoundException, CategoryRepository } from '../../../category/domain/category';
-import { SubcategoryNotFoundException, SubcategoryRepository } from '../../../category/domain/subcategory';
-import { Movement, MovementRepository, MovementSource, MovementType } from '../../../movement/domain/movement';
+import {
+  AccountNotFoundException,
+  AccountRepository,
+} from '@app/account/domain/account';
+import { CategoryResolver } from '@app/categorization-rule/domain/categorization-rule';
+import { currentTraceId } from '@app/config/telemetry/correlation';
+import { MovementSaved, MovementSavedPayload } from '@app/movement/application/movement.constants';
+import {
+  Movement,
+  MovementRepository,
+  MovementType,
+} from '@app/movement/domain/movement';
+import { DomainEventOutboxPublisher } from '@app/outbox/application/services/domain-event-outbox.publisher';
+import { Money } from '@app/shared/domain';
 import { WebhookTransactionInputDto } from '../dto/webhook-transaction-input.dto';
 import { WebhookTransactionOutputDto } from '../dto/webhook-transaction-output.dto';
 
+/**
+ * AC-4 (sm-0004): the webhook path enqueues `movement.saved` in the outbox with
+ * the correlation id pulled from the incoming request, so the trace crosses the
+ * request → cron boundary and reaches the `BudgetThresholdExceeded` handler
+ * with the same id.
+ */
 @Injectable()
 export class ReceiveWebhookTransactionUsecase {
   constructor(
     private readonly movementRepository: MovementRepository,
-    private readonly categoryRepository: CategoryRepository,
-    private readonly subcategoryRepository: SubcategoryRepository,
     private readonly accountRepository: AccountRepository,
-    private readonly applyCategorizationRules: ApplyCategorizationRulesUsecase,
+    private readonly categoryResolver: CategoryResolver,
+    private readonly outboxPublisher: DomainEventOutboxPublisher,
   ) {}
 
+  /**
+   * `requestId` is only a fallback: when telemetry is on, the trace id in
+   * context wins — and it already reflects any `traceparent` the caller sent,
+   * so the provider's own trace continues into ours.
+   */
   async execute(
     input: WebhookTransactionInputDto,
+    requestId?: string,
   ): Promise<WebhookTransactionOutputDto> {
+    const correlationId = currentTraceId() ?? requestId;
+
     const existing = await this.movementRepository.findByExternalReference(
       input.externalReference,
     );
@@ -32,7 +54,14 @@ export class ReceiveWebhookTransactionUsecase {
       };
     }
 
-    const { categoryId, subcategoryId } = await this.resolveCategory(input);
+    // The provider names its categories, so they are resolved by name; when it
+    // sends none, the user's categorization rules decide (AC-4).
+    const { categoryId, subcategoryId } =
+      await this.categoryResolver.resolveByNames(
+        { category: input.category, subcategory: input.subcategory },
+        { merchant: input.merchant, description: input.merchant },
+        input.user,
+      );
 
     const account = await this.accountRepository.findByIdAndUser(
       input.account,
@@ -43,15 +72,13 @@ export class ReceiveWebhookTransactionUsecase {
       throw new AccountNotFoundException('Account not found');
     }
 
-    const movement = Movement.create({
+    const movement = Movement.fromWebhook({
       date: input.date,
       type: input.type ?? MovementType.EXPENSE,
       description: input.merchant,
       merchant: input.merchant,
-      amount: input.amount,
-      currency: input.currency,
+      money: Money.of(input.amount, input.currency),
       paymentMethod: input.paymentMethod,
-      source: MovementSource.WEBHOOK,
       categoryId,
       subcategoryId,
       accountId: account.id,
@@ -61,52 +88,37 @@ export class ReceiveWebhookTransactionUsecase {
       invoiceIssuer: input.invoiceIssuer,
       invoiceUrl: input.invoiceUrl,
       invoiceIssuedAt: input.invoiceIssuedAt,
-    } as Movement);
+    });
 
-    const saved = await this.movementRepository.save(movement);
+    // The movement and its domain event commit together; the relay re-emits
+    // movement.saved later so the budget flow runs even across a crash.
+    const saved = await this.movementRepository.runInTransaction(
+      async (manager) => {
+        const persisted = await this.movementRepository.saveWithManager(
+          manager,
+          movement,
+        );
+
+        await this.outboxPublisher.publish(manager, {
+          eventType: MovementSaved,
+          payload: {
+            categoryId: persisted.categoryId,
+            accountId: persisted.accountId,
+            date: persisted.date,
+            amount: persisted.money.amount,
+            user: persisted.user,
+            correlationId,
+          } as MovementSavedPayload,
+        });
+
+        return persisted;
+      },
+    );
 
     return {
       movementId: saved.id,
       externalReference: input.externalReference,
       duplicate: false,
     };
-  }
-
-  /**
-   * AC-4: resolve the category from the incoming names when present, otherwise
-   * apply the user's categorization rules (with the default fallback).
-   */
-  private async resolveCategory(
-    input: WebhookTransactionInputDto,
-  ): Promise<{ categoryId: number; subcategoryId?: number }> {
-    if (!input.category) {
-      return this.applyCategorizationRules.execute(
-        { merchant: input.merchant, description: input.merchant },
-        input.user,
-      );
-    }
-
-    const category = await this.categoryRepository.findByName(input.category);
-
-    if (!category) {
-      throw new CategoryNotFoundException(
-        `Category "${input.category}" not found`,
-      );
-    }
-
-    const subcategory = input.subcategory
-      ? await this.subcategoryRepository.findByNameAndCategory(
-          input.subcategory,
-          category.id,
-        )
-      : null;
-
-    if (input.subcategory && !subcategory) {
-      throw new SubcategoryNotFoundException(
-        `Subcategory "${input.subcategory}" not found under category "${input.category}"`,
-      );
-    }
-
-    return { categoryId: category.id, subcategoryId: subcategory?.id };
   }
 }

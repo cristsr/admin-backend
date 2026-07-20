@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { normalizePagination } from '@shared';
-import { Movement, MovementRepository } from '../../domain/movement';
+import { Movement, MovementRepository } from '@app/movement/domain/movement';
 import { MovementFilterDto } from '../dto/movement-filter.dto';
 
 @Injectable()

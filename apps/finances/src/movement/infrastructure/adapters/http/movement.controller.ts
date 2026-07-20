@@ -9,23 +9,26 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
+import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, CurrentUser } from '@shared';
-import { IdempotencyInterceptor } from '../../../../idempotency/infrastructure/adapters/http';
+import { IdempotencyInterceptor } from '@app/idempotency/infrastructure/adapters/http';
 import {
   MovementFilterDto,
   MovementInputDto,
   MovementOutputDto,
   MovementPatchDto,
-} from '../../../application/dto';
-import { MovementMapper } from '../../../application/mappers';
+} from '@app/movement/application/dto';
+import { MovementMapper } from '@app/movement/application/mappers';
 import {
   FindAllMovementsUsecase,
   FindMovementUsecase,
   RemoveMovementUsecase,
   SaveMovementUsecase,
   UpdateMovementUsecase,
-} from '../../../application/usecases';
+} from '@app/movement/application/usecases';
 
+@ApiTags('movements')
+@ApiBearerAuth()
 @Controller('movements')
 export class MovementController {
   constructor(

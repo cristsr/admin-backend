@@ -1,4 +1,6 @@
-import { BudgetThreshold } from '../../../application/budget.constants';
+import { BudgetThreshold } from '@app/budget/application/budget.constants';
+import { Budget } from '@app/budget/domain/budget';
+import { Money } from '@app/shared/domain';
 import { MovementSavedEventHandler } from './movement-saved.event-handler';
 
 const payload = {
@@ -9,41 +11,47 @@ const payload = {
   user: 7,
 };
 
-const buildBudget = (overrides: Record<string, unknown> = {}) => ({
-  id: 1,
-  user: 7,
-  categoryId: 3,
-  accountId: 2,
-  amount: 100,
-  startDate: new Date('2026-07-01'),
-  endDate: new Date('2026-07-31'),
-  notifiedThreshold: undefined as BudgetThreshold | undefined,
-  ...overrides,
-});
+const buildBudget = (notifiedThreshold?: BudgetThreshold) =>
+  Budget.create({
+    id: 1,
+    user: 7,
+    categoryId: 3,
+    accountId: 2,
+    money: Money.of(100, 'COP'),
+    startDate: new Date('2026-07-01'),
+    endDate: new Date('2026-07-31'),
+    notifiedThreshold,
+  } as Budget);
 
 describe('MovementSavedEventHandler threshold idempotency (AC-1)', () => {
   let budgetRepository: any;
-  let movementRepository: any;
+  let budgetSpending: any;
   let eventEmitter: any;
   let handler: MovementSavedEventHandler;
+
+  /** Stands in for the real spending lookup, which hits the movement repository. */
+  const spendOf = (amount: number) =>
+    jest.fn(async (budget: Budget) => {
+      budget.recordSpending(Money.of(amount, 'COP'));
+    });
 
   beforeEach(() => {
     budgetRepository = {
       findActiveMatching: jest.fn(),
       save: jest.fn((b) => Promise.resolve(b)),
     };
-    movementRepository = { sumAmount: jest.fn() };
+    budgetSpending = { recordSpending: jest.fn() };
     eventEmitter = { emit: jest.fn() };
     handler = new MovementSavedEventHandler(
       budgetRepository,
-      movementRepository,
+      budgetSpending,
       eventEmitter,
     );
   });
 
   it('crossing 80% for the first time persists WARNING and emits', async () => {
     budgetRepository.findActiveMatching.mockResolvedValue([buildBudget()]);
-    movementRepository.sumAmount.mockResolvedValue(80);
+    budgetSpending.recordSpending = spendOf(80);
 
     await handler.handle(payload);
 
@@ -55,9 +63,9 @@ describe('MovementSavedEventHandler threshold idempotency (AC-1)', () => {
 
   it('does not re-emit if a second movement stays at the already-notified 80%', async () => {
     budgetRepository.findActiveMatching.mockResolvedValue([
-      buildBudget({ notifiedThreshold: BudgetThreshold.WARNING }),
+      buildBudget(BudgetThreshold.WARNING),
     ]);
-    movementRepository.sumAmount.mockResolvedValue(85);
+    budgetSpending.recordSpending = spendOf(85);
 
     await handler.handle(payload);
 
@@ -67,9 +75,9 @@ describe('MovementSavedEventHandler threshold idempotency (AC-1)', () => {
 
   it('emits EXCEEDED when crossing 100% even if WARNING was already notified', async () => {
     budgetRepository.findActiveMatching.mockResolvedValue([
-      buildBudget({ notifiedThreshold: BudgetThreshold.WARNING }),
+      buildBudget(BudgetThreshold.WARNING),
     ]);
-    movementRepository.sumAmount.mockResolvedValue(100);
+    budgetSpending.recordSpending = spendOf(100);
 
     await handler.handle(payload);
 

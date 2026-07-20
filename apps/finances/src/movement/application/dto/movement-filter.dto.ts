@@ -1,4 +1,4 @@
-import { MovementType } from '../../domain/movement';
+import { MovementType } from '@app/movement/domain/movement';
 
 export class MovementFilterDto {
   startDate: Date;

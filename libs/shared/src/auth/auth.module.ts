@@ -1,95 +1,95 @@
-import { DynamicModule, Module, Type } from '@nestjs/common';
+import { ConfigurableModuleBuilder, Module, Type } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { PassportModule } from '@nestjs/passport';
-import { ApiModule } from '../modules';
-import { JWT_STRATEGY_OPTIONS, USERS_SERVICE_CLIENT } from './auth.constants';
+import { createApiClientProvider } from '../modules';
+import {
+  AUTH_MODULE_OPTIONS,
+  JWT_STRATEGY_OPTIONS,
+  OIDC_DISCOVERY_CACHE,
+  USERS_SERVICE_CLIENT,
+} from './auth.constants';
 import { IdentityResolver, SubjectIdentityResolver } from './identity-resolver';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { JwtStrategy } from './jwt.strategy';
 import { discoverJwksUri } from './oidc-discovery';
+import { OidcDiscoveryCache } from './oidc-discovery-cache';
+
+/** Default discovery cache lifetime: re-resolve the JWKS endpoint hourly. */
+const DEFAULT_DISCOVERY_TTL_MS = 60 * 60 * 1000;
 
 export interface AuthModuleOptions {
   issuer: string;
   audience: string;
   usersServiceUrl: string;
+  /** Discovery cache lifetime in ms. Defaults to 1h. */
+  discoveryTtlMs?: number;
+}
+
+interface AuthModuleExtras {
+  /**
+   * How an external identity is read out of the token payload. Supplied at
+   * registration time rather than resolved asynchronously, because the class
+   * has to be known before DI runs. Defaults to reading `sub`.
+   */
   identityResolver?: Type<IdentityResolver>;
 }
 
-export interface AuthModuleAsyncOptions {
-  inject: any[];
-  identityResolver?: Type<IdentityResolver>;
-  useFactory: (
-    ...args: any[]
-  ) => Promise<AuthModuleOptions> | AuthModuleOptions;
-}
-
-@Module({})
-export class AuthModule {
-  static forRoot(options: AuthModuleOptions): DynamicModule {
-    return AuthModule.build({
-      imports: [
-        ApiModule.register({
-          name: USERS_SERVICE_CLIENT,
-          baseURL: options.usersServiceUrl,
+const { ConfigurableModuleClass } =
+  new ConfigurableModuleBuilder<AuthModuleOptions>({
+    optionsInjectionToken: AUTH_MODULE_OPTIONS,
+  })
+    .setClassMethodName('forRoot')
+    .setExtras<AuthModuleExtras>({}, (definition, extras) => ({
+      ...definition,
+      // Global so the shared OIDC discovery cache is injectable elsewhere (the
+      // health check) without re-importing this module and building a second
+      // cache that would discover all over again.
+      global: true,
+      imports: [PassportModule.register({})],
+      providers: [
+        ...(definition.providers ?? []),
+        createApiClientProvider<AuthModuleOptions>({
+          provide: USERS_SERVICE_CLIENT,
+          inject: [AUTH_MODULE_OPTIONS],
+          useFactory: (options) => ({ baseURL: options.usersServiceUrl }),
         }),
-      ],
-      strategyOptionsProvider: {
-        provide: JWT_STRATEGY_OPTIONS,
-        useFactory: async () => ({
-          issuer: options.issuer,
-          audience: options.audience,
-          jwksUri: await discoverJwksUri(options.issuer),
-        }),
-      },
-      identityResolver: options.identityResolver,
-    });
-  }
-
-  static forRootAsync(asyncOptions: AuthModuleAsyncOptions): DynamicModule {
-    return AuthModule.build({
-      imports: [
-        ApiModule.registerAsync({
-          name: USERS_SERVICE_CLIENT,
-          inject: asyncOptions.inject,
-          useFactory: async (...args: any[]) => {
-            const options = await asyncOptions.useFactory(...args);
-            return { baseURL: options.usersServiceUrl };
-          },
-        }),
-      ],
-      strategyOptionsProvider: {
-        provide: JWT_STRATEGY_OPTIONS,
-        inject: asyncOptions.inject,
-        useFactory: async (...args: any[]) => {
-          const options = await asyncOptions.useFactory(...args);
-          return {
+        {
+          provide: JWT_STRATEGY_OPTIONS,
+          useFactory: (options: AuthModuleOptions) => ({
             issuer: options.issuer,
             audience: options.audience,
-            jwksUri: await discoverJwksUri(options.issuer),
-          };
+          }),
+          inject: [AUTH_MODULE_OPTIONS],
         },
-      },
-      identityResolver: asyncOptions.identityResolver,
-    });
-  }
-
-  private static build(config: {
-    imports: DynamicModule['imports'];
-    strategyOptionsProvider: any;
-    identityResolver?: Type<IdentityResolver>;
-  }): DynamicModule {
-    return {
-      module: AuthModule,
-      imports: [PassportModule.register({}), ...config.imports],
-      providers: [
-        config.strategyOptionsProvider,
+        {
+          provide: OIDC_DISCOVERY_CACHE,
+          useFactory: (options: AuthModuleOptions) =>
+            new OidcDiscoveryCache({
+              issuer: options.issuer,
+              ttlMs: options.discoveryTtlMs ?? DEFAULT_DISCOVERY_TTL_MS,
+              discoverer: discoverJwksUri,
+            }),
+          inject: [AUTH_MODULE_OPTIONS],
+        },
         {
           provide: IdentityResolver,
-          useClass: config.identityResolver ?? SubjectIdentityResolver,
+          useClass: extras.identityResolver ?? SubjectIdentityResolver,
         },
         JwtStrategy,
         { provide: APP_GUARD, useClass: JwtAuthGuard },
       ],
-    };
-  }
-}
+      exports: [OIDC_DISCOVERY_CACHE],
+    }))
+    .build();
+
+/**
+ * Bearer-token authentication against an OpenID Connect issuer. Registers the
+ * JWT strategy, the global guard and the lazily-resolved JWKS discovery, and
+ * exposes the authenticated user through the configured identity resolver.
+ *
+ * `forRoot`/`forRootAsync` and every options shape they accept are generated
+ * by Nest; the async factory now runs once and feeds all three derived
+ * providers, instead of being invoked separately by each of them.
+ */
+@Module({})
+export class AuthModule extends ConfigurableModuleClass {}

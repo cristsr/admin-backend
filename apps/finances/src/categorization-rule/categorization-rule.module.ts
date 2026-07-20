@@ -1,14 +1,17 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CategoryModule } from '../category/category.module';
-import { CategorizationRuleRepository } from './domain/categorization-rule';
 import {
-  ApplyCategorizationRulesUsecase,
   CreateCategorizationRuleUsecase,
   FindAllCategorizationRulesUsecase,
   RemoveCategorizationRuleUsecase,
   UpdateCategorizationRuleUsecase,
 } from './application/usecases';
+import {
+  CategorizationRuleRepository,
+  CategorizationService,
+  CategoryResolver,
+} from './domain/categorization-rule';
 import { CategorizationRuleController } from './infrastructure/adapters/http';
 import {
   TypeOrmCategorizationRuleEntity,
@@ -17,8 +20,8 @@ import {
 
 /**
  * AC-4 (sm-0003) — user-defined auto-categorization rules and the matcher that
- * applies them. Exports the apply use case so movement ingestion (webhook and
- * manual) can categorize movements that arrive without a category.
+ * applies them. Exports the category resolver so movement ingestion (webhook
+ * and manual) settles the category of every incoming movement the same way.
  */
 @Module({
   imports: [
@@ -35,8 +38,9 @@ import {
     FindAllCategorizationRulesUsecase,
     UpdateCategorizationRuleUsecase,
     RemoveCategorizationRuleUsecase,
-    ApplyCategorizationRulesUsecase,
+    CategorizationService,
+    CategoryResolver,
   ],
-  exports: [ApplyCategorizationRulesUsecase],
+  exports: [CategoryResolver],
 })
 export class CategorizationRuleModule {}

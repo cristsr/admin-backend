@@ -1,4 +1,5 @@
-import { Movement } from '../../../../../domain/movement';
+import { Movement } from '@app/movement/domain/movement';
+import { Money } from '@app/shared/domain';
 import { TypeOrmMovementEntity } from './typeorm-movement.entity';
 
 export class TypeOrmMovementMapper {
@@ -13,8 +14,7 @@ export class TypeOrmMovementMapper {
       description: entity.description,
       merchant: entity.merchant,
       notes: entity.notes,
-      amount: entity.amount,
-      currency: entity.currency,
+      money: Money.of(entity.amount, entity.currency),
       paymentMethod: entity.paymentMethod,
       source: entity.source,
       categoryId: entity.categoryId,
@@ -53,8 +53,8 @@ export class TypeOrmMovementMapper {
       description: movement.description,
       merchant: movement.merchant,
       notes: movement.notes,
-      amount: movement.amount,
-      currency: movement.currency,
+      amount: movement.money.amount,
+      currency: movement.money.currency,
       paymentMethod: movement.paymentMethod,
       source: movement.source,
       // Null-checked because a transfer has no category: the previous

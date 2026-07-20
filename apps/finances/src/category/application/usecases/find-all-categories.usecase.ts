@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { normalizePagination } from '@shared';
-import { Category, CategoryRepository } from '../../domain/category';
+import { Category, CategoryRepository } from '@app/category/domain/category';
 import { CategoryFilterDto } from '../dto/category-filter.dto';
 
 @Injectable()

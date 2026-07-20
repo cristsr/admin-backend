@@ -1,35 +1,53 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Optional } from '@nestjs/common';
 import { DateTime } from 'luxon';
+import { correlationId, withSpan } from '@app/config/telemetry/correlation';
+import { MovementRepository } from '@app/movement/domain/movement';
 import {
-  Movement,
-  MovementRepository,
-  MovementSource,
-} from '../../../movement/domain/movement';
-import { Scheduled, ScheduledRepository } from '../../domain/scheduled';
+  Scheduled,
+  ScheduledRepository,
+} from '@app/scheduled/domain/scheduled';
 
 /**
  * Materializes due `Scheduled` entries into real `Movement`s and rolls each one
- * to its next occurrence. Triggered every minute by `ScheduledScheduler`.
+ * to its next occurrence. Triggered every minute by `ScheduledScheduler`. AC-4
+ * (sm-0004): each run logs a structured counters line keyed by a per-run
+ * correlation id.
  */
 @Injectable()
 export class GenerateScheduledMovementsUsecase {
-  #logger = new Logger(GenerateScheduledMovementsUsecase.name);
+  private readonly logger: Logger;
 
   constructor(
     private readonly scheduledRepository: ScheduledRepository,
     private readonly movementRepository: MovementRepository,
-  ) {}
+    @Optional() logger?: Logger,
+  ) {
+    this.logger = logger ?? new Logger(GenerateScheduledMovementsUsecase.name);
+  }
 
   async execute(): Promise<void> {
     const due = await this.scheduledRepository.findDue(DateTime.utc().toJSDate());
 
     if (!due.length) return;
 
-    this.#logger.log(`Generating ${due.length} scheduled movement(s)`);
+    // The run gets its own span, so the id below is the trace id every log line
+    // and every downstream call in this run already shares.
+    return withSpan('scheduled.generate', async () => {
+      const runId = correlationId();
+      this.logger.log(
+        `Generating ${due.length} scheduled movement(s) correlationId=${runId}`,
+      );
 
-    for (const schedule of due) {
-      await this.materialize(schedule);
-    }
+      let materialized = 0;
+      for (const schedule of due) {
+        await this.materialize(schedule);
+        materialized += 1;
+      }
+
+      this.logger.log(
+        `scheduledCronDone scheduledMaterialized=${materialized} correlationId=${runId}`,
+      );
+    });
   }
 
   /**
@@ -39,24 +57,11 @@ export class GenerateScheduledMovementsUsecase {
    * untouched, so the occurrence is retried instead of being silently skipped.
    */
   private async materialize(schedule: Scheduled): Promise<void> {
-    const movement = Movement.create({
-      description: schedule.description,
-      amount: schedule.amount,
-      currency: schedule.currency,
-      type: schedule.type,
-      date: schedule.date,
-      categoryId: schedule.categoryId,
-      subcategoryId: schedule.subcategoryId,
-      accountId: schedule.accountId,
-      user: schedule.user,
-      source: MovementSource.SCHEDULED,
-    } as Movement);
-
     try {
-      await this.movementRepository.save(movement);
+      await this.movementRepository.save(schedule.materialize());
     } catch (error) {
-      this.#logger.error(
-        `Error creating movement for scheduled ${schedule.id}: ${error.message}`,
+      this.logger.error(
+        `Error creating movement for scheduled ${schedule.id} correlationId=${correlationId()}: ${error.message}`,
       );
       return;
     }

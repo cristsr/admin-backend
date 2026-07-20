@@ -5,7 +5,7 @@ import { Repository } from 'typeorm';
 import {
   CategorizationRule,
   CategorizationRuleRepository,
-} from '../../../../domain/categorization-rule';
+} from '@app/categorization-rule/domain/categorization-rule';
 import { TypeOrmCategorizationRuleEntity } from './typeorm-categorization-rule.entity';
 import { TypeOrmCategorizationRuleMapper } from './typeorm-categorization-rule.mapper';
 

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import {
   CategorizationRuleNotFoundException,
   CategorizationRuleRepository,
-} from '../../domain/categorization-rule';
+} from '@app/categorization-rule/domain/categorization-rule';
 
 @Injectable()
 export class RemoveCategorizationRuleUsecase {

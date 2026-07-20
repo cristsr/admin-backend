@@ -1,4 +1,4 @@
-import { Movement } from '../../domain/movement';
+import { Movement } from '@app/movement/domain/movement';
 import { MovementOutputDto } from '../dto/movement-output.dto';
 
 export class MovementMapper {
@@ -12,8 +12,8 @@ export class MovementMapper {
       description: movement.description,
       merchant: movement.merchant,
       notes: movement.notes,
-      amount: movement.amount,
-      currency: movement.currency,
+      amount: movement.money.amount,
+      currency: movement.money.currency,
       paymentMethod: movement.paymentMethod,
       source: movement.source,
       transferGroup: movement.transferGroup,

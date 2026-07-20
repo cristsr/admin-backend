@@ -4,10 +4,10 @@ import { ObjectLiteral } from '@shared';
 import { Repository } from 'typeorm';
 import {
   IdempotencyKey,
-  IdempotencyReservation,
   IdempotencyRepository,
+  IdempotencyReservation,
   IdempotencyStatus,
-} from '../../../../domain/idempotency-key';
+} from '@app/idempotency/domain/idempotency-key';
 import { TypeOrmIdempotencyKeyEntity } from './typeorm-idempotency-key.entity';
 
 @Injectable()

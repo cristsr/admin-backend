@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
-import { CategoryNotFoundException, CategoryRepository } from '../../domain/category';
+import {
+  CategoryNotFoundException,
+  CategoryRepository,
+} from '@app/category/domain/category';
 import {
   Subcategory,
   SubcategoryNotFoundException,
   SubcategoryRepository,
-} from '../../domain/subcategory';
+} from '@app/category/domain/subcategory';
 import { SubcategoryInputDto } from '../dto/subcategory-input.dto';
 
 @Injectable()

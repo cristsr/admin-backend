@@ -5,7 +5,7 @@ import { ILike, Repository } from 'typeorm';
 import {
   Subcategory,
   SubcategoryRepository,
-} from '../../../../../domain/subcategory';
+} from '@app/category/domain/subcategory';
 import { TypeOrmSubcategoryEntity } from './typeorm-subcategory.entity';
 import { TypeOrmSubcategoryMapper } from './typeorm-subcategory.mapper';
 

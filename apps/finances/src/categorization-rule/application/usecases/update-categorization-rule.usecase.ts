@@ -3,7 +3,7 @@ import {
   CategorizationRule,
   CategorizationRuleNotFoundException,
   CategorizationRuleRepository,
-} from '../../domain/categorization-rule';
+} from '@app/categorization-rule/domain/categorization-rule';
 import { CategorizationRuleUpdateInputDto } from '../dto';
 
 @Injectable()

@@ -1,30 +1,35 @@
 import { CacheModule } from '@nestjs/cache-manager';
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { APP_FILTER } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import {
   Auth0IdentityResolver,
   AuthModule,
   ExceptionFilter,
   validatorFactory,
 } from '@shared';
-import { AppController } from 'app/config/controllers';
-import { DatabaseModule } from 'app/database/';
-import { ENV, Environment } from 'app/env';
-import { AccountModule } from 'app/account/account.module';
-import { BudgetModule } from 'app/budget/budget.module';
-import { CategorizationRuleModule } from 'app/categorization-rule/categorization-rule.module';
-import { CategoryModule } from 'app/category/category.module';
-import { IdempotencyModule } from 'app/idempotency/idempotency.module';
-import { MovementModule } from 'app/movement/movement.module';
-import { OutboxModule } from 'app/outbox/outbox.module';
-import { ScheduledModule } from 'app/scheduled/scheduled.module';
-import { SummaryModule } from 'app/summary/summary.module';
-import { TransferModule } from 'app/transfer/transfer.module';
-import { UserModule } from 'app/user/user.module';
-import { WebhookModule } from 'app/webhook/webhook.module';
+import { LoggerModule } from 'nestjs-pino';
+import { ENV, Environment } from '@app/env';
+import { AccountModule } from './account/account.module';
+import { BudgetModule } from './budget/budget.module';
+import { CategorizationRuleModule } from './categorization-rule/categorization-rule.module';
+import { CategoryModule } from './category/category.module';
+import { AppController } from './config/controllers/app.controller';
+import { buildPinoModuleOptions } from './config/logger/logger.config';
+import { buildThrottlerOptions } from './config/throttler/throttler.config';
+import { DatabaseModule } from './database/database.module';
+import { HealthModule } from './health/health.module';
+import { IdempotencyModule } from './idempotency/idempotency.module';
+import { MovementModule } from './movement/movement.module';
+import { OutboxModule } from './outbox/outbox.module';
+import { ScheduledModule } from './scheduled/scheduled.module';
+import { SummaryModule } from './summary/summary.module';
+import { TransferModule } from './transfer/transfer.module';
+import { UserModule } from './user/user.module';
+import { WebhookModule } from './webhook/webhook.module';
 
 @Module({
   imports: [
@@ -32,9 +37,24 @@ import { WebhookModule } from 'app/webhook/webhook.module';
       isGlobal: true,
       validate: validatorFactory(Environment),
     }),
+    LoggerModule.forRoot(buildPinoModuleOptions()),
     CacheModule.register(),
     ScheduleModule.forRoot(),
     EventEmitterModule.forRoot({}),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) =>
+        buildThrottlerOptions({
+          THROTTLE_AUTH_TTL_MS: config.get<number>(ENV.THROTTLE_AUTH_TTL_MS),
+          THROTTLE_AUTH_LIMIT: config.get<number>(ENV.THROTTLE_AUTH_LIMIT),
+          THROTTLE_WEBHOOK_TTL_MS: config.get<number>(
+            ENV.THROTTLE_WEBHOOK_TTL_MS,
+          ),
+          THROTTLE_WEBHOOK_LIMIT: config.get<number>(
+            ENV.THROTTLE_WEBHOOK_LIMIT,
+          ),
+        }),
+    }),
     DatabaseModule,
     AuthModule.forRootAsync({
       inject: [ConfigService],
@@ -50,6 +70,7 @@ import { WebhookModule } from 'app/webhook/webhook.module';
         usersServiceUrl: configService.get(ENV.USERS_API_URL),
       }),
     }),
+    HealthModule,
     AccountModule,
     CategoryModule,
     MovementModule,
@@ -64,6 +85,9 @@ import { WebhookModule } from 'app/webhook/webhook.module';
     CategorizationRuleModule,
   ],
   controllers: [AppController],
-  providers: [{ provide: APP_FILTER, useClass: ExceptionFilter }],
+  providers: [
+    { provide: APP_FILTER, useClass: ExceptionFilter },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}

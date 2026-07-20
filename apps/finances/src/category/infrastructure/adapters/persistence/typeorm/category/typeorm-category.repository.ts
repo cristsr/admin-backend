@@ -6,7 +6,7 @@ import {
   Category,
   CategoryQuery,
   CategoryRepository,
-} from '../../../../../domain/category';
+} from '@app/category/domain/category';
 import { TypeOrmSubcategoryEntity } from '../subcategory/typeorm-subcategory.entity';
 import { TypeOrmCategoryEntity } from './typeorm-category.entity';
 import { TypeOrmCategoryMapper } from './typeorm-category.mapper';

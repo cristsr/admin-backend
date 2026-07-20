@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { CategoryRepository } from '../../domain/category';
+import { CategoryRepository } from '@app/category/domain/category';
 
 /**
  * Flat list of "Category" and "Category/Subcategory" strings, matching the

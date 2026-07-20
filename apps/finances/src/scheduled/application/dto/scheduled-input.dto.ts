@@ -1,6 +1,6 @@
 import { IsEnum, IsNotEmpty, IsOptional, Min } from 'class-validator';
-import { MovementType } from '../../../movement/domain/movement';
-import { Frequency } from '../../domain/scheduled';
+import { MovementType } from '@app/movement/domain/movement';
+import { Frequency } from '@app/scheduled/domain/scheduled';
 
 export class ScheduledInputDto {
   @IsOptional()

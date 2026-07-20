@@ -1,8 +1,4 @@
-import {
-  DomainConflictException,
-  DomainNotFoundException,
-  DomainUnprocessableException,
-} from '@shared';
+import { DomainConflictException, DomainNotFoundException } from '@shared';
 
 /** Transferring to the same account would create two legs that cancel out. */
 export class SameAccountTransferException extends DomainConflictException {}
@@ -24,9 +20,3 @@ export class TransferNotFoundException extends DomainNotFoundException {}
  * it. Maps to 409.
  */
 export class TransferAlreadyReversedException extends DomainConflictException {}
-
-/**
- * AC-1 (sm-0003) — the source account has insufficient balance for the transfer
- * and does not allow a negative balance. Maps to 422.
- */
-export class InsufficientBalanceException extends DomainUnprocessableException {}
