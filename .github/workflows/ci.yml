@@ -29,11 +29,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm ci
 
       # `finances` is now the single monolith: it owns the users and exchanges
       # tables, so one build/migration/test pass covers everything.
@@ -87,7 +87,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Wait for Keycloak
@@ -100,7 +100,7 @@ jobs:
           exit 1
 
       - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+        run: npm ci
 
       - name: Run finances migrations against a fresh database
         env:
