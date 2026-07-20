@@ -1,14 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import {
+  AccountCriteria,
   AccountNotFoundException,
   AccountRepository,
 } from '@app/account/domain/account';
 import {
+  SubcategoryCriteria,
   SubcategoryNotFoundException,
   SubcategoryRepository,
 } from '@app/category/domain/subcategory';
 import {
   Scheduled,
+  ScheduledCriteria,
   ScheduledNotFoundException,
   ScheduledRepository,
 } from '@app/scheduled/domain/scheduled';
@@ -32,27 +35,26 @@ export class UpdateScheduledUsecase {
     patch: ScheduledPatchDto,
     user: number,
   ): Promise<Scheduled> {
-    const scheduled = await this.scheduledRepository.findByIdAndUser(id, user);
+    const scheduled = await this.scheduledRepository.firstMatching(
+      ScheduledCriteria.byIdAndUser(id, user),
+    );
     if (!scheduled) {
       throw new ScheduledNotFoundException('Scheduled not found');
     }
 
     if (patch.subcategory !== undefined) {
       const categoryId = patch.category ?? scheduled.categoryId;
-      const subcategory =
-        await this.subcategoryRepository.findByIdAndCategory(
-          patch.subcategory,
-          categoryId,
-        );
+      const subcategory = await this.subcategoryRepository.firstMatching(
+        SubcategoryCriteria.byIdAndCategory(patch.subcategory, categoryId),
+      );
       if (!subcategory) {
         throw new SubcategoryNotFoundException('Subcategory not found');
       }
     }
 
     if (patch.account !== undefined) {
-      const account = await this.accountRepository.findByIdAndUser(
-        patch.account,
-        user,
+      const account = await this.accountRepository.firstMatching(
+        AccountCriteria.byIdAndUser(patch.account, user),
       );
       if (!account) {
         throw new AccountNotFoundException('Account not found');

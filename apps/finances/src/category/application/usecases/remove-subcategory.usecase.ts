@@ -1,11 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { SubcategoryRepository } from '@app/category/domain/subcategory';
+import {
+  SubcategoryCriteria,
+  SubcategoryRepository,
+} from '@app/category/domain/subcategory';
 
 @Injectable()
 export class RemoveSubcategoryUsecase {
   constructor(private readonly subcategoryRepository: SubcategoryRepository) {}
 
   async execute(id: number): Promise<boolean> {
-    return this.subcategoryRepository.remove(id);
+    const removed = await this.subcategoryRepository.removeMatching(
+      SubcategoryCriteria.byId(id),
+    );
+
+    return !!removed;
   }
 }

@@ -1,74 +1,48 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Nullable } from '@shared';
-import { LessThanOrEqual, MoreThanOrEqual, Repository } from 'typeorm';
+import { Criteria, Nullable, TypeOrmCriteriaConverter } from '@shared';
+import { Repository } from 'typeorm';
 import {
   Budget,
-  BudgetQuery,
+  BudgetField,
   BudgetRepository,
 } from '@app/budget/domain/budget';
+import { BUDGET_CRITERIA_FIELDS } from './typeorm-budget.criteria-fields';
 import { TypeOrmBudgetEntity } from './typeorm-budget.entity';
 import { TypeOrmBudgetMapper } from './typeorm-budget.mapper';
 
+const RELATIONS = ['category'];
+
 @Injectable()
 export class TypeOrmBudgetRepository implements BudgetRepository {
+  readonly #criteria = new TypeOrmCriteriaConverter<
+    TypeOrmBudgetEntity,
+    BudgetField
+  >(BUDGET_CRITERIA_FIELDS);
+
   constructor(
     @InjectRepository(TypeOrmBudgetEntity)
     private readonly repository: Repository<TypeOrmBudgetEntity>,
   ) {}
 
-  async findByIdAndUser(id: number, user: number): Promise<Nullable<Budget>> {
+  async matching(criteria: Criteria<BudgetField>): Promise<Budget[]> {
+    const entities = await this.repository.find({
+      ...this.#criteria.toFindOptions(criteria),
+      relations: RELATIONS,
+    });
+
+    return entities.map(TypeOrmBudgetMapper.toDomain);
+  }
+
+  async firstMatching(
+    criteria: Criteria<BudgetField>,
+  ): Promise<Nullable<Budget>> {
     const entity = await this.repository.findOne({
-      where: { id, user },
-      relations: ['category'],
+      ...this.#criteria.toFindOptions(criteria),
+      relations: RELATIONS,
     });
+
     return entity ? TypeOrmBudgetMapper.toDomain(entity) : null;
-  }
-
-  async findAll(filter: BudgetQuery): Promise<Budget[]> {
-    const entities = await this.repository.find({
-      where: {
-        account: { id: filter.account },
-        startDate: MoreThanOrEqual(filter.startDate),
-        endDate: LessThanOrEqual(filter.endDate),
-        user: filter.user,
-        active: true,
-      },
-      relations: ['category'],
-      take: filter.take,
-      skip: filter.skip,
-    });
-    return entities.map(TypeOrmBudgetMapper.toDomain);
-  }
-
-  async findActiveMatching(
-    categoryId: number,
-    accountId: number,
-    date: Date,
-    user: number,
-  ): Promise<Budget[]> {
-    const entities = await this.repository.find({
-      where: {
-        user,
-        category: { id: categoryId },
-        account: { id: accountId },
-        startDate: LessThanOrEqual(date),
-        endDate: MoreThanOrEqual(date),
-        active: true,
-      },
-    });
-    return entities.map(TypeOrmBudgetMapper.toDomain);
-  }
-
-  async findDueForRegeneration(now: Date): Promise<Budget[]> {
-    const entities = await this.repository.find({
-      where: {
-        endDate: LessThanOrEqual(now),
-        active: true,
-        repeat: true,
-      },
-    });
-    return entities.map(TypeOrmBudgetMapper.toDomain);
   }
 
   async save(budget: Budget): Promise<Budget> {
@@ -78,9 +52,12 @@ export class TypeOrmBudgetRepository implements BudgetRepository {
     return TypeOrmBudgetMapper.toDomain(saved as TypeOrmBudgetEntity);
   }
 
-  async softRemove(id: number, user: number): Promise<boolean> {
-    const result = await this.repository.softDelete({ id, user });
-    return !!result.affected;
+  async removeMatching(criteria: Criteria<BudgetField>): Promise<number> {
+    const result = await this.repository.softDelete(
+      this.#criteria.toWhere(criteria),
+    );
+
+    return result.affected ?? 0;
   }
 
   async deactivate(id: number): Promise<void> {

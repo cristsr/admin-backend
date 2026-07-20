@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { AccountRepository } from '@app/account/domain/account';
+import {
+  AccountCriteria,
+  AccountRepository,
+} from '@app/account/domain/account';
 import { ExchangeRateProvider } from '@app/exchange/domain';
 import { Money } from '@app/shared/domain';
 import { SummaryRepository } from '@app/summary/domain/summary';
@@ -30,7 +33,11 @@ export class GetConsolidatedBalanceUsecase {
     user: number,
     presentationCurrency?: string,
   ): Promise<ConsolidatedBalanceOutputDto> {
-    const accounts = await this.accountRepository.findAllByUser(user);
+    // Every account, unpaginated: a consolidated total that silently left a
+    // page of accounts out would simply be wrong.
+    const accounts = await this.accountRepository.matching(
+      AccountCriteria.ownedBy(user),
+    );
 
     const presentation =
       presentationCurrency ??

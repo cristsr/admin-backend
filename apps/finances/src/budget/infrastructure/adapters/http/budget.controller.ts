@@ -8,12 +8,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { AuthenticatedUser, CurrentUser } from '@shared';
-import {
-  BudgetFilterDto,
-  BudgetInputDto,
-  BudgetOutputDto,
-} from '@app/budget/application/dto';
+import { AuthenticatedUser, CriteriaQueryDto, CurrentUser } from '@shared';
+import { BudgetInputDto, BudgetOutputDto } from '@app/budget/application/dto';
 import { BudgetMapper } from '@app/budget/application/mappers';
 import {
   FindAllBudgetsUsecase,
@@ -40,16 +36,17 @@ export class BudgetController {
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: number,
   ): Promise<BudgetOutputDto> {
-    const budget = await this.findBudgetUsecase.execute({ budget: id }, user.id);
+    const budget = await this.findBudgetUsecase.execute(id, user.id);
     return budget && BudgetMapper.toOutput(budget);
   }
 
+  /** Filters follow the shared criteria contract; see `CriteriaQueryDto`. */
   @Get()
   async findAll(
     @CurrentUser() user: AuthenticatedUser,
-    @Query() filter: BudgetFilterDto,
+    @Query() query: CriteriaQueryDto,
   ): Promise<BudgetOutputDto[]> {
-    const budgets = await this.findAllBudgetsUsecase.execute(filter, user.id);
+    const budgets = await this.findAllBudgetsUsecase.execute(query, user.id);
     return budgets.map(BudgetMapper.toOutput);
   }
 

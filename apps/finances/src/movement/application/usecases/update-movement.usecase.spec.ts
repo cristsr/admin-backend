@@ -31,11 +31,11 @@ describe('UpdateMovementUsecase (AC-4)', () => {
 
   beforeEach(() => {
     movementRepository = {
-      findByIdAndUser: jest.fn(),
+      firstMatching: jest.fn(),
       save: jest.fn((movement) => Promise.resolve(movement)),
     };
     subcategoryRepository = {
-      findByIdAndCategory: jest.fn().mockResolvedValue({ id: 9 }),
+      firstMatching: jest.fn().mockResolvedValue({ id: 9 }),
     };
     usecase = new UpdateMovementUsecase(
       movementRepository,
@@ -44,14 +44,14 @@ describe('UpdateMovementUsecase (AC-4)', () => {
   });
 
   it('404 when the movement belongs to another user', async () => {
-    movementRepository.findByIdAndUser.mockResolvedValue(null);
+    movementRepository.firstMatching.mockResolvedValue(null);
     await expect(usecase.execute(1, { notes: 'y' }, 7)).rejects.toThrow(
       MovementNotFoundException,
     );
   });
 
   it('422 when the movement is a transfer leg', async () => {
-    movementRepository.findByIdAndUser.mockResolvedValue(
+    movementRepository.firstMatching.mockResolvedValue(
       buildMovement({ type: MovementType.TRANSFER_OUT }),
     );
     await expect(usecase.execute(1, { notes: 'y' }, 7)).rejects.toThrow(
@@ -60,7 +60,7 @@ describe('UpdateMovementUsecase (AC-4)', () => {
   });
 
   it('422 when source=WEBHOOK and editing amount is attempted (ingestion data)', async () => {
-    movementRepository.findByIdAndUser.mockResolvedValue(
+    movementRepository.firstMatching.mockResolvedValue(
       buildMovement({ source: MovementSource.WEBHOOK }),
     );
     await expect(usecase.execute(1, { amount: 999 }, 7)).rejects.toThrow(
@@ -69,7 +69,7 @@ describe('UpdateMovementUsecase (AC-4)', () => {
   });
 
   it('allows editing notes/category on a WEBHOOK movement', async () => {
-    movementRepository.findByIdAndUser.mockResolvedValue(
+    movementRepository.firstMatching.mockResolvedValue(
       buildMovement({ source: MovementSource.WEBHOOK }),
     );
     const result = await usecase.execute(1, { notes: 'nuevo' }, 7);
@@ -78,21 +78,21 @@ describe('UpdateMovementUsecase (AC-4)', () => {
   });
 
   it('editing notes does not erase the merchant extracted by ingestion', async () => {
-    movementRepository.findByIdAndUser.mockResolvedValue(buildMovement());
+    movementRepository.firstMatching.mockResolvedValue(buildMovement());
     const result = await usecase.execute(1, { notes: 'nuevo' }, 7);
     expect(result.merchant).toBe('Uber');
   });
 
   it('editing the amount keeps the currency the movement was recorded in', async () => {
-    movementRepository.findByIdAndUser.mockResolvedValue(buildMovement());
+    movementRepository.firstMatching.mockResolvedValue(buildMovement());
     const result = await usecase.execute(1, { amount: 250 }, 7);
     expect(result.money.amount).toBe(250);
     expect(result.money.currency).toBe('USD');
   });
 
   it('validates subcategory ∈ category when reassigning', async () => {
-    movementRepository.findByIdAndUser.mockResolvedValue(buildMovement());
-    subcategoryRepository.findByIdAndCategory.mockResolvedValue(null);
+    movementRepository.firstMatching.mockResolvedValue(buildMovement());
+    subcategoryRepository.firstMatching.mockResolvedValue(null);
     await expect(
       usecase.execute(1, { subcategory: 5, category: 3 }, 7),
     ).rejects.toThrow(SubcategoryNotFoundException);

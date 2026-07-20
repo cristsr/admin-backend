@@ -1,6 +1,10 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { DateTime } from 'luxon';
-import { Budget, BudgetRepository } from '@app/budget/domain/budget';
+import {
+  Budget,
+  BudgetCriteria,
+  BudgetRepository,
+} from '@app/budget/domain/budget';
 import { correlationId, withSpan } from '@app/config/telemetry/correlation';
 
 /**
@@ -27,8 +31,8 @@ export class GenerateBudgetsUsecase {
       this.logger.log(`budgetsCronStart correlationId=${runId}`);
 
       const utc = DateTime.utc();
-      const budgets = await this.budgetRepository.findDueForRegeneration(
-        utc.toJSDate(),
+      const budgets = await this.budgetRepository.matching(
+        BudgetCriteria.dueForRegeneration(utc.toJSDate()),
       );
 
       let generated = 0;

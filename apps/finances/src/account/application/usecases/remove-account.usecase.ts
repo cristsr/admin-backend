@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  AccountCriteria,
   AccountNotFoundException,
   AccountRepository,
 } from '@app/account/domain/account';
@@ -16,7 +17,9 @@ export class RemoveAccountUsecase {
    * half-valid and archived rows stop counting in balances.
    */
   async execute(id: number, user: number): Promise<AccountArchivedOutputDto> {
-    const account = await this.accountRepository.findByIdAndUser(id, user);
+    const account = await this.accountRepository.firstMatching(
+      AccountCriteria.byIdAndUser(id, user),
+    );
 
     if (!account) {
       throw new AccountNotFoundException('Account not found');

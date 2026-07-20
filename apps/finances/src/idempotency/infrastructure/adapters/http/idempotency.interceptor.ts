@@ -2,6 +2,7 @@ import {
   CallHandler,
   ExecutionContext,
   Injectable,
+  Logger,
   NestInterceptor,
 } from '@nestjs/common';
 import { Observable, firstValueFrom, from } from 'rxjs';
@@ -24,6 +25,8 @@ const RETENTION_MS = 24 * 60 * 60 * 1000;
  */
 @Injectable()
 export class IdempotencyInterceptor implements NestInterceptor {
+  #logger = new Logger(IdempotencyInterceptor.name);
+
   constructor(private readonly idempotencyRepository: IdempotencyRepository) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
@@ -73,8 +76,47 @@ export class IdempotencyInterceptor implements NestInterceptor {
       return row.responseBody;
     }
 
-    const body = await firstValueFrom(next.handle());
-    await this.idempotencyRepository.complete(row.id, response.statusCode, body);
-    return body;
+    return this.runAndStore(next, row.id, response);
+  }
+
+  /**
+   * A failed handler must give the key back. Its work was rolled back, so
+   * nothing is left to replay — and holding the reservation would answer every
+   * retry of that key with 409 until the record expired a day later.
+   */
+  private async runAndStore(
+    next: CallHandler,
+    rowId: number,
+    response: { statusCode: number },
+  ): Promise<unknown> {
+    try {
+      const body = await firstValueFrom(next.handle());
+      await this.idempotencyRepository.complete(
+        rowId,
+        response.statusCode,
+        body,
+      );
+      return body;
+    } catch (error) {
+      await this.release(rowId);
+      throw error;
+    }
+  }
+
+  /**
+   * Releasing is best-effort: it must never replace the failure the caller is
+   * about to receive with one about our own bookkeeping. The expiry sweep
+   * removes the row anyway if this does not.
+   */
+  private async release(rowId: number): Promise<void> {
+    try {
+      await this.idempotencyRepository.release(rowId);
+    } catch (error) {
+      this.#logger.error(
+        `Could not release idempotency reservation ${rowId}: ${
+          (error as Error).message
+        }`,
+      );
+    }
   }
 }

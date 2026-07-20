@@ -1,12 +1,20 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { AuthenticatedUser, CurrentUser } from '@shared';
+import { AuthenticatedUser, CriteriaQueryDto, CurrentUser } from '@shared';
 import {
   AccountArchivedOutputDto,
   AccountBalanceOutputDto,
   AccountInputDto,
   AccountOutputDto,
-  UserAccountFilterDto,
 } from '@app/account/application/dto';
 import { AccountMapper } from '@app/account/application/mappers';
 import {
@@ -29,27 +37,34 @@ export class AccountController {
     private readonly removeAccountUsecase: RemoveAccountUsecase,
   ) {}
 
+  /**
+   * Filters follow the shared criteria contract; see `CriteriaQueryDto`.
+   * Replaces the former `GET /accounts/query`, and the single-account read
+   * moved from `GET /accounts?account=:id` to `GET /accounts/:id`.
+   */
   @Get()
-  async findOne(
-    @CurrentUser() user: AuthenticatedUser,
-    @Query() filter: UserAccountFilterDto,
-  ): Promise<AccountOutputDto> {
-    return this.findAccountUsecase.execute(filter, user.id);
-  }
-
-  @Get('/query')
   async findAll(
     @CurrentUser() user: AuthenticatedUser,
+    @Query() query: CriteriaQueryDto,
   ): Promise<AccountOutputDto[]> {
-    return this.findAllAccountsUsecase.execute(user.id);
+    return this.findAllAccountsUsecase.execute(query, user.id);
   }
 
+  // Registered before `:id` so the literal segment is not swallowed by it.
   @Get(':id/balance')
   async balance(
     @CurrentUser() user: AuthenticatedUser,
     @Param('id') id: number,
   ): Promise<AccountBalanceOutputDto> {
     return this.getAccountBalanceUsecase.execute(id, user.id);
+  }
+
+  @Get(':id')
+  async findOne(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id') id: number,
+  ): Promise<AccountOutputDto> {
+    return this.findAccountUsecase.execute(id, user.id);
   }
 
   @Post()

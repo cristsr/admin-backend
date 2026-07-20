@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { CategoryRepository } from '@app/category/domain/category';
+import {
+  CategoryCriteria,
+  CategoryRepository,
+} from '@app/category/domain/category';
 
 /**
  * Flat list of "Category" and "Category/Subcategory" strings, matching the
@@ -13,7 +16,9 @@ export class GetTaxonomyUsecase {
   constructor(private readonly categoryRepository: CategoryRepository) {}
 
   async execute(): Promise<string[]> {
-    const categories = await this.categoryRepository.findAll();
+    const categories = await this.categoryRepository.matching(
+      CategoryCriteria.all(),
+    );
 
     return categories.flatMap((category) => [
       category.name,

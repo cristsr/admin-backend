@@ -5,6 +5,7 @@ import { CategorizationRuleModule } from '../categorization-rule/categorization-
 import { CategoryModule } from '../category/category.module';
 import { IdempotencyModule } from '../idempotency/idempotency.module';
 import { OutboxModule } from '../outbox/outbox.module';
+import { RecordMovementService } from './application/services';
 import {
   FindAllMovementsUsecase,
   FindMovementUsecase,
@@ -31,12 +32,16 @@ import {
   controllers: [MovementController],
   providers: [
     { provide: MovementRepository, useClass: TypeOrmMovementRepository },
+    RecordMovementService,
     FindMovementUsecase,
     FindAllMovementsUsecase,
     SaveMovementUsecase,
     UpdateMovementUsecase,
     RemoveMovementUsecase,
   ],
-  exports: [MovementRepository],
+  // RecordMovementService is exported so every module that records a movement
+  // (the ingestion webhook today) goes through the same rules instead of
+  // rebuilding them against the repository.
+  exports: [MovementRepository, RecordMovementService],
 })
 export class MovementModule {}

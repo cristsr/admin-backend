@@ -1,32 +1,26 @@
-import { Nullable } from '@shared';
+import { Criteria, Nullable } from '@shared';
+import { BudgetField } from './budget.criteria';
 import { Budget } from './budget.entity';
 
-export interface BudgetQuery {
-  account?: number;
-  startDate: Date;
-  endDate: Date;
-  user: number;
-  take?: number;
-  skip?: number;
-}
-
+/**
+ * Reads take a criteria; the questions themselves live in `BudgetCriteria`,
+ * stated in domain terms.
+ */
 export abstract class BudgetRepository {
-  abstract findByIdAndUser(id: number, user: number): Promise<Nullable<Budget>>;
+  abstract matching(criteria: Criteria<BudgetField>): Promise<Budget[]>;
 
-  abstract findAll(filter: BudgetQuery): Promise<Budget[]>;
-
-  abstract findActiveMatching(
-    categoryId: number,
-    accountId: number,
-    date: Date,
-    user: number,
-  ): Promise<Budget[]>;
-
-  abstract findDueForRegeneration(now: Date): Promise<Budget[]>;
+  abstract firstMatching(
+    criteria: Criteria<BudgetField>,
+  ): Promise<Nullable<Budget>>;
 
   abstract save(budget: Budget): Promise<Budget>;
 
-  abstract softRemove(id: number, user: number): Promise<boolean>;
+  /** Soft-deletes every match and answers how many rows it touched. */
+  abstract removeMatching(criteria: Criteria<BudgetField>): Promise<number>;
 
+  /**
+   * Marks a budget as no longer the current period. Not a deletion and not a
+   * criteria: it targets the one budget whose successor has just been created.
+   */
   abstract deactivate(id: number): Promise<void>;
 }

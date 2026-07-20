@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import {
+  CategoryCriteria,
   CategoryNotFoundException,
   CategoryRepository,
 } from '@app/category/domain/category';
+import { CategorizationRuleCriteria } from './categorization-rule.criteria';
 import { CategorizationRuleRepository } from './categorization-rule.repository';
 
 /** What is known about a movement that arrived without a category. */
@@ -34,7 +36,9 @@ export class CategorizationService {
     input: CategorizationInput,
     user: number,
   ): Promise<CategoryAssignment> {
-    const rules = await this.ruleRepository.findByUserOrderByPriorityDesc(user);
+    const rules = await this.ruleRepository.matching(
+      CategorizationRuleCriteria.byPriority(user),
+    );
 
     const match = rules.find((rule) =>
       rule.matches(input.merchant, input.description),
@@ -47,7 +51,9 @@ export class CategorizationService {
       };
     }
 
-    const fallback = await this.categoryRepository.findSystemDefault();
+    const fallback = await this.categoryRepository.firstMatching(
+      CategoryCriteria.systemDefault(),
+    );
 
     if (!fallback) {
       throw new CategoryNotFoundException(

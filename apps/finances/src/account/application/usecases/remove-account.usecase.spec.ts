@@ -7,7 +7,7 @@ describe('RemoveAccountUsecase — cascade archive (AC-5)', () => {
 
   beforeEach(() => {
     accountRepository = {
-      findByIdAndUser: jest.fn(),
+      firstMatching: jest.fn(),
       archiveCascade: jest
         .fn()
         .mockResolvedValue({ archivedMovements: 3, archivedTransfers: 2 }),
@@ -16,7 +16,7 @@ describe('RemoveAccountUsecase — cascade archive (AC-5)', () => {
   });
 
   it('soft-deletes the account in cascade and reports what was archived', async () => {
-    accountRepository.findByIdAndUser.mockResolvedValue({ id: 1 });
+    accountRepository.firstMatching.mockResolvedValue({ id: 1 });
 
     const result = await usecase.execute(1, 42);
 
@@ -29,13 +29,13 @@ describe('RemoveAccountUsecase — cascade archive (AC-5)', () => {
   });
 
   it('no longer blocks when the account has movements', async () => {
-    accountRepository.findByIdAndUser.mockResolvedValue({ id: 1 });
+    accountRepository.firstMatching.mockResolvedValue({ id: 1 });
 
     await expect(usecase.execute(1, 42)).resolves.toBeDefined();
   });
 
   it('throws 404 when the account does not belong to the user', async () => {
-    accountRepository.findByIdAndUser.mockResolvedValue(null);
+    accountRepository.firstMatching.mockResolvedValue(null);
 
     await expect(usecase.execute(1, 42)).rejects.toBeInstanceOf(
       AccountNotFoundException,

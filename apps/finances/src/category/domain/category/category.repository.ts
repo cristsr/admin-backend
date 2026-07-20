@@ -1,27 +1,23 @@
-import { Nullable } from '@shared';
+import { Criteria, Nullable } from '@shared';
+import { CategoryField } from './category.criteria';
 import { Category } from './category.entity';
 
-export interface CategoryQuery {
-  take?: number;
-  skip?: number;
-}
-
+/**
+ * Reads take a criteria; the questions themselves live in `CategoryCriteria`,
+ * stated in domain terms.
+ */
 export abstract class CategoryRepository {
-  abstract findById(id: number): Promise<Nullable<Category>>;
+  abstract matching(criteria: Criteria<CategoryField>): Promise<Category[]>;
 
-  abstract findByName(name: string): Promise<Nullable<Category>>;
-
-  /**
-   * The system default category ("Sin categorizar", AC-4). Used as the fallback
-   * when no auto-categorization rule matches.
-   */
-  abstract findSystemDefault(): Promise<Nullable<Category>>;
-
-  abstract findAll(query?: CategoryQuery): Promise<Category[]>;
+  abstract firstMatching(
+    criteria: Criteria<CategoryField>,
+  ): Promise<Nullable<Category>>;
 
   abstract save(category: Category): Promise<Category>;
 
+  /** Persists a batch with its subcategories in a single transaction. */
   abstract saveMany(categories: Category[]): Promise<void>;
 
-  abstract remove(id: number): Promise<boolean>;
+  /** Soft-deletes every match and answers how many rows it touched. */
+  abstract removeMatching(criteria: Criteria<CategoryField>): Promise<number>;
 }

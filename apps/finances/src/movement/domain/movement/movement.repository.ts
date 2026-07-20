@@ -1,57 +1,33 @@
-import { Nullable } from '@shared';
+import { Criteria, Nullable } from '@shared';
 import { EntityManager } from 'typeorm';
-import { Money } from '@app/shared/domain';
+import { MovementField } from './movement.criteria';
 import { Movement } from './movement.entity';
-import { MovementType } from './movement.types';
 
-export interface MovementQuery {
-  startDate: Date;
-  endDate: Date;
-  user: number;
-  account?: number;
-  category?: number;
-  type?: MovementType[];
-  take?: number;
-  skip?: number;
-}
-
-export interface MovementSumQuery {
-  user: number;
-  category: number;
-  startDate: Date;
-  endDate: Date;
-  type: MovementType;
-  /**
-   * Only movements held in this currency are summed. Adding amounts across
-   * currencies would produce a total that means nothing, so the caller states
-   * which currency the total must come back in.
-   */
-  currency: string;
-  account?: number;
-}
-
+/**
+ * Reads are expressed as criteria rather than as one method per question. The
+ * questions themselves did not disappear — they moved to `MovementCriteria`,
+ * where they are stated in domain terms and can be composed, instead of
+ * growing this port by one signature every time a screen needs a new filter.
+ */
 export abstract class MovementRepository {
-  abstract findById(id: number): Promise<Nullable<Movement>>;
-
-  abstract findByIdAndUser(
-    id: number,
-    user: number,
-  ): Promise<Nullable<Movement>>;
-
-  abstract findByExternalReference(
-    externalReference: string,
-  ): Promise<Nullable<Movement>>;
+  abstract matching(criteria: Criteria<MovementField>): Promise<Movement[]>;
 
   /**
-   * Both legs (or the compensating pair) that share a transferGroup, scoped
-   * to the user.
+   * The first match, honouring the criteria's own ordering. `null` when
+   * nothing matches — an empty result is an answer, not a failure.
    */
-  abstract findByTransferGroup(
-    transferGroup: string,
-    user: number,
-  ): Promise<Movement[]>;
+  abstract firstMatching(
+    criteria: Criteria<MovementField>,
+  ): Promise<Nullable<Movement>>;
 
-  abstract findAll(filter: MovementQuery): Promise<Movement[]>;
+  abstract countMatching(criteria: Criteria<MovementField>): Promise<number>;
+
+  /**
+   * Total of the `amount` column over the matches, as a plain number: the
+   * repository has no way to know which currency labels it, so the caller —
+   * which put the currency filter in the criteria — mints the `Money`.
+   */
+  abstract sumAmount(criteria: Criteria<MovementField>): Promise<number>;
 
   abstract save(movement: Movement): Promise<Movement>;
 
@@ -75,7 +51,6 @@ export abstract class MovementRepository {
    */
   abstract saveAll(movements: Movement[]): Promise<Movement[]>;
 
-  abstract remove(id: number, user: number): Promise<boolean>;
-
-  abstract sumAmount(query: MovementSumQuery): Promise<Money>;
+  /** Soft-deletes every match and answers how many rows it touched. */
+  abstract removeMatching(criteria: Criteria<MovementField>): Promise<number>;
 }

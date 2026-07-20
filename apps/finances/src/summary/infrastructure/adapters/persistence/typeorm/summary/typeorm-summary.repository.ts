@@ -1,10 +1,16 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Nullable } from '@shared';
+import { Nullable, TypeOrmCriteriaConverter } from '@shared';
 import { DataSource, In, Repository } from 'typeorm';
 import { TypeOrmCategoryEntity } from '@app/category/infrastructure/adapters/persistence/typeorm/category';
-import { Movement, MovementType } from '@app/movement/domain/movement';
 import {
+  Movement,
+  MovementCriteria,
+  MovementField,
+  MovementType,
+} from '@app/movement/domain/movement';
+import {
+  MOVEMENT_CRITERIA_FIELDS,
   TypeOrmMovementEntity,
   TypeOrmMovementMapper,
 } from '@app/movement/infrastructure/adapters/persistence/typeorm/movement';
@@ -17,8 +23,16 @@ import {
   SummaryRepository,
 } from '@app/summary/domain/summary';
 
+/** How many movements the dashboard strip shows. */
+const LAST_MOVEMENTS_LIMIT = 5;
+
 @Injectable()
 export class TypeOrmSummaryRepository implements SummaryRepository {
+  readonly #criteria = new TypeOrmCriteriaConverter<
+    TypeOrmMovementEntity,
+    MovementField
+  >(MOVEMENT_CRITERIA_FIELDS);
+
   constructor(
     @InjectRepository(TypeOrmMovementEntity)
     private readonly movementRepository: Repository<TypeOrmMovementEntity>,
@@ -129,17 +143,21 @@ export class TypeOrmSummaryRepository implements SummaryRepository {
     });
   }
 
+  /**
+   * Reuses `MovementCriteria` rather than re-stating "the newest movements of
+   * an account" in a second place: the dashboard strip and the movements list
+   * must not drift apart on what "newest" means.
+   */
   async lastMovements(filter: LastMovementsQuery): Promise<Movement[]> {
+    const criteria = MovementCriteria.latestForAccount(
+      filter.user,
+      filter.account,
+      LAST_MOVEMENTS_LIMIT,
+    );
+
     const entities = await this.movementRepository.find({
+      ...this.#criteria.toFindOptions(criteria),
       relations: ['category', 'subcategory'],
-      where: {
-        account: { id: filter.account },
-        user: filter.user,
-      },
-      order: {
-        date: 'DESC',
-      },
-      take: 5,
     });
 
     return entities.map(TypeOrmMovementMapper.toDomain);

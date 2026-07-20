@@ -29,14 +29,14 @@ describe('UpdateScheduledUsecase (AC-5)', () => {
 
   beforeEach(() => {
     scheduledRepository = {
-      findByIdAndUser: jest.fn(),
+      firstMatching: jest.fn(),
       save: jest.fn((s) => Promise.resolve(s)),
     };
     subcategoryRepository = {
-      findByIdAndCategory: jest.fn().mockResolvedValue({ id: 9 }),
+      firstMatching: jest.fn().mockResolvedValue({ id: 9 }),
     };
     accountRepository = {
-      findByIdAndUser: jest.fn().mockResolvedValue({ id: 2 }),
+      firstMatching: jest.fn().mockResolvedValue({ id: 2 }),
     };
     usecase = new UpdateScheduledUsecase(
       scheduledRepository,
@@ -46,14 +46,14 @@ describe('UpdateScheduledUsecase (AC-5)', () => {
   });
 
   it('404 when the scheduled belongs to another user', async () => {
-    scheduledRepository.findByIdAndUser.mockResolvedValue(null);
+    scheduledRepository.firstMatching.mockResolvedValue(null);
     await expect(usecase.execute(1, { amount: 10 }, 7)).rejects.toThrow(
       ScheduledNotFoundException,
     );
   });
 
   it('updates amount and frequency without touching the type', async () => {
-    scheduledRepository.findByIdAndUser.mockResolvedValue(buildScheduled());
+    scheduledRepository.firstMatching.mockResolvedValue(buildScheduled());
     const result = await usecase.execute(
       1,
       { amount: 10, frequency: Frequency.WEEKLY },
@@ -66,13 +66,13 @@ describe('UpdateScheduledUsecase (AC-5)', () => {
   });
 
   it('editing the amount keeps the currency of the entry', async () => {
-    scheduledRepository.findByIdAndUser.mockResolvedValue(buildScheduled());
+    scheduledRepository.firstMatching.mockResolvedValue(buildScheduled());
     const result = await usecase.execute(1, { amount: 10 }, 7);
     expect(result.money.currency).toBe('COP');
   });
 
   it('does not create or modify already-materialized movements (only edits the template)', async () => {
-    scheduledRepository.findByIdAndUser.mockResolvedValue(buildScheduled());
+    scheduledRepository.firstMatching.mockResolvedValue(buildScheduled());
     await usecase.execute(1, { amount: 10 }, 7);
     // the usecase only persists the template; it does not touch the movements table
     expect(scheduledRepository.save).toHaveBeenCalledTimes(1);

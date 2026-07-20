@@ -1,14 +1,21 @@
 import { Injectable } from '@nestjs/common';
-import { normalizePagination } from '@shared';
-import { Movement, MovementRepository } from '@app/movement/domain/movement';
-import { MovementFilterDto } from '../dto/movement-filter.dto';
+import { CriteriaQueryDto } from '@shared';
+import {
+  Movement,
+  MovementCriteria,
+  MovementRepository,
+} from '@app/movement/domain/movement';
 
 @Injectable()
 export class FindAllMovementsUsecase {
   constructor(private readonly movementRepository: MovementRepository) {}
 
-  async execute(filter: MovementFilterDto, user: number): Promise<Movement[]> {
-    const { take, skip } = normalizePagination(filter);
-    return this.movementRepository.findAll({ ...filter, user, take, skip });
+  /**
+   * The query only ever narrows the listing: ownership is pinned by
+   * `MovementCriteria.list`, so no filter a caller writes can reach another
+   * user's movements.
+   */
+  async execute(query: CriteriaQueryDto, user: number): Promise<Movement[]> {
+    return this.movementRepository.matching(MovementCriteria.list(query, user));
   }
 }

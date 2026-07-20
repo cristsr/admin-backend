@@ -1,18 +1,22 @@
 import { Injectable } from '@nestjs/common';
 import {
+  AccountCriteria,
   AccountNotFoundException,
   AccountRepository,
 } from '@app/account/domain/account';
 import {
+  CategoryCriteria,
   CategoryNotFoundException,
   CategoryRepository,
 } from '@app/category/domain/category';
 import {
+  SubcategoryCriteria,
   SubcategoryNotFoundException,
   SubcategoryRepository,
 } from '@app/category/domain/subcategory';
 import {
   Scheduled,
+  ScheduledCriteria,
   ScheduledNotFoundException,
   ScheduledRepository,
 } from '@app/scheduled/domain/scheduled';
@@ -31,14 +35,19 @@ export class SaveScheduledUsecase {
   async execute(input: ScheduledInputDto, user: number): Promise<Scheduled> {
     const [existing, category, subcategory, account] = await Promise.all([
       input.id
-        ? this.scheduledRepository.findByIdAndUser(input.id, user)
+        ? this.scheduledRepository.firstMatching(
+            ScheduledCriteria.byIdAndUser(input.id, user),
+          )
         : null,
-      this.categoryRepository.findById(input.category),
-      this.subcategoryRepository.findByIdAndCategory(
-        input.subcategory,
-        input.category,
+      this.categoryRepository.firstMatching(
+        CategoryCriteria.byId(input.category),
       ),
-      this.accountRepository.findByIdAndUser(input.account, user),
+      this.subcategoryRepository.firstMatching(
+        SubcategoryCriteria.byIdAndCategory(input.subcategory, input.category),
+      ),
+      this.accountRepository.firstMatching(
+        AccountCriteria.byIdAndUser(input.account, user),
+      ),
     ]);
 
     if (input.id && !existing) {

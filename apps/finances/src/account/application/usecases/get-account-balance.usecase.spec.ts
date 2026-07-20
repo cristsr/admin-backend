@@ -12,7 +12,7 @@ describe('GetAccountBalanceUsecase (AC-3)', () => {
 
   beforeEach(() => {
     accountRepository = {
-      findByIdAndUser: jest.fn().mockResolvedValue(account),
+      firstMatching: jest.fn().mockResolvedValue(account),
       movementBalance: jest.fn().mockResolvedValue(50),
     };
     usecase = new GetAccountBalanceUsecase(accountRepository);
@@ -31,7 +31,7 @@ describe('GetAccountBalanceUsecase (AC-3)', () => {
   });
 
   it('throws AccountNotFoundException when the account belongs to another user (scoping)', async () => {
-    accountRepository.findByIdAndUser.mockResolvedValue(null);
+    accountRepository.firstMatching.mockResolvedValue(null);
     await expect(usecase.execute(1, 7)).rejects.toThrow(
       AccountNotFoundException,
     );

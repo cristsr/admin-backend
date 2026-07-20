@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import { BudgetRepository } from '@app/budget/domain/budget';
+import { BudgetCriteria, BudgetRepository } from '@app/budget/domain/budget';
 import {
   Movement,
+  MovementCriteria,
   MovementRepository,
   MovementType,
 } from '@app/movement/domain/movement';
@@ -14,16 +15,22 @@ export class FindBudgetMovementsUsecase {
   ) {}
 
   async execute(id: number, user: number): Promise<Movement[]> {
-    const budget = await this.budgetRepository.findByIdAndUser(id, user);
+    const budget = await this.budgetRepository.firstMatching(
+      BudgetCriteria.byIdAndUser(id, user),
+    );
 
     if (!budget) return [];
 
-    return this.movementRepository.findAll({
-      user,
-      startDate: budget.startDate,
-      endDate: budget.endDate,
-      category: budget.categoryId,
-      type: [MovementType.EXPENSE],
-    });
+    // No currency filter: this lists what the budget covers rather than
+    // totalling it, so a movement in another currency is still worth showing.
+    return this.movementRepository.matching(
+      MovementCriteria.spendingIn({
+        user,
+        category: budget.categoryId,
+        type: MovementType.EXPENSE,
+        startDate: budget.startDate,
+        endDate: budget.endDate,
+      }),
+    );
   }
 }

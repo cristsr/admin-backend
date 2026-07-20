@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  AccountCriteria,
   AccountNotFoundException,
   AccountRepository,
 } from '@app/account/domain/account';
@@ -10,7 +11,9 @@ export class GetAccountBalanceUsecase {
   constructor(private readonly accountRepository: AccountRepository) {}
 
   async execute(id: number, user: number): Promise<AccountBalanceOutputDto> {
-    const account = await this.accountRepository.findByIdAndUser(id, user);
+    const account = await this.accountRepository.firstMatching(
+      AccountCriteria.byIdAndUser(id, user),
+    );
     if (!account) {
       throw new AccountNotFoundException('Account not found');
     }

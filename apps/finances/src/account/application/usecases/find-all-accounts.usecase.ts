@@ -1,5 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { AccountRepository } from '@app/account/domain/account';
+import { CriteriaQueryDto } from '@shared';
+import {
+  AccountCriteria,
+  AccountRepository,
+} from '@app/account/domain/account';
 import { AccountOutputDto } from '../dto';
 import { AccountMapper } from '../mappers';
 
@@ -7,9 +11,12 @@ import { AccountMapper } from '../mappers';
 export class FindAllAccountsUsecase {
   constructor(private readonly accountRepository: AccountRepository) {}
 
-  async execute(user: number): Promise<AccountOutputDto[]> {
+  async execute(
+    query: CriteriaQueryDto,
+    user: number,
+  ): Promise<AccountOutputDto[]> {
     const [accounts, balances] = await Promise.all([
-      this.accountRepository.findAllByUser(user),
+      this.accountRepository.matching(AccountCriteria.list(query, user)),
       this.accountRepository.movementBalancesByUser(user),
     ]);
 

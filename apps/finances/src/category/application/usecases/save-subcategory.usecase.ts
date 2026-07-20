@@ -1,10 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import {
+  CategoryCriteria,
   CategoryNotFoundException,
   CategoryRepository,
 } from '@app/category/domain/category';
 import {
   Subcategory,
+  SubcategoryCriteria,
   SubcategoryNotFoundException,
   SubcategoryRepository,
 } from '@app/category/domain/subcategory';
@@ -19,8 +21,14 @@ export class SaveSubcategoryUsecase {
 
   async execute(input: SubcategoryInputDto): Promise<Subcategory> {
     const [existing, category] = await Promise.all([
-      input.id ? this.subcategoryRepository.findById(input.id) : null,
-      this.categoryRepository.findById(input.category),
+      input.id
+        ? this.subcategoryRepository.firstMatching(
+            SubcategoryCriteria.byId(input.id),
+          )
+        : null,
+      this.categoryRepository.firstMatching(
+        CategoryCriteria.byId(input.category),
+      ),
     ]);
 
     if (input.id && !existing) {

@@ -1,14 +1,16 @@
 import { Injectable } from '@nestjs/common';
-import { normalizePagination } from '@shared';
-import { Category, CategoryRepository } from '@app/category/domain/category';
-import { CategoryFilterDto } from '../dto/category-filter.dto';
+import { CriteriaQueryDto } from '@shared';
+import {
+  Category,
+  CategoryCriteria,
+  CategoryRepository,
+} from '@app/category/domain/category';
 
 @Injectable()
 export class FindAllCategoriesUsecase {
   constructor(private readonly categoryRepository: CategoryRepository) {}
 
-  async execute(filter: CategoryFilterDto = {}): Promise<Category[]> {
-    const { take, skip } = normalizePagination(filter);
-    return this.categoryRepository.findAll({ take, skip });
+  async execute(query?: CriteriaQueryDto): Promise<Category[]> {
+    return this.categoryRepository.matching(CategoryCriteria.list(query));
   }
 }

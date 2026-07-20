@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   Account,
+  AccountCriteria,
   AccountNotFoundException,
   AccountRepository,
 } from '@app/account/domain/account';
@@ -13,7 +14,9 @@ export class SaveAccountUsecase {
 
   async execute(input: AccountInputDto, user: number): Promise<Account> {
     const existing = input.id
-      ? await this.accountRepository.findByIdAndUser(input.id, user)
+      ? await this.accountRepository.firstMatching(
+          AccountCriteria.byIdAndUser(input.id, user),
+        )
       : null;
 
     if (input.id && !existing) {

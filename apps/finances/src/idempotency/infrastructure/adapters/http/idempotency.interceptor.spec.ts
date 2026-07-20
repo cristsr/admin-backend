@@ -50,7 +50,7 @@ describe('IdempotencyInterceptor (AC-3)', () => {
   let interceptor: IdempotencyInterceptor;
 
   beforeEach(() => {
-    repo = { reserve: jest.fn(), complete: jest.fn() };
+    repo = { reserve: jest.fn(), complete: jest.fn(), release: jest.fn() };
     interceptor = new IdempotencyInterceptor(repo);
   });
 
@@ -101,6 +101,55 @@ describe('IdempotencyInterceptor (AC-3)', () => {
     await expect(
       lastValueFrom(interceptor.intercept(ctx as any, next as any)),
     ).rejects.toBeInstanceOf(IdempotencyConflictException);
+  });
+
+  /**
+   * A handler that failed rolled its work back, so there is nothing to replay.
+   * Holding the reservation would answer every retry of that key with 409 until
+   * the record expired a day later.
+   */
+  describe('when the handler fails', () => {
+    const failing = (reason: Error) => ({
+      handle: () => {
+        throw reason;
+      },
+    });
+
+    beforeEach(() => {
+      repo.reserve.mockResolvedValue({
+        created: true,
+        row: completed({
+          status: IdempotencyStatus.PENDING,
+          responseBody: undefined,
+        }),
+      });
+    });
+
+    it('releases the reservation and surfaces the original failure', async () => {
+      const { ctx } = makeContext();
+      const boom = new Error('handler boom');
+
+      await expect(
+        lastValueFrom(
+          interceptor.intercept(ctx as any, failing(boom) as any),
+        ),
+      ).rejects.toBe(boom);
+
+      expect(repo.release).toHaveBeenCalledWith(1);
+      expect(repo.complete).not.toHaveBeenCalled();
+    });
+
+    it('still surfaces the original failure when releasing itself fails', async () => {
+      repo.release.mockRejectedValue(new Error('db down'));
+      const { ctx } = makeContext();
+      const boom = new Error('handler boom');
+
+      await expect(
+        lastValueFrom(
+          interceptor.intercept(ctx as any, failing(boom) as any),
+        ),
+      ).rejects.toBe(boom);
+    });
   });
 
   it('throws 409 when the existing key is still PENDING (in progress)', async () => {

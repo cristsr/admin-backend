@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   Account,
+  AccountCriteria,
   AccountNotFoundException,
   AccountRepository,
 } from '@app/account/domain/account';
@@ -29,8 +30,12 @@ export class CreateTransferUsecase {
     user: number,
   ): Promise<TransferOutputDto> {
     const [from, to] = await Promise.all([
-      this.accountRepository.findByIdAndUser(input.from, user),
-      this.accountRepository.findByIdAndUser(input.to, user),
+      this.accountRepository.firstMatching(
+        AccountCriteria.byIdAndUser(input.from, user),
+      ),
+      this.accountRepository.firstMatching(
+        AccountCriteria.byIdAndUser(input.to, user),
+      ),
     ]);
 
     if (!from) {

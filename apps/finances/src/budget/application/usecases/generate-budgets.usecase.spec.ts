@@ -5,7 +5,7 @@ import { GenerateBudgetsUsecase } from './generate-budgets.usecase';
 describe('GenerateBudgetsUsecase (AC-4 cron metrics)', () => {
   it('logs a structured line with budgetsGenerated and a generated correlationId for the run', async () => {
     const budgetRepository: any = {
-      findDueForRegeneration: jest.fn().mockResolvedValue([
+      matching: jest.fn().mockResolvedValue([
         Budget.create({
           id: 1,
           period: Period.MONTHLY,

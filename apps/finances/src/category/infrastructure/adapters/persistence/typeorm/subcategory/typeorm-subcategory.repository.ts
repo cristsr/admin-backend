@@ -1,50 +1,45 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Nullable } from '@shared';
-import { ILike, Repository } from 'typeorm';
+import { Criteria, Nullable, TypeOrmCriteriaConverter } from '@shared';
+import { Repository } from 'typeorm';
 import {
   Subcategory,
+  SubcategoryField,
   SubcategoryRepository,
 } from '@app/category/domain/subcategory';
+import { SUBCATEGORY_CRITERIA_FIELDS } from './typeorm-subcategory.criteria-fields';
 import { TypeOrmSubcategoryEntity } from './typeorm-subcategory.entity';
 import { TypeOrmSubcategoryMapper } from './typeorm-subcategory.mapper';
 
 @Injectable()
 export class TypeOrmSubcategoryRepository implements SubcategoryRepository {
+  readonly #criteria = new TypeOrmCriteriaConverter<
+    TypeOrmSubcategoryEntity,
+    SubcategoryField
+  >(SUBCATEGORY_CRITERIA_FIELDS);
+
   constructor(
     @InjectRepository(TypeOrmSubcategoryEntity)
     private readonly repository: Repository<TypeOrmSubcategoryEntity>,
   ) {}
 
-  async findById(id: number): Promise<Nullable<Subcategory>> {
-    const entity = await this.repository.findOne({ where: { id } });
-    return entity ? TypeOrmSubcategoryMapper.toDomain(entity) : null;
-  }
+  async matching(
+    criteria: Criteria<SubcategoryField>,
+  ): Promise<Subcategory[]> {
+    const entities = await this.repository.find(
+      this.#criteria.toFindOptions(criteria),
+    );
 
-  async findByIdAndCategory(
-    id: number,
-    categoryId: number,
-  ): Promise<Nullable<Subcategory>> {
-    const entity = await this.repository.findOne({
-      where: { id, category: { id: categoryId } },
-    });
-    return entity ? TypeOrmSubcategoryMapper.toDomain(entity) : null;
-  }
-
-  async findByCategory(categoryId: number): Promise<Subcategory[]> {
-    const entities = await this.repository.find({
-      where: { category: { id: categoryId } },
-    });
     return entities.map(TypeOrmSubcategoryMapper.toDomain);
   }
 
-  async findByNameAndCategory(
-    name: string,
-    categoryId: number,
+  async firstMatching(
+    criteria: Criteria<SubcategoryField>,
   ): Promise<Nullable<Subcategory>> {
-    const entity = await this.repository.findOne({
-      where: { name: ILike(name), category: { id: categoryId } },
-    });
+    const entity = await this.repository.findOne(
+      this.#criteria.toFindOptions(criteria),
+    );
+
     return entity ? TypeOrmSubcategoryMapper.toDomain(entity) : null;
   }
 
@@ -52,9 +47,7 @@ export class TypeOrmSubcategoryRepository implements SubcategoryRepository {
     const saved = await this.repository.save(
       TypeOrmSubcategoryMapper.toEntity(subcategory),
     );
-    return TypeOrmSubcategoryMapper.toDomain(
-      saved as TypeOrmSubcategoryEntity,
-    );
+    return TypeOrmSubcategoryMapper.toDomain(saved as TypeOrmSubcategoryEntity);
   }
 
   async saveMany(subcategories: Subcategory[]): Promise<void> {
@@ -63,8 +56,11 @@ export class TypeOrmSubcategoryRepository implements SubcategoryRepository {
     );
   }
 
-  async remove(id: number): Promise<boolean> {
-    const result = await this.repository.softDelete(id);
-    return !!result.affected;
+  async removeMatching(criteria: Criteria<SubcategoryField>): Promise<number> {
+    const result = await this.repository.softDelete(
+      this.#criteria.toWhere(criteria),
+    );
+
+    return result.affected ?? 0;
   }
 }

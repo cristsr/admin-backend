@@ -3,6 +3,7 @@ import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { BudgetThresholdExceeded, BudgetThresholdExceededPayload } from '@app/budget/application/budget.constants';
 import {
   Budget,
+  BudgetCriteria,
   BudgetRepository,
   BudgetSpendingService,
 } from '@app/budget/domain/budget';
@@ -29,11 +30,13 @@ export class MovementSavedEventHandler {
       `Movement saved event received correlationId=${payload.correlationId ?? '-'}`,
     );
 
-    const budgets = await this.budgetRepository.findActiveMatching(
-      payload.categoryId,
-      payload.accountId,
-      payload.date,
-      payload.user,
+    const budgets = await this.budgetRepository.matching(
+      BudgetCriteria.activeCovering({
+        user: payload.user,
+        category: payload.categoryId,
+        account: payload.accountId,
+        date: payload.date,
+      }),
     );
 
     for (const budget of budgets) {

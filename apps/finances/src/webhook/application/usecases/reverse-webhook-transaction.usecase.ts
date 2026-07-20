@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import {
+  MovementCriteria,
   MovementNotFoundException,
   MovementRepository,
 } from '@app/movement/domain/movement';
@@ -19,15 +20,17 @@ export class ReverseWebhookTransactionUsecase {
   async execute(
     externalReference: string,
   ): Promise<MovementReversalOutputDto> {
-    const original =
-      await this.movementRepository.findByExternalReference(externalReference);
+    const original = await this.movementRepository.firstMatching(
+      MovementCriteria.byExternalReference(externalReference),
+    );
     if (!original) {
       throw new MovementNotFoundException('Transaction not found');
     }
 
     const reversalReference = `reversal:${externalReference}`;
-    const existing =
-      await this.movementRepository.findByExternalReference(reversalReference);
+    const existing = await this.movementRepository.firstMatching(
+      MovementCriteria.byExternalReference(reversalReference),
+    );
     if (existing) {
       return {
         externalReference,

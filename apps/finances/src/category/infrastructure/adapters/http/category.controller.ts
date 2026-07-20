@@ -1,9 +1,8 @@
 import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import { Public } from '@shared';
+import { CriteriaQueryDto, Public } from '@shared';
 import {
   CategoriesInputDto,
-  CategoryFilterDto,
   CategoryInputDto,
   CategoryOutputDto,
   TaxonomyOutputDto,
@@ -51,11 +50,12 @@ export class CategoryController {
     return category && CategoryMapper.toOutput(category);
   }
 
+  /** Filters follow the shared criteria contract; see `CriteriaQueryDto`. */
   @Get()
   async findAll(
-    @Query() filter: CategoryFilterDto,
+    @Query() query: CriteriaQueryDto,
   ): Promise<CategoryOutputDto[]> {
-    const categories = await this.findAllCategoriesUsecase.execute(filter);
+    const categories = await this.findAllCategoriesUsecase.execute(query);
     return categories.map(CategoryMapper.toOutput);
   }
 

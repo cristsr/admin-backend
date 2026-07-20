@@ -1,9 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import {
+  CategoryCriteria,
   CategoryNotFoundException,
   CategoryRepository,
 } from '@app/category/domain/category';
 import {
+  SubcategoryCriteria,
   SubcategoryNotFoundException,
   SubcategoryRepository,
 } from '@app/category/domain/subcategory';
@@ -50,11 +52,15 @@ export class CategoryResolver {
     }
 
     const [category, subcategory] = await Promise.all([
-      this.categoryRepository.findById(selection.categoryId),
+      this.categoryRepository.firstMatching(
+        CategoryCriteria.byId(selection.categoryId),
+      ),
       selection.subcategoryId
-        ? this.subcategoryRepository.findByIdAndCategory(
-            selection.subcategoryId,
-            selection.categoryId,
+        ? this.subcategoryRepository.firstMatching(
+            SubcategoryCriteria.byIdAndCategory(
+              selection.subcategoryId,
+              selection.categoryId,
+            ),
           )
         : null,
     ]);
@@ -79,8 +85,8 @@ export class CategoryResolver {
       return this.categorization.categorize(hints, user);
     }
 
-    const category = await this.categoryRepository.findByName(
-      selection.category,
+    const category = await this.categoryRepository.firstMatching(
+      CategoryCriteria.byName(selection.category),
     );
 
     if (!category) {
@@ -90,9 +96,11 @@ export class CategoryResolver {
     }
 
     const subcategory = selection.subcategory
-      ? await this.subcategoryRepository.findByNameAndCategory(
-          selection.subcategory,
-          category.id,
+      ? await this.subcategoryRepository.firstMatching(
+          SubcategoryCriteria.byNameAndCategory(
+            selection.subcategory,
+            category.id,
+          ),
         )
       : null;
 

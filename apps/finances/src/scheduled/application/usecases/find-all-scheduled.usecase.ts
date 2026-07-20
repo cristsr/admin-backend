@@ -1,17 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { normalizePagination } from '@shared';
+import { CriteriaQueryDto } from '@shared';
 import {
   Scheduled,
+  ScheduledCriteria,
   ScheduledRepository,
 } from '@app/scheduled/domain/scheduled';
-import { ScheduledFilterDto } from '../dto/scheduled-filter.dto';
 
 @Injectable()
 export class FindAllScheduledUsecase {
   constructor(private readonly scheduledRepository: ScheduledRepository) {}
 
-  async execute(filter: ScheduledFilterDto, user: number): Promise<Scheduled[]> {
-    const { take, skip } = normalizePagination(filter);
-    return this.scheduledRepository.findAll({ ...filter, user, take, skip });
+  async execute(query: CriteriaQueryDto, user: number): Promise<Scheduled[]> {
+    return this.scheduledRepository.matching(
+      ScheduledCriteria.list(query, user),
+    );
   }
 }

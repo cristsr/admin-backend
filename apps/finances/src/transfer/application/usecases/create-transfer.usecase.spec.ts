@@ -37,7 +37,7 @@ describe('CreateTransferUsecase (AC-2 cross-currency)', () => {
 
   beforeEach(() => {
     accountRepository = {
-      findByIdAndUser: jest.fn(),
+      firstMatching: jest.fn(),
       movementBalance: jest.fn().mockResolvedValue(0),
     };
     movementRepository = {
@@ -52,7 +52,7 @@ describe('CreateTransferUsecase (AC-2 cross-currency)', () => {
   });
 
   it('rejects transferring to the same account', async () => {
-    accountRepository.findByIdAndUser.mockResolvedValue(cop);
+    accountRepository.firstMatching.mockResolvedValue(cop);
 
     await expect(
       usecase.execute(
@@ -63,7 +63,7 @@ describe('CreateTransferUsecase (AC-2 cross-currency)', () => {
   });
 
   it('same currency: rate=1 and toAmount=amount, without calling the provider', async () => {
-    accountRepository.findByIdAndUser
+    accountRepository.firstMatching
       .mockResolvedValueOnce(cop)
       .mockResolvedValueOnce(
         buildAccount({ id: 3, name: 'COP2', initialBalance: Money.zero('COP') }),
@@ -81,7 +81,7 @@ describe('CreateTransferUsecase (AC-2 cross-currency)', () => {
   });
 
   it('different currency: toAmount = amount * provider rate', async () => {
-    accountRepository.findByIdAndUser
+    accountRepository.firstMatching
       .mockResolvedValueOnce(cop)
       .mockResolvedValueOnce(usd);
     exchangeRateProvider.getRate.mockResolvedValue(0.00025);
@@ -101,7 +101,7 @@ describe('CreateTransferUsecase (AC-2 cross-currency)', () => {
   });
 
   it('propagates 422 when no historical rate is available', async () => {
-    accountRepository.findByIdAndUser
+    accountRepository.firstMatching
       .mockResolvedValueOnce(cop)
       .mockResolvedValueOnce(usd);
     exchangeRateProvider.getRate.mockRejectedValue(
@@ -128,7 +128,7 @@ describe('CreateTransferUsecase (AC-1 balance validation)', () => {
 
   beforeEach(() => {
     accountRepository = {
-      findByIdAndUser: jest.fn(),
+      firstMatching: jest.fn(),
       movementBalance: jest.fn().mockResolvedValue(0),
     };
     movementRepository = {
@@ -142,7 +142,7 @@ describe('CreateTransferUsecase (AC-1 balance validation)', () => {
   });
 
   it('rejects when the source has insufficient balance and disallows negative', async () => {
-    accountRepository.findByIdAndUser
+    accountRepository.firstMatching
       .mockResolvedValueOnce(
         source({
           initialBalance: Money.of(100, 'COP'),
@@ -162,7 +162,7 @@ describe('CreateTransferUsecase (AC-1 balance validation)', () => {
   });
 
   it('allows the transfer when the source account permits negative balance', async () => {
-    accountRepository.findByIdAndUser
+    accountRepository.firstMatching
       .mockResolvedValueOnce(
         source({
           initialBalance: Money.zero('COP'),
@@ -180,7 +180,7 @@ describe('CreateTransferUsecase (AC-1 balance validation)', () => {
   });
 
   it('does not even look up the balance when the account may go negative', async () => {
-    accountRepository.findByIdAndUser
+    accountRepository.firstMatching
       .mockResolvedValueOnce(source({ allowNegativeBalance: true }))
       .mockResolvedValueOnce(dest);
 
@@ -193,7 +193,7 @@ describe('CreateTransferUsecase (AC-1 balance validation)', () => {
   });
 
   it('allows the transfer when the live balance covers the amount', async () => {
-    accountRepository.findByIdAndUser
+    accountRepository.firstMatching
       .mockResolvedValueOnce(
         source({
           initialBalance: Money.of(500, 'COP'),

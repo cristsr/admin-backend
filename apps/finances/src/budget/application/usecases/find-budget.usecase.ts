@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { Nullable } from '@shared';
 import {
   Budget,
+  BudgetCriteria,
   BudgetRepository,
   BudgetSpendingService,
 } from '@app/budget/domain/budget';
-import { UserBudgetFilterDto } from '../dto/budget-filter.dto';
 
 @Injectable()
 export class FindBudgetUsecase {
@@ -14,13 +14,9 @@ export class FindBudgetUsecase {
     private readonly budgetSpending: BudgetSpendingService,
   ) {}
 
-  async execute(
-    filter: UserBudgetFilterDto,
-    user: number,
-  ): Promise<Nullable<Budget>> {
-    const budget = await this.budgetRepository.findByIdAndUser(
-      filter.budget,
-      user,
+  async execute(id: number, user: number): Promise<Nullable<Budget>> {
+    const budget = await this.budgetRepository.firstMatching(
+      BudgetCriteria.byIdAndUser(id, user),
     );
 
     if (!budget) return null;

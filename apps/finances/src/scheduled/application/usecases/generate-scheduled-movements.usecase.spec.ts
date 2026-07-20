@@ -3,11 +3,11 @@ import { GenerateScheduledMovementsUsecase } from './generate-scheduled-movement
 describe('GenerateScheduledMovementsUsecase (AC-4 cron metrics)', () => {
   it('logs a structured line with scheduledMaterialized and a generated correlationId for the run', async () => {
     const scheduledRepository: any = {
-      findDue: jest.fn().mockResolvedValue([
+      matching: jest.fn().mockResolvedValue([
         { id: 1, user: 1, recurs: () => false },
         { id: 2, user: 1, recurs: () => false },
       ]),
-      remove: jest.fn().mockResolvedValue(undefined),
+      removeMatching: jest.fn().mockResolvedValue(1),
       save: jest.fn().mockResolvedValue(undefined),
     };
     const movementRepository: any = {

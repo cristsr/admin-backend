@@ -1,4 +1,7 @@
+import { Account } from '@app/account/domain/account';
 import { MovementSaved } from '@app/movement/application/movement.constants';
+import { RecordMovementService } from '@app/movement/application/services';
+import { Money } from '@app/shared/domain';
 import { WebhookTransactionInputDto } from '../dto/webhook-transaction-input.dto';
 import { ReceiveWebhookTransactionUsecase } from './receive-webhook-transaction.usecase';
 
@@ -22,7 +25,7 @@ describe('ReceiveWebhookTransactionUsecase (AC-4 auto-categorization)', () => {
   beforeEach(() => {
     const fakeManager = { id: 'manager' };
     movementRepository = {
-      findByExternalReference: jest.fn().mockResolvedValue(null),
+      firstMatching: jest.fn().mockResolvedValue(null),
       runInTransaction: jest
         .fn()
         .mockImplementation((work) => work(fakeManager)),
@@ -31,7 +34,15 @@ describe('ReceiveWebhookTransactionUsecase (AC-4 auto-categorization)', () => {
         .mockImplementation(async (_manager, m) => ({ ...m, id: 200 })),
     };
     accountRepository = {
-      findByIdAndUser: jest.fn().mockResolvedValue({ id: 3 }),
+      firstMatching: jest.fn().mockResolvedValue(
+        Account.create({
+          id: 3,
+          name: 'Card',
+          initialBalance: Money.of(1000, 'USD'),
+          allowNegativeBalance: false,
+        } as never),
+      ),
+      movementBalance: jest.fn().mockResolvedValue(0),
     };
     categoryResolver = {
       resolveByNames: jest.fn().mockResolvedValue({ categoryId: 55 }),
@@ -41,7 +52,11 @@ describe('ReceiveWebhookTransactionUsecase (AC-4 auto-categorization)', () => {
       movementRepository,
       accountRepository,
       categoryResolver,
-      outboxPublisher,
+      new RecordMovementService(
+        movementRepository,
+        accountRepository,
+        outboxPublisher,
+      ),
     );
   });
 

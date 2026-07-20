@@ -1,21 +1,21 @@
 import { Injectable } from '@nestjs/common';
 import { Nullable } from '@shared';
 import {
+  AccountCriteria,
   AccountNotFoundException,
   AccountRepository,
 } from '@app/account/domain/account';
 import { CategoryResolver } from '@app/categorization-rule/domain/categorization-rule';
-import { currentTraceId } from '@app/config/telemetry/correlation';
 import {
   Movement,
+  MovementCriteria,
   MovementNotFoundException,
   MovementRepository,
   NewMovement,
 } from '@app/movement/domain/movement';
-import { DomainEventOutboxPublisher } from '@app/outbox/application/services/domain-event-outbox.publisher';
 import { Money } from '@app/shared/domain';
 import { MovementInputDto } from '../dto/movement-input.dto';
-import { MovementSaved, MovementSavedPayload } from '../movement.constants';
+import { RecordMovementService } from '../services';
 
 @Injectable()
 export class SaveMovementUsecase {
@@ -23,26 +23,23 @@ export class SaveMovementUsecase {
     private readonly movementRepository: MovementRepository,
     private readonly accountRepository: AccountRepository,
     private readonly categoryResolver: CategoryResolver,
-    private readonly outboxPublisher: DomainEventOutboxPublisher,
+    private readonly recordMovement: RecordMovementService,
   ) {}
 
-  /**
-   * `requestId` is only a fallback: when telemetry is on, the trace id in
-   * context wins, because that is the id the collector knows this flow by. It
-   * is read here instead of being passed down, so nothing below has to carry it.
-   */
   async execute(
     input: MovementInputDto,
     user: number,
     requestId?: string,
   ): Promise<Movement> {
-    const correlationId = currentTraceId() ?? requestId;
-
     const [existing, account] = await Promise.all([
       input.id
-        ? this.movementRepository.findByIdAndUser(input.id, user)
+        ? this.movementRepository.firstMatching(
+            MovementCriteria.byIdAndUser(input.id, user),
+          )
         : null,
-      this.accountRepository.findByIdAndUser(input.account, user),
+      this.accountRepository.firstMatching(
+        AccountCriteria.byIdAndUser(input.account, user),
+      ),
     ]);
 
     if (input.id && !existing) {
@@ -60,6 +57,11 @@ export class SaveMovementUsecase {
         user,
       );
 
+    // Read before `build`, which overwrites the existing movement in place:
+    // afterwards its old amount — the part already counted in the account's
+    // balance — is no longer recoverable.
+    const replacedBalanceEffect = existing?.signedAmount() ?? 0;
+
     const movement = SaveMovementUsecase.build(
       {
         date: input.date,
@@ -76,27 +78,9 @@ export class SaveMovementUsecase {
       existing,
     );
 
-    // AC-2: the movement and its domain event commit together. The outbox relay
-    // re-emits movement.saved later, so a crash after commit never loses it.
-    return this.movementRepository.runInTransaction(async (manager) => {
-      const saved = await this.movementRepository.saveWithManager(
-        manager,
-        movement,
-      );
-
-      await this.outboxPublisher.publish(manager, {
-        eventType: MovementSaved,
-        payload: {
-          categoryId: saved.categoryId,
-          accountId: saved.accountId,
-          date: saved.date,
-          amount: saved.money.amount,
-          user: saved.user,
-          correlationId,
-        } as MovementSavedPayload,
-      });
-
-      return saved;
+    return this.recordMovement.record(movement, account, {
+      requestId,
+      replacedBalanceEffect,
     });
   }
 

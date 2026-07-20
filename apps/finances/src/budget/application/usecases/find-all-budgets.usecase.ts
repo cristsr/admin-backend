@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
-import { normalizePagination } from '@shared';
+import { CriteriaQueryDto } from '@shared';
 import {
   Budget,
+  BudgetCriteria,
   BudgetRepository,
   BudgetSpendingService,
 } from '@app/budget/domain/budget';
-import { BudgetFilterDto } from '../dto/budget-filter.dto';
 
 @Injectable()
 export class FindAllBudgetsUsecase {
@@ -14,14 +14,10 @@ export class FindAllBudgetsUsecase {
     private readonly budgetSpending: BudgetSpendingService,
   ) {}
 
-  async execute(filter: BudgetFilterDto, user: number): Promise<Budget[]> {
-    const { take, skip } = normalizePagination(filter);
-    const budgets = await this.budgetRepository.findAll({
-      ...filter,
-      user,
-      take,
-      skip,
-    });
+  async execute(query: CriteriaQueryDto, user: number): Promise<Budget[]> {
+    const budgets = await this.budgetRepository.matching(
+      BudgetCriteria.list(query, user),
+    );
 
     await this.budgetSpending.recordSpendingAll(budgets);
 

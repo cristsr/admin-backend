@@ -9,9 +9,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { AuthenticatedUser, CurrentUser } from '@shared';
+import { AuthenticatedUser, CriteriaQueryDto, CurrentUser } from '@shared';
 import {
-  ScheduledFilterDto,
   ScheduledInputDto,
   ScheduledOutputDto,
   ScheduledPatchDto,
@@ -46,15 +45,13 @@ export class ScheduledController {
     return scheduled && ScheduledMapper.toOutput(scheduled);
   }
 
+  /** Filters follow the shared criteria contract; see `CriteriaQueryDto`. */
   @Get()
   async findAll(
     @CurrentUser() user: AuthenticatedUser,
-    @Query() filter: ScheduledFilterDto,
+    @Query() query: CriteriaQueryDto,
   ): Promise<ScheduledOutputDto[]> {
-    const scheduled = await this.findAllScheduledUsecase.execute(
-      filter,
-      user.id,
-    );
+    const scheduled = await this.findAllScheduledUsecase.execute(query, user.id);
     return scheduled.map(ScheduledMapper.toOutput);
   }
 

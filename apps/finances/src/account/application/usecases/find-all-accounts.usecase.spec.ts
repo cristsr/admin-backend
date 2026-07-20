@@ -5,7 +5,7 @@ import { FindAllAccountsUsecase } from './find-all-accounts.usecase';
 describe('FindAllAccountsUsecase (AC-3 embedded balance)', () => {
   it('attaches the live balance to each account', async () => {
     const accountRepository = {
-      findAllByUser: jest.fn().mockResolvedValue([
+      matching: jest.fn().mockResolvedValue([
         Account.create({
           id: 1,
           name: 'A',
@@ -23,7 +23,7 @@ describe('FindAllAccountsUsecase (AC-3 embedded balance)', () => {
     } as any;
     const usecase = new FindAllAccountsUsecase(accountRepository);
 
-    const result = await usecase.execute(7);
+    const result = await usecase.execute({}, 7);
 
     expect(result[0].balance).toBe(150);
     // account with no movements: balance = initialBalance

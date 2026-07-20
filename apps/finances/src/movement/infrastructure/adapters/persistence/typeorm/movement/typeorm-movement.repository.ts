@@ -1,84 +1,63 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Nullable } from '@shared';
-import { Between, EntityManager, In, Repository } from 'typeorm';
+import { Criteria, Nullable, TypeOrmCriteriaConverter } from '@shared';
+import { EntityManager, Repository } from 'typeorm';
 import {
   Movement,
-  MovementQuery,
+  MovementField,
   MovementRepository,
-  MovementSumQuery,
 } from '@app/movement/domain/movement';
-import { Money } from '@app/shared/domain';
+import { MOVEMENT_CRITERIA_FIELDS } from './typeorm-movement.criteria-fields';
 import { TypeOrmMovementEntity } from './typeorm-movement.entity';
 import { TypeOrmMovementMapper } from './typeorm-movement.mapper';
 
+/** Relations every movement is read with, so the mapper can build its summaries. */
+const RELATIONS = ['category', 'subcategory'];
+
 @Injectable()
 export class TypeOrmMovementRepository implements MovementRepository {
+  readonly #criteria = new TypeOrmCriteriaConverter<
+    TypeOrmMovementEntity,
+    MovementField
+  >(MOVEMENT_CRITERIA_FIELDS);
+
   constructor(
     @InjectRepository(TypeOrmMovementEntity)
     private readonly repository: Repository<TypeOrmMovementEntity>,
   ) {}
 
-  async findById(id: number): Promise<Nullable<Movement>> {
-    const entity = await this.repository.findOne({
-      where: { id },
-      relations: ['category', 'subcategory'],
-    });
-    return entity ? TypeOrmMovementMapper.toDomain(entity) : null;
-  }
-
-  async findByIdAndUser(
-    id: number,
-    user: number,
-  ): Promise<Nullable<Movement>> {
-    const entity = await this.repository.findOne({
-      where: { id, user },
-      relations: ['category', 'subcategory'],
-    });
-    return entity ? TypeOrmMovementMapper.toDomain(entity) : null;
-  }
-
-  async findByExternalReference(
-    externalReference: string,
-  ): Promise<Nullable<Movement>> {
-    const entity = await this.repository.findOne({
-      where: { externalReference },
-      relations: ['category', 'subcategory'],
-    });
-    return entity ? TypeOrmMovementMapper.toDomain(entity) : null;
-  }
-
-  async findByTransferGroup(
-    transferGroup: string,
-    user: number,
-  ): Promise<Movement[]> {
+  async matching(criteria: Criteria<MovementField>): Promise<Movement[]> {
     const entities = await this.repository.find({
-      where: { transferGroup, user },
-      relations: ['category', 'subcategory'],
-      order: { type: 'ASC' },
+      ...this.#criteria.toFindOptions(criteria),
+      relations: RELATIONS,
     });
+
     return entities.map(TypeOrmMovementMapper.toDomain);
   }
 
-  async findAll(filter: MovementQuery): Promise<Movement[]> {
-    const entities = await this.repository.find({
-      where: {
-        user: filter.user,
-        date: Between(filter.startDate, filter.endDate),
-        category: { id: filter.category },
-        account: { id: filter.account },
-        type: filter.type?.length ? In(filter.type) : null,
-      },
-      order: {
-        date: 'DESC',
-        createdAt: 'DESC',
-      },
-      relations: ['category', 'subcategory'],
-      take: filter.take,
-      skip: filter.skip,
+  async firstMatching(
+    criteria: Criteria<MovementField>,
+  ): Promise<Nullable<Movement>> {
+    const entity = await this.repository.findOne({
+      ...this.#criteria.toFindOptions(criteria),
+      relations: RELATIONS,
     });
 
-    return entities.map(TypeOrmMovementMapper.toDomain);
+    return entity ? TypeOrmMovementMapper.toDomain(entity) : null;
+  }
+
+  async countMatching(criteria: Criteria<MovementField>): Promise<number> {
+    return this.repository.countBy(this.#criteria.toWhere(criteria));
+  }
+
+  async sumAmount(criteria: Criteria<MovementField>): Promise<number> {
+    // `sum` answers null when nothing matched; an empty period has spent zero.
+    const total = await this.repository.sum(
+      'amount',
+      this.#criteria.toWhere(criteria),
+    );
+
+    return total ?? 0;
   }
 
   async save(movement: Movement): Promise<Movement> {
@@ -87,7 +66,7 @@ export class TypeOrmMovementRepository implements MovementRepository {
     );
     const entity = await this.repository.findOne({
       where: { id: saved.id },
-      relations: ['category', 'subcategory'],
+      relations: RELATIONS,
     });
     return TypeOrmMovementMapper.toDomain(entity);
   }
@@ -108,7 +87,7 @@ export class TypeOrmMovementRepository implements MovementRepository {
     );
     const entity = await manager.findOne(TypeOrmMovementEntity, {
       where: { id: saved.id },
-      relations: ['category', 'subcategory'],
+      relations: RELATIONS,
     });
     return TypeOrmMovementMapper.toDomain(entity);
   }
@@ -125,31 +104,11 @@ export class TypeOrmMovementRepository implements MovementRepository {
     });
   }
 
-  async remove(id: number, user: number): Promise<boolean> {
-    const result = await this.repository.softDelete({ id, user });
-    return !!result.affected;
-  }
+  async removeMatching(criteria: Criteria<MovementField>): Promise<number> {
+    const result = await this.repository.softDelete(
+      this.#criteria.toWhere(criteria),
+    );
 
-  async sumAmount(query: MovementSumQuery): Promise<Money> {
-    const builder = this.repository
-      .createQueryBuilder('m')
-      .select('COALESCE(SUM(m.amount), 0)', 'total')
-      .where('m.user_id = :user', { user: query.user })
-      .andWhere('m.category_id = :category', { category: query.category })
-      .andWhere('m.type = :type', { type: query.type })
-      .andWhere('m.currency = :currency', { currency: query.currency })
-      .andWhere('m.date BETWEEN :startDate AND :endDate', {
-        startDate: query.startDate,
-        endDate: query.endDate,
-      })
-      .andWhere('m.deleted_at IS NULL');
-
-    if (query.account) {
-      builder.andWhere('m.account_id = :account', { account: query.account });
-    }
-
-    const result = await builder.getRawOne<{ total: string }>();
-
-    return Money.of(Number(result.total), query.currency);
+    return result.affected ?? 0;
   }
 }

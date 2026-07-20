@@ -1,18 +1,24 @@
-import { Nullable } from '@shared';
+import { Criteria, Nullable } from '@shared';
+import { CategorizationRuleField } from './categorization-rule.criteria';
 import { CategorizationRule } from './categorization-rule.entity';
 
+/**
+ * Reads take a criteria; the questions themselves live in
+ * `CategorizationRuleCriteria`, stated in domain terms.
+ */
 export abstract class CategorizationRuleRepository {
-  /** The user's rules ordered by priority descending (highest wins). */
-  abstract findByUserOrderByPriorityDesc(
-    user: number,
+  abstract matching(
+    criteria: Criteria<CategorizationRuleField>,
   ): Promise<CategorizationRule[]>;
 
-  abstract findByIdAndUser(
-    id: number,
-    user: number,
+  abstract firstMatching(
+    criteria: Criteria<CategorizationRuleField>,
   ): Promise<Nullable<CategorizationRule>>;
 
   abstract save(rule: CategorizationRule): Promise<CategorizationRule>;
 
-  abstract softRemove(id: number, user: number): Promise<boolean>;
+  /** Soft-deletes every match and answers how many rows it touched. */
+  abstract removeMatching(
+    criteria: Criteria<CategorizationRuleField>,
+  ): Promise<number>;
 }

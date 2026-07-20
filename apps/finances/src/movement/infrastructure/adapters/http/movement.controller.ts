@@ -10,10 +10,9 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
-import { AuthenticatedUser, CurrentUser } from '@shared';
+import { AuthenticatedUser, CriteriaQueryDto, CurrentUser } from '@shared';
 import { IdempotencyInterceptor } from '@app/idempotency/infrastructure/adapters/http';
 import {
-  MovementFilterDto,
   MovementInputDto,
   MovementOutputDto,
   MovementPatchDto,
@@ -48,15 +47,17 @@ export class MovementController {
     return movement && MovementMapper.toOutput(movement);
   }
 
+  /**
+   * Filters follow the shared criteria contract, e.g.
+   * `?filters[0][field]=amount&filters[0][operator]=gte&filters[0][value]=1000`
+   * `&orderBy=date&order=desc&limit=20`.
+   */
   @Get()
   async findAll(
     @CurrentUser() user: AuthenticatedUser,
-    @Query() filter: MovementFilterDto,
+    @Query() query: CriteriaQueryDto,
   ): Promise<MovementOutputDto[]> {
-    const movements = await this.findAllMovementsUsecase.execute(
-      filter,
-      user.id,
-    );
+    const movements = await this.findAllMovementsUsecase.execute(query, user.id);
     return movements.map(MovementMapper.toOutput);
   }
 

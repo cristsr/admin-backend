@@ -1,25 +1,20 @@
-import { Nullable } from '@shared';
+import { Criteria, Nullable } from '@shared';
+import { ScheduledField } from './scheduled.criteria';
 import { Scheduled } from './scheduled.entity';
 
-export interface ScheduledQuery {
-  user: number;
-  account?: number;
-  take?: number;
-  skip?: number;
-}
-
+/**
+ * Reads take a criteria; the questions themselves live in `ScheduledCriteria`,
+ * stated in domain terms.
+ */
 export abstract class ScheduledRepository {
-  abstract findByIdAndUser(
-    id: number,
-    user: number,
+  abstract matching(criteria: Criteria<ScheduledField>): Promise<Scheduled[]>;
+
+  abstract firstMatching(
+    criteria: Criteria<ScheduledField>,
   ): Promise<Nullable<Scheduled>>;
-
-  abstract findAll(filter: ScheduledQuery): Promise<Scheduled[]>;
-
-  /** Entries whose next occurrence has come due (at or before `now`). */
-  abstract findDue(now: Date): Promise<Scheduled[]>;
 
   abstract save(scheduled: Scheduled): Promise<Scheduled>;
 
-  abstract remove(id: number, user: number): Promise<boolean>;
+  /** Soft-deletes every match and answers how many rows it touched. */
+  abstract removeMatching(criteria: Criteria<ScheduledField>): Promise<number>;
 }

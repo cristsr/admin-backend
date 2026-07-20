@@ -32,7 +32,8 @@ describe('ReverseTransferUsecase (AC-5)', () => {
 
   beforeEach(() => {
     movementRepository = {
-      findByTransferGroup: jest.fn(),
+      matching: jest.fn().mockResolvedValue([]),
+      countMatching: jest.fn().mockResolvedValue(0),
       saveAll: jest.fn().mockResolvedValue([{ id: 20 }, { id: 21 }]),
     };
     usecase = new ReverseTransferUsecase(
@@ -42,16 +43,14 @@ describe('ReverseTransferUsecase (AC-5)', () => {
   });
 
   it('404 when the transferGroup does not exist for the user', async () => {
-    movementRepository.findByTransferGroup.mockResolvedValue([]);
+    movementRepository.matching.mockResolvedValue([]);
     await expect(usecase.execute('grp', 7)).rejects.toThrow(
       TransferNotFoundException,
     );
   });
 
   it('creates a compensating pair with a derived reversalTransferGroup', async () => {
-    movementRepository.findByTransferGroup
-      .mockResolvedValueOnce(originalLegs)
-      .mockResolvedValueOnce([]);
+    movementRepository.matching.mockResolvedValue(originalLegs);
 
     const result = await usecase.execute('grp', 7);
 
@@ -67,9 +66,7 @@ describe('ReverseTransferUsecase (AC-5)', () => {
   });
 
   it('compensates with the exact amount of each original leg', async () => {
-    movementRepository.findByTransferGroup
-      .mockResolvedValueOnce(originalLegs)
-      .mockResolvedValueOnce([]);
+    movementRepository.matching.mockResolvedValue(originalLegs);
 
     await usecase.execute('grp', 7);
 
@@ -79,9 +76,8 @@ describe('ReverseTransferUsecase (AC-5)', () => {
   });
 
   it('409 when the transfer was already reversed', async () => {
-    movementRepository.findByTransferGroup
-      .mockResolvedValueOnce(originalLegs)
-      .mockResolvedValueOnce([{ id: 20, transferGroup: 'reversal:grp' }]);
+    movementRepository.matching.mockResolvedValue(originalLegs);
+    movementRepository.countMatching.mockResolvedValue(1);
 
     await expect(usecase.execute('grp', 7)).rejects.toThrow(
       TransferAlreadyReversedException,

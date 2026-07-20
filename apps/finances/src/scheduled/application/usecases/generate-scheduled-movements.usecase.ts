@@ -4,6 +4,7 @@ import { correlationId, withSpan } from '@app/config/telemetry/correlation';
 import { MovementRepository } from '@app/movement/domain/movement';
 import {
   Scheduled,
+  ScheduledCriteria,
   ScheduledRepository,
 } from '@app/scheduled/domain/scheduled';
 
@@ -26,7 +27,9 @@ export class GenerateScheduledMovementsUsecase {
   }
 
   async execute(): Promise<void> {
-    const due = await this.scheduledRepository.findDue(DateTime.utc().toJSDate());
+    const due = await this.scheduledRepository.matching(
+      ScheduledCriteria.due(DateTime.utc().toJSDate()),
+    );
 
     if (!due.length) return;
 
@@ -67,7 +70,9 @@ export class GenerateScheduledMovementsUsecase {
     }
 
     if (!schedule.recurs()) {
-      await this.scheduledRepository.remove(schedule.id, schedule.user);
+      await this.scheduledRepository.removeMatching(
+        ScheduledCriteria.byIdAndUser(schedule.id, schedule.user),
+      );
       return;
     }
 

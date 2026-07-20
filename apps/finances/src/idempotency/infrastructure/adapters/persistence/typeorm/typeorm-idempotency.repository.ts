@@ -63,6 +63,10 @@ export class TypeOrmIdempotencyRepository implements IdempotencyRepository {
     });
   }
 
+  async release(id: number): Promise<void> {
+    await this.repository.delete(id);
+  }
+
   async deleteExpired(now: Date): Promise<number> {
     const result = await this.repository
       .createQueryBuilder()

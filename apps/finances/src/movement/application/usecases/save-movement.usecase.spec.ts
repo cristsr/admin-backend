@@ -1,8 +1,11 @@
 import { context, trace } from '@opentelemetry/api';
 import { AsyncLocalStorageContextManager } from '@opentelemetry/context-async-hooks';
 import { BasicTracerProvider } from '@opentelemetry/sdk-trace-base';
+import { Account } from '@app/account/domain/account';
+import { Money } from '@app/shared/domain';
 import { MovementInputDto } from '../dto/movement-input.dto';
 import { MovementSaved } from '../movement.constants';
+import { RecordMovementService } from '../services';
 import { SaveMovementUsecase } from './save-movement.usecase';
 
 describe('SaveMovementUsecase (AC-2 transactional outbox)', () => {
@@ -26,14 +29,22 @@ describe('SaveMovementUsecase (AC-2 transactional outbox)', () => {
   beforeEach(() => {
     const fakeManager = { id: 'manager' };
     movementRepository = {
-      findByIdAndUser: jest.fn(),
+      firstMatching: jest.fn(),
       runInTransaction: jest.fn().mockImplementation((work) => work(fakeManager)),
       saveWithManager: jest
         .fn()
         .mockImplementation(async (_manager, m) => ({ ...m, id: 100 })),
     };
     accountRepository = {
-      findByIdAndUser: jest.fn().mockResolvedValue({ id: 3 }),
+      firstMatching: jest.fn().mockResolvedValue(
+        Account.create({
+          id: 3,
+          name: 'Checking',
+          initialBalance: Money.of(1000, 'USD'),
+          allowNegativeBalance: false,
+        } as never),
+      ),
+      movementBalance: jest.fn().mockResolvedValue(0),
     };
     categoryResolver = {
       resolveByIds: jest
@@ -41,11 +52,17 @@ describe('SaveMovementUsecase (AC-2 transactional outbox)', () => {
         .mockResolvedValue({ categoryId: 5, subcategoryId: 9 }),
     };
     outboxPublisher = { publish: jest.fn() };
+    // The real service, not a double: the transactional guarantee it provides
+    // is exactly what these tests are about.
     usecase = new SaveMovementUsecase(
       movementRepository,
       accountRepository,
       categoryResolver,
-      outboxPublisher,
+      new RecordMovementService(
+        movementRepository,
+        accountRepository,
+        outboxPublisher,
+      ),
     );
   });
 

@@ -1,11 +1,18 @@
 import { Injectable } from '@nestjs/common';
-import { MovementRepository } from '@app/movement/domain/movement';
+import {
+  MovementCriteria,
+  MovementRepository,
+} from '@app/movement/domain/movement';
 
 @Injectable()
 export class RemoveMovementUsecase {
   constructor(private readonly movementRepository: MovementRepository) {}
 
   async execute(id: number, user: number): Promise<boolean> {
-    return this.movementRepository.remove(id, user);
+    const removed = await this.movementRepository.removeMatching(
+      MovementCriteria.byIdAndUser(id, user),
+    );
+
+    return !!removed;
   }
 }

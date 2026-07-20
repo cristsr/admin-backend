@@ -1,11 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Nullable } from '@shared';
+import { Criteria, Nullable, TypeOrmCriteriaConverter } from '@shared';
 import { Repository } from 'typeorm';
 import {
   CategorizationRule,
+  CategorizationRuleField,
   CategorizationRuleRepository,
 } from '@app/categorization-rule/domain/categorization-rule';
+import { CATEGORIZATION_RULE_CRITERIA_FIELDS } from './typeorm-categorization-rule.criteria-fields';
 import { TypeOrmCategorizationRuleEntity } from './typeorm-categorization-rule.entity';
 import { TypeOrmCategorizationRuleMapper } from './typeorm-categorization-rule.mapper';
 
@@ -13,28 +15,33 @@ import { TypeOrmCategorizationRuleMapper } from './typeorm-categorization-rule.m
 export class TypeOrmCategorizationRuleRepository
   implements CategorizationRuleRepository
 {
+  readonly #criteria = new TypeOrmCriteriaConverter<
+    TypeOrmCategorizationRuleEntity,
+    CategorizationRuleField
+  >(CATEGORIZATION_RULE_CRITERIA_FIELDS);
+
   constructor(
     @InjectRepository(TypeOrmCategorizationRuleEntity)
     private readonly repository: Repository<TypeOrmCategorizationRuleEntity>,
   ) {}
 
-  async findByUserOrderByPriorityDesc(
-    user: number,
+  async matching(
+    criteria: Criteria<CategorizationRuleField>,
   ): Promise<CategorizationRule[]> {
-    const entities = await this.repository.find({
-      where: { userId: user },
-      order: { priority: 'DESC', id: 'ASC' },
-    });
+    const entities = await this.repository.find(
+      this.#criteria.toFindOptions(criteria),
+    );
+
     return entities.map(TypeOrmCategorizationRuleMapper.toDomain);
   }
 
-  async findByIdAndUser(
-    id: number,
-    user: number,
+  async firstMatching(
+    criteria: Criteria<CategorizationRuleField>,
   ): Promise<Nullable<CategorizationRule>> {
-    const entity = await this.repository.findOne({
-      where: { id, userId: user },
-    });
+    const entity = await this.repository.findOne(
+      this.#criteria.toFindOptions(criteria),
+    );
+
     return entity ? TypeOrmCategorizationRuleMapper.toDomain(entity) : null;
   }
 
@@ -47,8 +54,13 @@ export class TypeOrmCategorizationRuleRepository
     );
   }
 
-  async softRemove(id: number, user: number): Promise<boolean> {
-    const result = await this.repository.softDelete({ id, userId: user });
-    return !!result.affected;
+  async removeMatching(
+    criteria: Criteria<CategorizationRuleField>,
+  ): Promise<number> {
+    const result = await this.repository.softDelete(
+      this.#criteria.toWhere(criteria),
+    );
+
+    return result.affected ?? 0;
   }
 }

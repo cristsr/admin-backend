@@ -26,6 +26,12 @@ const TRANSFER_TYPES = new Set<MovementType>([
   MovementType.TRANSFER_OUT,
 ]);
 
+/** Types that take money out of the account holding them. */
+const WITHDRAWAL_TYPES = new Set<MovementType>([
+  MovementType.EXPENSE,
+  MovementType.TRANSFER_OUT,
+]);
+
 /** What a user is allowed to change on an existing movement. */
 export interface MovementPatch {
   date?: Date;
@@ -183,6 +189,23 @@ export class Movement {
 
   isTransferLeg(): boolean {
     return TRANSFER_TYPES.has(this.type);
+  }
+
+  /**
+   * Money leaves the account: a spend, or the outgoing leg of a transfer. This
+   * is what an account has to be able to fund before the movement is recorded.
+   */
+  isWithdrawal(): boolean {
+    return WITHDRAWAL_TYPES.has(this.type);
+  }
+
+  /**
+   * The effect this movement has on its account's balance — negative when the
+   * money left. Lets a caller discount a movement it is about to replace,
+   * instead of re-deriving the sign from the type on its own.
+   */
+  signedAmount(): number {
+    return this.isWithdrawal() ? -this.money.amount : this.money.amount;
   }
 
   /** Its data was extracted by ingestion, so most of it is not the user's to edit. */

@@ -13,7 +13,7 @@ describe('GetConsolidatedBalanceUsecase (AC-2)', () => {
 
   beforeEach(() => {
     accountRepository = {
-      findAllByUser: jest
+      matching: jest
         .fn()
         .mockResolvedValue([accountIn(1, 'COP'), accountIn(2, 'USD')]),
     };
@@ -49,13 +49,13 @@ describe('GetConsolidatedBalanceUsecase (AC-2)', () => {
   });
 
   it('does not call the provider for accounts already in the presentation currency', async () => {
-    accountRepository.findAllByUser.mockResolvedValue([accountIn(1, 'COP')]);
+    accountRepository.matching.mockResolvedValue([accountIn(1, 'COP')]);
     await usecase.execute({}, 7, 'COP');
     expect(exchangeRateProvider.getRate).not.toHaveBeenCalled();
   });
 
   it('without a currency claim uses the currency of the first account', async () => {
-    accountRepository.findAllByUser.mockResolvedValue([accountIn(1, 'EUR')]);
+    accountRepository.matching.mockResolvedValue([accountIn(1, 'EUR')]);
     const result = await usecase.execute({}, 7, undefined);
     expect(result.presentationCurrency).toBe('EUR');
   });

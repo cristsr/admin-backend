@@ -21,7 +21,6 @@ export interface AuthModuleOptions {
   issuer: string;
   audience: string;
   usersServiceUrl: string;
-  /** Discovery cache lifetime in ms. Defaults to 1h. */
   discoveryTtlMs?: number;
 }
 
@@ -34,53 +33,52 @@ interface AuthModuleExtras {
   identityResolver?: Type<IdentityResolver>;
 }
 
-const { ConfigurableModuleClass } =
-  new ConfigurableModuleBuilder<AuthModuleOptions>({
-    optionsInjectionToken: AUTH_MODULE_OPTIONS,
-  })
-    .setClassMethodName('forRoot')
-    .setExtras<AuthModuleExtras>({}, (definition, extras) => ({
-      ...definition,
-      // Global so the shared OIDC discovery cache is injectable elsewhere (the
-      // health check) without re-importing this module and building a second
-      // cache that would discover all over again.
-      global: true,
-      imports: [PassportModule.register({})],
-      providers: [
-        ...(definition.providers ?? []),
-        createApiClientProvider<AuthModuleOptions>({
-          provide: USERS_SERVICE_CLIENT,
-          inject: [AUTH_MODULE_OPTIONS],
-          useFactory: (options) => ({ baseURL: options.usersServiceUrl }),
+const { ConfigurableModuleClass } = new ConfigurableModuleBuilder<AuthModuleOptions>({
+  optionsInjectionToken: AUTH_MODULE_OPTIONS,
+})
+  .setClassMethodName('forRoot')
+  .setExtras<AuthModuleExtras>({}, (definition, extras) => ({
+    ...definition,
+    // Global so the shared OIDC discovery cache is injectable elsewhere (the
+    // health check) without re-importing this module and building a second
+    // cache that would discover all over again.
+    global: true,
+    imports: [PassportModule.register({})],
+    providers: [
+      ...(definition.providers ?? []),
+      createApiClientProvider<AuthModuleOptions>({
+        provide: USERS_SERVICE_CLIENT,
+        inject: [AUTH_MODULE_OPTIONS],
+        useFactory: (options) => ({ baseURL: options.usersServiceUrl }),
+      }),
+      {
+        provide: JWT_STRATEGY_OPTIONS,
+        useFactory: (options: AuthModuleOptions) => ({
+          issuer: options.issuer,
+          audience: options.audience,
         }),
-        {
-          provide: JWT_STRATEGY_OPTIONS,
-          useFactory: (options: AuthModuleOptions) => ({
+        inject: [AUTH_MODULE_OPTIONS],
+      },
+      {
+        provide: OIDC_DISCOVERY_CACHE,
+        useFactory: (options: AuthModuleOptions) =>
+          new OidcDiscoveryCache({
             issuer: options.issuer,
-            audience: options.audience,
+            ttlMs: options.discoveryTtlMs ?? DEFAULT_DISCOVERY_TTL_MS,
+            discoverer: discoverJwksUri,
           }),
-          inject: [AUTH_MODULE_OPTIONS],
-        },
-        {
-          provide: OIDC_DISCOVERY_CACHE,
-          useFactory: (options: AuthModuleOptions) =>
-            new OidcDiscoveryCache({
-              issuer: options.issuer,
-              ttlMs: options.discoveryTtlMs ?? DEFAULT_DISCOVERY_TTL_MS,
-              discoverer: discoverJwksUri,
-            }),
-          inject: [AUTH_MODULE_OPTIONS],
-        },
-        {
-          provide: IdentityResolver,
-          useClass: extras.identityResolver ?? SubjectIdentityResolver,
-        },
-        JwtStrategy,
-        { provide: APP_GUARD, useClass: JwtAuthGuard },
-      ],
-      exports: [OIDC_DISCOVERY_CACHE],
-    }))
-    .build();
+        inject: [AUTH_MODULE_OPTIONS],
+      },
+      {
+        provide: IdentityResolver,
+        useClass: extras.identityResolver ?? SubjectIdentityResolver,
+      },
+      JwtStrategy,
+      { provide: APP_GUARD, useClass: JwtAuthGuard },
+    ],
+    exports: [OIDC_DISCOVERY_CACHE],
+  }))
+  .build();
 
 /**
  * Bearer-token authentication against an OpenID Connect issuer. Registers the

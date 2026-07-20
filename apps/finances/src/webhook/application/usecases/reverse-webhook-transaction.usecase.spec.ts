@@ -25,21 +25,21 @@ describe('ReverseWebhookTransactionUsecase (AC-6)', () => {
 
   beforeEach(() => {
     movementRepository = {
-      findByExternalReference: jest.fn(),
+      firstMatching: jest.fn(),
       save: jest.fn().mockResolvedValue({ id: 9 }),
     };
     usecase = new ReverseWebhookTransactionUsecase(movementRepository);
   });
 
   it('404 when no movement exists with that externalReference', async () => {
-    movementRepository.findByExternalReference.mockResolvedValue(null);
+    movementRepository.firstMatching.mockResolvedValue(null);
     await expect(usecase.execute('ext-1')).rejects.toThrow(
       MovementNotFoundException,
     );
   });
 
   it('creates a compensating movement with the inverted type', async () => {
-    movementRepository.findByExternalReference
+    movementRepository.firstMatching
       .mockResolvedValueOnce(original)
       .mockResolvedValueOnce(null);
 
@@ -56,7 +56,7 @@ describe('ReverseWebhookTransactionUsecase (AC-6)', () => {
   });
 
   it('compensates the exact amount, on the same account and category', async () => {
-    movementRepository.findByExternalReference
+    movementRepository.firstMatching
       .mockResolvedValueOnce(original)
       .mockResolvedValueOnce(null);
 
@@ -70,7 +70,7 @@ describe('ReverseWebhookTransactionUsecase (AC-6)', () => {
   });
 
   it('is idempotent: a second call returns the existing reversal without duplicating', async () => {
-    movementRepository.findByExternalReference
+    movementRepository.firstMatching
       .mockResolvedValueOnce(original)
       .mockResolvedValueOnce({ id: 9, externalReference: 'reversal:ext-1' });
 

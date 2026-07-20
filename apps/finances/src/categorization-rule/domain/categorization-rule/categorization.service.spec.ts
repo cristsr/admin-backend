@@ -18,13 +18,13 @@ describe('CategorizationService (AC-4)', () => {
   let service: CategorizationService;
 
   beforeEach(() => {
-    ruleRepository = { findByUserOrderByPriorityDesc: jest.fn() };
-    categoryRepository = { findSystemDefault: jest.fn() };
+    ruleRepository = { matching: jest.fn() };
+    categoryRepository = { firstMatching: jest.fn() };
     service = new CategorizationService(ruleRepository, categoryRepository);
   });
 
   it('matches the pattern case-insensitively against the merchant', async () => {
-    ruleRepository.findByUserOrderByPriorityDesc.mockResolvedValue([
+    ruleRepository.matching.mockResolvedValue([
       buildRule({ subcategoryId: 20 }),
     ]);
 
@@ -34,7 +34,7 @@ describe('CategorizationService (AC-4)', () => {
   });
 
   it('also matches against the description', async () => {
-    ruleRepository.findByUserOrderByPriorityDesc.mockResolvedValue([
+    ruleRepository.matching.mockResolvedValue([
       buildRule(),
     ]);
 
@@ -47,7 +47,7 @@ describe('CategorizationService (AC-4)', () => {
   });
 
   it('the first rule wins, since the repository orders by priority', async () => {
-    ruleRepository.findByUserOrderByPriorityDesc.mockResolvedValue([
+    ruleRepository.matching.mockResolvedValue([
       buildRule({ id: 1, pattern: 'uber', categoryId: 10, priority: 5 }),
       buildRule({ id: 2, pattern: 'uber', categoryId: 99, priority: 1 }),
     ]);
@@ -58,10 +58,10 @@ describe('CategorizationService (AC-4)', () => {
   });
 
   it('falls back to the system default when no rule matches', async () => {
-    ruleRepository.findByUserOrderByPriorityDesc.mockResolvedValue([
+    ruleRepository.matching.mockResolvedValue([
       buildRule({ pattern: 'netflix' }),
     ]);
-    categoryRepository.findSystemDefault.mockResolvedValue({ id: 1 });
+    categoryRepository.firstMatching.mockResolvedValue({ id: 1 });
 
     const result = await service.categorize({ merchant: 'UBER TRIP' }, 7);
 
@@ -69,8 +69,8 @@ describe('CategorizationService (AC-4)', () => {
   });
 
   it('fails loudly when the default category is missing', async () => {
-    ruleRepository.findByUserOrderByPriorityDesc.mockResolvedValue([]);
-    categoryRepository.findSystemDefault.mockResolvedValue(null);
+    ruleRepository.matching.mockResolvedValue([]);
+    categoryRepository.firstMatching.mockResolvedValue(null);
 
     await expect(service.categorize({ merchant: 'X' }, 7)).rejects.toThrow(
       CategoryNotFoundException,

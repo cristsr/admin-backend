@@ -1,17 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import {
+  AccountCriteria,
   AccountNotFoundException,
   AccountRepository,
 } from '@app/account/domain/account';
 import { CategoryResolver } from '@app/categorization-rule/domain/categorization-rule';
-import { currentTraceId } from '@app/config/telemetry/correlation';
-import { MovementSaved, MovementSavedPayload } from '@app/movement/application/movement.constants';
+import { RecordMovementService } from '@app/movement/application/services';
 import {
   Movement,
+  MovementCriteria,
   MovementRepository,
   MovementType,
 } from '@app/movement/domain/movement';
-import { DomainEventOutboxPublisher } from '@app/outbox/application/services/domain-event-outbox.publisher';
 import { Money } from '@app/shared/domain';
 import { WebhookTransactionInputDto } from '../dto/webhook-transaction-input.dto';
 import { WebhookTransactionOutputDto } from '../dto/webhook-transaction-output.dto';
@@ -28,22 +28,20 @@ export class ReceiveWebhookTransactionUsecase {
     private readonly movementRepository: MovementRepository,
     private readonly accountRepository: AccountRepository,
     private readonly categoryResolver: CategoryResolver,
-    private readonly outboxPublisher: DomainEventOutboxPublisher,
+    private readonly recordMovement: RecordMovementService,
   ) {}
 
   /**
-   * `requestId` is only a fallback: when telemetry is on, the trace id in
-   * context wins — and it already reflects any `traceparent` the caller sent,
-   * so the provider's own trace continues into ours.
+   * `requestId` is only a fallback for the correlation id: when telemetry is
+   * on, the trace in context wins — and it already reflects any `traceparent`
+   * the caller sent, so the provider's own trace continues into ours.
    */
   async execute(
     input: WebhookTransactionInputDto,
     requestId?: string,
   ): Promise<WebhookTransactionOutputDto> {
-    const correlationId = currentTraceId() ?? requestId;
-
-    const existing = await this.movementRepository.findByExternalReference(
-      input.externalReference,
+    const existing = await this.movementRepository.firstMatching(
+      MovementCriteria.byExternalReference(input.externalReference),
     );
 
     if (existing) {
@@ -63,9 +61,8 @@ export class ReceiveWebhookTransactionUsecase {
         input.user,
       );
 
-    const account = await this.accountRepository.findByIdAndUser(
-      input.account,
-      input.user,
+    const account = await this.accountRepository.firstMatching(
+      AccountCriteria.byIdAndUser(input.account, input.user),
     );
 
     if (!account) {
@@ -90,30 +87,9 @@ export class ReceiveWebhookTransactionUsecase {
       invoiceIssuedAt: input.invoiceIssuedAt,
     });
 
-    // The movement and its domain event commit together; the relay re-emits
-    // movement.saved later so the budget flow runs even across a crash.
-    const saved = await this.movementRepository.runInTransaction(
-      async (manager) => {
-        const persisted = await this.movementRepository.saveWithManager(
-          manager,
-          movement,
-        );
-
-        await this.outboxPublisher.publish(manager, {
-          eventType: MovementSaved,
-          payload: {
-            categoryId: persisted.categoryId,
-            accountId: persisted.accountId,
-            date: persisted.date,
-            amount: persisted.money.amount,
-            user: persisted.user,
-            correlationId,
-          } as MovementSavedPayload,
-        });
-
-        return persisted;
-      },
-    );
+    const saved = await this.recordMovement.record(movement, account, {
+      requestId,
+    });
 
     return {
       movementId: saved.id,
