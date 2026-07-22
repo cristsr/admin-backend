@@ -1,1551 +1,1423 @@
 {
-    "item": [
+  "item": [
+    {
+      "name": "accounts",
+      "description": "",
+      "item": [
         {
-            "name": "accounts",
-            "description": "",
-            "item": [
-                {
-                    "id": "2cee6889-96da-456c-a3c7-64cc097e007e",
-                    "name": "Crear cuenta, declarando si admite saldo negativo (AC-1)",
-                    "request": {
-                        "name": "Crear cuenta, declarando si admite saldo negativo (AC-1)",
-                        "description": {},
-                        "url": {
-                            "path": [
-                                "accounts"
-                            ],
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "query": [],
-                            "variable": []
-                        },
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Accept",
-                                "value": "application/json"
-                            }
-                        ],
-                        "method": "POST",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"name\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"initialBalance\": \"<number>\",\n  \"allowNegativeBalance\": false\n}",
-                            "options": {
-                                "raw": {
-                                    "headerFamily": "json",
-                                    "language": "json"
-                                }
-                            }
-                        },
-                        "auth": null
-                    },
-                    "response": [
-                        {
-                            "id": "a2011264-88ba-45b5-bf41-f428c5a99fe1",
-                            "name": "Cuenta creada con su política de saldo negativo.",
-                            "originalRequest": {
-                                "url": {
-                                    "path": [
-                                        "accounts"
-                                    ],
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "query": [],
-                                    "variable": []
-                                },
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Accept",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "method": "POST",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"name\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"initialBalance\": \"<number>\",\n  \"allowNegativeBalance\": false\n}",
-                                    "options": {
-                                        "raw": {
-                                            "headerFamily": "json",
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "status": "Created",
-                            "code": 201,
-                            "header": [
-                                {
-                                    "key": "Content-Type",
-                                    "value": "application/json"
-                                }
-                            ],
-                            "body": "{\n  \"id\": \"<integer>\",\n  \"name\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"allowNegativeBalance\": \"<boolean>\",\n  \"initialBalance\": \"<number>\",\n  \"createdAt\": \"<dateTime>\"\n}",
-                            "cookie": [],
-                            "_postman_previewlanguage": "json"
-                        }
-                    ],
-                    "event": [],
-                    "protocolProfileBehavior": {
-                        "disableBodyPruning": true
-                    }
-                },
-                {
-                    "name": "{id}",
-                    "description": "",
-                    "item": [
-                        {
-                            "id": "4d13e7e4-54d7-4f92-b462-715b4c6c0e89",
-                            "name": "Actualizar cuenta, incluyendo allowNegativeBalance (AC-1)",
-                            "request": {
-                                "name": "Actualizar cuenta, incluyendo allowNegativeBalance (AC-1)",
-                                "description": {},
-                                "url": {
-                                    "path": [
-                                        "accounts",
-                                        ":id"
-                                    ],
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "query": [],
-                                    "variable": [
-                                        {
-                                            "type": "any",
-                                            "value": "<integer>",
-                                            "key": "id",
-                                            "disabled": false,
-                                            "description": {
-                                                "content": "(Required) ",
-                                                "type": "text/plain"
-                                            }
-                                        }
-                                    ]
-                                },
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Accept",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "method": "PATCH",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"name\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"initialBalance\": \"<number>\",\n  \"allowNegativeBalance\": false\n}",
-                                    "options": {
-                                        "raw": {
-                                            "headerFamily": "json",
-                                            "language": "json"
-                                        }
-                                    }
-                                },
-                                "auth": null
-                            },
-                            "response": [
-                                {
-                                    "id": "2e8fd087-bb4d-425d-9ee4-0b363ae9ea10",
-                                    "name": "Cuenta actualizada.",
-                                    "originalRequest": {
-                                        "url": {
-                                            "path": [
-                                                "accounts",
-                                                ":id"
-                                            ],
-                                            "host": [
-                                                "{{baseUrl}}"
-                                            ],
-                                            "query": [],
-                                            "variable": [
-                                                {
-                                                    "disabled": false,
-                                                    "description": {
-                                                        "content": "(Required) ",
-                                                        "type": "text/plain"
-                                                    },
-                                                    "type": "any",
-                                                    "value": "<integer>",
-                                                    "key": "id"
-                                                }
-                                            ]
-                                        },
-                                        "header": [
-                                            {
-                                                "key": "Content-Type",
-                                                "value": "application/json"
-                                            },
-                                            {
-                                                "key": "Accept",
-                                                "value": "application/json"
-                                            }
-                                        ],
-                                        "method": "PATCH",
-                                        "body": {
-                                            "mode": "raw",
-                                            "raw": "{\n  \"name\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"initialBalance\": \"<number>\",\n  \"allowNegativeBalance\": false\n}",
-                                            "options": {
-                                                "raw": {
-                                                    "headerFamily": "json",
-                                                    "language": "json"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "status": "OK",
-                                    "code": 200,
-                                    "header": [
-                                        {
-                                            "key": "Content-Type",
-                                            "value": "application/json"
-                                        }
-                                    ],
-                                    "body": "{\n  \"id\": \"<integer>\",\n  \"name\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"allowNegativeBalance\": \"<boolean>\",\n  \"initialBalance\": \"<number>\",\n  \"createdAt\": \"<dateTime>\"\n}",
-                                    "cookie": [],
-                                    "_postman_previewlanguage": "json"
-                                },
-                                {
-                                    "id": "9bf8c0d3-f8ec-4ae5-8bc6-b44dbdfa9fa1",
-                                    "name": "La cuenta no existe o no pertenece al usuario.",
-                                    "originalRequest": {
-                                        "url": {
-                                            "path": [
-                                                "accounts",
-                                                ":id"
-                                            ],
-                                            "host": [
-                                                "{{baseUrl}}"
-                                            ],
-                                            "query": [],
-                                            "variable": [
-                                                {
-                                                    "disabled": false,
-                                                    "description": {
-                                                        "content": "(Required) ",
-                                                        "type": "text/plain"
-                                                    },
-                                                    "type": "any",
-                                                    "value": "<integer>",
-                                                    "key": "id"
-                                                }
-                                            ]
-                                        },
-                                        "header": [
-                                            {
-                                                "key": "Content-Type",
-                                                "value": "application/json"
-                                            },
-                                            {
-                                                "key": "Accept",
-                                                "value": "application/json"
-                                            }
-                                        ],
-                                        "method": "PATCH",
-                                        "body": {
-                                            "mode": "raw",
-                                            "raw": "{\n  \"name\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"initialBalance\": \"<number>\",\n  \"allowNegativeBalance\": false\n}",
-                                            "options": {
-                                                "raw": {
-                                                    "headerFamily": "json",
-                                                    "language": "json"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "status": "Not Found",
-                                    "code": 404,
-                                    "header": [
-                                        {
-                                            "key": "Content-Type",
-                                            "value": "application/json"
-                                        }
-                                    ],
-                                    "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
-                                    "cookie": [],
-                                    "_postman_previewlanguage": "json"
-                                }
-                            ],
-                            "event": [],
-                            "protocolProfileBehavior": {
-                                "disableBodyPruning": true
-                            }
-                        },
-                        {
-                            "id": "ab4ee18b-daaa-4532-8f97-aeb496a4f520",
-                            "name": "Archivar cuenta en cascada (AC-5)",
-                            "request": {
-                                "name": "Archivar cuenta en cascada (AC-5)",
-                                "description": {
-                                    "content": "Reemplaza el bloqueo por AccountHasMovementsException. Soft-deletea la cuenta, sus movimientos, y ambas patas de cada transferencia donde participa (aunque la contraparte siga en una cuenta activa). Lo soft-deleted deja de contar en saldos y reportes.\n",
-                                    "type": "text/plain"
-                                },
-                                "url": {
-                                    "path": [
-                                        "accounts",
-                                        ":id"
-                                    ],
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "query": [],
-                                    "variable": [
-                                        {
-                                            "type": "any",
-                                            "value": "<integer>",
-                                            "key": "id",
-                                            "disabled": false,
-                                            "description": {
-                                                "content": "(Required) ",
-                                                "type": "text/plain"
-                                            }
-                                        }
-                                    ]
-                                },
-                                "header": [
-                                    {
-                                        "key": "Accept",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "method": "DELETE",
-                                "body": {},
-                                "auth": null
-                            },
-                            "response": [
-                                {
-                                    "id": "080739ba-bd4e-4d6f-bce4-2aa859a78d65",
-                                    "name": "Cuenta y sus movimientos/transferencias archivados en cascada.",
-                                    "originalRequest": {
-                                        "url": {
-                                            "path": [
-                                                "accounts",
-                                                ":id"
-                                            ],
-                                            "host": [
-                                                "{{baseUrl}}"
-                                            ],
-                                            "query": [],
-                                            "variable": [
-                                                {
-                                                    "disabled": false,
-                                                    "description": {
-                                                        "content": "(Required) ",
-                                                        "type": "text/plain"
-                                                    },
-                                                    "type": "any",
-                                                    "value": "<integer>",
-                                                    "key": "id"
-                                                }
-                                            ]
-                                        },
-                                        "header": [
-                                            {
-                                                "key": "Accept",
-                                                "value": "application/json"
-                                            }
-                                        ],
-                                        "method": "DELETE",
-                                        "body": {}
-                                    },
-                                    "status": "OK",
-                                    "code": 200,
-                                    "header": [
-                                        {
-                                            "key": "Content-Type",
-                                            "value": "application/json"
-                                        }
-                                    ],
-                                    "body": "{\n  \"accountId\": \"<integer>\",\n  \"archivedMovements\": \"<integer>\",\n  \"archivedTransfers\": \"<integer>\"\n}",
-                                    "cookie": [],
-                                    "_postman_previewlanguage": "json"
-                                },
-                                {
-                                    "id": "9e972bb3-92b9-4178-a6f7-80f073189e61",
-                                    "name": "La cuenta no existe o no pertenece al usuario.",
-                                    "originalRequest": {
-                                        "url": {
-                                            "path": [
-                                                "accounts",
-                                                ":id"
-                                            ],
-                                            "host": [
-                                                "{{baseUrl}}"
-                                            ],
-                                            "query": [],
-                                            "variable": [
-                                                {
-                                                    "disabled": false,
-                                                    "description": {
-                                                        "content": "(Required) ",
-                                                        "type": "text/plain"
-                                                    },
-                                                    "type": "any",
-                                                    "value": "<integer>",
-                                                    "key": "id"
-                                                }
-                                            ]
-                                        },
-                                        "header": [
-                                            {
-                                                "key": "Accept",
-                                                "value": "application/json"
-                                            }
-                                        ],
-                                        "method": "DELETE",
-                                        "body": {}
-                                    },
-                                    "status": "Not Found",
-                                    "code": 404,
-                                    "header": [
-                                        {
-                                            "key": "Content-Type",
-                                            "value": "application/json"
-                                        }
-                                    ],
-                                    "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
-                                    "cookie": [],
-                                    "_postman_previewlanguage": "json"
-                                }
-                            ],
-                            "event": [],
-                            "protocolProfileBehavior": {
-                                "disableBodyPruning": true
-                            }
-                        }
-                    ]
+          "id": "2cee6889-96da-456c-a3c7-64cc097e007e",
+          "name": "Crear cuenta, declarando si admite saldo negativo (AC-1)",
+          "request": {
+            "name": "Crear cuenta, declarando si admite saldo negativo (AC-1)",
+            "description": {},
+            "url": {
+              "path": ["accounts"],
+              "host": ["{{baseUrl}}"],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"initialBalance\": \"<number>\",\n  \"allowNegativeBalance\": false\n}",
+              "options": {
+                "raw": {
+                  "headerFamily": "json",
+                  "language": "json"
                 }
-            ]
+              }
+            },
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "a2011264-88ba-45b5-bf41-f428c5a99fe1",
+              "name": "Cuenta creada con su política de saldo negativo.",
+              "originalRequest": {
+                "url": {
+                  "path": ["accounts"],
+                  "host": ["{{baseUrl}}"],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"initialBalance\": \"<number>\",\n  \"allowNegativeBalance\": false\n}",
+                  "options": {
+                    "raw": {
+                      "headerFamily": "json",
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"<integer>\",\n  \"name\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"allowNegativeBalance\": \"<boolean>\",\n  \"initialBalance\": \"<number>\",\n  \"createdAt\": \"<dateTime>\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
         },
         {
-            "name": "movements",
-            "description": "",
-            "item": [
-                {
-                    "id": "56cc602d-631d-4c9c-886a-b7f1b6aa247c",
-                    "name": "Crear movimiento (idempotente y con categoría opcional)",
-                    "request": {
-                        "name": "Crear movimiento (idempotente y con categoría opcional)",
-                        "description": {},
-                        "url": {
-                            "path": [
-                                "movements"
-                            ],
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "query": [],
-                            "variable": []
-                        },
-                        "header": [
-                            {
-                                "disabled": false,
-                                "description": {
-                                    "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
-                                    "type": "text/plain"
-                                },
-                                "key": "Idempotency-Key",
-                                "value": "<string>"
-                            },
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Accept",
-                                "value": "application/json"
-                            }
-                        ],
-                        "method": "POST",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"date\": \"<dateTime>\",\n  \"type\": \"<string>\",\n  \"amount\": \"<number>\",\n  \"currency\": \"<string>\",\n  \"accountId\": \"<integer>\",\n  \"description\": \"<string>\",\n  \"merchant\": \"<string>\",\n  \"notes\": \"<string>\",\n  \"paymentMethod\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\"\n}",
-                            "options": {
-                                "raw": {
-                                    "headerFamily": "json",
-                                    "language": "json"
-                                }
-                            }
-                        },
-                        "auth": null
-                    },
-                    "response": [
-                        {
-                            "id": "78e13d6f-2c7f-4882-b668-985b7657bfee",
-                            "name": "Replay idempotente — misma Idempotency-Key y mismo cuerpo ya procesados.",
-                            "originalRequest": {
-                                "url": {
-                                    "path": [
-                                        "movements"
-                                    ],
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "query": [],
-                                    "variable": []
-                                },
-                                "header": [
-                                    {
-                                        "disabled": false,
-                                        "description": {
-                                            "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
-                                            "type": "text/plain"
-                                        },
-                                        "key": "Idempotency-Key",
-                                        "value": "<string>"
-                                    },
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Accept",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "method": "POST",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"date\": \"<dateTime>\",\n  \"type\": \"<string>\",\n  \"amount\": \"<number>\",\n  \"currency\": \"<string>\",\n  \"accountId\": \"<integer>\",\n  \"description\": \"<string>\",\n  \"merchant\": \"<string>\",\n  \"notes\": \"<string>\",\n  \"paymentMethod\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\"\n}",
-                                    "options": {
-                                        "raw": {
-                                            "headerFamily": "json",
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "status": "OK",
-                            "code": 200,
-                            "header": [
-                                {
-                                    "key": "Content-Type",
-                                    "value": "application/json"
-                                }
-                            ],
-                            "body": "{\n  \"id\": \"<integer>\",\n  \"date\": \"<dateTime>\",\n  \"type\": \"<string>\",\n  \"amount\": \"<number>\",\n  \"currency\": \"<string>\",\n  \"accountId\": \"<integer>\",\n  \"categoryId\": \"<integer>\",\n  \"description\": \"<string>\",\n  \"merchant\": \"<string>\",\n  \"subcategoryId\": \"<integer>\",\n  \"transferGroup\": \"<string>\"\n}",
-                            "cookie": [],
-                            "_postman_previewlanguage": "json"
-                        },
-                        {
-                            "id": "2ef6ec41-f264-4976-ae5d-80fe6eb8179f",
-                            "name": "Movimiento creado (categorizado por regla o categoría por defecto si se omitió categoryId).",
-                            "originalRequest": {
-                                "url": {
-                                    "path": [
-                                        "movements"
-                                    ],
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "query": [],
-                                    "variable": []
-                                },
-                                "header": [
-                                    {
-                                        "disabled": false,
-                                        "description": {
-                                            "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
-                                            "type": "text/plain"
-                                        },
-                                        "key": "Idempotency-Key",
-                                        "value": "<string>"
-                                    },
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Accept",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "method": "POST",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"date\": \"<dateTime>\",\n  \"type\": \"<string>\",\n  \"amount\": \"<number>\",\n  \"currency\": \"<string>\",\n  \"accountId\": \"<integer>\",\n  \"description\": \"<string>\",\n  \"merchant\": \"<string>\",\n  \"notes\": \"<string>\",\n  \"paymentMethod\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\"\n}",
-                                    "options": {
-                                        "raw": {
-                                            "headerFamily": "json",
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "status": "Created",
-                            "code": 201,
-                            "header": [
-                                {
-                                    "key": "Content-Type",
-                                    "value": "application/json"
-                                }
-                            ],
-                            "body": "{\n  \"id\": \"<integer>\",\n  \"date\": \"<dateTime>\",\n  \"type\": \"<string>\",\n  \"amount\": \"<number>\",\n  \"currency\": \"<string>\",\n  \"accountId\": \"<integer>\",\n  \"categoryId\": \"<integer>\",\n  \"description\": \"<string>\",\n  \"merchant\": \"<string>\",\n  \"subcategoryId\": \"<integer>\",\n  \"transferGroup\": \"<string>\"\n}",
-                            "cookie": [],
-                            "_postman_previewlanguage": "json"
-                        },
-                        {
-                            "id": "478d31d8-9d1b-46d0-99ae-0cbf78716edd",
-                            "name": "Ya hay un request en curso con la misma Idempotency-Key (aún no completado).",
-                            "originalRequest": {
-                                "url": {
-                                    "path": [
-                                        "movements"
-                                    ],
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "query": [],
-                                    "variable": []
-                                },
-                                "header": [
-                                    {
-                                        "disabled": false,
-                                        "description": {
-                                            "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
-                                            "type": "text/plain"
-                                        },
-                                        "key": "Idempotency-Key",
-                                        "value": "<string>"
-                                    },
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Accept",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "method": "POST",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"date\": \"<dateTime>\",\n  \"type\": \"<string>\",\n  \"amount\": \"<number>\",\n  \"currency\": \"<string>\",\n  \"accountId\": \"<integer>\",\n  \"description\": \"<string>\",\n  \"merchant\": \"<string>\",\n  \"notes\": \"<string>\",\n  \"paymentMethod\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\"\n}",
-                                    "options": {
-                                        "raw": {
-                                            "headerFamily": "json",
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "status": "Conflict",
-                            "code": 409,
-                            "header": [
-                                {
-                                    "key": "Content-Type",
-                                    "value": "application/json"
-                                }
-                            ],
-                            "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
-                            "cookie": [],
-                            "_postman_previewlanguage": "json"
-                        },
-                        {
-                            "id": "174cd804-50b1-4454-b059-2aaddca09102",
-                            "name": "La Idempotency-Key ya se usó con un cuerpo distinto (conflicto de idempotencia).",
-                            "originalRequest": {
-                                "url": {
-                                    "path": [
-                                        "movements"
-                                    ],
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "query": [],
-                                    "variable": []
-                                },
-                                "header": [
-                                    {
-                                        "disabled": false,
-                                        "description": {
-                                            "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
-                                            "type": "text/plain"
-                                        },
-                                        "key": "Idempotency-Key",
-                                        "value": "<string>"
-                                    },
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Accept",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "method": "POST",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"date\": \"<dateTime>\",\n  \"type\": \"<string>\",\n  \"amount\": \"<number>\",\n  \"currency\": \"<string>\",\n  \"accountId\": \"<integer>\",\n  \"description\": \"<string>\",\n  \"merchant\": \"<string>\",\n  \"notes\": \"<string>\",\n  \"paymentMethod\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\"\n}",
-                                    "options": {
-                                        "raw": {
-                                            "headerFamily": "json",
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "status": "Unprocessable Entity (WebDAV) (RFC 4918)",
-                            "code": 422,
-                            "header": [
-                                {
-                                    "key": "Content-Type",
-                                    "value": "application/json"
-                                }
-                            ],
-                            "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
-                            "cookie": [],
-                            "_postman_previewlanguage": "json"
-                        }
-                    ],
-                    "event": [],
-                    "protocolProfileBehavior": {
-                        "disableBodyPruning": true
+          "name": "{id}",
+          "description": "",
+          "item": [
+            {
+              "id": "4d13e7e4-54d7-4f92-b462-715b4c6c0e89",
+              "name": "Actualizar cuenta, incluyendo allowNegativeBalance (AC-1)",
+              "request": {
+                "name": "Actualizar cuenta, incluyendo allowNegativeBalance (AC-1)",
+                "description": {},
+                "url": {
+                  "path": ["accounts", ":id"],
+                  "host": ["{{baseUrl}}"],
+                  "query": [],
+                  "variable": [
+                    {
+                      "type": "any",
+                      "value": "<integer>",
+                      "key": "id",
+                      "disabled": false,
+                      "description": {
+                        "content": "(Required) ",
+                        "type": "text/plain"
+                      }
                     }
-                }
-            ]
-        },
-        {
-            "name": "transfers",
-            "description": "",
-            "item": [
-                {
-                    "id": "4ceb7bdc-fab5-46bc-9b3a-d7987a0a803a",
-                    "name": "Crear transferencia (valida saldo e idempotencia)",
-                    "request": {
-                        "name": "Crear transferencia (valida saldo e idempotencia)",
-                        "description": {},
-                        "url": {
-                            "path": [
-                                "transfers"
-                            ],
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "query": [],
-                            "variable": []
-                        },
-                        "header": [
-                            {
-                                "disabled": false,
-                                "description": {
-                                    "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
-                                    "type": "text/plain"
-                                },
-                                "key": "Idempotency-Key",
-                                "value": "<string>"
-                            },
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Accept",
-                                "value": "application/json"
-                            }
-                        ],
-                        "method": "POST",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"sourceAccountId\": \"<integer>\",\n  \"targetAccountId\": \"<integer>\",\n  \"amount\": \"<number>\",\n  \"date\": \"<dateTime>\",\n  \"description\": \"<string>\",\n  \"notes\": \"<string>\"\n}",
-                            "options": {
-                                "raw": {
-                                    "headerFamily": "json",
-                                    "language": "json"
-                                }
-                            }
-                        },
-                        "auth": null
-                    },
-                    "response": [
-                        {
-                            "id": "18b6a698-e235-4fe8-857c-9232ce3f6bab",
-                            "name": "Replay idempotente — misma Idempotency-Key y mismo cuerpo ya procesados.",
-                            "originalRequest": {
-                                "url": {
-                                    "path": [
-                                        "transfers"
-                                    ],
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "query": [],
-                                    "variable": []
-                                },
-                                "header": [
-                                    {
-                                        "disabled": false,
-                                        "description": {
-                                            "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
-                                            "type": "text/plain"
-                                        },
-                                        "key": "Idempotency-Key",
-                                        "value": "<string>"
-                                    },
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Accept",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "method": "POST",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"sourceAccountId\": \"<integer>\",\n  \"targetAccountId\": \"<integer>\",\n  \"amount\": \"<number>\",\n  \"date\": \"<dateTime>\",\n  \"description\": \"<string>\",\n  \"notes\": \"<string>\"\n}",
-                                    "options": {
-                                        "raw": {
-                                            "headerFamily": "json",
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "status": "OK",
-                            "code": 200,
-                            "header": [
-                                {
-                                    "key": "Content-Type",
-                                    "value": "application/json"
-                                }
-                            ],
-                            "body": "{\n  \"transferGroup\": \"<string>\",\n  \"outMovementId\": \"<integer>\",\n  \"inMovementId\": \"<integer>\"\n}",
-                            "cookie": [],
-                            "_postman_previewlanguage": "json"
-                        },
-                        {
-                            "id": "c978a34f-e847-479a-9b39-b37d80602b14",
-                            "name": "Transferencia creada como par de movimientos enlazados por transferGroup.",
-                            "originalRequest": {
-                                "url": {
-                                    "path": [
-                                        "transfers"
-                                    ],
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "query": [],
-                                    "variable": []
-                                },
-                                "header": [
-                                    {
-                                        "disabled": false,
-                                        "description": {
-                                            "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
-                                            "type": "text/plain"
-                                        },
-                                        "key": "Idempotency-Key",
-                                        "value": "<string>"
-                                    },
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Accept",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "method": "POST",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"sourceAccountId\": \"<integer>\",\n  \"targetAccountId\": \"<integer>\",\n  \"amount\": \"<number>\",\n  \"date\": \"<dateTime>\",\n  \"description\": \"<string>\",\n  \"notes\": \"<string>\"\n}",
-                                    "options": {
-                                        "raw": {
-                                            "headerFamily": "json",
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "status": "Created",
-                            "code": 201,
-                            "header": [
-                                {
-                                    "key": "Content-Type",
-                                    "value": "application/json"
-                                }
-                            ],
-                            "body": "{\n  \"transferGroup\": \"<string>\",\n  \"outMovementId\": \"<integer>\",\n  \"inMovementId\": \"<integer>\"\n}",
-                            "cookie": [],
-                            "_postman_previewlanguage": "json"
-                        },
-                        {
-                            "id": "ee4fb2c9-a726-4f0b-a306-2fb7dbf88b38",
-                            "name": "Ya hay un request en curso con la misma Idempotency-Key (aún no completado).",
-                            "originalRequest": {
-                                "url": {
-                                    "path": [
-                                        "transfers"
-                                    ],
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "query": [],
-                                    "variable": []
-                                },
-                                "header": [
-                                    {
-                                        "disabled": false,
-                                        "description": {
-                                            "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
-                                            "type": "text/plain"
-                                        },
-                                        "key": "Idempotency-Key",
-                                        "value": "<string>"
-                                    },
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Accept",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "method": "POST",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"sourceAccountId\": \"<integer>\",\n  \"targetAccountId\": \"<integer>\",\n  \"amount\": \"<number>\",\n  \"date\": \"<dateTime>\",\n  \"description\": \"<string>\",\n  \"notes\": \"<string>\"\n}",
-                                    "options": {
-                                        "raw": {
-                                            "headerFamily": "json",
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "status": "Conflict",
-                            "code": 409,
-                            "header": [
-                                {
-                                    "key": "Content-Type",
-                                    "value": "application/json"
-                                }
-                            ],
-                            "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
-                            "cookie": [],
-                            "_postman_previewlanguage": "json"
-                        },
-                        {
-                            "id": "5c984345-7b95-44f2-b374-4e6d86a2de2d",
-                            "name": "Saldo insuficiente en la cuenta origen que no admite saldo negativo (AC-1), o la Idempotency-Key ya se usó con un cuerpo distinto (AC-3). El campo message distingue el caso.",
-                            "originalRequest": {
-                                "url": {
-                                    "path": [
-                                        "transfers"
-                                    ],
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "query": [],
-                                    "variable": []
-                                },
-                                "header": [
-                                    {
-                                        "disabled": false,
-                                        "description": {
-                                            "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
-                                            "type": "text/plain"
-                                        },
-                                        "key": "Idempotency-Key",
-                                        "value": "<string>"
-                                    },
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Accept",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "method": "POST",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"sourceAccountId\": \"<integer>\",\n  \"targetAccountId\": \"<integer>\",\n  \"amount\": \"<number>\",\n  \"date\": \"<dateTime>\",\n  \"description\": \"<string>\",\n  \"notes\": \"<string>\"\n}",
-                                    "options": {
-                                        "raw": {
-                                            "headerFamily": "json",
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "status": "Unprocessable Entity (WebDAV) (RFC 4918)",
-                            "code": 422,
-                            "header": [
-                                {
-                                    "key": "Content-Type",
-                                    "value": "application/json"
-                                }
-                            ],
-                            "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
-                            "cookie": [],
-                            "_postman_previewlanguage": "json"
-                        }
-                    ],
-                    "event": [],
-                    "protocolProfileBehavior": {
-                        "disableBodyPruning": true
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"initialBalance\": \"<number>\",\n  \"allowNegativeBalance\": false\n}",
+                  "options": {
+                    "raw": {
+                      "headerFamily": "json",
+                      "language": "json"
                     }
-                }
-            ]
-        },
-        {
-            "name": "categorization-rules",
-            "description": "",
-            "item": [
+                  }
+                },
+                "auth": null
+              },
+              "response": [
                 {
-                    "id": "6403918e-cc8c-4a21-94d0-7bd881b62da5",
-                    "name": "Crear una regla de auto-categorización (AC-4)",
-                    "request": {
-                        "name": "Crear una regla de auto-categorización (AC-4)",
-                        "description": {},
-                        "url": {
-                            "path": [
-                                "categorization-rules"
-                            ],
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "query": [],
-                            "variable": []
-                        },
-                        "header": [
-                            {
-                                "key": "Content-Type",
-                                "value": "application/json"
-                            },
-                            {
-                                "key": "Accept",
-                                "value": "application/json"
-                            }
-                        ],
-                        "method": "POST",
-                        "body": {
-                            "mode": "raw",
-                            "raw": "{\n  \"pattern\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\",\n  \"priority\": 0\n}",
-                            "options": {
-                                "raw": {
-                                    "headerFamily": "json",
-                                    "language": "json"
-                                }
-                            }
-                        },
-                        "auth": null
-                    },
-                    "response": [
+                  "id": "2e8fd087-bb4d-425d-9ee4-0b363ae9ea10",
+                  "name": "Cuenta actualizada.",
+                  "originalRequest": {
+                    "url": {
+                      "path": ["accounts", ":id"],
+                      "host": ["{{baseUrl}}"],
+                      "query": [],
+                      "variable": [
                         {
-                            "id": "69627f29-97ac-4b27-94be-e130efafc127",
-                            "name": "Regla creada.",
-                            "originalRequest": {
-                                "url": {
-                                    "path": [
-                                        "categorization-rules"
-                                    ],
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "query": [],
-                                    "variable": []
-                                },
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Accept",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "method": "POST",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"pattern\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\",\n  \"priority\": 0\n}",
-                                    "options": {
-                                        "raw": {
-                                            "headerFamily": "json",
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "status": "Created",
-                            "code": 201,
-                            "header": [
-                                {
-                                    "key": "Content-Type",
-                                    "value": "application/json"
-                                }
-                            ],
-                            "body": "{\n  \"id\": \"<integer>\",\n  \"pattern\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"priority\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\",\n  \"createdAt\": \"<dateTime>\"\n}",
-                            "cookie": [],
-                            "_postman_previewlanguage": "json"
-                        },
-                        {
-                            "id": "b608d4a4-3c29-4d41-99b0-d7f4f8bcd061",
-                            "name": "La categoría o subcategoría referenciada no existe.",
-                            "originalRequest": {
-                                "url": {
-                                    "path": [
-                                        "categorization-rules"
-                                    ],
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "query": [],
-                                    "variable": []
-                                },
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Accept",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "method": "POST",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"pattern\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\",\n  \"priority\": 0\n}",
-                                    "options": {
-                                        "raw": {
-                                            "headerFamily": "json",
-                                            "language": "json"
-                                        }
-                                    }
-                                }
-                            },
-                            "status": "Not Found",
-                            "code": 404,
-                            "header": [
-                                {
-                                    "key": "Content-Type",
-                                    "value": "application/json"
-                                }
-                            ],
-                            "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
-                            "cookie": [],
-                            "_postman_previewlanguage": "json"
+                          "disabled": false,
+                          "description": {
+                            "content": "(Required) ",
+                            "type": "text/plain"
+                          },
+                          "type": "any",
+                          "value": "<integer>",
+                          "key": "id"
                         }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Accept",
+                        "value": "application/json"
+                      }
                     ],
-                    "event": [],
-                    "protocolProfileBehavior": {
-                        "disableBodyPruning": true
+                    "method": "PATCH",
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"initialBalance\": \"<number>\",\n  \"allowNegativeBalance\": false\n}",
+                      "options": {
+                        "raw": {
+                          "headerFamily": "json",
+                          "language": "json"
+                        }
+                      }
                     }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"id\": \"<integer>\",\n  \"name\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"allowNegativeBalance\": \"<boolean>\",\n  \"initialBalance\": \"<number>\",\n  \"createdAt\": \"<dateTime>\"\n}",
+                  "cookie": [],
+                  "_postman_previewlanguage": "json"
                 },
                 {
-                    "id": "0dfe67a3-93b4-4aad-b113-dc9301cf950f",
-                    "name": "Listar las reglas del usuario, ordenadas por prioridad descendente",
-                    "request": {
-                        "name": "Listar las reglas del usuario, ordenadas por prioridad descendente",
-                        "description": {},
-                        "url": {
-                            "path": [
-                                "categorization-rules"
-                            ],
-                            "host": [
-                                "{{baseUrl}}"
-                            ],
-                            "query": [],
-                            "variable": []
-                        },
-                        "header": [
-                            {
-                                "key": "Accept",
-                                "value": "application/json"
-                            }
-                        ],
-                        "method": "GET",
-                        "body": {},
-                        "auth": null
-                    },
-                    "response": [
+                  "id": "9bf8c0d3-f8ec-4ae5-8bc6-b44dbdfa9fa1",
+                  "name": "La cuenta no existe o no pertenece al usuario.",
+                  "originalRequest": {
+                    "url": {
+                      "path": ["accounts", ":id"],
+                      "host": ["{{baseUrl}}"],
+                      "query": [],
+                      "variable": [
                         {
-                            "id": "0d31de79-6570-4cd4-a349-a681e7671385",
-                            "name": "Reglas del usuario autenticado.",
-                            "originalRequest": {
-                                "url": {
-                                    "path": [
-                                        "categorization-rules"
-                                    ],
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "query": [],
-                                    "variable": []
-                                },
-                                "header": [
-                                    {
-                                        "key": "Accept",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "method": "GET",
-                                "body": {}
-                            },
-                            "status": "OK",
-                            "code": 200,
-                            "header": [
-                                {
-                                    "key": "Content-Type",
-                                    "value": "application/json"
-                                }
-                            ],
-                            "body": "[\n  {\n    \"id\": \"<integer>\",\n    \"pattern\": \"<string>\",\n    \"categoryId\": \"<integer>\",\n    \"priority\": \"<integer>\",\n    \"subcategoryId\": \"<integer>\",\n    \"createdAt\": \"<dateTime>\"\n  },\n  {\n    \"id\": \"<integer>\",\n    \"pattern\": \"<string>\",\n    \"categoryId\": \"<integer>\",\n    \"priority\": \"<integer>\",\n    \"subcategoryId\": \"<integer>\",\n    \"createdAt\": \"<dateTime>\"\n  }\n]",
-                            "cookie": [],
-                            "_postman_previewlanguage": "json"
+                          "disabled": false,
+                          "description": {
+                            "content": "(Required) ",
+                            "type": "text/plain"
+                          },
+                          "type": "any",
+                          "value": "<integer>",
+                          "key": "id"
                         }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Accept",
+                        "value": "application/json"
+                      }
                     ],
-                    "event": [],
-                    "protocolProfileBehavior": {
-                        "disableBodyPruning": true
+                    "method": "PATCH",
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"name\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"initialBalance\": \"<number>\",\n  \"allowNegativeBalance\": false\n}",
+                      "options": {
+                        "raw": {
+                          "headerFamily": "json",
+                          "language": "json"
+                        }
+                      }
                     }
+                  },
+                  "status": "Not Found",
+                  "code": 404,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
+                  "cookie": [],
+                  "_postman_previewlanguage": "json"
+                }
+              ],
+              "event": [],
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              }
+            },
+            {
+              "id": "ab4ee18b-daaa-4532-8f97-aeb496a4f520",
+              "name": "Archivar cuenta en cascada (AC-5)",
+              "request": {
+                "name": "Archivar cuenta en cascada (AC-5)",
+                "description": {
+                  "content": "Reemplaza el bloqueo por AccountHasMovementsException. Soft-deletea la cuenta, sus movimientos, y ambas patas de cada transferencia donde participa (aunque la contraparte siga en una cuenta activa). Lo soft-deleted deja de contar en saldos y reportes.\n",
+                  "type": "text/plain"
+                },
+                "url": {
+                  "path": ["accounts", ":id"],
+                  "host": ["{{baseUrl}}"],
+                  "query": [],
+                  "variable": [
+                    {
+                      "type": "any",
+                      "value": "<integer>",
+                      "key": "id",
+                      "disabled": false,
+                      "description": {
+                        "content": "(Required) ",
+                        "type": "text/plain"
+                      }
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {},
+                "auth": null
+              },
+              "response": [
+                {
+                  "id": "080739ba-bd4e-4d6f-bce4-2aa859a78d65",
+                  "name": "Cuenta y sus movimientos/transferencias archivados en cascada.",
+                  "originalRequest": {
+                    "url": {
+                      "path": ["accounts", ":id"],
+                      "host": ["{{baseUrl}}"],
+                      "query": [],
+                      "variable": [
+                        {
+                          "disabled": false,
+                          "description": {
+                            "content": "(Required) ",
+                            "type": "text/plain"
+                          },
+                          "type": "any",
+                          "value": "<integer>",
+                          "key": "id"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Accept",
+                        "value": "application/json"
+                      }
+                    ],
+                    "method": "DELETE",
+                    "body": {}
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"accountId\": \"<integer>\",\n  \"archivedMovements\": \"<integer>\",\n  \"archivedTransfers\": \"<integer>\"\n}",
+                  "cookie": [],
+                  "_postman_previewlanguage": "json"
                 },
                 {
-                    "name": "{id}",
-                    "description": "",
-                    "item": [
+                  "id": "9e972bb3-92b9-4178-a6f7-80f073189e61",
+                  "name": "La cuenta no existe o no pertenece al usuario.",
+                  "originalRequest": {
+                    "url": {
+                      "path": ["accounts", ":id"],
+                      "host": ["{{baseUrl}}"],
+                      "query": [],
+                      "variable": [
                         {
-                            "id": "bf5d9a50-3af2-4c73-a456-d630daab62c8",
-                            "name": "Actualizar una regla de auto-categorización (AC-4)",
-                            "request": {
-                                "name": "Actualizar una regla de auto-categorización (AC-4)",
-                                "description": {},
-                                "url": {
-                                    "path": [
-                                        "categorization-rules",
-                                        ":id"
-                                    ],
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "query": [],
-                                    "variable": [
-                                        {
-                                            "type": "any",
-                                            "value": "<integer>",
-                                            "key": "id",
-                                            "disabled": false,
-                                            "description": {
-                                                "content": "(Required) ",
-                                                "type": "text/plain"
-                                            }
-                                        }
-                                    ]
-                                },
-                                "header": [
-                                    {
-                                        "key": "Content-Type",
-                                        "value": "application/json"
-                                    },
-                                    {
-                                        "key": "Accept",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "method": "PATCH",
-                                "body": {
-                                    "mode": "raw",
-                                    "raw": "{\n  \"pattern\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\",\n  \"priority\": \"<integer>\"\n}",
-                                    "options": {
-                                        "raw": {
-                                            "headerFamily": "json",
-                                            "language": "json"
-                                        }
-                                    }
-                                },
-                                "auth": null
-                            },
-                            "response": [
-                                {
-                                    "id": "214dc582-b228-4ed8-8520-7dcc803157d7",
-                                    "name": "Regla actualizada.",
-                                    "originalRequest": {
-                                        "url": {
-                                            "path": [
-                                                "categorization-rules",
-                                                ":id"
-                                            ],
-                                            "host": [
-                                                "{{baseUrl}}"
-                                            ],
-                                            "query": [],
-                                            "variable": [
-                                                {
-                                                    "disabled": false,
-                                                    "description": {
-                                                        "content": "(Required) ",
-                                                        "type": "text/plain"
-                                                    },
-                                                    "type": "any",
-                                                    "value": "<integer>",
-                                                    "key": "id"
-                                                }
-                                            ]
-                                        },
-                                        "header": [
-                                            {
-                                                "key": "Content-Type",
-                                                "value": "application/json"
-                                            },
-                                            {
-                                                "key": "Accept",
-                                                "value": "application/json"
-                                            }
-                                        ],
-                                        "method": "PATCH",
-                                        "body": {
-                                            "mode": "raw",
-                                            "raw": "{\n  \"pattern\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\",\n  \"priority\": \"<integer>\"\n}",
-                                            "options": {
-                                                "raw": {
-                                                    "headerFamily": "json",
-                                                    "language": "json"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "status": "OK",
-                                    "code": 200,
-                                    "header": [
-                                        {
-                                            "key": "Content-Type",
-                                            "value": "application/json"
-                                        }
-                                    ],
-                                    "body": "{\n  \"id\": \"<integer>\",\n  \"pattern\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"priority\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\",\n  \"createdAt\": \"<dateTime>\"\n}",
-                                    "cookie": [],
-                                    "_postman_previewlanguage": "json"
-                                },
-                                {
-                                    "id": "e87c77d1-8fcc-4756-a88f-50a83fb61290",
-                                    "name": "La regla no existe o no pertenece al usuario.",
-                                    "originalRequest": {
-                                        "url": {
-                                            "path": [
-                                                "categorization-rules",
-                                                ":id"
-                                            ],
-                                            "host": [
-                                                "{{baseUrl}}"
-                                            ],
-                                            "query": [],
-                                            "variable": [
-                                                {
-                                                    "disabled": false,
-                                                    "description": {
-                                                        "content": "(Required) ",
-                                                        "type": "text/plain"
-                                                    },
-                                                    "type": "any",
-                                                    "value": "<integer>",
-                                                    "key": "id"
-                                                }
-                                            ]
-                                        },
-                                        "header": [
-                                            {
-                                                "key": "Content-Type",
-                                                "value": "application/json"
-                                            },
-                                            {
-                                                "key": "Accept",
-                                                "value": "application/json"
-                                            }
-                                        ],
-                                        "method": "PATCH",
-                                        "body": {
-                                            "mode": "raw",
-                                            "raw": "{\n  \"pattern\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\",\n  \"priority\": \"<integer>\"\n}",
-                                            "options": {
-                                                "raw": {
-                                                    "headerFamily": "json",
-                                                    "language": "json"
-                                                }
-                                            }
-                                        }
-                                    },
-                                    "status": "Not Found",
-                                    "code": 404,
-                                    "header": [
-                                        {
-                                            "key": "Content-Type",
-                                            "value": "application/json"
-                                        }
-                                    ],
-                                    "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
-                                    "cookie": [],
-                                    "_postman_previewlanguage": "json"
-                                }
-                            ],
-                            "event": [],
-                            "protocolProfileBehavior": {
-                                "disableBodyPruning": true
-                            }
-                        },
-                        {
-                            "id": "85ca69a6-a3a6-4ba6-9709-6aa4d6037bfc",
-                            "name": "Eliminar una regla de auto-categorización (AC-4)",
-                            "request": {
-                                "name": "Eliminar una regla de auto-categorización (AC-4)",
-                                "description": {},
-                                "url": {
-                                    "path": [
-                                        "categorization-rules",
-                                        ":id"
-                                    ],
-                                    "host": [
-                                        "{{baseUrl}}"
-                                    ],
-                                    "query": [],
-                                    "variable": [
-                                        {
-                                            "type": "any",
-                                            "value": "<integer>",
-                                            "key": "id",
-                                            "disabled": false,
-                                            "description": {
-                                                "content": "(Required) ",
-                                                "type": "text/plain"
-                                            }
-                                        }
-                                    ]
-                                },
-                                "header": [
-                                    {
-                                        "key": "Accept",
-                                        "value": "application/json"
-                                    }
-                                ],
-                                "method": "DELETE",
-                                "body": {},
-                                "auth": null
-                            },
-                            "response": [
-                                {
-                                    "id": "49bd43aa-7d77-4b0c-9f73-6560c290ac71",
-                                    "name": "Regla eliminada.",
-                                    "originalRequest": {
-                                        "url": {
-                                            "path": [
-                                                "categorization-rules",
-                                                ":id"
-                                            ],
-                                            "host": [
-                                                "{{baseUrl}}"
-                                            ],
-                                            "query": [],
-                                            "variable": [
-                                                {
-                                                    "disabled": false,
-                                                    "description": {
-                                                        "content": "(Required) ",
-                                                        "type": "text/plain"
-                                                    },
-                                                    "type": "any",
-                                                    "value": "<integer>",
-                                                    "key": "id"
-                                                }
-                                            ]
-                                        },
-                                        "method": "DELETE",
-                                        "body": {}
-                                    },
-                                    "status": "No Content",
-                                    "code": 204,
-                                    "header": [],
-                                    "cookie": [],
-                                    "_postman_previewlanguage": "text"
-                                },
-                                {
-                                    "id": "eaf8f8de-f024-443a-86ca-c1b4636f8c3b",
-                                    "name": "La regla no existe o no pertenece al usuario.",
-                                    "originalRequest": {
-                                        "url": {
-                                            "path": [
-                                                "categorization-rules",
-                                                ":id"
-                                            ],
-                                            "host": [
-                                                "{{baseUrl}}"
-                                            ],
-                                            "query": [],
-                                            "variable": [
-                                                {
-                                                    "disabled": false,
-                                                    "description": {
-                                                        "content": "(Required) ",
-                                                        "type": "text/plain"
-                                                    },
-                                                    "type": "any",
-                                                    "value": "<integer>",
-                                                    "key": "id"
-                                                }
-                                            ]
-                                        },
-                                        "header": [
-                                            {
-                                                "key": "Accept",
-                                                "value": "application/json"
-                                            }
-                                        ],
-                                        "method": "DELETE",
-                                        "body": {}
-                                    },
-                                    "status": "Not Found",
-                                    "code": 404,
-                                    "header": [
-                                        {
-                                            "key": "Content-Type",
-                                            "value": "application/json"
-                                        }
-                                    ],
-                                    "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
-                                    "cookie": [],
-                                    "_postman_previewlanguage": "json"
-                                }
-                            ],
-                            "event": [],
-                            "protocolProfileBehavior": {
-                                "disableBodyPruning": true
-                            }
+                          "disabled": false,
+                          "description": {
+                            "content": "(Required) ",
+                            "type": "text/plain"
+                          },
+                          "type": "any",
+                          "value": "<integer>",
+                          "key": "id"
                         }
-                    ]
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Accept",
+                        "value": "application/json"
+                      }
+                    ],
+                    "method": "DELETE",
+                    "body": {}
+                  },
+                  "status": "Not Found",
+                  "code": 404,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
+                  "cookie": [],
+                  "_postman_previewlanguage": "json"
                 }
-            ]
+              ],
+              "event": [],
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              }
+            }
+          ]
         }
-    ],
-    "event": [],
-    "variable": [
+      ]
+    },
+    {
+      "name": "movements",
+      "description": "",
+      "item": [
         {
-            "key": "baseUrl",
-            "value": "/"
+          "id": "56cc602d-631d-4c9c-886a-b7f1b6aa247c",
+          "name": "Crear movimiento (idempotente y con categoría opcional)",
+          "request": {
+            "name": "Crear movimiento (idempotente y con categoría opcional)",
+            "description": {},
+            "url": {
+              "path": ["movements"],
+              "host": ["{{baseUrl}}"],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "disabled": false,
+                "description": {
+                  "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
+                  "type": "text/plain"
+                },
+                "key": "Idempotency-Key",
+                "value": "<string>"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"date\": \"<dateTime>\",\n  \"type\": \"<string>\",\n  \"amount\": \"<number>\",\n  \"currency\": \"<string>\",\n  \"accountId\": \"<integer>\",\n  \"description\": \"<string>\",\n  \"merchant\": \"<string>\",\n  \"notes\": \"<string>\",\n  \"paymentMethod\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\"\n}",
+              "options": {
+                "raw": {
+                  "headerFamily": "json",
+                  "language": "json"
+                }
+              }
+            },
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "78e13d6f-2c7f-4882-b668-985b7657bfee",
+              "name": "Replay idempotente — misma Idempotency-Key y mismo cuerpo ya procesados.",
+              "originalRequest": {
+                "url": {
+                  "path": ["movements"],
+                  "host": ["{{baseUrl}}"],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
+                      "type": "text/plain"
+                    },
+                    "key": "Idempotency-Key",
+                    "value": "<string>"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"date\": \"<dateTime>\",\n  \"type\": \"<string>\",\n  \"amount\": \"<number>\",\n  \"currency\": \"<string>\",\n  \"accountId\": \"<integer>\",\n  \"description\": \"<string>\",\n  \"merchant\": \"<string>\",\n  \"notes\": \"<string>\",\n  \"paymentMethod\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\"\n}",
+                  "options": {
+                    "raw": {
+                      "headerFamily": "json",
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"<integer>\",\n  \"date\": \"<dateTime>\",\n  \"type\": \"<string>\",\n  \"amount\": \"<number>\",\n  \"currency\": \"<string>\",\n  \"accountId\": \"<integer>\",\n  \"categoryId\": \"<integer>\",\n  \"description\": \"<string>\",\n  \"merchant\": \"<string>\",\n  \"subcategoryId\": \"<integer>\",\n  \"transferGroup\": \"<string>\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "2ef6ec41-f264-4976-ae5d-80fe6eb8179f",
+              "name": "Movimiento creado (categorizado por regla o categoría por defecto si se omitió categoryId).",
+              "originalRequest": {
+                "url": {
+                  "path": ["movements"],
+                  "host": ["{{baseUrl}}"],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
+                      "type": "text/plain"
+                    },
+                    "key": "Idempotency-Key",
+                    "value": "<string>"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"date\": \"<dateTime>\",\n  \"type\": \"<string>\",\n  \"amount\": \"<number>\",\n  \"currency\": \"<string>\",\n  \"accountId\": \"<integer>\",\n  \"description\": \"<string>\",\n  \"merchant\": \"<string>\",\n  \"notes\": \"<string>\",\n  \"paymentMethod\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\"\n}",
+                  "options": {
+                    "raw": {
+                      "headerFamily": "json",
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"<integer>\",\n  \"date\": \"<dateTime>\",\n  \"type\": \"<string>\",\n  \"amount\": \"<number>\",\n  \"currency\": \"<string>\",\n  \"accountId\": \"<integer>\",\n  \"categoryId\": \"<integer>\",\n  \"description\": \"<string>\",\n  \"merchant\": \"<string>\",\n  \"subcategoryId\": \"<integer>\",\n  \"transferGroup\": \"<string>\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "478d31d8-9d1b-46d0-99ae-0cbf78716edd",
+              "name": "Ya hay un request en curso con la misma Idempotency-Key (aún no completado).",
+              "originalRequest": {
+                "url": {
+                  "path": ["movements"],
+                  "host": ["{{baseUrl}}"],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
+                      "type": "text/plain"
+                    },
+                    "key": "Idempotency-Key",
+                    "value": "<string>"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"date\": \"<dateTime>\",\n  \"type\": \"<string>\",\n  \"amount\": \"<number>\",\n  \"currency\": \"<string>\",\n  \"accountId\": \"<integer>\",\n  \"description\": \"<string>\",\n  \"merchant\": \"<string>\",\n  \"notes\": \"<string>\",\n  \"paymentMethod\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\"\n}",
+                  "options": {
+                    "raw": {
+                      "headerFamily": "json",
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "174cd804-50b1-4454-b059-2aaddca09102",
+              "name": "La Idempotency-Key ya se usó con un cuerpo distinto (conflicto de idempotencia).",
+              "originalRequest": {
+                "url": {
+                  "path": ["movements"],
+                  "host": ["{{baseUrl}}"],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
+                      "type": "text/plain"
+                    },
+                    "key": "Idempotency-Key",
+                    "value": "<string>"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"date\": \"<dateTime>\",\n  \"type\": \"<string>\",\n  \"amount\": \"<number>\",\n  \"currency\": \"<string>\",\n  \"accountId\": \"<integer>\",\n  \"description\": \"<string>\",\n  \"merchant\": \"<string>\",\n  \"notes\": \"<string>\",\n  \"paymentMethod\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\"\n}",
+                  "options": {
+                    "raw": {
+                      "headerFamily": "json",
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+              "code": 422,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
         }
-    ],
-    "info": {
-        "_postman_id": "8c3c5bf0-557f-4a24-a306-badb51ddf23e",
-        "name": "sm-0003 API",
-        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-        "description": {
-            "content": "Contrato generado por /design para sm-0003: Robustez del dominio y consistencia. Cubre validación de saldo en transferencias (AC-1), idempotencia en escrituras de usuario (AC-3), reglas de auto-categorización (AC-4) y archivado de cuentas en cascada (AC-5). AC-2 (patrón Outbox) no expone endpoints — es infraestructura interna.\n",
-            "type": "text/plain"
+      ]
+    },
+    {
+      "name": "transfers",
+      "description": "",
+      "item": [
+        {
+          "id": "4ceb7bdc-fab5-46bc-9b3a-d7987a0a803a",
+          "name": "Crear transferencia (valida saldo e idempotencia)",
+          "request": {
+            "name": "Crear transferencia (valida saldo e idempotencia)",
+            "description": {},
+            "url": {
+              "path": ["transfers"],
+              "host": ["{{baseUrl}}"],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "disabled": false,
+                "description": {
+                  "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
+                  "type": "text/plain"
+                },
+                "key": "Idempotency-Key",
+                "value": "<string>"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"sourceAccountId\": \"<integer>\",\n  \"targetAccountId\": \"<integer>\",\n  \"amount\": \"<number>\",\n  \"date\": \"<dateTime>\",\n  \"description\": \"<string>\",\n  \"notes\": \"<string>\"\n}",
+              "options": {
+                "raw": {
+                  "headerFamily": "json",
+                  "language": "json"
+                }
+              }
+            },
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "18b6a698-e235-4fe8-857c-9232ce3f6bab",
+              "name": "Replay idempotente — misma Idempotency-Key y mismo cuerpo ya procesados.",
+              "originalRequest": {
+                "url": {
+                  "path": ["transfers"],
+                  "host": ["{{baseUrl}}"],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
+                      "type": "text/plain"
+                    },
+                    "key": "Idempotency-Key",
+                    "value": "<string>"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sourceAccountId\": \"<integer>\",\n  \"targetAccountId\": \"<integer>\",\n  \"amount\": \"<number>\",\n  \"date\": \"<dateTime>\",\n  \"description\": \"<string>\",\n  \"notes\": \"<string>\"\n}",
+                  "options": {
+                    "raw": {
+                      "headerFamily": "json",
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"transferGroup\": \"<string>\",\n  \"outMovementId\": \"<integer>\",\n  \"inMovementId\": \"<integer>\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "c978a34f-e847-479a-9b39-b37d80602b14",
+              "name": "Transferencia creada como par de movimientos enlazados por transferGroup.",
+              "originalRequest": {
+                "url": {
+                  "path": ["transfers"],
+                  "host": ["{{baseUrl}}"],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
+                      "type": "text/plain"
+                    },
+                    "key": "Idempotency-Key",
+                    "value": "<string>"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sourceAccountId\": \"<integer>\",\n  \"targetAccountId\": \"<integer>\",\n  \"amount\": \"<number>\",\n  \"date\": \"<dateTime>\",\n  \"description\": \"<string>\",\n  \"notes\": \"<string>\"\n}",
+                  "options": {
+                    "raw": {
+                      "headerFamily": "json",
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"transferGroup\": \"<string>\",\n  \"outMovementId\": \"<integer>\",\n  \"inMovementId\": \"<integer>\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "ee4fb2c9-a726-4f0b-a306-2fb7dbf88b38",
+              "name": "Ya hay un request en curso con la misma Idempotency-Key (aún no completado).",
+              "originalRequest": {
+                "url": {
+                  "path": ["transfers"],
+                  "host": ["{{baseUrl}}"],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
+                      "type": "text/plain"
+                    },
+                    "key": "Idempotency-Key",
+                    "value": "<string>"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sourceAccountId\": \"<integer>\",\n  \"targetAccountId\": \"<integer>\",\n  \"amount\": \"<number>\",\n  \"date\": \"<dateTime>\",\n  \"description\": \"<string>\",\n  \"notes\": \"<string>\"\n}",
+                  "options": {
+                    "raw": {
+                      "headerFamily": "json",
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Conflict",
+              "code": 409,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "5c984345-7b95-44f2-b374-4e6d86a2de2d",
+              "name": "Saldo insuficiente en la cuenta origen que no admite saldo negativo (AC-1), o la Idempotency-Key ya se usó con un cuerpo distinto (AC-3). El campo message distingue el caso.",
+              "originalRequest": {
+                "url": {
+                  "path": ["transfers"],
+                  "host": ["{{baseUrl}}"],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "disabled": false,
+                    "description": {
+                      "content": "Clave de idempotencia opcional. Dos requests del mismo usuario con la misma clave y el mismo cuerpo producen un único registro y devuelven la misma respuesta. La clave se retiene 24h. Ver respuestas 409/422.\n",
+                      "type": "text/plain"
+                    },
+                    "key": "Idempotency-Key",
+                    "value": "<string>"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"sourceAccountId\": \"<integer>\",\n  \"targetAccountId\": \"<integer>\",\n  \"amount\": \"<number>\",\n  \"date\": \"<dateTime>\",\n  \"description\": \"<string>\",\n  \"notes\": \"<string>\"\n}",
+                  "options": {
+                    "raw": {
+                      "headerFamily": "json",
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+              "code": 422,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
         }
+      ]
+    },
+    {
+      "name": "categorization-rules",
+      "description": "",
+      "item": [
+        {
+          "id": "6403918e-cc8c-4a21-94d0-7bd881b62da5",
+          "name": "Crear una regla de auto-categorización (AC-4)",
+          "request": {
+            "name": "Crear una regla de auto-categorización (AC-4)",
+            "description": {},
+            "url": {
+              "path": ["categorization-rules"],
+              "host": ["{{baseUrl}}"],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "POST",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pattern\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\",\n  \"priority\": 0\n}",
+              "options": {
+                "raw": {
+                  "headerFamily": "json",
+                  "language": "json"
+                }
+              }
+            },
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "69627f29-97ac-4b27-94be-e130efafc127",
+              "name": "Regla creada.",
+              "originalRequest": {
+                "url": {
+                  "path": ["categorization-rules"],
+                  "host": ["{{baseUrl}}"],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"pattern\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\",\n  \"priority\": 0\n}",
+                  "options": {
+                    "raw": {
+                      "headerFamily": "json",
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": \"<integer>\",\n  \"pattern\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"priority\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\",\n  \"createdAt\": \"<dateTime>\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            },
+            {
+              "id": "b608d4a4-3c29-4d41-99b0-d7f4f8bcd061",
+              "name": "La categoría o subcategoría referenciada no existe.",
+              "originalRequest": {
+                "url": {
+                  "path": ["categorization-rules"],
+                  "host": ["{{baseUrl}}"],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "POST",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"pattern\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\",\n  \"priority\": 0\n}",
+                  "options": {
+                    "raw": {
+                      "headerFamily": "json",
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "id": "0dfe67a3-93b4-4aad-b113-dc9301cf950f",
+          "name": "Listar las reglas del usuario, ordenadas por prioridad descendente",
+          "request": {
+            "name": "Listar las reglas del usuario, ordenadas por prioridad descendente",
+            "description": {},
+            "url": {
+              "path": ["categorization-rules"],
+              "host": ["{{baseUrl}}"],
+              "query": [],
+              "variable": []
+            },
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "method": "GET",
+            "body": {},
+            "auth": null
+          },
+          "response": [
+            {
+              "id": "0d31de79-6570-4cd4-a349-a681e7671385",
+              "name": "Reglas del usuario autenticado.",
+              "originalRequest": {
+                "url": {
+                  "path": ["categorization-rules"],
+                  "host": ["{{baseUrl}}"],
+                  "query": [],
+                  "variable": []
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "GET",
+                "body": {}
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": \"<integer>\",\n    \"pattern\": \"<string>\",\n    \"categoryId\": \"<integer>\",\n    \"priority\": \"<integer>\",\n    \"subcategoryId\": \"<integer>\",\n    \"createdAt\": \"<dateTime>\"\n  },\n  {\n    \"id\": \"<integer>\",\n    \"pattern\": \"<string>\",\n    \"categoryId\": \"<integer>\",\n    \"priority\": \"<integer>\",\n    \"subcategoryId\": \"<integer>\",\n    \"createdAt\": \"<dateTime>\"\n  }\n]",
+              "cookie": [],
+              "_postman_previewlanguage": "json"
+            }
+          ],
+          "event": [],
+          "protocolProfileBehavior": {
+            "disableBodyPruning": true
+          }
+        },
+        {
+          "name": "{id}",
+          "description": "",
+          "item": [
+            {
+              "id": "bf5d9a50-3af2-4c73-a456-d630daab62c8",
+              "name": "Actualizar una regla de auto-categorización (AC-4)",
+              "request": {
+                "name": "Actualizar una regla de auto-categorización (AC-4)",
+                "description": {},
+                "url": {
+                  "path": ["categorization-rules", ":id"],
+                  "host": ["{{baseUrl}}"],
+                  "query": [],
+                  "variable": [
+                    {
+                      "type": "any",
+                      "value": "<integer>",
+                      "key": "id",
+                      "disabled": false,
+                      "description": {
+                        "content": "(Required) ",
+                        "type": "text/plain"
+                      }
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "PATCH",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"pattern\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\",\n  \"priority\": \"<integer>\"\n}",
+                  "options": {
+                    "raw": {
+                      "headerFamily": "json",
+                      "language": "json"
+                    }
+                  }
+                },
+                "auth": null
+              },
+              "response": [
+                {
+                  "id": "214dc582-b228-4ed8-8520-7dcc803157d7",
+                  "name": "Regla actualizada.",
+                  "originalRequest": {
+                    "url": {
+                      "path": ["categorization-rules", ":id"],
+                      "host": ["{{baseUrl}}"],
+                      "query": [],
+                      "variable": [
+                        {
+                          "disabled": false,
+                          "description": {
+                            "content": "(Required) ",
+                            "type": "text/plain"
+                          },
+                          "type": "any",
+                          "value": "<integer>",
+                          "key": "id"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Accept",
+                        "value": "application/json"
+                      }
+                    ],
+                    "method": "PATCH",
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"pattern\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\",\n  \"priority\": \"<integer>\"\n}",
+                      "options": {
+                        "raw": {
+                          "headerFamily": "json",
+                          "language": "json"
+                        }
+                      }
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"id\": \"<integer>\",\n  \"pattern\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"priority\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\",\n  \"createdAt\": \"<dateTime>\"\n}",
+                  "cookie": [],
+                  "_postman_previewlanguage": "json"
+                },
+                {
+                  "id": "e87c77d1-8fcc-4756-a88f-50a83fb61290",
+                  "name": "La regla no existe o no pertenece al usuario.",
+                  "originalRequest": {
+                    "url": {
+                      "path": ["categorization-rules", ":id"],
+                      "host": ["{{baseUrl}}"],
+                      "query": [],
+                      "variable": [
+                        {
+                          "disabled": false,
+                          "description": {
+                            "content": "(Required) ",
+                            "type": "text/plain"
+                          },
+                          "type": "any",
+                          "value": "<integer>",
+                          "key": "id"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                      },
+                      {
+                        "key": "Accept",
+                        "value": "application/json"
+                      }
+                    ],
+                    "method": "PATCH",
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n  \"pattern\": \"<string>\",\n  \"categoryId\": \"<integer>\",\n  \"subcategoryId\": \"<integer>\",\n  \"priority\": \"<integer>\"\n}",
+                      "options": {
+                        "raw": {
+                          "headerFamily": "json",
+                          "language": "json"
+                        }
+                      }
+                    }
+                  },
+                  "status": "Not Found",
+                  "code": 404,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
+                  "cookie": [],
+                  "_postman_previewlanguage": "json"
+                }
+              ],
+              "event": [],
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              }
+            },
+            {
+              "id": "85ca69a6-a3a6-4ba6-9709-6aa4d6037bfc",
+              "name": "Eliminar una regla de auto-categorización (AC-4)",
+              "request": {
+                "name": "Eliminar una regla de auto-categorización (AC-4)",
+                "description": {},
+                "url": {
+                  "path": ["categorization-rules", ":id"],
+                  "host": ["{{baseUrl}}"],
+                  "query": [],
+                  "variable": [
+                    {
+                      "type": "any",
+                      "value": "<integer>",
+                      "key": "id",
+                      "disabled": false,
+                      "description": {
+                        "content": "(Required) ",
+                        "type": "text/plain"
+                      }
+                    }
+                  ]
+                },
+                "header": [
+                  {
+                    "key": "Accept",
+                    "value": "application/json"
+                  }
+                ],
+                "method": "DELETE",
+                "body": {},
+                "auth": null
+              },
+              "response": [
+                {
+                  "id": "49bd43aa-7d77-4b0c-9f73-6560c290ac71",
+                  "name": "Regla eliminada.",
+                  "originalRequest": {
+                    "url": {
+                      "path": ["categorization-rules", ":id"],
+                      "host": ["{{baseUrl}}"],
+                      "query": [],
+                      "variable": [
+                        {
+                          "disabled": false,
+                          "description": {
+                            "content": "(Required) ",
+                            "type": "text/plain"
+                          },
+                          "type": "any",
+                          "value": "<integer>",
+                          "key": "id"
+                        }
+                      ]
+                    },
+                    "method": "DELETE",
+                    "body": {}
+                  },
+                  "status": "No Content",
+                  "code": 204,
+                  "header": [],
+                  "cookie": [],
+                  "_postman_previewlanguage": "text"
+                },
+                {
+                  "id": "eaf8f8de-f024-443a-86ca-c1b4636f8c3b",
+                  "name": "La regla no existe o no pertenece al usuario.",
+                  "originalRequest": {
+                    "url": {
+                      "path": ["categorization-rules", ":id"],
+                      "host": ["{{baseUrl}}"],
+                      "query": [],
+                      "variable": [
+                        {
+                          "disabled": false,
+                          "description": {
+                            "content": "(Required) ",
+                            "type": "text/plain"
+                          },
+                          "type": "any",
+                          "value": "<integer>",
+                          "key": "id"
+                        }
+                      ]
+                    },
+                    "header": [
+                      {
+                        "key": "Accept",
+                        "value": "application/json"
+                      }
+                    ],
+                    "method": "DELETE",
+                    "body": {}
+                  },
+                  "status": "Not Found",
+                  "code": 404,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"statusCode\": \"<integer>\",\n  \"message\": \"<string>\",\n  \"error\": \"<string>\"\n}",
+                  "cookie": [],
+                  "_postman_previewlanguage": "json"
+                }
+              ],
+              "event": [],
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true
+              }
+            }
+          ]
+        }
+      ]
     }
+  ],
+  "event": [],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "/"
+    }
+  ],
+  "info": {
+    "_postman_id": "8c3c5bf0-557f-4a24-a306-badb51ddf23e",
+    "name": "sm-0003 API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": {
+      "content": "Contrato generado por /design para sm-0003: Robustez del dominio y consistencia. Cubre validación de saldo en transferencias (AC-1), idempotencia en escrituras de usuario (AC-3), reglas de auto-categorización (AC-4) y archivado de cuentas en cascada (AC-5). AC-2 (patrón Outbox) no expone endpoints — es infraestructura interna.\n",
+      "type": "text/plain"
+    }
+  }
 }

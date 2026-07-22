@@ -7,15 +7,9 @@ export abstract class IdempotencyRepository {
    * Atomically inserts a PENDING row; on unique conflict returns the existing
    * one instead, with `created` false.
    */
-  abstract reserve(
-    reservation: IdempotencyReservation,
-  ): Promise<{ created: boolean; row: IdempotencyKey }>;
+  abstract reserve(reservation: IdempotencyReservation): Promise<{ created: boolean; row: IdempotencyKey }>;
 
-  abstract complete(
-    id: number,
-    responseStatus: number,
-    responseBody: ObjectLiteral,
-  ): Promise<void>;
+  abstract complete(id: number, responseStatus: number, responseBody: ObjectLiteral): Promise<void>;
 
   /** Drops a failed request's reservation so the key becomes usable again. */
   abstract release(id: number): Promise<void>;

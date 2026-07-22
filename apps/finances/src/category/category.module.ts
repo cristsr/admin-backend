@@ -26,9 +26,7 @@ import {
 } from './infrastructure/adapters/persistence/typeorm/subcategory';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([TypeOrmCategoryEntity, TypeOrmSubcategoryEntity]),
-  ],
+  imports: [TypeOrmModule.forFeature([TypeOrmCategoryEntity, TypeOrmSubcategoryEntity])],
   controllers: [CategoryController, SubcategoryController],
   providers: [
     { provide: CategoryRepository, useClass: TypeOrmCategoryRepository },

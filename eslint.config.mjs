@@ -71,15 +71,7 @@ export default [
       'import-x/order': [
         'error',
         {
-          groups: [
-            'builtin',
-            'external',
-            'internal',
-            'parent',
-            'sibling',
-            'index',
-            'unknown',
-          ],
+          groups: ['builtin', 'external', 'internal', 'parent', 'sibling', 'index', 'unknown'],
           pathGroups: [
             {
               pattern: '@nestjs/**',
@@ -97,11 +89,7 @@ export default [
               position: 'before',
             },
           ],
-          pathGroupsExcludedImportTypes: [
-            '@nestjs/**',
-            '@admin-back/**',
-            '@app/**',
-          ],
+          pathGroupsExcludedImportTypes: ['@nestjs/**', '@admin-back/**', '@app/**'],
           'newlines-between': 'never',
           alphabetize: {
             order: 'asc',

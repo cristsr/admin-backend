@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   Account,
-  AccountCriteria,
+  AccountLookups,
   AccountNotFoundException,
   AccountRepository,
 } from '@app/account/domain/account';
@@ -23,17 +23,10 @@ export class CreateTransferUsecase {
     private readonly transferFactory: TransferFactory,
   ) {}
 
-  async execute(
-    input: TransferInputDto,
-    user: number,
-  ): Promise<TransferOutputDto> {
+  async execute(input: TransferInputDto, user: number): Promise<TransferOutputDto> {
     const [from, to] = await Promise.all([
-      this.accountRepository.firstMatching(
-        AccountCriteria.byIdAndUser(input.from, user),
-      ),
-      this.accountRepository.firstMatching(
-        AccountCriteria.byIdAndUser(input.to, user),
-      ),
+      this.accountRepository.firstMatching(AccountLookups.byIdAndUser(input.from, user)),
+      this.accountRepository.firstMatching(AccountLookups.byIdAndUser(input.to, user)),
     ]);
 
     if (!from) {
@@ -73,17 +66,10 @@ export class CreateTransferUsecase {
   }
 
   /** The account decides; the live balance it needs is only known by the repository. */
-  private async ensureSourceCanFund(
-    from: Account,
-    amount: Money,
-    user: number,
-  ): Promise<void> {
+  private async ensureSourceCanFund(from: Account, amount: Money, user: number): Promise<void> {
     if (from.allowNegativeBalance) return;
 
-    const movementBalance = await this.accountRepository.movementBalance(
-      from.id,
-      user,
-    );
+    const movementBalance = await this.accountRepository.movementBalance(from.id, user);
 
     from.ensureCanWithdraw(amount, movementBalance);
   }

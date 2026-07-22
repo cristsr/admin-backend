@@ -1,14 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { Nullable } from '@shared';
-import {
-  AccountCriteria,
-  AccountNotFoundException,
-  AccountRepository,
-} from '@app/account/domain/account';
+import { AccountLookups, AccountNotFoundException, AccountRepository } from '@app/account/domain/account';
 import { CategoryResolver } from '@app/categorization-rule/domain/categorization-rule';
 import {
   Movement,
-  MovementCriteria,
+  MovementLookups,
   MovementNotFoundException,
   MovementRepository,
   NewMovement,
@@ -26,20 +22,10 @@ export class SaveMovementUsecase {
     private readonly recordMovement: RecordMovementService,
   ) {}
 
-  async execute(
-    input: MovementInputDto,
-    user: number,
-    requestId?: string,
-  ): Promise<Movement> {
+  async execute(input: MovementInputDto, user: number, requestId?: string): Promise<Movement> {
     const [existing, account] = await Promise.all([
-      input.id
-        ? this.movementRepository.firstMatching(
-            MovementCriteria.byIdAndUser(input.id, user),
-          )
-        : null,
-      this.accountRepository.firstMatching(
-        AccountCriteria.byIdAndUser(input.account, user),
-      ),
+      input.id ? this.movementRepository.firstMatching(MovementLookups.byIdAndUser(input.id, user)) : null,
+      this.accountRepository.firstMatching(AccountLookups.byIdAndUser(input.account, user)),
     ]);
 
     if (input.id && !existing) {
@@ -50,12 +36,11 @@ export class SaveMovementUsecase {
       throw new AccountNotFoundException('Account not found');
     }
 
-    const { categoryId, subcategoryId } =
-      await this.categoryResolver.resolveByIds(
-        { categoryId: input.category, subcategoryId: input.subcategory },
-        { description: input.description },
-        user,
-      );
+    const { categoryId, subcategoryId } = await this.categoryResolver.resolveByIds(
+      { categoryId: input.category, subcategoryId: input.subcategory },
+      { description: input.description },
+      user,
+    );
 
     // Must be read before `build` overwrites the existing movement.
     const replacedBalanceEffect = existing?.signedAmount() ?? 0;
@@ -83,10 +68,7 @@ export class SaveMovementUsecase {
   }
 
   /** Re-saving keeps the original source; only a new movement is manual. */
-  private static build(
-    attributes: NewMovement,
-    existing: Nullable<Movement>,
-  ): Movement {
+  private static build(attributes: NewMovement, existing: Nullable<Movement>): Movement {
     if (!existing) return Movement.manual(attributes);
 
     existing.update(attributes);

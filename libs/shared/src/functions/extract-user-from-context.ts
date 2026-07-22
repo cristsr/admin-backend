@@ -9,9 +9,7 @@ export function extractUserFromContext<T>(ctx: ExecutionContext): T {
     return ctx.switchToHttp().getRequest().user;
   }
 
-  new Logger(extractUserFromContext.name).error(
-    `Unable to extract user from a "${ctx.getType()}" context`,
-  );
+  new Logger(extractUserFromContext.name).error(`Unable to extract user from a "${ctx.getType()}" context`);
 
   return null;
 }

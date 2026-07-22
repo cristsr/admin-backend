@@ -1,17 +1,8 @@
 import { Injectable } from '@nestjs/common';
-import {
-  AccountCriteria,
-  AccountNotFoundException,
-  AccountRepository,
-} from '@app/account/domain/account';
+import { AccountLookups, AccountNotFoundException, AccountRepository } from '@app/account/domain/account';
 import { CategoryResolver } from '@app/categorization-rule/domain/categorization-rule';
 import { RecordMovementService } from '@app/movement/application/services';
-import {
-  Movement,
-  MovementCriteria,
-  MovementRepository,
-  MovementType,
-} from '@app/movement/domain/movement';
+import { Movement, MovementLookups, MovementRepository, MovementType } from '@app/movement/domain/movement';
 import { Money } from '@app/shared/domain';
 import { WebhookTransactionInputDto } from '../dto/webhook-transaction-input.dto';
 import { WebhookTransactionOutputDto } from '../dto/webhook-transaction-output.dto';
@@ -26,12 +17,9 @@ export class ReceiveWebhookTransactionUsecase {
   ) {}
 
   /** `requestId` is a fallback; the telemetry trace in context wins when present. */
-  async execute(
-    input: WebhookTransactionInputDto,
-    requestId?: string,
-  ): Promise<WebhookTransactionOutputDto> {
+  async execute(input: WebhookTransactionInputDto, requestId?: string): Promise<WebhookTransactionOutputDto> {
     const existing = await this.movementRepository.firstMatching(
-      MovementCriteria.byExternalReference(input.externalReference),
+      MovementLookups.byExternalReference(input.externalReference),
     );
 
     if (existing) {
@@ -43,15 +31,14 @@ export class ReceiveWebhookTransactionUsecase {
     }
 
     // Categories come as names; when absent, the user's categorization rules decide.
-    const { categoryId, subcategoryId } =
-      await this.categoryResolver.resolveByNames(
-        { category: input.category, subcategory: input.subcategory },
-        { merchant: input.merchant, description: input.merchant },
-        input.user,
-      );
+    const { categoryId, subcategoryId } = await this.categoryResolver.resolveByNames(
+      { category: input.category, subcategory: input.subcategory },
+      { merchant: input.merchant, description: input.merchant },
+      input.user,
+    );
 
     const account = await this.accountRepository.firstMatching(
-      AccountCriteria.byIdAndUser(input.account, input.user),
+      AccountLookups.byIdAndUser(input.account, input.user),
     );
 
     if (!account) {

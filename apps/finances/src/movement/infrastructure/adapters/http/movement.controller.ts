@@ -1,22 +1,8 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query, UseInterceptors } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, CriteriaQueryDto, CurrentUser } from '@shared';
 import { IdempotencyInterceptor } from '@app/idempotency/infrastructure/adapters/http';
-import {
-  MovementInputDto,
-  MovementOutputDto,
-  MovementPatchDto,
-} from '@app/movement/application/dto';
+import { MovementInputDto, MovementOutputDto, MovementPatchDto } from '@app/movement/application/dto';
 import { MovementMapper } from '@app/movement/application/mappers';
 import {
   FindAllMovementsUsecase,
@@ -39,10 +25,7 @@ export class MovementController {
   ) {}
 
   @Get(':id')
-  async findOne(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('id') id: number,
-  ): Promise<MovementOutputDto> {
+  async findOne(@CurrentUser() user: AuthenticatedUser, @Param('id') id: number): Promise<MovementOutputDto> {
     const movement = await this.findMovementUsecase.execute(id, user.id);
     return movement && MovementMapper.toOutput(movement);
   }

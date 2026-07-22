@@ -3,7 +3,9 @@ import { ObjectLiteral } from '@shared';
 
 /** SHA-256 of a request body with sorted keys, so equivalent bodies hash the same. */
 export function hashRequestBody(body: ObjectLiteral | undefined): string {
-  return createHash('sha256').update(stableStringify(body ?? {})).digest('hex');
+  return createHash('sha256')
+    .update(stableStringify(body ?? {}))
+    .digest('hex');
 }
 
 function stableStringify(value: unknown): string {

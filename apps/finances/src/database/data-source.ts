@@ -6,12 +6,12 @@ import { TypeOrmBudgetEntity } from '../budget/infrastructure/adapters/persisten
 import { TypeOrmCategorizationRuleEntity } from '../categorization-rule/infrastructure/adapters/persistence/typeorm';
 import { TypeOrmCategoryEntity } from '../category/infrastructure/adapters/persistence/typeorm/category';
 import { TypeOrmSubcategoryEntity } from '../category/infrastructure/adapters/persistence/typeorm/subcategory';
-import { ExchangeEntity } from '../exchange/entities';
+import { TypeOrmExchangeRateEntity } from '../exchange/infrastructure/adapters/persistence/typeorm/exchange-rate';
 import { TypeOrmIdempotencyKeyEntity } from '../idempotency/infrastructure/adapters/persistence/typeorm';
 import { TypeOrmMovementEntity } from '../movement/infrastructure/adapters/persistence/typeorm/movement';
 import { TypeOrmOutboxEventEntity } from '../outbox/infrastructure/adapters/persistence/typeorm';
 import { TypeOrmScheduledEntity } from '../scheduled/infrastructure/adapters/persistence/typeorm/scheduled';
-import { UserEntity } from '../user/entities';
+import { TypeOrmUserEntity } from '../user/infrastructure/adapters/persistence/typeorm/user';
 
 config({ path: 'apps/finances/.env' });
 
@@ -25,8 +25,8 @@ export default new DataSource({
     TypeOrmMovementEntity,
     TypeOrmBudgetEntity,
     TypeOrmScheduledEntity,
-    UserEntity,
-    ExchangeEntity,
+    TypeOrmUserEntity,
+    TypeOrmExchangeRateEntity,
     TypeOrmOutboxEventEntity,
     TypeOrmIdempotencyKeyEntity,
     TypeOrmCategorizationRuleEntity,

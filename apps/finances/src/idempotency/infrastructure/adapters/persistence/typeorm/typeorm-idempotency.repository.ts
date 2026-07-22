@@ -17,9 +17,7 @@ export class TypeOrmIdempotencyRepository implements IdempotencyRepository {
     private readonly repository: Repository<TypeOrmIdempotencyKeyEntity>,
   ) {}
 
-  async reserve(
-    reservation: IdempotencyReservation,
-  ): Promise<{ created: boolean; row: IdempotencyKey }> {
+  async reserve(reservation: IdempotencyReservation): Promise<{ created: boolean; row: IdempotencyKey }> {
     // The unique index + ON CONFLICT DO NOTHING keeps concurrent inserts race-safe.
     const insert = await this.repository
       .createQueryBuilder()
@@ -50,11 +48,7 @@ export class TypeOrmIdempotencyRepository implements IdempotencyRepository {
     return { created, row: this.toDomain(entity) };
   }
 
-  async complete(
-    id: number,
-    responseStatus: number,
-    responseBody: ObjectLiteral,
-  ): Promise<void> {
+  async complete(id: number, responseStatus: number, responseBody: ObjectLiteral): Promise<void> {
     await this.repository.update(id, {
       status: IdempotencyStatus.COMPLETED,
       responseStatus,

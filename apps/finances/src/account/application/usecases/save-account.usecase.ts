@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   Account,
-  AccountCriteria,
+  AccountLookups,
   AccountNotFoundException,
   AccountRepository,
 } from '@app/account/domain/account';
@@ -14,9 +14,7 @@ export class SaveAccountUsecase {
 
   async execute(input: AccountInputDto, user: number): Promise<Account> {
     const existing = input.id
-      ? await this.accountRepository.firstMatching(
-          AccountCriteria.byIdAndUser(input.id, user),
-        )
+      ? await this.accountRepository.firstMatching(AccountLookups.byIdAndUser(input.id, user))
       : null;
 
     if (input.id && !existing) {
@@ -27,8 +25,7 @@ export class SaveAccountUsecase {
       ...existing,
       name: input.name,
       initialBalance: Money.of(input.initialBalance ?? 0, input.currency),
-      allowNegativeBalance:
-        input.allowNegativeBalance ?? existing?.allowNegativeBalance ?? false,
+      allowNegativeBalance: input.allowNegativeBalance ?? existing?.allowNegativeBalance ?? false,
       user,
     } as Account);
 

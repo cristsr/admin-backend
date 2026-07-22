@@ -44,9 +44,7 @@ export class Money {
   /** Restates the amount in another currency; the rate is supplied by the caller. */
   convertTo(currency: string, rate: number): Money {
     if (rate <= 0) {
-      throw new InvalidMoneyException(
-        `Exchange rate must be positive, received "${rate}"`,
-      );
+      throw new InvalidMoneyException(`Exchange rate must be positive, received "${rate}"`);
     }
 
     return Money.of(this.amount * rate, currency);

@@ -2,11 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ObjectLiteral } from '@shared';
 import { EntityManager, Repository } from 'typeorm';
-import {
-  OutboxEvent,
-  OutboxRepository,
-  OutboxStatus,
-} from '@app/outbox/domain/outbox-event';
+import { OutboxEvent, OutboxRepository, OutboxStatus } from '@app/outbox/domain/outbox-event';
 import { TypeOrmOutboxEventEntity } from './typeorm-outbox-event.entity';
 
 @Injectable()
@@ -54,11 +50,7 @@ export class TypeOrmOutboxRepository implements OutboxRepository {
     });
   }
 
-  async markFailed(
-    id: number,
-    error: string,
-    backoffSeconds: number,
-  ): Promise<void> {
+  async markFailed(id: number, error: string, backoffSeconds: number): Promise<void> {
     await this.repository
       .createQueryBuilder()
       .update(TypeOrmOutboxEventEntity)

@@ -1,9 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /** Creates the outbox_events table for the transactional outbox. */
-export class CreateOutboxEventsTable1784073600021
-  implements MigrationInterface
-{
+export class CreateOutboxEventsTable1784073600021 implements MigrationInterface {
   name = 'CreateOutboxEventsTable1784073600021';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

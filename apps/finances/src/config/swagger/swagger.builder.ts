@@ -14,14 +14,9 @@ export const SWAGGER_SECURITY = {
 function baseDocumentConfig(): Omit<OpenAPIObject, 'paths'> {
   return new DocumentBuilder()
     .setTitle('Finances API')
-    .setDescription(
-      'admin-back · finances — contrato generado desde el código.',
-    )
+    .setDescription('admin-back · finances — contrato generado desde el código.')
     .setVersion('1.0.0')
-    .addBearerAuth(
-      { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' },
-      SWAGGER_SECURITY.bearer,
-    )
+    .addBearerAuth({ type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }, SWAGGER_SECURITY.bearer)
     .addSecurity(SWAGGER_SECURITY.webhookApiKey, {
       type: 'apiKey',
       in: 'header',
@@ -37,10 +32,7 @@ export function buildSwaggerDocument(_app?: INestApplication): OpenAPIObject {
 }
 
 /** Mounts the Swagger UI at `/docs` only when `showDocs` is true. */
-export function maybeMountSwagger(
-  app: INestApplication,
-  showDocs: boolean,
-): void {
+export function maybeMountSwagger(app: INestApplication, showDocs: boolean): void {
   if (!showDocs) return;
 
   const document = SwaggerModule.createDocument(app, baseDocumentConfig());

@@ -1,9 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /** Creates the idempotency_keys table for idempotent user writes. */
-export class CreateIdempotencyKeysTable1784073600022
-  implements MigrationInterface
-{
+export class CreateIdempotencyKeysTable1784073600022 implements MigrationInterface {
   name = 'CreateIdempotencyKeysTable1784073600022';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -24,9 +22,7 @@ export class CreateIdempotencyKeysTable1784073600022
     await queryRunner.query(
       `CREATE UNIQUE INDEX "uq_idempotency_user_key" ON "idempotency_keys" ("user_id", "idempotency_key")`,
     );
-    await queryRunner.query(
-      `CREATE INDEX "idx_idempotency_expires_at" ON "idempotency_keys" ("expires_at")`,
-    );
+    await queryRunner.query(`CREATE INDEX "idx_idempotency_expires_at" ON "idempotency_keys" ("expires_at")`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

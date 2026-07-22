@@ -1,9 +1,5 @@
 import { MovementType } from '@app/movement/domain/movement';
-import {
-  Frequency,
-  Scheduled,
-  ScheduledNotFoundException,
-} from '@app/scheduled/domain/scheduled';
+import { Frequency, Scheduled, ScheduledNotFoundException } from '@app/scheduled/domain/scheduled';
 import { Money } from '@app/shared/domain';
 import { UpdateScheduledUsecase } from './update-scheduled.usecase';
 
@@ -38,27 +34,17 @@ describe('UpdateScheduledUsecase', () => {
     accountRepository = {
       firstMatching: jest.fn().mockResolvedValue({ id: 2 }),
     };
-    usecase = new UpdateScheduledUsecase(
-      scheduledRepository,
-      subcategoryRepository,
-      accountRepository,
-    );
+    usecase = new UpdateScheduledUsecase(scheduledRepository, subcategoryRepository, accountRepository);
   });
 
   it('404 when the scheduled belongs to another user', async () => {
     scheduledRepository.firstMatching.mockResolvedValue(null);
-    await expect(usecase.execute(1, { amount: 10 }, 7)).rejects.toThrow(
-      ScheduledNotFoundException,
-    );
+    await expect(usecase.execute(1, { amount: 10 }, 7)).rejects.toThrow(ScheduledNotFoundException);
   });
 
   it('updates amount and frequency without touching the type', async () => {
     scheduledRepository.firstMatching.mockResolvedValue(buildScheduled());
-    const result = await usecase.execute(
-      1,
-      { amount: 10, frequency: Frequency.WEEKLY },
-      7,
-    );
+    const result = await usecase.execute(1, { amount: 10, frequency: Frequency.WEEKLY }, 7);
     expect(result.money.amount).toBe(10);
     expect(result.frequency).toBe(Frequency.WEEKLY);
     expect(result.type).toBe(MovementType.EXPENSE);

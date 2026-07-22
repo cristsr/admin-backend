@@ -9,11 +9,6 @@
   },
   // e2e specs live under src/ too, and they are test code: excluded here so the
   // app build does not demand jest's globals.
-  "exclude": [
-    "jest.config.ts",
-    "**/*.spec.ts",
-    "**/*.test.ts",
-    "**/*.e2e-spec.ts"
-  ],
+  "exclude": ["jest.config.ts", "**/*.spec.ts", "**/*.test.ts", "**/*.e2e-spec.ts"],
   "include": ["**/*.ts"]
 }

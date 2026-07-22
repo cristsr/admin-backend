@@ -11,10 +11,7 @@ import { OutboxRepository } from '@app/outbox/domain/outbox-event';
 export class DomainEventOutboxPublisher {
   constructor(private readonly outboxRepository: OutboxRepository) {}
 
-  async publish(
-    manager: EntityManager,
-    event: { eventType: string; payload: ObjectLiteral },
-  ): Promise<void> {
+  async publish(manager: EntityManager, event: { eventType: string; payload: ObjectLiteral }): Promise<void> {
     await this.outboxRepository.saveWithinTransaction(manager, event);
   }
 }

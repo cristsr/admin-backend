@@ -17,7 +17,7 @@ El sistema expone ingresos vs. gastos agregados por período dentro de un rango 
 explícito (`from`/`to`, ISO date), para graficar la evolución del flujo de caja.
 
 - El endpoint recibe el rango vía `from`/`to` y una `granularity` con valores `day | week |
-  month | year`; el server agrupa el rango en buckets de ese tamaño.
+month | year`; el server agrupa el rango en buckets de ese tamaño.
 - El agregado separa ingresos de gastos por cada bucket de la granularidad elegida.
 - Excluye `TRANSFER_IN`/`TRANSFER_OUT` (usa `reportableMovementTypes`): mover dinero entre
   cuentas propias no es ingreso ni gasto.
@@ -135,24 +135,29 @@ contabilidad o impuestos. Reusa los filtros ya existentes (fecha, cuenta, catego
 ## Technical Context
 
 ### Microservicio objetivo
+
 - `finances` — nuevo módulo `reports` (`apps/finances/src/reports/`)
 
 ### Artefactos a reutilizar
+
 - Entidades y artefactos del sistema ya existentes donde apliquen (repositorio/consulta de
   movements, `reportableMovementTypes`, filtros de `GET /movements`)
 - Crear entidades/artefactos específicos de `reports` solo cuando sea estrictamente necesario
 
 ### Patrones obligatorios
+
 - Seguir las convenciones del proyecto (CLAUDE.md + `.agents/profile.md`): arquitectura
   hexagonal por módulo, puertos como `abstract class` para DI, un caso de uso por acción,
   DTOs `*-input`/`*-output`/`*-filter` con mappers separados, columnas tipo-enum como `varchar`
 
 ### Restricciones técnicas
+
 - No introducir ni quitar propiedades en las entidades de dominio existentes salvo que sea
   estrictamente necesario
 - Reportes read-only: no mutan movements ni su esquema
 
 ### Integraciones conocidas
+
 - `exceljs` para generar el export en formato XLSX
 - Cola `pgmq` (ya usada en el proyecto para notificaciones de presupuesto) para procesar el
   export de forma asíncrona, detrás de un puerto `abstract class` fácilmente intercambiable

@@ -5,9 +5,7 @@ import { GenerateScheduledMovementsUsecase } from '@app/scheduled/application/us
 
 @Injectable()
 export class GenerateScheduledMovementsEventHandler {
-  constructor(
-    private readonly generateScheduledMovementsUsecase: GenerateScheduledMovementsUsecase,
-  ) {}
+  constructor(private readonly generateScheduledMovementsUsecase: GenerateScheduledMovementsUsecase) {}
 
   @OnEvent(GenerateScheduledMovements)
   async handle(): Promise<void> {

@@ -1,13 +1,32 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserController } from './controllers';
-import { UserEntity } from './entities';
-import { UserRepository } from './repositories';
-import { UserService } from './services';
+import { AuthenticatedUserProvider } from '@shared';
+import {
+  FindAllUsersUsecase,
+  FindUserUsecase,
+  RemoveUserUsecase,
+  SaveUserUsecase,
+} from './application/usecases';
+import { UserRepository } from './domain/user';
+import { TypeOrmAuthenticatedUserProvider } from './infrastructure/adapters/auth';
+import { UserController } from './infrastructure/adapters/http';
+import { TypeOrmUserEntity, TypeOrmUserRepository } from './infrastructure/adapters/persistence/typeorm/user';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity])],
+  imports: [TypeOrmModule.forFeature([TypeOrmUserEntity])],
   controllers: [UserController],
-  providers: [UserService, UserRepository],
+  providers: [
+    { provide: UserRepository, useClass: TypeOrmUserRepository },
+    // Binds the auth port so the JWT strategy resolves users via DI, not HTTP.
+    {
+      provide: AuthenticatedUserProvider,
+      useClass: TypeOrmAuthenticatedUserProvider,
+    },
+    FindAllUsersUsecase,
+    FindUserUsecase,
+    SaveUserUsecase,
+    RemoveUserUsecase,
+  ],
+  exports: [AuthenticatedUserProvider],
 })
 export class UserModule {}

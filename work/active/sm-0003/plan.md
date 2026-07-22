@@ -20,14 +20,14 @@ y `data-source.ts`.
 
 ### Trazabilidad AC → Tareas
 
-| AC | Cubierto por |
-|----|-------------|
-| AC-1 (validación de saldo en transferencias) | Tarea 1, Tarea 2, Tarea 3 |
-| AC-2 (outbox transaccional) | Tarea 4, Tarea 5, Tarea 6, Tarea 7, Tarea 8 |
-| AC-3 (idempotencia) | Tarea 9, Tarea 10, Tarea 11, Tarea 12, Tarea 13 |
-| AC-4 (auto-categorización) | Tarea 14, Tarea 15, Tarea 16, Tarea 17, Tarea 18, Tarea 19 |
-| AC-5 (archivado en cascada) | Tarea 20, Tarea 21 |
-| Suite completa | Tarea 22 |
+| AC                                           | Cubierto por                                               |
+| -------------------------------------------- | ---------------------------------------------------------- |
+| AC-1 (validación de saldo en transferencias) | Tarea 1, Tarea 2, Tarea 3                                  |
+| AC-2 (outbox transaccional)                  | Tarea 4, Tarea 5, Tarea 6, Tarea 7, Tarea 8                |
+| AC-3 (idempotencia)                          | Tarea 9, Tarea 10, Tarea 11, Tarea 12, Tarea 13            |
+| AC-4 (auto-categorización)                   | Tarea 14, Tarea 15, Tarea 16, Tarea 17, Tarea 18, Tarea 19 |
+| AC-5 (archivado en cascada)                  | Tarea 20, Tarea 21                                         |
+| Suite completa                               | Tarea 22                                                   |
 
 > Nota de test runner: los comandos usan `npx jest <path> --no-coverage` desde
 > `apps/finances`. Si el proyecto solo corre vía Nx, equivale a
@@ -47,6 +47,7 @@ y `data-source.ts`.
 git -C D:/Cristian/Nest/admin-back branch --show-current
 git -C D:/Cristian/Nest/admin-back status --porcelain
 ```
+
 Esperado: el repo está en desarrollo activo (rama `feat/core`). No hay `develop`; la
 rama base del proyecto es `master`. Si el working tree tiene cambios sin relación con
 sm-0003, avisar antes de crear la rama.
@@ -56,6 +57,7 @@ sm-0003, avisar antes de crear la rama.
 ```bash
 git -C D:/Cristian/Nest/admin-back checkout -b <nombre-de-rama-dado-por-usuario>
 ```
+
 Esperado: rama nueva creada y activa.
 
 ---
@@ -65,6 +67,7 @@ Esperado: rama nueva creada y activa.
 ### Tarea 1: Campo `allowNegativeBalance` en account (entidad + migración + DTO + mapper) [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/account/domain/account/account.entity.ts`
 - Modificar: `apps/finances/src/account/infrastructure/adapters/persistence/typeorm/account/typeorm-account.entity.ts`
 - Modificar: mapper dominio↔TypeORM de account (`.../typeorm/account/*.mapper.ts`)
@@ -107,6 +110,7 @@ cd apps/finances
 npx jest src/account/application/usecases/save-account.usecase.spec.ts --no-coverage
 cd ../..
 ```
+
 Esperado: FAIL — `allowNegativeBalance` no existe en el tipo / result undefined.
 
 **Step 3: Implementar**
@@ -149,9 +153,7 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * false; credit-card-like accounts set true so transfers that would leave them
  * negative are not rejected.
  */
-export class AddAccountAllowNegativeBalance1784073600020
-  implements MigrationInterface
-{
+export class AddAccountAllowNegativeBalance1784073600020 implements MigrationInterface {
   name = 'AddAccountAllowNegativeBalance1784073600020';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -161,9 +163,7 @@ export class AddAccountAllowNegativeBalance1784073600020
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `ALTER TABLE "accounts" DROP COLUMN "allow_negative_balance"`,
-    );
+    await queryRunner.query(`ALTER TABLE "accounts" DROP COLUMN "allow_negative_balance"`);
   }
 }
 ```
@@ -173,6 +173,7 @@ export class AddAccountAllowNegativeBalance1784073600020
 ```bash
 cd apps/finances && npx jest src/account/application/usecases/save-account.usecase.spec.ts --no-coverage && cd ../..
 ```
+
 Esperado: PASS
 
 ---
@@ -180,6 +181,7 @@ Esperado: PASS
 ### Tarea 2: `InsufficientBalanceException` (422) [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/transfer/domain/transfer/transfer.exception.ts` (o extender el existente)
 - Test: cubierto por Tarea 3
 
@@ -216,6 +218,7 @@ export class InsufficientBalanceException extends DomainException {
 ### Tarea 3: Validación de saldo en `CreateTransferUsecase` [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/transfer/application/usecases/create-transfer.usecase.ts`
 - Test: `apps/finances/src/transfer/application/usecases/create-transfer.usecase.spec.ts`
 
@@ -267,6 +270,7 @@ describe('CreateTransferUsecase — balance validation (AC-1)', () => {
 ```bash
 cd apps/finances && npx jest src/transfer/application/usecases/create-transfer.usecase.spec.ts --no-coverage && cd ../..
 ```
+
 Esperado: FAIL — no se lanza la excepción / `saveAll` se llama igual.
 
 **Step 3: Implementar**
@@ -295,6 +299,7 @@ Mantener el resto del flujo (cross-currency, `saveAll` de ambas patas) intacto.
 ```bash
 cd apps/finances && npx jest src/transfer/application/usecases/create-transfer.usecase.spec.ts --no-coverage && cd ../..
 ```
+
 Esperado: PASS
 
 > Nota controller: `AccountController` (POST/PATCH) ya usa `AccountInputDto`/`AccountOutputDto`,
@@ -307,6 +312,7 @@ Esperado: PASS
 ### Tarea 4: Entidad `OutboxEvent` + migración + registro en data-source [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/outbox/domain/outbox-event/outbox-event.entity.ts`
 - Crear: `apps/finances/src/outbox/domain/outbox-event/outbox-event.types.ts` (enum `OutboxStatus`)
 - Crear: `apps/finances/src/outbox/infrastructure/adapters/persistence/typeorm/typeorm-outbox-event.entity.ts`
@@ -337,6 +343,7 @@ Registrar la entidad en `data-source.ts` junto a las demás.
 ### Tarea 5: Puerto `OutboxRepository` + adapter TypeORM [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/outbox/domain/outbox-event/outbox.repository.ts` (abstract class)
 - Crear: `apps/finances/src/outbox/infrastructure/adapters/persistence/typeorm/typeorm-outbox.repository.ts`
 - Test: `apps/finances/src/outbox/infrastructure/adapters/persistence/typeorm/typeorm-outbox.repository.spec.ts`
@@ -375,6 +382,7 @@ filas `DELIVERED` ni con `available_at` futuro, y que `markFailed` incrementa `a
 ### Tarea 6: Publicador transaccional de eventos de dominio [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/outbox/application/services/domain-event-outbox.publisher.ts`
 - Test: `apps/finances/src/outbox/application/services/domain-event-outbox.publisher.spec.ts`
 
@@ -400,6 +408,7 @@ de dominio pasa por el outbox").
 ### Tarea 7: `SaveMovementUsecase` escribe movimiento + outbox en una transacción [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/movement/application/usecases/save-movement.usecase.ts`
 - Modificar: `apps/finances/src/movement/domain/movement/movement.repository.ts` (agregar `saveWithinTransaction` o un `runInTransaction`)
 - Modificar: `apps/finances/src/movement/infrastructure/adapters/persistence/typeorm/movement/typeorm-movement.repository.ts`
@@ -453,6 +462,7 @@ const saved = await this.movementRepository.runInTransaction(async (manager) => 
 ### Tarea 8: `OutboxRelayScheduler` (cron interno, re-despacho in-process) [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/outbox/infrastructure/adapters/schedulers/outbox-relay.scheduler.ts`
 - Crear: `apps/finances/src/outbox/outbox.module.ts`
 - Modificar: `apps/finances/src/app.module.ts` (importar `OutboxModule`)
@@ -480,7 +490,11 @@ describe('OutboxRelayScheduler (AC-2)', () => {
 
     await scheduler.relay();
 
-    expect(outboxRepository.markFailed).toHaveBeenCalledWith(8, expect.stringContaining('boom'), expect.any(Number));
+    expect(outboxRepository.markFailed).toHaveBeenCalledWith(
+      8,
+      expect.stringContaining('boom'),
+      expect.any(Number),
+    );
     expect(outboxRepository.markDelivered).not.toHaveBeenCalled();
   });
 });
@@ -527,6 +541,7 @@ Importar `OutboxModule` en `MovementModule` (para el publisher) y en `app.module
 ### Tarea 9: Entidad `IdempotencyKey` + migración + data-source [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/idempotency/domain/idempotency-key/idempotency-key.entity.ts`
 - Crear: `apps/finances/src/idempotency/infrastructure/adapters/persistence/typeorm/typeorm-idempotency-key.entity.ts`
 - Crear: mapper
@@ -542,6 +557,7 @@ Importar `OutboxModule` en `MovementModule` (para el publisher) y en `app.module
 ### Tarea 10: Puerto `IdempotencyRepository` + adapter [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/idempotency/domain/idempotency-key/idempotency.repository.ts`
 - Crear: `apps/finances/src/idempotency/infrastructure/adapters/persistence/typeorm/typeorm-idempotency.repository.ts`
 - Test: `.../typeorm-idempotency.repository.spec.ts`
@@ -577,6 +593,7 @@ en el segundo intento con la misma `(userId, key)`.
 ### Tarea 11: `IdempotencyInterceptor` [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/idempotency/infrastructure/adapters/http/idempotency.interceptor.ts`
 - Crear: `apps/finances/src/idempotency/domain/idempotency-key/idempotency.exception.ts` (`IdempotencyConflictException` 422, `IdempotencyInProgressException` 409)
 - Crear: `apps/finances/src/idempotency/idempotency.module.ts`
@@ -587,7 +604,9 @@ en el segundo intento con la misma `(userId, key)`.
 
 ```typescript
 describe('IdempotencyInterceptor (AC-3)', () => {
-  it('passes through when no Idempotency-Key header is present', async () => { /* next.handle called, no repo access */ });
+  it('passes through when no Idempotency-Key header is present', async () => {
+    /* next.handle called, no repo access */
+  });
 
   it('stores the response and returns it on first use of a key', async () => {
     repo.reserve.mockResolvedValue({ created: true });
@@ -598,7 +617,10 @@ describe('IdempotencyInterceptor (AC-3)', () => {
   });
 
   it('replays the stored response when same key + same body hash (COMPLETED)', async () => {
-    repo.reserve.mockResolvedValue({ created: false, existing: completed({ requestHash: HASH, responseStatus: 201, responseBody: { id: 1 } }) });
+    repo.reserve.mockResolvedValue({
+      created: false,
+      existing: completed({ requestHash: HASH, responseStatus: 201, responseBody: { id: 1 } }),
+    });
     const out = await lastValueFrom(interceptor.intercept(ctxWithSameBody, next));
     expect(out).toEqual({ id: 1 });
     expect(next.handle).not.toHaveBeenCalled();
@@ -606,19 +628,22 @@ describe('IdempotencyInterceptor (AC-3)', () => {
 
   it('throws 422 when same key + different body hash', async () => {
     repo.reserve.mockResolvedValue({ created: false, existing: completed({ requestHash: 'other' }) });
-    await expect(lastValueFrom(interceptor.intercept(ctxWithDifferentBody, next)))
-      .rejects.toBeInstanceOf(IdempotencyConflictException);
+    await expect(lastValueFrom(interceptor.intercept(ctxWithDifferentBody, next))).rejects.toBeInstanceOf(
+      IdempotencyConflictException,
+    );
   });
 
   it('throws 409 when the existing key is still PENDING (in progress)', async () => {
     repo.reserve.mockResolvedValue({ created: false, existing: pending({ requestHash: HASH }) });
-    await expect(lastValueFrom(interceptor.intercept(ctxWithSameBody, next)))
-      .rejects.toBeInstanceOf(IdempotencyInProgressException);
+    await expect(lastValueFrom(interceptor.intercept(ctxWithSameBody, next))).rejects.toBeInstanceOf(
+      IdempotencyInProgressException,
+    );
   });
 });
 ```
 
 **Step 3: Implementar** — el interceptor:
+
 1. Lee `Idempotency-Key` del request; si falta → `next.handle()` sin tocar el repo.
 2. Calcula `requestHash = sha256(canonicalJson(body))`; `endpoint = method + ' ' + route`;
    `userId` de `request.user`.
@@ -638,6 +663,7 @@ provider, y exporta el interceptor.
 ### Tarea 12: Aplicar el interceptor a `POST /movements` y `POST /transfers` [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/movement/infrastructure/adapters/http/movement.controller.ts` (`@UseInterceptors(IdempotencyInterceptor)` en `save`)
 - Modificar: `apps/finances/src/transfer/infrastructure/adapters/http/transfer.controller.ts` (en `create`)
 - Modificar: `movement.module.ts` y `transfer.module.ts` (importar `IdempotencyModule`)
@@ -651,6 +677,7 @@ GET/PATCH/DELETE.
 ### Tarea 13: `IdempotencyPurgeScheduler` (retención 24h) [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/idempotency/infrastructure/adapters/schedulers/idempotency-purge.scheduler.ts`
 - Modificar: `idempotency.module.ts` (registrar el scheduler)
 - Test: `.../idempotency-purge.scheduler.spec.ts`
@@ -673,6 +700,7 @@ it('deletes idempotency keys whose expires_at is in the past (AC-3)', async () =
 ### Tarea 14: Flag `system` en category + seed "Sin categorizar" [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/category/domain/category/category.entity.ts` (agregar `system: boolean`)
 - Modificar: entidad TypeORM de category + mapper
 - Crear: `apps/finances/src/database/migrations/1784073600023-AddCategorySystemAndSeedDefault.ts`
@@ -691,6 +719,7 @@ DEFAULT false` + `INSERT ... ('Sin categorizar', ..., true)`. Migración `...023
 ### Tarea 15: Entidad `CategorizationRule` + migración + data-source [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/categorization-rule/domain/categorization-rule/categorization-rule.entity.ts`
 - Crear: entidad TypeORM + mapper
 - Crear: `apps/finances/src/database/migrations/1784073600024-CreateCategorizationRulesTable.ts`
@@ -704,6 +733,7 @@ DEFAULT false` + `INSERT ... ('Sin categorizar', ..., true)`. Migración `...023
 ### Tarea 16: DTOs de reglas (`api.yaml` → DTO) [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/categorization-rule/application/dto/categorization-rule-input.dto.ts`
 - Crear: `apps/finances/src/categorization-rule/application/dto/categorization-rule-update-input.dto.ts`
 - Crear: `apps/finances/src/categorization-rule/application/dto/categorization-rule-output.dto.ts`
@@ -725,6 +755,7 @@ DEFAULT false` + `INSERT ... ('Sin categorizar', ..., true)`. Migración `...023
 ### Tarea 17: Puerto + adapter + CRUD use cases de reglas [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/categorization-rule/domain/categorization-rule/categorization-rule.repository.ts` (abstract)
 - Crear: adapter TypeORM
 - Crear: usecases `create-categorization-rule`, `find-all-categorization-rules`, `update-categorization-rule`, `remove-categorization-rule`
@@ -742,6 +773,7 @@ export abstract class CategorizationRuleRepository {
 ```
 
 **Tests (mapean AC-4 y scope por usuario):**
+
 - create valida que la categoría exista (404 si no) y persiste con `user`.
 - find-all devuelve solo reglas del usuario, ordenadas por prioridad desc.
 - update solo sobre reglas del usuario (404 si no).
@@ -752,6 +784,7 @@ export abstract class CategorizationRuleRepository {
 ### Tarea 18: `ApplyCategorizationRulesUsecase` (matcher + default) [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/categorization-rule/application/usecases/apply-categorization-rules.usecase.ts`
 - Test: `.../apply-categorization-rules.usecase.spec.ts`
 
@@ -784,7 +817,9 @@ describe('ApplyCategorizationRulesUsecase (AC-4)', () => {
 
   it('falls back to the system default category when no rule matches', async () => {
     ruleRepo.findByUserOrderByPriorityDesc.mockResolvedValue([]);
-    categoryRepo.findSystemDefault.mockResolvedValue(category({ id: 7, name: 'Sin categorizar', system: true }));
+    categoryRepo.findSystemDefault.mockResolvedValue(
+      category({ id: 7, name: 'Sin categorizar', system: true }),
+    );
     const r = await usecase.execute({ merchant: 'x', description: 'y' }, 42);
     expect(r.categoryId).toBe(7);
   });
@@ -813,6 +848,7 @@ async execute(input: { merchant?: string; description?: string }, user: number) 
 ### Tarea 19: Controller de reglas + enganche en webhook y save-movement [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/categorization-rule/infrastructure/adapters/http/categorization-rule.controller.ts`
 - Crear: `apps/finances/src/categorization-rule/categorization-rule.module.ts`
 - Modificar: `apps/finances/src/app.module.ts` (importar el módulo)
@@ -836,6 +872,7 @@ queda categorizado; sin match → categoría por defecto.
 ### Tarea 20: `RemoveAccountUsecase` — soft-delete en cascada [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/account/application/usecases/remove-account.usecase.ts`
 - Modificar: `apps/finances/src/account/domain/account/account.repository.ts` (`softRemove` ahora cascada, o nuevo método transaccional)
 - Modificar: `apps/finances/src/movement/domain/movement/movement.repository.ts` (métodos de soft-delete por cuenta y por transferGroup)
@@ -861,7 +898,11 @@ describe('RemoveAccountUsecase — cascade archive (AC-5)', () => {
   it('soft-deletes both legs of every transfer group even if the counterpart account is active', async () => {
     accountRepository.findByIdAndUser.mockResolvedValue(account({ id: 1 }));
     await usecase.execute(1, 42);
-    expect(movementRepository.softDeleteTransferGroupsByAccount).toHaveBeenCalledWith(1, 42, expect.anything());
+    expect(movementRepository.softDeleteTransferGroupsByAccount).toHaveBeenCalledWith(
+      1,
+      42,
+      expect.anything(),
+    );
   });
 
   it('no longer throws AccountHasMovementsException', async () => {
@@ -877,18 +918,20 @@ describe('RemoveAccountUsecase — cascade archive (AC-5)', () => {
 ```
 
 **Step 3: Implementar** — dentro de una transacción:
+
 1. `softDeleteTransferGroupsByAccount(accountId, user, manager)` → borra ambas patas de cada
    `transferGroup` en el que participa un movimiento de la cuenta (subquery por `transfer_group`).
 2. `softDeleteByAccount(accountId, user, manager)` → borra los movimientos restantes de la cuenta.
 3. `accountRepository.softRemove(accountId, user)` (dentro del mismo `manager`).
-Devolver `AccountArchivedOutputDto { accountId, archivedMovements, archivedTransfers }`.
-Eliminar el chequeo `hasMovements` que lanzaba `AccountHasMovementsException`.
+   Devolver `AccountArchivedOutputDto { accountId, archivedMovements, archivedTransfers }`.
+   Eliminar el chequeo `hasMovements` que lanzaba `AccountHasMovementsException`.
 
 ---
 
 ### Tarea 21: Excluir movimientos soft-deleted de los cálculos + controller [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/account/infrastructure/adapters/persistence/typeorm/account/typeorm-account.repository.ts` (queries SQL crudas de `movementBalance`, `movementBalancesByUser`, `hasMovements`)
 - Modificar: `apps/finances/src/account/infrastructure/adapters/http/account.controller.ts` (DELETE devuelve `AccountArchivedOutputDto`, 200)
 - Test: `.../typeorm-account.repository.spec.ts` (extender)
@@ -917,6 +960,7 @@ cd apps/finances
 npx jest src/account src/transfer src/movement src/budget src/category src/outbox src/idempotency src/categorization-rule src/webhook --no-coverage
 cd ../..
 ```
+
 Esperado: PASS — todos los tests de los módulos tocados por sm-0003 pasando.
 
 Además, verificar que las migraciones corren limpio contra una DB fresca:
@@ -926,6 +970,7 @@ cd apps/finances
 npx typeorm-ts-node-commonjs migration:run -d src/database/data-source.ts
 cd ../..
 ```
+
 Esperado: las 5 migraciones (`...020`–`...024`) aplican sin error.
 
 ---

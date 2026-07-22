@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TerminusModule } from '@nestjs/terminus';
-import { OIDC_DISCOVERY_CACHE, OidcDiscoveryCache } from '@shared';
+import { JWT_STRATEGY_OPTIONS, JwtStrategyOptions } from '@shared';
 import { HealthController } from './health.controller';
 import { OidcHealthIndicator } from './oidc-health.indicator';
 
@@ -13,9 +13,9 @@ const OIDC_READINESS_TIMEOUT_MS = 2_000;
   providers: [
     {
       provide: OidcHealthIndicator,
-      useFactory: (discovery: OidcDiscoveryCache) =>
-        new OidcHealthIndicator(discovery, OIDC_READINESS_TIMEOUT_MS),
-      inject: [OIDC_DISCOVERY_CACHE],
+      useFactory: (options: JwtStrategyOptions) =>
+        new OidcHealthIndicator(options.jwksUri, OIDC_READINESS_TIMEOUT_MS),
+      inject: [JWT_STRATEGY_OPTIONS],
     },
   ],
 })

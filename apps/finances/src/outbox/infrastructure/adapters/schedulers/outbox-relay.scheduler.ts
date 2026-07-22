@@ -22,14 +22,11 @@ export class OutboxRelayScheduler {
 
   @Cron(CronExpression.EVERY_10_SECONDS)
   async relay(): Promise<void> {
-    const events = await this.outboxRepository.claimPendingBatch(
-      OutboxRelayScheduler.BATCH,
-    );
+    const events = await this.outboxRepository.claimPendingBatch(OutboxRelayScheduler.BATCH);
 
     for (const event of events) {
       // Restore the publish-time trace id so handlers log under the request's correlation.
-      const correlationId = (event.payload as { correlationId?: string })
-        .correlationId;
+      const correlationId = (event.payload as { correlationId?: string }).correlationId;
       this.logger.log(
         `Relaying outbox event ${event.id} (${event.eventType}) correlationId=${correlationId ?? '-'}`,
       );

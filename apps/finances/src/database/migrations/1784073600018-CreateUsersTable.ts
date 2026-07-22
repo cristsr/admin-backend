@@ -18,12 +18,8 @@ export class CreateUsersTable1784073600018 implements MigrationInterface {
         CONSTRAINT "UQ_users_auth0_id" UNIQUE ("auth0_id")
       )
     `);
-    await queryRunner.query(
-      `CREATE INDEX "IDX_users_email" ON "users" ("email")`,
-    );
-    await queryRunner.query(
-      `CREATE INDEX "IDX_users_auth0_id" ON "users" ("auth0_id")`,
-    );
+    await queryRunner.query(`CREATE INDEX "IDX_users_email" ON "users" ("email")`);
+    await queryRunner.query(`CREATE INDEX "IDX_users_auth0_id" ON "users" ("auth0_id")`);
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {

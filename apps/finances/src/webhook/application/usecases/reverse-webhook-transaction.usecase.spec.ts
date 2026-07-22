@@ -33,15 +33,11 @@ describe('ReverseWebhookTransactionUsecase', () => {
 
   it('404 when no movement exists with that externalReference', async () => {
     movementRepository.firstMatching.mockResolvedValue(null);
-    await expect(usecase.execute('ext-1')).rejects.toThrow(
-      MovementNotFoundException,
-    );
+    await expect(usecase.execute('ext-1')).rejects.toThrow(MovementNotFoundException);
   });
 
   it('creates a compensating movement with the inverted type', async () => {
-    movementRepository.firstMatching
-      .mockResolvedValueOnce(original)
-      .mockResolvedValueOnce(null);
+    movementRepository.firstMatching.mockResolvedValueOnce(original).mockResolvedValueOnce(null);
 
     const result = await usecase.execute('ext-1');
 
@@ -56,9 +52,7 @@ describe('ReverseWebhookTransactionUsecase', () => {
   });
 
   it('compensates the exact amount, on the same account and category', async () => {
-    movementRepository.firstMatching
-      .mockResolvedValueOnce(original)
-      .mockResolvedValueOnce(null);
+    movementRepository.firstMatching.mockResolvedValueOnce(original).mockResolvedValueOnce(null);
 
     await usecase.execute('ext-1');
 

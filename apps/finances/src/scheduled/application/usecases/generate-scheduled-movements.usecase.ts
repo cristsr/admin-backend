@@ -4,7 +4,8 @@ import { correlationId, withSpan } from '@app/config/telemetry/correlation';
 import { MovementRepository } from '@app/movement/domain/movement';
 import {
   Scheduled,
-  ScheduledCriteria,
+  ScheduledLookups,
+  ScheduledReports,
   ScheduledRepository,
 } from '@app/scheduled/domain/scheduled';
 
@@ -22,18 +23,14 @@ export class GenerateScheduledMovementsUsecase {
   }
 
   async execute(): Promise<void> {
-    const due = await this.scheduledRepository.matching(
-      ScheduledCriteria.due(DateTime.utc().toJSDate()),
-    );
+    const due = await this.scheduledRepository.matching(ScheduledReports.due(DateTime.utc().toJSDate()));
 
     if (!due.length) return;
 
     // Own span per run: its id is the trace id all run log lines share.
     return withSpan('scheduled.generate', async () => {
       const runId = correlationId();
-      this.logger.log(
-        `Generating ${due.length} scheduled movement(s) correlationId=${runId}`,
-      );
+      this.logger.log(`Generating ${due.length} scheduled movement(s) correlationId=${runId}`);
 
       let materialized = 0;
       for (const schedule of due) {
@@ -41,9 +38,7 @@ export class GenerateScheduledMovementsUsecase {
         materialized += 1;
       }
 
-      this.logger.log(
-        `scheduledCronDone scheduledMaterialized=${materialized} correlationId=${runId}`,
-      );
+      this.logger.log(`scheduledCronDone scheduledMaterialized=${materialized} correlationId=${runId}`);
     });
   }
 
@@ -63,9 +58,7 @@ export class GenerateScheduledMovementsUsecase {
     }
 
     if (!schedule.recurs()) {
-      await this.scheduledRepository.removeMatching(
-        ScheduledCriteria.byIdAndUser(schedule.id, schedule.user),
-      );
+      await this.scheduledRepository.removeMatching(ScheduledLookups.byIdAndUser(schedule.id, schedule.user));
       return;
     }
 

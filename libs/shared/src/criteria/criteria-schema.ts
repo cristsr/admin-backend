@@ -34,9 +34,7 @@ export const IDENTITY_OPERATORS: readonly FilterOperator[] = [
   FilterOperator.IN,
 ];
 
-const DEFAULT_OPERATORS: Readonly<
-  Record<CriteriaValueType, readonly FilterOperator[]>
-> = {
+const DEFAULT_OPERATORS: Readonly<Record<CriteriaValueType, readonly FilterOperator[]>> = {
   [CriteriaValueType.STRING]: TEXT_OPERATORS,
   [CriteriaValueType.NUMBER]: COMPARABLE_OPERATORS,
   [CriteriaValueType.DATE]: COMPARABLE_OPERATORS,
@@ -47,14 +45,10 @@ const DEFAULT_OPERATORS: Readonly<
  * The publicly filterable surface of an aggregate. Deliberately partial:
  * fields absent from it stay code-only and cannot be driven by callers.
  */
-export type CriteriaSchema<TField extends string> = Partial<
-  Record<TField, CriteriaFieldDefinition>
->;
+export type CriteriaSchema<TField extends string> = Partial<Record<TField, CriteriaFieldDefinition>>;
 
 /** The operators a definition accepts, resolving the per-type default. */
-export function allowedOperators(
-  definition: CriteriaFieldDefinition,
-): readonly FilterOperator[] {
+export function allowedOperators(definition: CriteriaFieldDefinition): readonly FilterOperator[] {
   const declared = definition.operators ?? DEFAULT_OPERATORS[definition.type];
 
   if (!definition.isNullable) return declared;

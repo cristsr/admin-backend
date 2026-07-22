@@ -10,14 +10,14 @@
 
 ### Trazabilidad AC → Tareas
 
-| AC | Cubierto por |
-|----|-------------|
-| AC-1 | Tarea 9 |
-| AC-2 | Tarea 3, Tarea 4 |
-| AC-3 | Tarea 1, Tarea 2 |
+| AC   | Cubierto por              |
+| ---- | ------------------------- |
+| AC-1 | Tarea 9                   |
+| AC-2 | Tarea 3, Tarea 4          |
+| AC-3 | Tarea 1, Tarea 2          |
 | AC-4 | Tarea 6, Tarea 7, Tarea 8 |
-| AC-5 | Tarea 5 |
-| AC-6 | Tarea 10 |
+| AC-5 | Tarea 5                   |
+| AC-6 | Tarea 10                  |
 
 ---
 
@@ -71,6 +71,7 @@ Esperado: rama nueva creada y activa, partiendo de `master` actualizado.
 ### Tarea 1: `OidcDiscoveryCache` (resolver perezoso con TTL) [X]
 
 **Archivos:**
+
 - Crear: `libs/shared/src/auth/oidc-discovery-cache.ts`
 - Test: `libs/shared/src/auth/oidc-discovery-cache.spec.ts`
 - Modificar: `libs/shared/src/auth/index.ts` (agregar export)
@@ -258,6 +259,7 @@ Esperado: PASS
 ### Tarea 2: Refactor de `AuthModule` y `JwtStrategy` para resolver el discovery de forma perezosa [X]
 
 **Archivos:**
+
 - Modificar: `libs/shared/src/auth/auth.module.ts`
 - Modificar: `libs/shared/src/auth/jwt.strategy.ts`
 - Modificar: `libs/shared/src/auth/auth.constants.ts`
@@ -279,9 +281,7 @@ const fakeDecodedToken = {
 };
 
 describe('JwtStrategy lazy OIDC discovery (AC-3)', () => {
-  const buildStrategy = async (
-    discovery: OidcDiscoveryCache,
-  ): Promise<JwtStrategy> => {
+  const buildStrategy = async (discovery: OidcDiscoveryCache): Promise<JwtStrategy> => {
     const { JwtStrategy } = await import('./jwt.strategy');
     const httpClient: any = { get: jest.fn() };
     const identityResolver: any = { resolveExternalId: () => 'sub-1' };
@@ -346,11 +346,7 @@ import { DynamicModule, Module, Type } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { PassportModule } from '@nestjs/passport';
 import { ApiModule } from '../modules';
-import {
-  JWT_STRATEGY_OPTIONS,
-  OIDC_DISCOVERY_CACHE,
-  USERS_SERVICE_CLIENT,
-} from './auth.constants';
+import { JWT_STRATEGY_OPTIONS, OIDC_DISCOVERY_CACHE, USERS_SERVICE_CLIENT } from './auth.constants';
 import { IdentityResolver, SubjectIdentityResolver } from './identity-resolver';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { JwtStrategy, JwtStrategyOptions } from './jwt.strategy';
@@ -368,9 +364,7 @@ export interface AuthModuleOptions {
 export interface AuthModuleAsyncOptions {
   inject: any[];
   identityResolver?: Type<IdentityResolver>;
-  useFactory: (
-    ...args: any[]
-  ) => Promise<AuthModuleOptions> | AuthModuleOptions;
+  useFactory: (...args: any[]) => Promise<AuthModuleOptions> | AuthModuleOptions;
 }
 
 @Module({})
@@ -431,9 +425,10 @@ export class AuthModule {
     });
   }
 
-  private static discoveryProvider(
-    options: AuthModuleOptions,
-  ): { provide: string; useFactory: () => OidcDiscoveryCache } {
+  private static discoveryProvider(options: AuthModuleOptions): {
+    provide: string;
+    useFactory: () => OidcDiscoveryCache;
+  } {
     return {
       provide: OIDC_DISCOVERY_CACHE,
       useFactory: () =>
@@ -478,11 +473,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { passportJwtSecret } from 'jwks-rsa';
 import { ExtractJwt, Strategy, SecretOrKeyProvider } from 'passport-jwt';
 import { firstValueFrom, map } from 'rxjs';
-import {
-  JWT_STRATEGY_OPTIONS,
-  OIDC_DISCOVERY_CACHE,
-  USERS_SERVICE_CLIENT,
-} from './auth.constants';
+import { JWT_STRATEGY_OPTIONS, OIDC_DISCOVERY_CACHE, USERS_SERVICE_CLIENT } from './auth.constants';
 import { AuthenticatedUser } from './authenticated-user.type';
 import { IdentityResolver } from './identity-resolver';
 import { OidcDiscoveryCache } from './oidc-discovery-cache';
@@ -519,21 +510,15 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKeyProvider: JwtStrategy.buildSecretProvider(
-        () => this.resolveJwksClient(fallbackJwksUri),
-      ),
+      secretOrKeyProvider: JwtStrategy.buildSecretProvider(() => this.resolveJwksClient(fallbackJwksUri)),
       audience: options.audience,
       issuer: options.issuer,
       algorithms: ['RS256'],
     });
   }
 
-  private async resolveJwksClient(
-    fallbackJwksUri: string,
-  ): Promise<ReturnType<typeof passportJwtSecret>> {
-    const jwksUri = this.discovery
-      ? await this.discovery.getJwksUri()
-      : fallbackJwksUri;
+  private async resolveJwksClient(fallbackJwksUri: string): Promise<ReturnType<typeof passportJwtSecret>> {
+    const jwksUri = this.discovery ? await this.discovery.getJwksUri() : fallbackJwksUri;
 
     if (!this.jwksClient || this.resolvedJwksUri !== jwksUri) {
       this.jwksClient = passportJwtSecret({
@@ -564,9 +549,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   validate(payload: Record<string, any>): Promise<AuthenticatedUser> {
     const externalId = this.identityResolver.resolveExternalId(payload);
 
-    const user$ = this.httpClient
-      .get(`/users/sub/${externalId}`)
-      .pipe(map((response) => response.data));
+    const user$ = this.httpClient.get(`/users/sub/${externalId}`).pipe(map((response) => response.data));
 
     return firstValueFrom(user$);
   }
@@ -588,6 +571,7 @@ Esperado: PASS — el nuevo spec pasa y no rompe los specs existentes de auth.
 ### Tarea 3: `OidcHealthIndicator` (readiness OIDC, reutiliza el resolver perezoso) [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/health/oidc-health.indicator.ts`
 - Crear: `apps/finances/src/health/oidc-health.indicator.spec.ts`
 - Crear: `apps/finances/src/health/index.ts`
@@ -600,8 +584,7 @@ En `apps/finances/src/health/oidc-health.indicator.spec.ts`:
 import { OidcHealthIndicator } from './oidc-health.indicator';
 
 describe('OidcHealthIndicator (AC-2 + AC-3)', () => {
-  const build = (getJwksUri: jest.Mock) =>
-    new OidcHealthIndicator({ getJwksUri } as any, 500);
+  const build = (getJwksUri: jest.Mock) => new OidcHealthIndicator({ getJwksUri } as any, 500);
 
   it('reports up when the discovery resolves (cache hit o primer warm-up)', async () => {
     const discovery = { getJwksUri: jest.fn().mockResolvedValue('https://idp/jwks') };
@@ -624,9 +607,7 @@ describe('OidcHealthIndicator (AC-2 + AC-3)', () => {
 
   it('reports down when the discovery exceeds the readiness timeout', async () => {
     const discovery = {
-      getJwksUri: jest.fn(
-        () => new Promise<string>((r) => setTimeout(() => r('late'), 200)),
-      ),
+      getJwksUri: jest.fn(() => new Promise<string>((r) => setTimeout(() => r('late'), 200))),
     };
     const indicator = new OidcHealthIndicator(discovery as any, 50);
 
@@ -643,6 +624,7 @@ describe('OidcHealthIndicator (AC-2 + AC-3)', () => {
 ```bash
 npx jest src/health/oidc-health.indicator.spec.ts --no-coverage
 ```
+
 > (Ejecutar desde `apps/finances`; lo mismo aplica a los specs siguientes.)
 
 Esperado: FAIL — "Cannot find module './oidc-health.indicator'".
@@ -712,6 +694,7 @@ Esperado: PASS
 ### Tarea 4: `HealthController` (liveness + readiness) y reemplazo del `/health` actual [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/health/health.controller.ts`
 - Crear: `apps/finances/src/health/health.controller.spec.ts`
 - Crear: `apps/finances/src/health/health.module.ts`
@@ -727,19 +710,13 @@ En `apps/finances/src/health/health.controller.spec.ts`:
 import { HealthController } from './health.controller';
 
 describe('HealthController (AC-2)', () => {
-  const build = (
-    healthCheckService: any,
-    typeOrmHealthIndicator: any,
-    oidcHealthIndicator: any,
-  ) =>
-    new HealthController(
-      healthCheckService,
-      typeOrmHealthIndicator,
-      oidcHealthIndicator,
-    );
+  const build = (healthCheckService: any, typeOrmHealthIndicator: any, oidcHealthIndicator: any) =>
+    new HealthController(healthCheckService, typeOrmHealthIndicator, oidcHealthIndicator);
 
   it('liveness runs no indicators (proceso vivo, sin tocar dependencias)', async () => {
-    const healthCheckService = { check: jest.fn().mockResolvedValue({ status: 'ok', info: {}, error: {}, details: {} }) };
+    const healthCheckService = {
+      check: jest.fn().mockResolvedValue({ status: 'ok', info: {}, error: {}, details: {} }),
+    };
     const ctrl = build(healthCheckService, {}, {});
 
     const result = await ctrl.live();
@@ -817,10 +794,7 @@ export class HealthController {
   @ApiOperation({ operationId: 'healthReady', summary: 'Readiness — DB + OIDC accesibles.' })
   @HealthCheck()
   ready() {
-    return this.health.check([
-      () => this.db.pingCheck('db'),
-      () => this.oidc.isHealthy('oidc'),
-    ]);
+    return this.health.check([() => this.db.pingCheck('db'), () => this.oidc.isHealthy('oidc')]);
   }
 }
 ```
@@ -885,12 +859,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { APP_FILTER } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
-import {
-  Auth0IdentityResolver,
-  AuthModule,
-  ExceptionFilter,
-  validatorFactory,
-} from '@shared';
+import { Auth0IdentityResolver, AuthModule, ExceptionFilter, validatorFactory } from '@shared';
 import { AppController } from 'app/config/controllers';
 import { DatabaseModule } from 'app/database/';
 import { ENV, Environment } from 'app/env';
@@ -920,10 +889,7 @@ import { WebhookModule } from 'app/webhook/webhook.module';
     DatabaseModule,
     AuthModule.forRootAsync({
       inject: [ConfigService],
-      identityResolver:
-        process.env.AUTH_IDENTITY_PROVIDER === 'auth0'
-          ? Auth0IdentityResolver
-          : undefined,
+      identityResolver: process.env.AUTH_IDENTITY_PROVIDER === 'auth0' ? Auth0IdentityResolver : undefined,
       useFactory: (configService: ConfigService) => ({
         issuer: configService.get(ENV.OIDC_ISSUER),
         audience: configService.get(ENV.OIDC_AUDIENCE),
@@ -969,6 +935,7 @@ Esperado: PASS en ambos.
 ### Tarea 5: AC-5 — Rate limiting (`@nestjs/throttler`) + trust proxy [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/env.ts` (nuevas env vars)
 - Crear: `apps/finances/src/config/throttler/throttler.config.ts`
 - Crear: `apps/finances/src/config/throttler/throttler.config.spec.ts`
@@ -1077,8 +1044,7 @@ export interface ThrottlerEnv {
  * change.
  */
 export function buildThrottlerOptions(env: ThrottlerEnv): ThrottlerModuleOptions {
-  const toMs = (v: number | '' | undefined, def: number) =>
-    !v && v !== 0 ? def : Number(v);
+  const toMs = (v: number | '' | undefined, def: number) => (!v && v !== 0 ? def : Number(v));
 
   const throttlers: ThrottlerOptions[] = [
     {
@@ -1112,12 +1078,7 @@ import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import {
-  Auth0IdentityResolver,
-  AuthModule,
-  ExceptionFilter,
-  validatorFactory,
-} from '@shared';
+import { Auth0IdentityResolver, AuthModule, ExceptionFilter, validatorFactory } from '@shared';
 import { AppController } from 'app/config/controllers';
 import { buildThrottlerOptions } from 'app/config/throttler/throttler.config';
 import { DatabaseModule } from 'app/database/';
@@ -1186,9 +1147,7 @@ export class WebhookController {
   ) {}
 
   @Post('transactions')
-  async receiveTransaction(
-    @Body() input: WebhookTransactionInputDto,
-  ): Promise<WebhookTransactionOutputDto> {
+  async receiveTransaction(@Body() input: WebhookTransactionInputDto): Promise<WebhookTransactionOutputDto> {
     return this.receiveWebhookTransactionUsecase.execute(input);
   }
 
@@ -1262,6 +1221,7 @@ Esperado: PASS
 ### Tarea 6: `nestjs-pino` con `genReqId` que honra `X-Request-Id` entrante [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/config/logger/logger.config.ts`
 - Crear: `apps/finances/src/config/logger/logger.config.spec.ts`
 - Modificar: `apps/finances/src/app.module.ts` (importar `LoggerModule`)
@@ -1404,6 +1364,7 @@ Esperado: PASS
 ### Tarea 7: Propagación del `correlationId` por el outbox (`movement.saved` → `BudgetThresholdExceeded`) [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/movement/application/movement.constants.ts`
 - Modificar: `apps/finances/src/budget/domain/budget/budget-notification.publisher.ts`
 - Modificar: `apps/finances/src/movement/application/usecases/save-movement.usecase.ts`
@@ -1428,9 +1389,7 @@ describe('SaveMovementUsecase (AC-4 propagation)', () => {
 
   it('embeds the correlationId into the outbox movement.saved payload so the relay can restore it (no live outbox)', async () => {
     const movementRepository: any = {
-      runInTransaction: jest.fn(async (cb: (m: any) => Promise<any>) =>
-        cb({} as any),
-      ),
+      runInTransaction: jest.fn(async (cb: (m: any) => Promise<any>) => cb({} as any)),
       saveWithManager: jest.fn(async (_m: any, mv: any) => ({ ...mv, id: 99 })),
     };
     const outboxPublisher: any = { publish: jest.fn().mockResolvedValue(undefined) };
@@ -1505,9 +1464,7 @@ describe('OutboxRelayScheduler correlation id restoration (AC-4)', () => {
 
     await scheduler.relay();
 
-    expect(logger.log).toHaveBeenCalledWith(
-      expect.stringContaining('corr-xyz'),
-    );
+    expect(logger.log).toHaveBeenCalledWith(expect.stringContaining('corr-xyz'));
     expect(eventEmitter.emitAsync).toHaveBeenCalledWith('movement.saved', {
       movementId: 2,
       correlationId: 'corr-xyz',
@@ -1662,7 +1619,13 @@ import { AccountNotFoundException, AccountRepository } from '../../../account/do
 import { ApplyCategorizationRulesUsecase } from '../../../categorization-rule/application/usecases';
 import { CategoryNotFoundException, CategoryRepository } from '../../../category/domain/category';
 import { SubcategoryNotFoundException, SubcategoryRepository } from '../../../category/domain/subcategory';
-import { Movement, MovementRepository, MovementSource, MovementType, MovementSaved } from '../../../movement/domain/movement';
+import {
+  Movement,
+  MovementRepository,
+  MovementSource,
+  MovementType,
+  MovementSaved,
+} from '../../../movement/domain/movement';
 import { MovementSavedPayload } from '../../../movement/application/movement.constants';
 import { DomainEventOutboxPublisher } from '../../../outbox/application/services/domain-event-outbox.publisher';
 import { WebhookTransactionInputDto } from '../dto/webhook-transaction-input.dto';
@@ -1689,9 +1652,7 @@ export class ReceiveWebhookTransactionUsecase {
     input: WebhookTransactionInputDto,
     correlationId?: string,
   ): Promise<WebhookTransactionOutputDto> {
-    const existing = await this.movementRepository.findByExternalReference(
-      input.externalReference,
-    );
+    const existing = await this.movementRepository.findByExternalReference(input.externalReference);
     if (existing) {
       return {
         movementId: existing.id,
@@ -1702,10 +1663,7 @@ export class ReceiveWebhookTransactionUsecase {
 
     const { categoryId, subcategoryId } = await this.resolveCategory(input);
 
-    const account = await this.accountRepository.findByIdAndUser(
-      input.account,
-      input.user,
-    );
+    const account = await this.accountRepository.findByIdAndUser(input.account, input.user);
     if (!account) {
       throw new AccountNotFoundException('Account not found');
     }
@@ -1767,10 +1725,7 @@ export class ReceiveWebhookTransactionUsecase {
       throw new CategoryNotFoundException(`Category "${input.category}" not found`);
     }
     const subcategory = input.subcategory
-      ? await this.subcategoryRepository.findByNameAndCategory(
-          input.subcategory,
-          category.id,
-        )
+      ? await this.subcategoryRepository.findByNameAndCategory(input.subcategory, category.id)
       : null;
     if (input.subcategory && !subcategory) {
       throw new SubcategoryNotFoundException(
@@ -1794,10 +1749,7 @@ export class ReceiveWebhookTransactionUsecase {
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { MovementSaved, MovementSavedPayload } from '../../../../movement/application/movement.constants';
-import {
-  MovementRepository,
-  MovementType,
-} from '../../../../movement/domain/movement';
+import { MovementRepository, MovementType } from '../../../../movement/domain/movement';
 import { BudgetRepository } from '../../../domain/budget';
 import {
   BUDGET_THRESHOLD_LIMITS,
@@ -1823,9 +1775,7 @@ export class MovementSavedEventHandler {
 
   @OnEvent(MovementSaved)
   async handle(payload: MovementSavedPayload): Promise<void> {
-    this.logger.log(
-      `Movement saved event received correlationId=${payload.correlationId ?? '-'}`,
-    );
+    this.logger.log(`Movement saved event received correlationId=${payload.correlationId ?? '-'}`);
 
     const budgets = await this.budgetRepository.findActiveMatching(
       payload.categoryId,
@@ -1851,9 +1801,7 @@ export class MovementSavedEventHandler {
 
       if (!threshold) continue;
 
-      const alreadyRank = budget.notifiedThreshold
-        ? THRESHOLD_RANK[budget.notifiedThreshold]
-        : 0;
+      const alreadyRank = budget.notifiedThreshold ? THRESHOLD_RANK[budget.notifiedThreshold] : 0;
       if (THRESHOLD_RANK[threshold] <= alreadyRank) continue;
 
       budget.notifiedThreshold = threshold;
@@ -1876,10 +1824,7 @@ export class MovementSavedEventHandler {
 ```typescript
 import { Injectable, Logger } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import {
-  BudgetNotificationPublisher,
-  BudgetThresholdExceededPayload,
-} from '../../../domain/budget';
+import { BudgetNotificationPublisher, BudgetThresholdExceededPayload } from '../../../domain/budget';
 import { BudgetThresholdExceeded } from '../../../application/budget.constants';
 
 @Injectable()
@@ -1921,13 +1866,10 @@ export class OutboxRelayScheduler {
 
   @Cron(CronExpression.EVERY_10_SECONDS)
   async relay(): Promise<void> {
-    const events = await this.outboxRepository.claimPendingBatch(
-      OutboxRelayScheduler.BATCH,
-    );
+    const events = await this.outboxRepository.claimPendingBatch(OutboxRelayScheduler.BATCH);
 
     for (const event of events) {
-      const correlationId: string | undefined =
-        (event.payload as { correlationId?: string }).correlationId;
+      const correlationId: string | undefined = (event.payload as { correlationId?: string }).correlationId;
       this.logger.log(
         `Relaying outbox event ${event.id} (${event.eventType}) correlationId=${correlationId ?? '-'}`,
       );
@@ -1979,6 +1921,7 @@ Esperado: PASS
 ### Tarea 8: Métricas estructuradas de crons (`scheduledMaterialized`, `budgetsGenerated`) [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/budget/application/usecases/generate-budgets.usecase.ts`
 - Modificar: `apps/finances/src/budget/application/usecases/generate-budgets.usecase.spec.ts` (si existe; si no, crear)
 - Modificar: `apps/finances/src/scheduled/application/usecases/generate-scheduled-movements.usecase.ts`
@@ -1997,8 +1940,32 @@ describe('GenerateBudgetsUsecase (AC-4 cron metrics)', () => {
   it('logs a structured line with budgetsGenerated and a generated correlationId for the run', async () => {
     const budgetRepository: any = {
       findDueForRegeneration: jest.fn().mockResolvedValue([
-        { id: 1, period: 'MONTHLY', amount: 1000, currency: 'ARS', categoryId: 1, accountId: 1, user: 1, name: 'b', repeat: true, startDate: new Date(), endDate: new Date() },
-        { id: 2, period: 'MONTHLY', amount: 500, currency: 'ARS', categoryId: 2, accountId: 1, user: 1, name: 'b2', repeat: true, startDate: new Date(), endDate: new Date() },
+        {
+          id: 1,
+          period: 'MONTHLY',
+          amount: 1000,
+          currency: 'ARS',
+          categoryId: 1,
+          accountId: 1,
+          user: 1,
+          name: 'b',
+          repeat: true,
+          startDate: new Date(),
+          endDate: new Date(),
+        },
+        {
+          id: 2,
+          period: 'MONTHLY',
+          amount: 500,
+          currency: 'ARS',
+          categoryId: 2,
+          accountId: 1,
+          user: 1,
+          name: 'b2',
+          repeat: true,
+          startDate: new Date(),
+          endDate: new Date(),
+        },
       ]),
       save: jest.fn().mockResolvedValue(undefined),
       deactivate: jest.fn().mockResolvedValue(undefined),
@@ -2058,9 +2025,7 @@ export class GenerateBudgetsUsecase {
     this.logger.log(`budgetsCronStart correlationId=${correlationId}`);
 
     const utc = DateTime.utc();
-    const budgets = await this.budgetRepository.findDueForRegeneration(
-      utc.toJSDate(),
-    );
+    const budgets = await this.budgetRepository.findDueForRegeneration(utc.toJSDate());
 
     let generated = 0;
     for (const budget of budgets) {
@@ -2086,15 +2051,10 @@ export class GenerateBudgetsUsecase {
       generated += 1;
     }
 
-    this.logger.log(
-      `budgetsCronDone budgetsGenerated=${generated} correlationId=${correlationId}`,
-    );
+    this.logger.log(`budgetsCronDone budgetsGenerated=${generated} correlationId=${correlationId}`);
   }
 
-  private nextPeriodDates(
-    budget: Budget,
-    utc: DateTime,
-  ): { startDate: Date; endDate: Date } {
+  private nextPeriodDates(budget: Budget, utc: DateTime): { startDate: Date; endDate: Date } {
     switch (budget.period) {
       case Period.DAILY:
         return { startDate: utc.startOf('day').toJSDate(), endDate: utc.endOf('day').toJSDate() };
@@ -2104,7 +2064,10 @@ export class GenerateBudgetsUsecase {
         const endDate = DateTime.fromJSDate(budget.endDate);
         return {
           startDate: utc.startOf('day').toJSDate(),
-          endDate: utc.plus({ days: startDate.diff(endDate).days }).endOf('day').toJSDate(),
+          endDate: utc
+            .plus({ days: startDate.diff(endDate).days })
+            .endOf('day')
+            .toJSDate(),
         };
       }
       case Period.MONTHLY:
@@ -2142,9 +2105,7 @@ export class GenerateScheduledMovementsUsecase {
     if (!due.length) return;
 
     const correlationId = randomUUID();
-    this.logger.log(
-      `Generating ${due.length} scheduled movement(s) correlationId=${correlationId}`,
-    );
+    this.logger.log(`Generating ${due.length} scheduled movement(s) correlationId=${correlationId}`);
 
     let materialized = 0;
     for (const schedule of due) {
@@ -2152,9 +2113,7 @@ export class GenerateScheduledMovementsUsecase {
       materialized += 1;
     }
 
-    this.logger.log(
-      `scheduledCronDone scheduledMaterialized=${materialized} correlationId=${correlationId}`,
-    );
+    this.logger.log(`scheduledCronDone scheduledMaterialized=${materialized} correlationId=${correlationId}`);
   }
 
   private async materialize(schedule: Scheduled, correlationId: string): Promise<void> {
@@ -2240,6 +2199,7 @@ Esperado: PASS
 ### Tarea 9: Cablear Swagger (`DocumentBuilder`) + decoradores de seguridad en controladores [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/main.ts` (`SwaggerModule.setup`)
 - Crear: `apps/finances/src/config/swagger/swagger.builder.ts`
 - Crear: `apps/finances/src/config/swagger/swagger.builder.spec.ts`
@@ -2317,10 +2277,7 @@ export function buildSwaggerDocument(app: INestApplication): OpenAPIObject {
 }
 
 /** Mounts the Swagger UI at /docs only when SHOW_DOCS is true. */
-export function maybeMountSwagger(
-  app: INestApplication,
-  showDocs: boolean,
-): void {
+export function maybeMountSwagger(app: INestApplication, showDocs: boolean): void {
   if (!showDocs) return;
 
   const { SwaggerModule } = require('@nestjs/swagger');
@@ -2349,7 +2306,9 @@ import { ApiSecurity, ApiTags } from '@nestjs/swagger';
 @Public()
 @UseGuards(WebhookApiKeyGuard)
 @Throttle({ webhook: { limit: 60, ttl: 60_000 } })
-export class WebhookController { /* unchanged body */ }
+export class WebhookController {
+  /* unchanged body */
+}
 ```
 
 Decorar `HealthController` con `@ApiTags('finances-health')` (sin security
@@ -2388,6 +2347,7 @@ Esperado: PASS en spec y build exitoso (Swagger encuentra los decoradores de `@n
 ### Tarea 10: Keycloak en `docker-compose`, configuración Jest e2e, `*.e2e-spec.ts` y job de CI [X]
 
 **Archivos:**
+
 - Modificar: `docker-compose.yml`
 - Crear: `docker/keycloak/import/realm-export.json`
 - Crear: `apps/finances/test/jest-e2e.config.ts`
@@ -2418,9 +2378,7 @@ describe('Auth happy path e2e (AC-6)', () => {
   });
 
   it('rejects a request without a valid JWT on a private endpoint', async () => {
-    await request(app.getHttpServer())
-      .get('/accounts')
-      .expect(401);
+    await request(app.getHttpServer()).get('/accounts').expect(401);
   });
 
   it('accepts a valid Keycloak JWT on a private endpoint', async () => {
@@ -2444,17 +2402,20 @@ async function acquireKeycloakToken(): Promise<string> {
     password: process.env.KEYCLOAK_PASSWORD ?? 'test-pass',
   }).toString();
 
-  const res = await fetch(tokenEndpoint ?? 'http://localhost:8080/realms/finances/protocol/openid-connect/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body,
-  });
+  const res = await fetch(
+    tokenEndpoint ?? 'http://localhost:8080/realms/finances/protocol/openid-connect/token',
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body,
+    },
+  );
 
   if (!res.ok) {
     throw new Error(`Keycloak token fetch failed: ${res.status} ${await res.text()}`);
   }
 
-  return (await res.json() as { access_token: string }).access_token;
+  return ((await res.json()) as { access_token: string }).access_token;
 }
 ```
 
@@ -2573,70 +2534,70 @@ export async function buildE2eApp(): Promise<INestApplication> {
 container):
 
 ```yaml
-  e2e:
-    runs-on: ubuntu-latest
-    needs: build-and-test
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: admin
-          POSTGRES_DB: finances
-        ports:
-          - 5433:5432
-        options: >-
-          --health-cmd "pg_isready -U postgres"
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-      keycloak:
-        image: quay.io/keycloak/keycloak:24.0
-        options: --name keycloak --volume ${{ github.workspace }}/docker/keycloak/import:/opt/keycloak/data/import
-        env:
-          KEYCLOAK_ADMIN: admin
-          KEYCLOAK_ADMIN_PASSWORD: admin
-        ports:
-          - 8080:8080
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
+e2e:
+  runs-on: ubuntu-latest
+  needs: build-and-test
+  services:
+    postgres:
+      image: postgres:16
+      env:
+        POSTGRES_USER: postgres
+        POSTGRES_PASSWORD: admin
+        POSTGRES_DB: finances
+      ports:
+        - 5433:5432
+      options: >-
+        --health-cmd "pg_isready -U postgres"
+        --health-interval 10s
+        --health-timeout 5s
+        --health-retries 5
+    keycloak:
+      image: quay.io/keycloak/keycloak:24.0
+      options: --name keycloak --volume ${{ github.workspace }}/docker/keycloak/import:/opt/keycloak/data/import
+      env:
+        KEYCLOAK_ADMIN: admin
+        KEYCLOAK_ADMIN_PASSWORD: admin
+      ports:
+        - 8080:8080
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-node@v4
+      with:
+        node-version: 20
+        cache: npm
 
-      - name: Wait for Keycloak
-        run: |
-          for i in $(seq 1 30); do
-            if curl -fsS http://localhost:8080/realms/finances/.well-known/openid-configuration >/dev/null; then exit 0; fi
-            sleep 2
-          done
-          docker logs keycloak
-          exit 1
+    - name: Wait for Keycloak
+      run: |
+        for i in $(seq 1 30); do
+          if curl -fsS http://localhost:8080/realms/finances/.well-known/openid-configuration >/dev/null; then exit 0; fi
+          sleep 2
+        done
+        docker logs keycloak
+        exit 1
 
-      - name: Install dependencies
-        run: npm ci --legacy-peer-deps
+    - name: Install dependencies
+      run: npm ci --legacy-peer-deps
 
-      - name: Run migrations
-        env:
-          DB_URI: postgres://postgres:admin@localhost:5433/finances
-        run: |
-          TS_NODE_PROJECT=apps/finances/tsconfig.app.json \
-          NODE_OPTIONS="-r tsconfig-paths/register" \
-          npx typeorm-ts-node-commonjs migration:run -d apps/finances/src/database/data-source.ts
+    - name: Run migrations
+      env:
+        DB_URI: postgres://postgres:admin@localhost:5433/finances
+      run: |
+        TS_NODE_PROJECT=apps/finances/tsconfig.app.json \
+        NODE_OPTIONS="-r tsconfig-paths/register" \
+        npx typeorm-ts-node-commonjs migration:run -d apps/finances/src/database/data-source.ts
 
-      - name: Run e2e auth tests
-        env:
-          OIDC_ISSUER: http://localhost:8080/realms/finances
-          OIDC_AUDIENCE: finances-api
-          AUTH_IDENTITY_PROVIDER: keycloak
-          USERS_API_URL: http://localhost:8080/realms/finances/account
-          WEBHOOK_API_KEY: test-key
-          KEYCLOAK_TOKEN_URL: http://localhost:8080/realms/finances/protocol/openid-connect/token
-          KEYCLOAK_CLIENT_ID: finances-test
-          KEYCLOAK_USER: test-user
-          KEYCLOAK_PASSWORD: test-pass
-        run: npx nx test finances --config apps/finances/test/jest-e2e.config.ts
+    - name: Run e2e auth tests
+      env:
+        OIDC_ISSUER: http://localhost:8080/realms/finances
+        OIDC_AUDIENCE: finances-api
+        AUTH_IDENTITY_PROVIDER: keycloak
+        USERS_API_URL: http://localhost:8080/realms/finances/account
+        WEBHOOK_API_KEY: test-key
+        KEYCLOAK_TOKEN_URL: http://localhost:8080/realms/finances/protocol/openid-connect/token
+        KEYCLOAK_CLIENT_ID: finances-test
+        KEYCLOAK_USER: test-user
+        KEYCLOAK_PASSWORD: test-pass
+      run: npx nx test finances --config apps/finances/test/jest-e2e.config.ts
 ```
 
 > `finances-test` client y `test-user` deben preexistir en el realm import (o
@@ -2692,8 +2653,11 @@ end-to-end, local y en CI.
 - **No se agregan env vars sin validar** — `OIDC_DISCOVERY_TTL_MS` queda
   reservado y su default vive en `AuthModule` para mantener el `Environment`
   estable. Si se hace configurable, agregar a `env.ts` con `@IsOptional() +
-  @IsNumber()` siguiendo el mismo patrón que `THROTTLE_*`.
+@IsNumber()` siguiendo el mismo patrón que `THROTTLE_*`.
 - **`requests/transactions/reversal` rate limit** — el `@Throttle` se aplica
   a nivel controller, así ambas rutas webhook comparten el límite por IP+API
   key (alineado con la ambigüedad resuelta en `hu.md`).
+
+```
+
 ```

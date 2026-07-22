@@ -1,11 +1,5 @@
 import { Type } from 'class-transformer';
-import {
-  IsArray,
-  IsNotEmpty,
-  IsOptional,
-  Min,
-  ValidateNested,
-} from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, Min, ValidateNested } from 'class-validator';
 import { SubcategoryBatchItemDto } from './subcategories-input.dto';
 
 export class CategoryInputDto {

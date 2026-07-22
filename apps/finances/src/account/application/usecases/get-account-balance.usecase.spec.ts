@@ -32,8 +32,6 @@ describe('GetAccountBalanceUsecase', () => {
 
   it('throws AccountNotFoundException when the account belongs to another user (scoping)', async () => {
     accountRepository.firstMatching.mockResolvedValue(null);
-    await expect(usecase.execute(1, 7)).rejects.toThrow(
-      AccountNotFoundException,
-    );
+    await expect(usecase.execute(1, 7)).rejects.toThrow(AccountNotFoundException);
   });
 });

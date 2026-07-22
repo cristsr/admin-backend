@@ -38,7 +38,7 @@ estado y el de sus dependencias.
 
 ### AC-3: OIDC discovery perezoso
 
-El descubrimiento OIDC es *eager* al arrancar: si el IdP no responde, la app no levanta. Debe
+El descubrimiento OIDC es _eager_ al arrancar: si el IdP no responde, la app no levanta. Debe
 volverse perezoso, como ya hace `jwks-rsa` con las llaves de firma.
 
 - La app arranca aunque el proveedor OIDC no esté disponible en ese instante.
@@ -120,10 +120,12 @@ Debe existir una prueba automatizada contra un IdP real de laboratorio.
 ## Technical Context
 
 ### Microservicio objetivo
+
 - apps/finances (toda la historia cae en esta app; incluye los módulos de auth/webhook,
   crons y el bootstrap de la aplicación)
 
 ### Patrones obligatorios
+
 - Mantener el estándar de arquitectura hexagonal ya en uso en el repo (domain /
   application / infrastructure por módulo, puertos como `abstract class` para DI,
   DTOs en `application/dto/`).

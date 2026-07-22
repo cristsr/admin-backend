@@ -98,9 +98,9 @@ describe('IdempotencyInterceptor', () => {
     const { ctx } = makeContext();
     const next = { handle: () => of({ id: 1 }) };
 
-    await expect(
-      lastValueFrom(interceptor.intercept(ctx as any, next as any)),
-    ).rejects.toBeInstanceOf(IdempotencyConflictException);
+    await expect(lastValueFrom(interceptor.intercept(ctx as any, next as any))).rejects.toBeInstanceOf(
+      IdempotencyConflictException,
+    );
   });
 
   // A failed handler must free the key; otherwise retries get 409 until expiry.
@@ -125,11 +125,7 @@ describe('IdempotencyInterceptor', () => {
       const { ctx } = makeContext();
       const boom = new Error('handler boom');
 
-      await expect(
-        lastValueFrom(
-          interceptor.intercept(ctx as any, failing(boom) as any),
-        ),
-      ).rejects.toBe(boom);
+      await expect(lastValueFrom(interceptor.intercept(ctx as any, failing(boom) as any))).rejects.toBe(boom);
 
       expect(repo.release).toHaveBeenCalledWith(1);
       expect(repo.complete).not.toHaveBeenCalled();
@@ -140,11 +136,7 @@ describe('IdempotencyInterceptor', () => {
       const { ctx } = makeContext();
       const boom = new Error('handler boom');
 
-      await expect(
-        lastValueFrom(
-          interceptor.intercept(ctx as any, failing(boom) as any),
-        ),
-      ).rejects.toBe(boom);
+      await expect(lastValueFrom(interceptor.intercept(ctx as any, failing(boom) as any))).rejects.toBe(boom);
     });
   });
 
@@ -156,8 +148,8 @@ describe('IdempotencyInterceptor', () => {
     const { ctx } = makeContext();
     const next = { handle: () => of({ id: 1 }) };
 
-    await expect(
-      lastValueFrom(interceptor.intercept(ctx as any, next as any)),
-    ).rejects.toBeInstanceOf(IdempotencyInProgressException);
+    await expect(lastValueFrom(interceptor.intercept(ctx as any, next as any))).rejects.toBeInstanceOf(
+      IdempotencyInProgressException,
+    );
   });
 });

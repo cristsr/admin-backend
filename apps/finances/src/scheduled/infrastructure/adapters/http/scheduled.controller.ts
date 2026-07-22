@@ -1,20 +1,7 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Patch,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, CriteriaQueryDto, CurrentUser } from '@shared';
-import {
-  ScheduledInputDto,
-  ScheduledOutputDto,
-  ScheduledPatchDto,
-} from '@app/scheduled/application/dto';
+import { ScheduledInputDto, ScheduledOutputDto, ScheduledPatchDto } from '@app/scheduled/application/dto';
 import { ScheduledMapper } from '@app/scheduled/application/mappers';
 import {
   FindAllScheduledUsecase,
@@ -69,11 +56,7 @@ export class ScheduledController {
     @Param('id') id: number,
     @Body() patch: ScheduledPatchDto,
   ): Promise<ScheduledOutputDto> {
-    const scheduled = await this.updateScheduledUsecase.execute(
-      id,
-      patch,
-      user.id,
-    );
+    const scheduled = await this.updateScheduledUsecase.execute(id, patch, user.id);
     return ScheduledMapper.toOutput(scheduled);
   }
 

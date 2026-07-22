@@ -1,155 +1,66 @@
-import {
-  And,
-  Between,
-  Equal,
-  FindManyOptions,
-  FindOperator,
-  FindOptionsOrder,
-  FindOptionsWhere,
-  ILike,
-  In,
-  IsNull,
-  LessThan,
-  LessThanOrEqual,
-  MoreThan,
-  MoreThanOrEqual,
-  Not,
-} from 'typeorm';
-import {
-  Criteria,
-  Filter,
-  FilterOperator,
-  InvalidCriteriaException,
-  OrderType,
-} from '../criteria';
+import { FindManyOptions, FindOptionsOrder, FindOptionsWhere } from 'typeorm';
+import { Criteria, InvalidCriteriaException } from '../criteria';
 import { ObjectLiteral } from '../types/object-literal';
+import { CriteriaFieldMap } from './criteria-field-map.type';
+import { assignAtPath } from './find-options.writer';
+import { ORDER_DIRECTION } from './order-direction.map';
+import { buildFindOperator } from './typeorm-operator.map';
 
 /**
- * Maps each domain field to its TypeORM property path. Total on purpose: an
- * unmapped field fails compilation instead of reaching the database.
+ * Translates a criteria into TypeORM `find` options. A stateless utility: the
+ * per-entity field map is passed in, so there is nothing to instantiate — the
+ * static methods are called directly and a private constructor forbids `new`.
+ * Relations to eager-load and the entity itself stay with the repository.
  */
-export type CriteriaFieldMap<TField extends string> = Readonly<
-  Record<TField, string>
->;
-
-const ORDER_DIRECTION: Readonly<Record<OrderType, 'ASC' | 'DESC'>> = {
-  [OrderType.ASC]: 'ASC',
-  [OrderType.DESC]: 'DESC',
-};
-
-/**
- * Translates a criteria into TypeORM `find` options. Relations to eager-load
- * and the entity itself stay with the repository.
- */
-export class TypeOrmCriteriaConverter<
-  TEntity extends ObjectLiteral,
-  TField extends string,
-> {
-  constructor(private readonly fields: CriteriaFieldMap<TField>) {}
-
-  toFindOptions(criteria: Criteria<TField>): FindManyOptions<TEntity> {
+export class TypeOrmCriteriaConverter {
+  static toFindOptions<TEntity extends ObjectLiteral, TField extends string>(
+    fields: CriteriaFieldMap<TField>,
+    criteria: Criteria<TField>,
+  ): FindManyOptions<TEntity> {
     return {
-      where: this.toWhere(criteria),
-      order: this.toOrder(criteria),
+      where: TypeOrmCriteriaConverter.toWhere<TEntity, TField>(fields, criteria),
+      order: TypeOrmCriteriaConverter.toOrder<TEntity, TField>(fields, criteria),
       take: criteria.pagination?.take,
       skip: criteria.pagination?.skip,
     };
   }
 
   /** The `where` alone, for operations without ordering or paging (`count`, `sum`). */
-  toWhere(criteria: Criteria<TField>): FindOptionsWhere<TEntity> {
+  static toWhere<TEntity extends ObjectLiteral, TField extends string>(
+    fields: CriteriaFieldMap<TField>,
+    criteria: Criteria<TField>,
+  ): FindOptionsWhere<TEntity> {
     return criteria.filters.reduce<ObjectLiteral>(
       (where, filter) =>
-        this.assign(where, this.pathOf(filter.field), this.toOperator(filter)),
+        assignAtPath(where, TypeOrmCriteriaConverter.pathOf(fields, filter.field), buildFindOperator(filter)),
       {},
     ) as FindOptionsWhere<TEntity>;
   }
 
-  toOrder(criteria: Criteria<TField>): FindOptionsOrder<TEntity> {
+  static toOrder<TEntity extends ObjectLiteral, TField extends string>(
+    fields: CriteriaFieldMap<TField>,
+    criteria: Criteria<TField>,
+  ): FindOptionsOrder<TEntity> {
     return criteria.orders.reduce<ObjectLiteral>(
       (order, clause) =>
-        this.assign(
+        assignAtPath(
           order,
-          this.pathOf(clause.field),
+          TypeOrmCriteriaConverter.pathOf(fields, clause.field),
           ORDER_DIRECTION[clause.type],
         ),
       {},
     ) as FindOptionsOrder<TEntity>;
   }
 
-  private pathOf(field: TField): string {
-    const path = this.fields[field];
+  private static pathOf<TField extends string>(fields: CriteriaFieldMap<TField>, field: TField): string {
+    const path = fields[field];
 
     if (!path) {
-      throw new InvalidCriteriaException(
-        `Field "${field}" has no persistence mapping`,
-        { context: { field } },
-      );
+      throw new InvalidCriteriaException(`Field "${field}" has no persistence mapping`, {
+        context: { field },
+      });
     }
 
     return path;
-  }
-
-  /**
-   * Writes `value` at a dotted path (`account.id` becomes `{ account: { id } }`).
-   * Two conditions on the same column are ANDed, composing real ranges.
-   */
-  private assign(
-    target: ObjectLiteral,
-    path: string,
-    value: unknown,
-  ): ObjectLiteral {
-    const segments = path.split('.');
-    const leaf = segments.pop();
-
-    const node = segments.reduce<ObjectLiteral>((current, segment) => {
-      current[segment] = current[segment] ?? {};
-      return current[segment] as ObjectLiteral;
-    }, target);
-
-    const existing = node[leaf];
-
-    node[leaf] =
-      existing instanceof FindOperator && value instanceof FindOperator
-        ? And(existing, value)
-        : value;
-
-    return target;
-  }
-
-  private toOperator(filter: Filter<TField>): FindOperator<unknown> {
-    const [first, second] = filter.values;
-
-    switch (filter.operator) {
-      case FilterOperator.EQUAL:
-        return Equal(first);
-      case FilterOperator.NOT_EQUAL:
-        return Not(Equal(first));
-      case FilterOperator.GREATER_THAN:
-        return MoreThan(first);
-      case FilterOperator.GREATER_OR_EQUAL:
-        return MoreThanOrEqual(first);
-      case FilterOperator.LESS_THAN:
-        return LessThan(first);
-      case FilterOperator.LESS_OR_EQUAL:
-        return LessThanOrEqual(first);
-      case FilterOperator.BETWEEN:
-        return Between(first, second);
-      case FilterOperator.CONTAINS:
-        return ILike(`%${String(first)}%`);
-      case FilterOperator.EQUALS_IGNORE_CASE:
-        return ILike(String(first));
-      case FilterOperator.IN:
-        return In([...filter.values]);
-      case FilterOperator.IS_NULL:
-        return IsNull();
-      case FilterOperator.IS_NOT_NULL:
-        return Not(IsNull());
-      default:
-        throw new InvalidCriteriaException(
-          `Unsupported filter operator "${filter.operator}"`,
-          { context: { field: filter.field, operator: filter.operator } },
-        );
-    }
   }
 }

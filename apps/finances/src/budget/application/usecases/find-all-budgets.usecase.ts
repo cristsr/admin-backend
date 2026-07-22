@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { CriteriaQueryDto } from '@shared';
-import {
-  Budget,
-  BudgetCriteria,
-  BudgetRepository,
-  BudgetSpendingService,
-} from '@app/budget/domain/budget';
+import { Budget, BudgetListing, BudgetRepository, BudgetSpendingService } from '@app/budget/domain/budget';
 
 @Injectable()
 export class FindAllBudgetsUsecase {
@@ -15,9 +10,7 @@ export class FindAllBudgetsUsecase {
   ) {}
 
   async execute(query: CriteriaQueryDto, user: number): Promise<Budget[]> {
-    const budgets = await this.budgetRepository.matching(
-      BudgetCriteria.list(query, user),
-    );
+    const budgets = await this.budgetRepository.matching(BudgetListing.fromQuery(query, user));
 
     await this.budgetSpending.recordSpendingAll(budgets);
 

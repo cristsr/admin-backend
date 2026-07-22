@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  Param,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, CriteriaQueryDto, CurrentUser } from '@shared';
 import {
@@ -55,10 +46,7 @@ export class AccountController {
   }
 
   @Get(':id')
-  async findOne(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('id') id: number,
-  ): Promise<AccountOutputDto> {
+  async findOne(@CurrentUser() user: AuthenticatedUser, @Param('id') id: number): Promise<AccountOutputDto> {
     return this.findAccountUsecase.execute(id, user.id);
   }
 

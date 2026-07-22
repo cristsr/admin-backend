@@ -23,10 +23,7 @@ describe('ExceptionFilter', () => {
   it('answers a domain not-found with its own status, not a generic 500', () => {
     const { host, status, body } = capture();
 
-    new ExceptionFilter().catch(
-      new AccountNotFoundException('Account not found'),
-      host,
-    );
+    new ExceptionFilter().catch(new AccountNotFoundException('Account not found'), host);
 
     expect(status).toHaveBeenCalledWith(HttpStatus.NOT_FOUND);
     expect(body()).toMatchObject({

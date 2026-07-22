@@ -45,9 +45,6 @@ export class Environment {
   AUTH_IDENTITY_PROVIDER: string;
 
   @IsString()
-  USERS_API_URL: string;
-
-  @IsString()
   WEBHOOK_API_KEY: string;
 
   @IsOptional()

@@ -9,9 +9,7 @@ import { buildNodeSDK, isTelemetryEnabled } from './telemetry.config';
 describe('isTelemetryEnabled', () => {
   it('stays off when no collector endpoint is configured', () => {
     expect(isTelemetryEnabled({})).toBe(false);
-    expect(isTelemetryEnabled({ OTEL_EXPORTER_OTLP_ENDPOINT: '   ' })).toBe(
-      false,
-    );
+    expect(isTelemetryEnabled({ OTEL_EXPORTER_OTLP_ENDPOINT: '   ' })).toBe(false);
   });
 
   it('turns on once an endpoint is given', () => {
@@ -37,8 +35,7 @@ describe('buildNodeSDK', () => {
 
   /** The SDK keeps the resource it was built with on a private field. */
   const resourceOf = (sdk: unknown) =>
-    (sdk as { _resource: { attributes: Record<string, unknown> } })._resource
-      .attributes;
+    (sdk as { _resource: { attributes: Record<string, unknown> } })._resource.attributes;
 
   it('identifies the service, defaulting the name to finances', () => {
     const attributes = resourceOf(buildNodeSDK(endpoint));

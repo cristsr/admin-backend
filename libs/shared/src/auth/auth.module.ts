@@ -1,22 +1,14 @@
 import { ConfigurableModuleBuilder, Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { PassportModule } from '@nestjs/passport';
-import { createApiClientProvider } from '../modules';
-import { AuthModuleExtras } from './auth-module-extras.type';
-import { AuthModuleOptions } from './auth-module-options.type';
-import {
-  AUTH_MODULE_OPTIONS,
-  JWT_STRATEGY_OPTIONS,
-  OIDC_DISCOVERY_CACHE,
-  USERS_SERVICE_CLIENT,
-} from './auth.constants';
-import { IdentityResolver, SubjectIdentityResolver } from './identity-resolver';
-import { JwtAuthGuard } from './jwt-auth.guard';
-import { JwtStrategy } from './jwt.strategy';
-import { discoverJwksUri } from './oidc-discovery';
-import { OidcDiscoveryCache } from './oidc-discovery-cache';
-
-const DEFAULT_DISCOVERY_TTL_MS = 60 * 60 * 1000;
+import { AUTH_MODULE_OPTIONS, JWT_STRATEGY_OPTIONS } from './constants/auth.constants';
+import { discoverOidcMetadata } from './functions/oidc-metadata';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { IdentityResolver, SubjectIdentityResolver } from './resolvers/identity-resolver';
+import { JwtStrategy } from './strategies/jwt.strategy';
+import { AuthModuleExtras } from './types/auth-module-extras.type';
+import { AuthModuleOptions } from './types/auth-module-options.type';
+import { JwtStrategyOptions } from './types/jwt-strategy-options.type';
 
 const { ConfigurableModuleClass } = new ConfigurableModuleBuilder<AuthModuleOptions>({
   optionsInjectionToken: AUTH_MODULE_OPTIONS,
@@ -24,32 +16,25 @@ const { ConfigurableModuleClass } = new ConfigurableModuleBuilder<AuthModuleOpti
   .setClassMethodName('forRoot')
   .setExtras<AuthModuleExtras>({}, (definition, extras) => ({
     ...definition,
-    // Global so the discovery cache is injectable elsewhere without a second one.
+    // Global so the strategy and guard apply application-wide.
     global: true,
-    imports: [PassportModule.register({})],
+    // Preserve caller-supplied imports (e.g. the module binding the
+    // AuthenticatedUserProvider port) alongside Passport.
+    imports: [...(definition.imports ?? []), PassportModule.register({})],
     providers: [
       ...(definition.providers ?? []),
-      createApiClientProvider<AuthModuleOptions>({
-        provide: USERS_SERVICE_CLIENT,
-        inject: [AUTH_MODULE_OPTIONS],
-        useFactory: (options) => ({ baseURL: options.usersServiceUrl }),
-      }),
       {
         provide: JWT_STRATEGY_OPTIONS,
-        useFactory: (options: AuthModuleOptions) => ({
-          issuer: options.issuer,
-          audience: options.audience,
-        }),
-        inject: [AUTH_MODULE_OPTIONS],
-      },
-      {
-        provide: OIDC_DISCOVERY_CACHE,
-        useFactory: (options: AuthModuleOptions) =>
-          new OidcDiscoveryCache({
-            issuer: options.issuer,
-            ttlMs: options.discoveryTtlMs ?? DEFAULT_DISCOVERY_TTL_MS,
-            discoverer: discoverJwksUri,
-          }),
+        // Discovery runs once here; the strategy receives a static JWKS URI.
+        useFactory: async (options: AuthModuleOptions): Promise<JwtStrategyOptions> => {
+          const metadata = await discoverOidcMetadata(options.issuer, options.audience);
+
+          return {
+            issuer: metadata.issuer,
+            audience: options.audience,
+            jwksUri: metadata.jwksUri,
+          };
+        },
         inject: [AUTH_MODULE_OPTIONS],
       },
       {
@@ -59,7 +44,8 @@ const { ConfigurableModuleClass } = new ConfigurableModuleBuilder<AuthModuleOpti
       JwtStrategy,
       { provide: APP_GUARD, useClass: JwtAuthGuard },
     ],
-    exports: [OIDC_DISCOVERY_CACHE],
+    // Exposed so readiness probes can reach the discovered JWKS endpoint.
+    exports: [JWT_STRATEGY_OPTIONS],
   }))
   .build();
 

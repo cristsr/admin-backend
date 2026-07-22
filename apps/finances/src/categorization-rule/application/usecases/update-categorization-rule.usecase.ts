@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   CategorizationRule,
-  CategorizationRuleCriteria,
+  CategorizationRuleLookups,
   CategorizationRuleNotFoundException,
   CategorizationRuleRepository,
 } from '@app/categorization-rule/domain/categorization-rule';
@@ -16,14 +16,10 @@ export class UpdateCategorizationRuleUsecase {
     input: CategorizationRuleUpdateInputDto,
     user: number,
   ): Promise<CategorizationRule> {
-    const rule = await this.ruleRepository.firstMatching(
-      CategorizationRuleCriteria.byIdAndUser(id, user),
-    );
+    const rule = await this.ruleRepository.firstMatching(CategorizationRuleLookups.byIdAndUser(id, user));
 
     if (!rule) {
-      throw new CategorizationRuleNotFoundException(
-        'Categorization rule not found',
-      );
+      throw new CategorizationRuleNotFoundException('Categorization rule not found');
     }
 
     rule.update({

@@ -63,9 +63,7 @@ describe('OutboxRelayScheduler', () => {
   });
 
   it('marks the event failed with backoff when a handler throws (no loss)', async () => {
-    outboxRepository.claimPendingBatch.mockResolvedValue([
-      outboxEvent({ id: 8, attempts: 0 }),
-    ]);
+    outboxRepository.claimPendingBatch.mockResolvedValue([outboxEvent({ id: 8, attempts: 0 })]);
     eventEmitter.emitAsync.mockRejectedValue(new Error('handler boom'));
 
     await scheduler.relay();

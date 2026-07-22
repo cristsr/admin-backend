@@ -1,12 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
-import { BudgetThresholdExceeded, BudgetThresholdExceededPayload } from '@app/budget/application/budget.constants';
 import {
-  Budget,
-  BudgetCriteria,
-  BudgetRepository,
-  BudgetSpendingService,
-} from '@app/budget/domain/budget';
+  BudgetThresholdExceeded,
+  BudgetThresholdExceededPayload,
+} from '@app/budget/application/budget.constants';
+import { Budget, BudgetReports, BudgetRepository, BudgetSpendingService } from '@app/budget/domain/budget';
 import { MovementSavedPayload } from '@app/movement/application/movement-saved-payload.type';
 import { MovementSaved } from '@app/movement/application/movement.constants';
 
@@ -26,12 +24,10 @@ export class MovementSavedEventHandler {
 
   @OnEvent(MovementSaved)
   async handle(payload: MovementSavedPayload): Promise<void> {
-    this.logger.log(
-      `Movement saved event received correlationId=${payload.correlationId ?? '-'}`,
-    );
+    this.logger.log(`Movement saved event received correlationId=${payload.correlationId ?? '-'}`);
 
     const budgets = await this.budgetRepository.matching(
-      BudgetCriteria.activeCovering({
+      BudgetReports.activeCovering({
         user: payload.user,
         category: payload.categoryId,
         account: payload.accountId,
@@ -48,10 +44,7 @@ export class MovementSavedEventHandler {
    * A claimed breach is persisted before it is announced, so a crash in
    * between cannot turn into a duplicate alert.
    */
-  private async review(
-    budget: Budget,
-    correlationId?: string,
-  ): Promise<void> {
+  private async review(budget: Budget, correlationId?: string): Promise<void> {
     await this.budgetSpending.recordSpending(budget);
 
     const threshold = budget.claimThresholdBreach();

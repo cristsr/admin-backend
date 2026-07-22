@@ -25,6 +25,7 @@ trabajo activa de la feature; el scan leyó el código tal como está (correcto 
 ## finances
 
 ### Módulo a crear
+
 `apps/finances/src/reports/` — hexagonal (`domain/` + `application/` + `infrastructure/adapters/`),
 **no existe todavía** (greenfield). Registrar en:
 `apps/finances/src/app.module.ts` → array `imports` (junto a `SummaryModule`, `BudgetModule`, …).
@@ -35,6 +36,7 @@ trabajo activa de la feature; el scan leyó el código tal como está (correcto 
 **TypeORM:** `apps/finances/src/movement/infrastructure/adapters/persistence/typeorm/movement/typeorm-movement.entity.ts` (tabla `movements`)
 
 Campos relevantes para reportes:
+
 - `date`: `Date` — columna `date` (`@DateColumn`)
 - `type`: `MovementType` — `varchar` (`INCOME`/`EXPENSE`/`TRANSFER_IN`/`TRANSFER_OUT`)
 - `amount`: `number` — `@MoneyColumn` → `numeric(14,2)`; **el driver lo devuelve como string**, mapear con `Number(...)`
@@ -51,17 +53,20 @@ Campos relevantes para reportes:
 ### Enums / constantes de dominio (reutilizar, NO redefinir)
 
 **Archivo:** `apps/finances/src/movement/domain/movement/movement.types.ts`
+
 - `MovementType` (enum): `INCOME | EXPENSE | TRANSFER_IN | TRANSFER_OUT`
 - `reportableMovementTypes = [INCOME, EXPENSE]` — **clave para excluir transferencias** en todos los agregados
 - `PaymentMethod` (enum): `CASH | DEBIT | CREDIT | TRANSFER | OTHER`
 - `MovementSource` (enum): `MANUAL | WEBHOOK | SCHEDULED`
 
 **Frequency (AC-3 proyección):** `apps/finances/src/scheduled/domain/scheduled/frequency.enum.ts`
+
 - `Frequency`: `ONCE | DAILY | WEEKLY | MONTHLY | YEARLY`
 
 ### Patrón de agregación a espejar — SummaryRepository
 
 **Puerto:** `apps/finances/src/summary/domain/summary/summary.repository.ts`
+
 ```typescript
 export abstract class SummaryRepository {
   abstract balance(filter: BalanceQuery): Promise<Nullable<Balance>>;
@@ -69,7 +74,9 @@ export abstract class SummaryRepository {
   abstract lastMovements(filter: LastMovementsQuery): Promise<Movement[]>;
 }
 ```
+
 **Impl:** `apps/finances/src/summary/infrastructure/adapters/persistence/typeorm/summary/typeorm-summary.repository.ts`
+
 - Usa `QueryBuilder` con SQL crudo + `getRawOne`/`getRawMany`; agrega con `SUM(CASE WHEN type = ... )`, `groupBy`, `orderBy`.
 - Convierte `numeric` (string) → `Number(...)` en el map de salida.
 - Excluye transferencias vía `type = 'EXPENSE'` / `type IN ('INCOME','TRANSFER_IN')` según el cálculo.
@@ -79,12 +86,15 @@ export abstract class SummaryRepository {
 ### Patrón de cola pgmq a espejar — export asíncrono (AC-6)
 
 **Puerto (abstract class en dominio):** `apps/finances/src/budget/domain/budget/budget-notification.publisher.ts`
+
 ```typescript
 export abstract class BudgetNotificationPublisher {
   abstract publish(payload: BudgetThresholdExceededPayload): Promise<void>;
 }
 ```
+
 **Impl pgmq:** `apps/finances/src/budget/infrastructure/adapters/messaging/pgmq-budget-notification.publisher.ts`
+
 - `await this.dataSource.query('SELECT pgmq.send($1, $2)', [queue, JSON.stringify(payload)])`
 - Nombre de cola desde config: `this.config.get(ENV.PGMQ_BUDGET_QUEUE) ?? 'budget_threshold'`
 - Traga el error con `Logger` para no romper el flujo principal.
@@ -126,6 +136,7 @@ export abstract class BudgetNotificationPublisher {
 ### Modelo scheduled (AC-3 proyección)
 
 **Entidad:** `apps/finances/src/scheduled/domain/scheduled/scheduled.entity.ts`
+
 - `{ date (próxima ocurrencia), type, amount, currency, categoryId, subcategoryId, accountId, user, frequency }`
 - `advance()` calcula la siguiente fecha con **luxon** según `frequency`; `recurs()` = no ONCE.
 - **⚠️** Solo se persiste la **próxima** ocurrencia (`date`). Para proyectar todas las ocurrencias
@@ -136,10 +147,12 @@ export abstract class BudgetNotificationPublisher {
 ### Identidad del usuario autenticado
 
 **Archivo:** `libs/shared/src/auth/authenticated-user.type.ts`
+
 - `AuthenticatedUser { id, name, lastName, email, auth0Id, presentationCurrency? }`
 - El scope de todos los reportes es `user.id`. `presentationCurrency` es opcional.
 
 ### Documentación disponible
+
 - Índice del proyecto: `RESUMEN_EJECUTIVO.md` (visión, módulos, migraciones, endpoints).
 - **Sin** carpeta `docs/services/finances/` (no hay docs por-componente; el RESUMEN cumple ese rol).
 
@@ -156,7 +169,7 @@ export abstract class BudgetNotificationPublisher {
    serializarse a mano sin librería.
 
 3. **Infra del export asíncrono (AC-6) — el hueco más grande:** el patrón pgmq de `budget` solo
-   *publica* en la cola; para el export falta definir (no existe en el código):
+   _publica_ en la cola; para el export falta definir (no existe en el código):
    - el **consumidor/worker** que toma el job y genera el archivo,
    - **dónde vive el archivo** generado y **cómo se descarga después** (endpoint de descarga +
      almacenamiento/estado del job). `/design` debe especificar este ciclo (encolar → generar →

@@ -1,13 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  HttpCode,
-  Param,
-  Patch,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpCode, Param, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, CurrentUser } from '@shared';
 import {
@@ -44,9 +35,7 @@ export class CategorizationRuleController {
   }
 
   @Get()
-  async findAll(
-    @CurrentUser() user: AuthenticatedUser,
-  ): Promise<CategorizationRuleOutputDto[]> {
+  async findAll(@CurrentUser() user: AuthenticatedUser): Promise<CategorizationRuleOutputDto[]> {
     const rules = await this.findAllUsecase.execute(user.id);
     return rules.map(CategorizationRuleMapper.toOutput);
   }
@@ -63,10 +52,7 @@ export class CategorizationRuleController {
 
   @Delete(':id')
   @HttpCode(204)
-  async remove(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('id') id: number,
-  ): Promise<void> {
+  async remove(@CurrentUser() user: AuthenticatedUser, @Param('id') id: number): Promise<void> {
     await this.removeUsecase.execute(id, user.id);
   }
 }

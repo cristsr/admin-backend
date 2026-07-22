@@ -9,9 +9,7 @@ import { ENV } from '@app/env';
  * `pgmq` extension installed and the queue created.
  */
 @Injectable()
-export class PgmqBudgetNotificationPublisher
-  implements BudgetNotificationPublisher
-{
+export class PgmqBudgetNotificationPublisher implements BudgetNotificationPublisher {
   #logger = new Logger(PgmqBudgetNotificationPublisher.name);
 
   constructor(
@@ -20,18 +18,12 @@ export class PgmqBudgetNotificationPublisher
   ) {}
 
   async publish(payload: BudgetThresholdExceededPayload): Promise<void> {
-    const queue =
-      this.config.get<string>(ENV.PGMQ_BUDGET_QUEUE) ?? 'budget_threshold';
+    const queue = this.config.get<string>(ENV.PGMQ_BUDGET_QUEUE) ?? 'budget_threshold';
     try {
-      await this.dataSource.query('SELECT pgmq.send($1, $2)', [
-        queue,
-        JSON.stringify(payload),
-      ]);
+      await this.dataSource.query('SELECT pgmq.send($1, $2)', [queue, JSON.stringify(payload)]);
     } catch (error) {
       // A delivery failure must not break the movement save that triggered it.
-      this.#logger.error(
-        `Failed to publish budget threshold notification to queue "${queue}": ${error}`,
-      );
+      this.#logger.error(`Failed to publish budget threshold notification to queue "${queue}": ${error}`);
     }
   }
 }

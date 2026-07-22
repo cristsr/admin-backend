@@ -7,10 +7,7 @@ import { BalanceFilterDto } from '../dto/balance-filter.dto';
 export class GetBalanceUsecase {
   constructor(private readonly summaryRepository: SummaryRepository) {}
 
-  async execute(
-    filter: BalanceFilterDto,
-    user: number,
-  ): Promise<Nullable<Balance>> {
+  async execute(filter: BalanceFilterDto, user: number): Promise<Nullable<Balance>> {
     return this.summaryRepository.balance({ ...filter, user });
   }
 }

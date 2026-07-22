@@ -24,7 +24,7 @@
 
 ## Decisión: Discovery OIDC perezoso + cache (AC-3)
 
-- **Contexto:** Hoy el discovery es *eager*: `AuthModule.build()` resuelve
+- **Contexto:** Hoy el discovery es _eager_: `AuthModule.build()` resuelve
   `discoverJwksUri(issuer)` dentro del factory de `JWT_STRATEGY_OPTIONS`, durante el init
   del módulo, antes de `app.listen()`. Si el IdP no responde, la app no levanta. El JWKS en
   sí ya es perezoso y cacheado vía `jwks-rsa` (`passportJwtSecret({ cache: true, ... })`);

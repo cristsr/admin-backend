@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  MovementCriteria,
-  MovementRepository,
-} from '@app/movement/domain/movement';
+import { MovementReports, MovementRepository } from '@app/movement/domain/movement';
 import {
   TransferAlreadyReversedException,
   TransferFactory,
@@ -21,20 +18,15 @@ export class ReverseTransferUsecase {
     private readonly transferFactory: TransferFactory,
   ) {}
 
-  async execute(
-    transferGroup: string,
-    user: number,
-  ): Promise<TransferReversalOutputDto> {
-    const legs = await this.movementRepository.matching(
-      MovementCriteria.byTransferGroup(transferGroup, user),
-    );
+  async execute(transferGroup: string, user: number): Promise<TransferReversalOutputDto> {
+    const legs = await this.movementRepository.matching(MovementReports.byTransferGroup(transferGroup, user));
     if (!legs.length) {
       throw new TransferNotFoundException('Transfer not found');
     }
 
     const reversalGroup = TransferFactory.reversalGroupFor(transferGroup);
     const existing = await this.movementRepository.countMatching(
-      MovementCriteria.byTransferGroup(reversalGroup, user),
+      MovementReports.byTransferGroup(reversalGroup, user),
     );
     if (existing) {
       throw new TransferAlreadyReversedException('Transfer already reversed');

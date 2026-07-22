@@ -1,4 +1,11 @@
-import { MovementAccountSummary, MovementCategorySummary, MovementSource, MovementSubcategorySummary, MovementType, PaymentMethod } from '@app/movement/domain/movement';
+import {
+  MovementAccountSummary,
+  MovementCategorySummary,
+  MovementSource,
+  MovementSubcategorySummary,
+  MovementType,
+  PaymentMethod,
+} from '@app/movement/domain/movement';
 
 export class MovementOutputDto {
   id: number;

@@ -2,17 +2,9 @@ import { Nullable } from '../types/nullable.type';
 import { Criteria } from './criteria';
 import { CriteriaFieldDefinition } from './criteria-field-definition.type';
 import { CriteriaQueryDto } from './criteria-query.dto';
-import {
-  CriteriaSchema,
-  CriteriaValueType,
-  allowedOperators,
-} from './criteria-schema';
+import { CriteriaSchema, CriteriaValueType, allowedOperators } from './criteria-schema';
 import { Filter, FilterScalar } from './filter';
-import {
-  FilterOperator,
-  LIST_OPERATORS,
-  VALUELESS_OPERATORS,
-} from './filter-operator';
+import { FilterOperator, LIST_OPERATORS, VALUELESS_OPERATORS } from './filter-operator';
 import { InvalidCriteriaException } from './invalid-criteria.exception';
 import { OrderType } from './order-type';
 
@@ -30,10 +22,7 @@ export function criteriaFromQuery<TField extends string>(
   base: Criteria<TField> = Criteria.none<TField>(),
 ): Criteria<TField> {
   const filtered = (query?.filters ?? []).reduce(
-    (criteria, raw) =>
-      criteria.add(
-        buildFilter(raw.field as TField, raw.operator, raw.value, schema),
-      ),
+    (criteria, raw) => criteria.add(buildFilter(raw.field as TField, raw.operator, raw.value, schema)),
     base,
   );
 
@@ -50,10 +39,7 @@ function applyOrder<TField extends string>(
 ): Criteria<TField> {
   if (!query?.orderBy) return criteria;
 
-  return criteria.orderBy(
-    sortableField(query.orderBy as TField, schema),
-    query.order ?? OrderType.ASC,
-  );
+  return criteria.orderBy(sortableField(query.orderBy as TField, schema), query.order ?? OrderType.ASC);
 }
 
 function buildFilter<TField extends string>(
@@ -65,10 +51,9 @@ function buildFilter<TField extends string>(
   const definition = definitionOf(field, schema);
 
   if (!allowedOperators(definition).includes(operator)) {
-    throw new InvalidCriteriaException(
-      `Operator "${operator}" is not allowed on field "${field}"`,
-      { context: { field, operator } },
-    );
+    throw new InvalidCriteriaException(`Operator "${operator}" is not allowed on field "${field}"`, {
+      context: { field, operator },
+    });
   }
 
   if (VALUELESS_OPERATORS.includes(operator)) {
@@ -76,10 +61,9 @@ function buildFilter<TField extends string>(
   }
 
   if (!raw) {
-    throw new InvalidCriteriaException(
-      `Filter on "${field}" requires a value`,
-      { context: { field, operator } },
-    );
+    throw new InvalidCriteriaException(`Filter on "${field}" requires a value`, {
+      context: { field, operator },
+    });
   }
 
   if (!LIST_OPERATORS.includes(operator)) {
@@ -106,10 +90,7 @@ function definitionOf<TField extends string>(
   return definition;
 }
 
-function sortableField<TField extends string>(
-  field: TField,
-  schema: CriteriaSchema<TField>,
-): TField {
+function sortableField<TField extends string>(field: TField, schema: CriteriaSchema<TField>): TField {
   if (!definitionOf(field, schema).isSortable) {
     throw new InvalidCriteriaException(`Field "${field}" is not sortable`, {
       context: { field },
@@ -122,10 +103,7 @@ function sortableField<TField extends string>(
 function toSingle(raw: string | string[], field: string): string {
   if (!Array.isArray(raw)) return raw;
 
-  throw new InvalidCriteriaException(
-    `Filter on "${field}" expects a single value`,
-    { context: { field } },
-  );
+  throw new InvalidCriteriaException(`Filter on "${field}" expects a single value`, { context: { field } });
 }
 
 /** Accepts both `value=A,B` and repeated `value[]=A&value[]=B`. */
@@ -135,41 +113,50 @@ function toList(raw: string | string[]): string[] {
   return raw.map((member) => member.trim()).filter(Boolean);
 }
 
-function coerce(
-  raw: string,
-  definition: CriteriaFieldDefinition,
-  field: string,
-): FilterScalar {
-  if (definition.type === CriteriaValueType.STRING) return raw;
+/** Reads one raw query-string value into the scalar its field expects. */
+type Coercer = (raw: string, field: string) => FilterScalar;
 
-  if (definition.type === CriteriaValueType.NUMBER) {
-    const parsed = Number(raw);
-    if (!raw.trim() || Number.isNaN(parsed)) {
-      throw new InvalidCriteriaException(
-        `Field "${field}" expects a number, received "${raw}"`,
-        { context: { field, value: raw } },
-      );
-    }
-    return parsed;
+const COERCERS: Readonly<Record<CriteriaValueType, Coercer>> = {
+  [CriteriaValueType.STRING]: (raw) => raw,
+  [CriteriaValueType.NUMBER]: toNumber,
+  [CriteriaValueType.BOOLEAN]: toBoolean,
+  [CriteriaValueType.DATE]: toDate,
+};
+
+function coerce(raw: string, definition: CriteriaFieldDefinition, field: string): FilterScalar {
+  return COERCERS[definition.type](raw, field);
+}
+
+function toNumber(raw: string, field: string): number {
+  const parsed = Number(raw);
+
+  if (!raw.trim() || Number.isNaN(parsed)) {
+    throw new InvalidCriteriaException(`Field "${field}" expects a number, received "${raw}"`, {
+      context: { field, value: raw },
+    });
   }
 
-  if (definition.type === CriteriaValueType.BOOLEAN) {
-    const normalized = raw.trim().toLowerCase();
-    if (TRUTHY.includes(normalized)) return true;
-    if (FALSY.includes(normalized)) return false;
-    throw new InvalidCriteriaException(
-      `Field "${field}" expects a boolean, received "${raw}"`,
-      { context: { field, value: raw } },
-    );
-  }
+  return parsed;
+}
 
+function toBoolean(raw: string, field: string): boolean {
+  const normalized = raw.trim().toLowerCase();
+
+  if (TRUTHY.includes(normalized)) return true;
+  if (FALSY.includes(normalized)) return false;
+
+  throw new InvalidCriteriaException(`Field "${field}" expects a boolean, received "${raw}"`, {
+    context: { field, value: raw },
+  });
+}
+
+function toDate(raw: string, field: string): Date {
   const date = new Date(raw);
 
   if (Number.isNaN(date.getTime())) {
-    throw new InvalidCriteriaException(
-      `Field "${field}" expects a date, received "${raw}"`,
-      { context: { field, value: raw } },
-    );
+    throw new InvalidCriteriaException(`Field "${field}" expects a date, received "${raw}"`, {
+      context: { field, value: raw },
+    });
   }
 
   return date;

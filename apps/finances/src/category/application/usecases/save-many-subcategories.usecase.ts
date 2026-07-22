@@ -1,8 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  Subcategory,
-  SubcategoryRepository,
-} from '@app/category/domain/subcategory';
+import { Subcategory, SubcategoryRepository } from '@app/category/domain/subcategory';
 import { SubcategoriesInputDto } from '../dto/subcategories-input.dto';
 
 @Injectable()

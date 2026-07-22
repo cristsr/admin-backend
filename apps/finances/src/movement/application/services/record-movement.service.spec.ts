@@ -1,7 +1,4 @@
-import {
-  Account,
-  InsufficientBalanceException,
-} from '@app/account/domain/account';
+import { Account, InsufficientBalanceException } from '@app/account/domain/account';
 import { Movement, MovementType } from '@app/movement/domain/movement';
 import { Money } from '@app/shared/domain';
 import { MovementSaved } from '../movement.constants';
@@ -34,27 +31,19 @@ describe('RecordMovementService', () => {
   beforeEach(() => {
     const fakeManager = { id: 'manager' };
     movementRepository = {
-      runInTransaction: jest
-        .fn()
-        .mockImplementation((work) => work(fakeManager)),
-      saveWithManager: jest
-        .fn()
-        .mockImplementation(async (_manager, m) => ({ ...m, id: 100 })),
+      runInTransaction: jest.fn().mockImplementation((work) => work(fakeManager)),
+      saveWithManager: jest.fn().mockImplementation(async (_manager, m) => ({ ...m, id: 100 })),
     };
     accountRepository = { movementBalance: jest.fn().mockResolvedValue(0) };
     outboxPublisher = { publish: jest.fn() };
-    service = new RecordMovementService(
-      movementRepository,
-      accountRepository,
-      outboxPublisher,
-    );
+    service = new RecordMovementService(movementRepository, accountRepository, outboxPublisher);
   });
 
   describe('funding rule', () => {
     it('refuses an expense the account cannot fund', async () => {
-      await expect(
-        service.record(movement(MovementType.EXPENSE, 150), account(false)),
-      ).rejects.toThrow(InsufficientBalanceException);
+      await expect(service.record(movement(MovementType.EXPENSE, 150), account(false))).rejects.toThrow(
+        InsufficientBalanceException,
+      );
 
       expect(movementRepository.saveWithManager).not.toHaveBeenCalled();
     });
@@ -80,12 +69,9 @@ describe('RecordMovementService', () => {
     });
 
     it('checks the outgoing leg of a transfer like any other withdrawal', async () => {
-      await expect(
-        service.record(
-          movement(MovementType.TRANSFER_OUT, 150),
-          account(false),
-        ),
-      ).rejects.toThrow(InsufficientBalanceException);
+      await expect(service.record(movement(MovementType.TRANSFER_OUT, 150), account(false))).rejects.toThrow(
+        InsufficientBalanceException,
+      );
     });
 
     it('discounts the movement being replaced before judging an edit', async () => {
@@ -144,9 +130,9 @@ describe('RecordMovementService', () => {
     });
 
     it('publishes nothing when the account refuses to fund the movement', async () => {
-      await expect(
-        service.record(movement(MovementType.EXPENSE, 150), account(false)),
-      ).rejects.toThrow(InsufficientBalanceException);
+      await expect(service.record(movement(MovementType.EXPENSE, 150), account(false))).rejects.toThrow(
+        InsufficientBalanceException,
+      );
 
       expect(outboxPublisher.publish).not.toHaveBeenCalled();
       expect(movementRepository.runInTransaction).not.toHaveBeenCalled();

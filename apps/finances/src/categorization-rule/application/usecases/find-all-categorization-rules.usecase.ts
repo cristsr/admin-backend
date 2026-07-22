@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   CategorizationRule,
-  CategorizationRuleCriteria,
+  CategorizationRuleReports,
   CategorizationRuleRepository,
 } from '@app/categorization-rule/domain/categorization-rule';
 
@@ -10,8 +10,6 @@ export class FindAllCategorizationRulesUsecase {
   constructor(private readonly ruleRepository: CategorizationRuleRepository) {}
 
   async execute(user: number): Promise<CategorizationRule[]> {
-    return this.ruleRepository.matching(
-      CategorizationRuleCriteria.byPriority(user),
-    );
+    return this.ruleRepository.matching(CategorizationRuleReports.byPriority(user));
   }
 }

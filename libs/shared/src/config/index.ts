@@ -20,23 +20,18 @@ function configValidator(config: object, type: Type): Record<string, any> {
   });
 
   if (errors.length) {
-    const failures = errors.flatMap((error) =>
-      Object.values(error.constraints ?? {}),
-    );
+    const failures = errors.flatMap((error) => Object.values(error.constraints ?? {}));
 
-    throw new InvalidConfigurationException(
-      `Invalid ${type.name}:\n  - ${failures.join('\n  - ')}`,
-      { context: { invalid: errors.map((error) => error.property) } },
-    );
+    throw new InvalidConfigurationException(`Invalid ${type.name}:\n  - ${failures.join('\n  - ')}`, {
+      context: { invalid: errors.map((error) => error.property) },
+    });
   }
 
   return validatedConfig;
 }
 
 /** Builds a reusable config validator bound to a class-validator-decorated class. */
-export function validatorFactory(
-  type: Type,
-): (config: Record<string, any>) => Record<string, any> {
+export function validatorFactory(type: Type): (config: Record<string, any>) => Record<string, any> {
   return (config) => configValidator(config, type);
 }
 
@@ -44,17 +39,9 @@ export function validatorFactory(
 export function mapEnvironmentKeys<T>(type: Type<T>): Keys<T> {
   const metadataStorage = getMetadataStorage();
 
-  const targetMetadata = metadataStorage.getTargetValidationMetadatas(
-    type,
-    null,
-    false,
-    false,
-  );
+  const targetMetadata = metadataStorage.getTargetValidationMetadatas(type, null, false, false);
 
-  const entries = targetMetadata.map(({ propertyName }) => [
-    propertyName,
-    propertyName,
-  ]);
+  const entries = targetMetadata.map(({ propertyName }) => [propertyName, propertyName]);
 
   return Object.freeze(Object.fromEntries(entries));
 }

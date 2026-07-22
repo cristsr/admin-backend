@@ -5,9 +5,7 @@ import { BudgetNotificationPublisher, BudgetThresholdExceededPayload } from '@ap
 
 @Injectable()
 export class BudgetThresholdExceededEventHandler {
-  private readonly logger = new Logger(
-    BudgetThresholdExceededEventHandler.name,
-  );
+  private readonly logger = new Logger(BudgetThresholdExceededEventHandler.name);
 
   constructor(private readonly publisher: BudgetNotificationPublisher) {}
 

@@ -29,10 +29,7 @@ describe('Criteria', () => {
   it('appends filters in the order they were stated', () => {
     const criteria = empty().equals('user', 7).greaterThan('amount', 100);
 
-    expect(criteria.filters.map((filter) => filter.field)).toEqual([
-      'user',
-      'amount',
-    ]);
+    expect(criteria.filters.map((filter) => filter.field)).toEqual(['user', 'amount']);
     expect(criteria.filters[1].operator).toBe(FilterOperator.GREATER_THAN);
   });
 
@@ -98,14 +95,9 @@ describe('Criteria', () => {
 
   describe('ordering', () => {
     it('keeps sort clauses in declaration order, so the first breaks ties last', () => {
-      const criteria = empty()
-        .orderBy('date', OrderType.DESC)
-        .orderBy('amount', OrderType.ASC);
+      const criteria = empty().orderBy('date', OrderType.DESC).orderBy('amount', OrderType.ASC);
 
-      expect(criteria.orders.map((order) => order.field)).toEqual([
-        'date',
-        'amount',
-      ]);
+      expect(criteria.orders.map((order) => order.field)).toEqual(['date', 'amount']);
       expect(criteria.orders[0].type).toBe(OrderType.DESC);
     });
 
@@ -123,9 +115,7 @@ describe('Criteria', () => {
     });
 
     it('caps an oversized page so a caller cannot ask for the whole table', () => {
-      expect(empty().paginate({ limit: 100_000 }).pagination.take).toBe(
-        MAX_PAGE_SIZE,
-      );
+      expect(empty().paginate({ limit: 100_000 }).pagination.take).toBe(MAX_PAGE_SIZE);
     });
 
     it('limitTo bounds a batch without an offset', () => {
@@ -135,21 +125,17 @@ describe('Criteria', () => {
 
   describe('invalid filters', () => {
     it('refuses a between with a single bound', () => {
-      expect(() =>
-        empty().where('date', FilterOperator.BETWEEN, [new Date()]),
-      ).toThrow(InvalidCriteriaException);
+      expect(() => empty().where('date', FilterOperator.BETWEEN, [new Date()])).toThrow(
+        InvalidCriteriaException,
+      );
     });
 
     it('refuses a list operator with a scalar value', () => {
-      expect(() => empty().where('type', FilterOperator.IN, 'EXPENSE')).toThrow(
-        InvalidCriteriaException,
-      );
+      expect(() => empty().where('type', FilterOperator.IN, 'EXPENSE')).toThrow(InvalidCriteriaException);
     });
 
     it('refuses a comparison with no value at all', () => {
-      expect(() => empty().where('amount', FilterOperator.EQUAL)).toThrow(
-        InvalidCriteriaException,
-      );
+      expect(() => empty().where('amount', FilterOperator.EQUAL)).toThrow(InvalidCriteriaException);
     });
   });
 });

@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import {
-  SubcategoryCriteria,
+  SubcategoryLookups,
   SubcategoryNotFoundException,
   SubcategoryRepository,
 } from '@app/category/domain/subcategory';
 import {
   Movement,
-  MovementCriteria,
+  MovementLookups,
   MovementNotFoundException,
   MovementPatch,
   MovementRepository,
@@ -20,14 +20,8 @@ export class UpdateMovementUsecase {
     private readonly subcategoryRepository: SubcategoryRepository,
   ) {}
 
-  async execute(
-    id: number,
-    patch: MovementPatchDto,
-    user: number,
-  ): Promise<Movement> {
-    const movement = await this.movementRepository.firstMatching(
-      MovementCriteria.byIdAndUser(id, user),
-    );
+  async execute(id: number, patch: MovementPatchDto, user: number): Promise<Movement> {
+    const movement = await this.movementRepository.firstMatching(MovementLookups.byIdAndUser(id, user));
     if (!movement) {
       throw new MovementNotFoundException('Movement not found');
     }
@@ -49,7 +43,7 @@ export class UpdateMovementUsecase {
 
     const categoryId = patch.category ?? movement.categoryId;
     const subcategory = await this.subcategoryRepository.firstMatching(
-      SubcategoryCriteria.byIdAndCategory(patch.subcategory, categoryId),
+      SubcategoryLookups.byIdAndCategory(patch.subcategory, categoryId),
     );
 
     if (!subcategory) {

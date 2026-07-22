@@ -11,11 +11,7 @@ import {
   RemoveBudgetUsecase,
   SaveBudgetUsecase,
 } from './application/usecases';
-import {
-  BudgetNotificationPublisher,
-  BudgetRepository,
-  BudgetSpendingService,
-} from './domain/budget';
+import { BudgetNotificationPublisher, BudgetRepository, BudgetSpendingService } from './domain/budget';
 import {
   BudgetThresholdExceededEventHandler,
   GenerateBudgetsEventHandler,
@@ -30,12 +26,7 @@ import {
 import { BudgetScheduler } from './infrastructure/adapters/schedulers';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([TypeOrmBudgetEntity]),
-    CategoryModule,
-    MovementModule,
-    AccountModule,
-  ],
+  imports: [TypeOrmModule.forFeature([TypeOrmBudgetEntity]), CategoryModule, MovementModule, AccountModule],
   controllers: [BudgetController],
   providers: [
     { provide: BudgetRepository, useClass: TypeOrmBudgetRepository },

@@ -23,24 +23,13 @@ export class RecordMovementService {
    * Correlation id comes from the ambient trace; `requestId` is the fallback
    * when telemetry is off.
    */
-  async record(
-    movement: Movement,
-    account: Account,
-    options: RecordMovementOptions = {},
-  ): Promise<Movement> {
-    await this.ensureAccountCanFund(
-      movement,
-      account,
-      options.replacedBalanceEffect,
-    );
+  async record(movement: Movement, account: Account, options: RecordMovementOptions = {}): Promise<Movement> {
+    await this.ensureAccountCanFund(movement, account, options.replacedBalanceEffect);
 
     const correlationId = currentTraceId() ?? options.requestId;
 
     return this.movementRepository.runInTransaction(async (manager) => {
-      const saved = await this.movementRepository.saveWithManager(
-        manager,
-        movement,
-      );
+      const saved = await this.movementRepository.saveWithManager(manager, movement);
 
       await this.outboxPublisher.publish(manager, {
         eventType: MovementSaved,
@@ -70,14 +59,8 @@ export class RecordMovementService {
     if (!movement.isWithdrawal()) return;
     if (account.allowNegativeBalance) return;
 
-    const movementBalance = await this.accountRepository.movementBalance(
-      account.id,
-      movement.user,
-    );
+    const movementBalance = await this.accountRepository.movementBalance(account.id, movement.user);
 
-    account.ensureCanWithdraw(
-      movement.money,
-      movementBalance - replacedBalanceEffect,
-    );
+    account.ensureCanWithdraw(movement.money, movementBalance - replacedBalanceEffect);
   }
 }

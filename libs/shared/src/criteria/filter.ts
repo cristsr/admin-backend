@@ -1,8 +1,4 @@
-import {
-  FilterOperator,
-  LIST_OPERATORS,
-  VALUELESS_OPERATORS,
-} from './filter-operator';
+import { FilterOperator, LIST_OPERATORS, VALUELESS_OPERATORS } from './filter-operator';
 import { InvalidCriteriaException } from './invalid-criteria.exception';
 
 export type FilterScalar = string | number | boolean | Date;

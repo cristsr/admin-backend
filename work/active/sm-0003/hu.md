@@ -110,11 +110,13 @@ transferencias enlazadas. El sistema debe aplicar una política explícita.
 ## Technical Context
 
 ### Microservicio objetivo
+
 - `apps/finances` — toda la historia (AC-1 a AC-5) cae en esta app; sus módulos
   (`account`, `movement`/`transfer`, `budget`, `category`) más lo nuevo para outbox
   e idempotencia.
 
 ### Patrones obligatorios
+
 - Los patrones ya establecidos en el proyecto: arquitectura hexagonal por módulo
   (`domain`/`application`/`infrastructure/adapters`), puertos como `abstract class`
   para DI, DTOs `*-input`/`*-output`, columnas tipo-enum como varchar.
@@ -122,12 +124,14 @@ transferencias enlazadas. El sistema debe aplicar una política explícita.
   del cuerpo forma parte de la verificación de la `Idempotency-Key`).
 
 ### Restricciones técnicas
+
 - No usar enums de PostgreSQL (valores permitidos solo en la capa de aplicación).
 - No romper los contratos de API existentes (webhook y endpoints actuales).
 - No tocar el flujo de cálculo de saldo de `sm-0001` más allá de consumirlo.
 - El relay del outbox no debe bloquear el request HTTP que origina el evento.
 
 ### Integraciones conocidas
+
 - Se reutiliza **PGMQ** (el componente de mensajería que ya vive en la base de datos,
   usado por el publisher de presupuestos); no se introducen componentes nuevos.
 - El mecanismo de mensajería debe quedar **detrás de una abstracción** (puerto) para

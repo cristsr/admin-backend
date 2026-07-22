@@ -8,9 +8,7 @@ describe('RemoveAccountUsecase — cascade archive', () => {
   beforeEach(() => {
     accountRepository = {
       firstMatching: jest.fn(),
-      archiveCascade: jest
-        .fn()
-        .mockResolvedValue({ archivedMovements: 3, archivedTransfers: 2 }),
+      archiveCascade: jest.fn().mockResolvedValue({ archivedMovements: 3, archivedTransfers: 2 }),
     };
     usecase = new RemoveAccountUsecase(accountRepository);
   });
@@ -37,9 +35,7 @@ describe('RemoveAccountUsecase — cascade archive', () => {
   it('throws 404 when the account does not belong to the user', async () => {
     accountRepository.firstMatching.mockResolvedValue(null);
 
-    await expect(usecase.execute(1, 42)).rejects.toBeInstanceOf(
-      AccountNotFoundException,
-    );
+    await expect(usecase.execute(1, 42)).rejects.toBeInstanceOf(AccountNotFoundException);
     expect(accountRepository.archiveCascade).not.toHaveBeenCalled();
   });
 });

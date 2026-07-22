@@ -2,23 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Criteria, Nullable, TypeOrmCriteriaConverter } from '@shared';
 import { DataSource, Repository } from 'typeorm';
-import {
-  Account,
-  AccountArchiveResult,
-  AccountField,
-  AccountRepository,
-} from '@app/account/domain/account';
+import { Account, AccountArchiveResult, AccountField, AccountRepository } from '@app/account/domain/account';
 import { ACCOUNT_CRITERIA_FIELDS } from './typeorm-account.criteria-fields';
 import { TypeOrmAccountEntity } from './typeorm-account.entity';
 import { TypeOrmAccountMapper } from './typeorm-account.mapper';
 
 @Injectable()
 export class TypeOrmAccountRepository implements AccountRepository {
-  readonly #criteria = new TypeOrmCriteriaConverter<
-    TypeOrmAccountEntity,
-    AccountField
-  >(ACCOUNT_CRITERIA_FIELDS);
-
   constructor(
     @InjectRepository(TypeOrmAccountEntity)
     private readonly repository: Repository<TypeOrmAccountEntity>,
@@ -27,17 +17,21 @@ export class TypeOrmAccountRepository implements AccountRepository {
 
   async matching(criteria: Criteria<AccountField>): Promise<Account[]> {
     const entities = await this.repository.find(
-      this.#criteria.toFindOptions(criteria),
+      TypeOrmCriteriaConverter.toFindOptions<TypeOrmAccountEntity, AccountField>(
+        ACCOUNT_CRITERIA_FIELDS,
+        criteria,
+      ),
     );
 
     return entities.map(TypeOrmAccountMapper.toDomain);
   }
 
-  async firstMatching(
-    criteria: Criteria<AccountField>,
-  ): Promise<Nullable<Account>> {
+  async firstMatching(criteria: Criteria<AccountField>): Promise<Nullable<Account>> {
     const entity = await this.repository.findOne(
-      this.#criteria.toFindOptions(criteria),
+      TypeOrmCriteriaConverter.toFindOptions<TypeOrmAccountEntity, AccountField>(
+        ACCOUNT_CRITERIA_FIELDS,
+        criteria,
+      ),
     );
 
     if (!entity) return null;
@@ -46,32 +40,24 @@ export class TypeOrmAccountRepository implements AccountRepository {
   }
 
   async save(account: Account): Promise<Account> {
-    const saved = await this.repository.save(
-      TypeOrmAccountMapper.toEntity(account),
-    );
+    const saved = await this.repository.save(TypeOrmAccountMapper.toEntity(account));
     return TypeOrmAccountMapper.toDomain(saved as TypeOrmAccountEntity);
   }
 
   // Raw queries avoid the module cycle with movement (see the port).
-  async archiveCascade(
-    id: number,
-    user: number,
-  ): Promise<AccountArchiveResult> {
+  async archiveCascade(id: number, user: number): Promise<AccountArchiveResult> {
     return this.dataSource.transaction(async (manager) => {
-      const movements: Array<{ transfer_group: Nullable<string> }> =
-        await manager.query(
-          `UPDATE movements SET deleted_at = NOW()
+      const movements: Array<{ transfer_group: Nullable<string> }> = await manager.query(
+        `UPDATE movements SET deleted_at = NOW()
            WHERE account_id = $1 AND user_id = $2 AND deleted_at IS NULL
            RETURNING transfer_group`,
-          [id, user],
-        );
+        [id, user],
+      );
 
       const archivedMovements = movements.length;
       const groups = [
         ...new Set(
-          movements
-            .map((movement) => movement.transfer_group)
-            .filter((group): group is string => !!group),
+          movements.map((movement) => movement.transfer_group).filter((group): group is string => !!group),
         ),
       ];
 
@@ -109,13 +95,12 @@ export class TypeOrmAccountRepository implements AccountRepository {
   }
 
   async movementBalancesByUser(user: number): Promise<Record<number, number>> {
-    const rows: Array<{ account_id: number; total: string }> =
-      await this.dataSource.query(
-        `SELECT account_id, ${TypeOrmAccountRepository.SIGNED_SUM} AS total ` +
-          `FROM movements WHERE user_id = $1 AND deleted_at IS NULL ` +
-          `GROUP BY account_id`,
-        [user],
-      );
+    const rows: Array<{ account_id: number; total: string }> = await this.dataSource.query(
+      `SELECT account_id, ${TypeOrmAccountRepository.SIGNED_SUM} AS total ` +
+        `FROM movements WHERE user_id = $1 AND deleted_at IS NULL ` +
+        `GROUP BY account_id`,
+      [user],
+    );
     return rows.reduce(
       (acc, row) => ({ ...acc, [row.account_id]: Number(row.total) }),
       {} as Record<number, number>,

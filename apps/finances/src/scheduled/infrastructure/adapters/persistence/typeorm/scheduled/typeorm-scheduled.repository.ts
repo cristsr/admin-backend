@@ -2,11 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Criteria, Nullable, TypeOrmCriteriaConverter } from '@shared';
 import { Repository } from 'typeorm';
-import {
-  Scheduled,
-  ScheduledField,
-  ScheduledRepository,
-} from '@app/scheduled/domain/scheduled';
+import { Scheduled, ScheduledField, ScheduledRepository } from '@app/scheduled/domain/scheduled';
 import { SCHEDULED_CRITERIA_FIELDS } from './typeorm-scheduled.criteria-fields';
 import { TypeOrmScheduledEntity } from './typeorm-scheduled.entity';
 import { TypeOrmScheduledMapper } from './typeorm-scheduled.mapper';
@@ -15,11 +11,6 @@ const RELATIONS = ['category', 'subcategory'];
 
 @Injectable()
 export class TypeOrmScheduledRepository implements ScheduledRepository {
-  readonly #criteria = new TypeOrmCriteriaConverter<
-    TypeOrmScheduledEntity,
-    ScheduledField
-  >(SCHEDULED_CRITERIA_FIELDS);
-
   constructor(
     @InjectRepository(TypeOrmScheduledEntity)
     private readonly repository: Repository<TypeOrmScheduledEntity>,
@@ -27,18 +18,22 @@ export class TypeOrmScheduledRepository implements ScheduledRepository {
 
   async matching(criteria: Criteria<ScheduledField>): Promise<Scheduled[]> {
     const entities = await this.repository.find({
-      ...this.#criteria.toFindOptions(criteria),
+      ...TypeOrmCriteriaConverter.toFindOptions<TypeOrmScheduledEntity, ScheduledField>(
+        SCHEDULED_CRITERIA_FIELDS,
+        criteria,
+      ),
       relations: RELATIONS,
     });
 
     return entities.map(TypeOrmScheduledMapper.toDomain);
   }
 
-  async firstMatching(
-    criteria: Criteria<ScheduledField>,
-  ): Promise<Nullable<Scheduled>> {
+  async firstMatching(criteria: Criteria<ScheduledField>): Promise<Nullable<Scheduled>> {
     const entity = await this.repository.findOne({
-      ...this.#criteria.toFindOptions(criteria),
+      ...TypeOrmCriteriaConverter.toFindOptions<TypeOrmScheduledEntity, ScheduledField>(
+        SCHEDULED_CRITERIA_FIELDS,
+        criteria,
+      ),
       relations: RELATIONS,
     });
 
@@ -48,15 +43,16 @@ export class TypeOrmScheduledRepository implements ScheduledRepository {
   }
 
   async save(scheduled: Scheduled): Promise<Scheduled> {
-    const saved = await this.repository.save(
-      TypeOrmScheduledMapper.toEntity(scheduled),
-    );
+    const saved = await this.repository.save(TypeOrmScheduledMapper.toEntity(scheduled));
     return TypeOrmScheduledMapper.toDomain(saved as TypeOrmScheduledEntity);
   }
 
   async removeMatching(criteria: Criteria<ScheduledField>): Promise<number> {
     const result = await this.repository.softDelete(
-      this.#criteria.toWhere(criteria),
+      TypeOrmCriteriaConverter.toWhere<TypeOrmScheduledEntity, ScheduledField>(
+        SCHEDULED_CRITERIA_FIELDS,
+        criteria,
+      ),
     );
 
     return result.affected ?? 0;

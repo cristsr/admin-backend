@@ -13,9 +13,7 @@ export class TypeOrmSubcategoryMapper {
     });
   }
 
-  static toEntity(
-    subcategory: Subcategory,
-  ): Partial<TypeOrmSubcategoryEntity> {
+  static toEntity(subcategory: Subcategory): Partial<TypeOrmSubcategoryEntity> {
     return {
       id: subcategory.id,
       name: subcategory.name,

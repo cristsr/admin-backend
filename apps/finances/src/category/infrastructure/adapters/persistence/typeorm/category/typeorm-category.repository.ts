@@ -2,11 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Criteria, Nullable, TypeOrmCriteriaConverter } from '@shared';
 import { DataSource, Repository } from 'typeorm';
-import {
-  Category,
-  CategoryField,
-  CategoryRepository,
-} from '@app/category/domain/category';
+import { Category, CategoryField, CategoryRepository } from '@app/category/domain/category';
 import { TypeOrmSubcategoryEntity } from '../subcategory/typeorm-subcategory.entity';
 import { CATEGORY_CRITERIA_FIELDS } from './typeorm-category.criteria-fields';
 import { TypeOrmCategoryEntity } from './typeorm-category.entity';
@@ -16,11 +12,6 @@ const RELATIONS = ['subcategories'];
 
 @Injectable()
 export class TypeOrmCategoryRepository implements CategoryRepository {
-  readonly #criteria = new TypeOrmCriteriaConverter<
-    TypeOrmCategoryEntity,
-    CategoryField
-  >(CATEGORY_CRITERIA_FIELDS);
-
   constructor(
     @InjectRepository(TypeOrmCategoryEntity)
     private readonly repository: Repository<TypeOrmCategoryEntity>,
@@ -29,18 +20,22 @@ export class TypeOrmCategoryRepository implements CategoryRepository {
 
   async matching(criteria: Criteria<CategoryField>): Promise<Category[]> {
     const entities = await this.repository.find({
-      ...this.#criteria.toFindOptions(criteria),
+      ...TypeOrmCriteriaConverter.toFindOptions<TypeOrmCategoryEntity, CategoryField>(
+        CATEGORY_CRITERIA_FIELDS,
+        criteria,
+      ),
       relations: RELATIONS,
     });
 
     return entities.map(TypeOrmCategoryMapper.toDomain);
   }
 
-  async firstMatching(
-    criteria: Criteria<CategoryField>,
-  ): Promise<Nullable<Category>> {
+  async firstMatching(criteria: Criteria<CategoryField>): Promise<Nullable<Category>> {
     const entity = await this.repository.findOne({
-      ...this.#criteria.toFindOptions(criteria),
+      ...TypeOrmCriteriaConverter.toFindOptions<TypeOrmCategoryEntity, CategoryField>(
+        CATEGORY_CRITERIA_FIELDS,
+        criteria,
+      ),
       relations: RELATIONS,
     });
 
@@ -50,9 +45,7 @@ export class TypeOrmCategoryRepository implements CategoryRepository {
   }
 
   async save(category: Category): Promise<Category> {
-    const saved = await this.repository.save(
-      TypeOrmCategoryMapper.toEntity(category),
-    );
+    const saved = await this.repository.save(TypeOrmCategoryMapper.toEntity(category));
     return TypeOrmCategoryMapper.toDomain(saved as TypeOrmCategoryEntity);
   }
 
@@ -74,10 +67,7 @@ export class TypeOrmCategoryRepository implements CategoryRepository {
         })),
       );
 
-      await queryRunner.manager.save(
-        TypeOrmSubcategoryEntity,
-        subcategoryEntities,
-      );
+      await queryRunner.manager.save(TypeOrmSubcategoryEntity, subcategoryEntities);
 
       await queryRunner.commitTransaction();
     } catch (error) {
@@ -90,7 +80,10 @@ export class TypeOrmCategoryRepository implements CategoryRepository {
 
   async removeMatching(criteria: Criteria<CategoryField>): Promise<number> {
     const result = await this.repository.softDelete(
-      this.#criteria.toWhere(criteria),
+      TypeOrmCriteriaConverter.toWhere<TypeOrmCategoryEntity, CategoryField>(
+        CATEGORY_CRITERIA_FIELDS,
+        criteria,
+      ),
     );
 
     return result.affected ?? 0;

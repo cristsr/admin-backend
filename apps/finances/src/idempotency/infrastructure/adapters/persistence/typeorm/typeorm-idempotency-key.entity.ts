@@ -1,12 +1,5 @@
 import { ObjectLiteral } from '@shared';
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  Index,
-  PrimaryGeneratedColumn,
-  Unique,
-} from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn, Unique } from 'typeorm';
 import { IdempotencyStatus } from '@app/idempotency/domain/idempotency-key';
 
 @Entity('idempotency_keys')

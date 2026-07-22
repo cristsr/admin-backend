@@ -1,10 +1,6 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
 import { DateTime } from 'luxon';
-import {
-  Budget,
-  BudgetCriteria,
-  BudgetRepository,
-} from '@app/budget/domain/budget';
+import { Budget, BudgetReports, BudgetRepository } from '@app/budget/domain/budget';
 import { correlationId, withSpan } from '@app/config/telemetry/correlation';
 
 /** Regenerates repeating budgets whose period has closed, logging per-run counters. */
@@ -25,9 +21,7 @@ export class GenerateBudgetsUsecase {
       this.logger.log(`budgetsCronStart correlationId=${runId}`);
 
       const utc = DateTime.utc();
-      const budgets = await this.budgetRepository.matching(
-        BudgetCriteria.dueForRegeneration(utc.toJSDate()),
-      );
+      const budgets = await this.budgetRepository.matching(BudgetReports.dueForRegeneration(utc.toJSDate()));
 
       let generated = 0;
       for (const budget of budgets) {
@@ -35,9 +29,7 @@ export class GenerateBudgetsUsecase {
         if (isRenewed) generated += 1;
       }
 
-      this.logger.log(
-        `budgetsCronDone budgetsGenerated=${generated} correlationId=${runId}`,
-      );
+      this.logger.log(`budgetsCronDone budgetsGenerated=${generated} correlationId=${runId}`);
     });
   }
 
@@ -49,10 +41,7 @@ export class GenerateBudgetsUsecase {
     try {
       await this.budgetRepository.save(budget.renew(now));
     } catch (error) {
-      this.logger.error(
-        `Error creating budget ${budget.id}: ${error.message}`,
-        error.stack,
-      );
+      this.logger.error(`Error creating budget ${budget.id}: ${error.message}`, error.stack);
       return false;
     }
 

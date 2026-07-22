@@ -1,17 +1,13 @@
 import { Injectable } from '@nestjs/common';
+import { AccountLookups, AccountNotFoundException, AccountRepository } from '@app/account/domain/account';
 import {
-  AccountCriteria,
-  AccountNotFoundException,
-  AccountRepository,
-} from '@app/account/domain/account';
-import {
-  SubcategoryCriteria,
+  SubcategoryLookups,
   SubcategoryNotFoundException,
   SubcategoryRepository,
 } from '@app/category/domain/subcategory';
 import {
   Scheduled,
-  ScheduledCriteria,
+  ScheduledLookups,
   ScheduledNotFoundException,
   ScheduledRepository,
 } from '@app/scheduled/domain/scheduled';
@@ -29,14 +25,8 @@ export class UpdateScheduledUsecase {
     private readonly accountRepository: AccountRepository,
   ) {}
 
-  async execute(
-    id: number,
-    patch: ScheduledPatchDto,
-    user: number,
-  ): Promise<Scheduled> {
-    const scheduled = await this.scheduledRepository.firstMatching(
-      ScheduledCriteria.byIdAndUser(id, user),
-    );
+  async execute(id: number, patch: ScheduledPatchDto, user: number): Promise<Scheduled> {
+    const scheduled = await this.scheduledRepository.firstMatching(ScheduledLookups.byIdAndUser(id, user));
     if (!scheduled) {
       throw new ScheduledNotFoundException('Scheduled not found');
     }
@@ -44,7 +34,7 @@ export class UpdateScheduledUsecase {
     if (patch.subcategory !== undefined) {
       const categoryId = patch.category ?? scheduled.categoryId;
       const subcategory = await this.subcategoryRepository.firstMatching(
-        SubcategoryCriteria.byIdAndCategory(patch.subcategory, categoryId),
+        SubcategoryLookups.byIdAndCategory(patch.subcategory, categoryId),
       );
       if (!subcategory) {
         throw new SubcategoryNotFoundException('Subcategory not found');
@@ -53,7 +43,7 @@ export class UpdateScheduledUsecase {
 
     if (patch.account !== undefined) {
       const account = await this.accountRepository.firstMatching(
-        AccountCriteria.byIdAndUser(patch.account, user),
+        AccountLookups.byIdAndUser(patch.account, user),
       );
       if (!account) {
         throw new AccountNotFoundException('Account not found');

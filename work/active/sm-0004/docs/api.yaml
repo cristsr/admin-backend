@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: sm-0004 API
-  version: "1.0.0"
+  version: '1.0.0'
   description: >
     Contrato generado por /design para sm-0004: calidad de plataforma no-funcional.
     Endpoints HTTP nuevos: health checks (liveness/readiness). Además define los

@@ -27,6 +27,7 @@ CI). Por eso el contexto se organiza por AC/preocupación en vez de por entidad.
 ## apps/finances — anclajes por criterio
 
 ### Bootstrap de la app
+
 **Archivo:** `D:\Cristian\Nest\admin-back\apps\finances\src\main.ts`
 Arranque mínimo. Hoy tiene: `NestFactory.create(AppModule)`, `ValidationPipe` global
 (`transform: true, forbidUnknownValues: false`), `useContainer(...)`, `app.listen(port)`,
@@ -35,6 +36,7 @@ ni `app.useLogger(...)`. Punto de enganche para AC-1 (Swagger), AC-4 (logger pin
 (trust proxy).
 
 ### Módulo raíz
+
 **Archivo:** `D:\Cristian\Nest\admin-back\apps\finances\src\app.module.ts`
 **Imports actuales:** `ConfigModule.forRoot({ isGlobal: true, validate: validatorFactory(Environment) })`,
 `CacheModule.register()`, `ScheduleModule.forRoot()`, `EventEmitterModule.forRoot({})`,
@@ -44,6 +46,7 @@ No hay `ThrottlerModule`, `TerminusModule` ni `LoggerModule` (pino) en ningún l
 El `APP_GUARD` (JWT global) lo registra internamente `AuthModule.build()`, no este módulo.
 
 ### AC-1 — Contrato OpenAPI/Swagger
+
 - `@nestjs/swagger` **ya instalado** (`^7.3.1`) pero **sin usar**: no hay `SwaggerModule` /
   `DocumentBuilder` en el repo, ni decoradores `@ApiTags`/`@ApiBearerAuth`/`@ApiSecurity`.
 - Flag de entorno ya previsto: `SHOW_DOCS: boolean` existe en `env.ts` (validado) pero **no
@@ -52,23 +55,31 @@ El `APP_GUARD` (JWT global) lo registra internamente `AuthModule.build()`, no es
   (`WebhookApiKeyGuard`), públicos (`@Public()`: taxonomía y health).
 
 ### AC-2 — Health checks (liveness/readiness)
+
 **Archivo actual:** `D:\Cristian\Nest\admin-back\apps\finances\src\config\controllers\app.controller.ts`
+
 ```ts
 @Controller()
 export class AppController {
   @Get('health')
-  health() { this.logger.log('Health check success'); return { status: 'ok' }; }
+  health() {
+    this.logger.log('Health check success');
+    return { status: 'ok' };
+  }
 }
 ```
+
 - Un solo `GET /health`, **sin `@Public()`** → hoy queda detrás del guard JWT global (bug
   frente al AC-2, que lo exige público).
 - No hay separación liveness/readiness, ni chequeo de DB/OIDC, ni `@nestjs/terminus`
   (**falta instalar**).
 
 ### AC-3 — Discovery OIDC perezoso + cache
+
 **Lib compartida:** `D:\Cristian\Nest\admin-back\libs\shared\src\auth\`
 (`auth.module.ts`, `jwt-auth.guard.ts`, `jwt.strategy.ts`, `oidc-discovery.ts`,
 `identity-resolver.ts`, `auth.constants.ts`, `index.ts`).
+
 - **Eager confirmado**: `AuthModule.build()` resuelve el discovery dentro del factory de
   `JWT_STRATEGY_OPTIONS` (`auth.module.ts` ~líneas 38-42 y 60-70), durante el init del
   módulo, **antes** de `app.listen()`. Si el IdP no responde, la app no levanta.
@@ -87,6 +98,7 @@ export class AppController {
 - `CacheModule.register()` ya está importado en `AppModule` (disponible para el TTL).
 
 ### AC-4 — Logging estructurado + trace id + métricas de crons
+
 - **Sin trace id/correlation id** en ningún punto (ni middleware, ni interceptor, ni en los
   payloads de eventos `MovementSavedPayload` / `BudgetThresholdExceededPayload`).
 - `nestjs-pino` (`4.1.0`) + `pino-pretty` (`^11.2.1`) **ya instalados pero no cableados**
@@ -107,6 +119,7 @@ export class AppController {
   - Relay del outbox: `apps\finances\src\outbox\infrastructure\adapters\schedulers\outbox-relay.scheduler.ts` (`@Cron(EVERY_10_SECONDS)`). **Ningún event handler loguea hoy**, y los payloads no llevan correlation id.
 
 ### AC-5 — Rate limiting
+
 - `@nestjs/throttler` **falta instalar**. Ningún guard de throttling en el repo.
 - **Webhook:** `D:\Cristian\Nest\admin-back\apps\finances\src\webhook\infrastructure\adapters\http\webhook.controller.ts`
   — `@Controller('webhooks')` + `@Public()` + `@UseGuards(WebhookApiKeyGuard)`. Rutas:
@@ -120,6 +133,7 @@ export class AppController {
   para leer la IP real de `X-Forwarded-For` detrás de NGINX.
 
 ### AC-6 — e2e de auth contra Keycloak
+
 - **docker-compose:** `D:\Cristian\Nest\admin-back\docker-compose.yml` — único servicio
   `postgres:16` (host `5433→5432`, cred `postgres/admin`, DB `finances`, init script
   `./docker/postgres/init-databases.sh`). **Sin Keycloak** → agregarlo aquí (decisión clarify).
@@ -131,6 +145,7 @@ export class AppController {
   `globalSetup`, ni ningún `*.e2e-spec.ts` propio del repo todavía.
 
 ### Env vars / config
+
 **Archivo:** `D:\Cristian\Nest\admin-back\apps\finances\src\env.ts`
 Clase `Environment` (validada con `class-validator`; fail-fast real vía
 `libs/shared/src/config/index.ts`, lanza `InvalidConfigurationException`). Campos relevantes:
@@ -138,6 +153,7 @@ Clase `Environment` (validada con `class-validator`; fail-fast real vía
 `SHOW_DOCS: boolean` (ya validado, aún sin cablear — reservado para AC-1).
 
 ### Documentación disponible
+
 No hay `docs/services/<micro>/` en este repo. Documentación de referencia:
 `D:\Cristian\Nest\admin-back\RESUMEN_EJECUTIVO.md` (visión, módulos, endpoints, migraciones;
 §4 auth, §9 limitaciones conocidas — punto 5 documenta el bloqueo Auth0/WAF del AC-6) y
@@ -147,15 +163,15 @@ No hay `docs/services/<micro>/` en este repo. Documentación de referencia:
 
 ## Dependencias — estado para esta historia
 
-| Paquete | Estado |
-|---|---|
-| `@nestjs/swagger` `^7.3.1` | Instalado, **sin usar** (AC-1) |
-| `nestjs-pino` `4.1.0` + `pino-pretty` `^11.2.1` | Instalados, **sin cablear** (AC-4) |
-| `@nestjs/axios` `^3.0.2` | Instalado y en uso |
-| `jwks-rsa` `^3.1.0` | Instalado y en uso (patrón lazy+cache de referencia, AC-3) |
-| `@nestjs/cache-manager` `2.2.2` (+ `CacheModule` importado) | Disponible para el TTL del discovery (AC-3) |
-| `@nestjs/terminus` | **Falta instalar** (AC-2) |
-| `@nestjs/throttler` | **Falta instalar** (AC-5) |
+| Paquete                                                     | Estado                                                     |
+| ----------------------------------------------------------- | ---------------------------------------------------------- |
+| `@nestjs/swagger` `^7.3.1`                                  | Instalado, **sin usar** (AC-1)                             |
+| `nestjs-pino` `4.1.0` + `pino-pretty` `^11.2.1`             | Instalados, **sin cablear** (AC-4)                         |
+| `@nestjs/axios` `^3.0.2`                                    | Instalado y en uso                                         |
+| `jwks-rsa` `^3.1.0`                                         | Instalado y en uso (patrón lazy+cache de referencia, AC-3) |
+| `@nestjs/cache-manager` `2.2.2` (+ `CacheModule` importado) | Disponible para el TTL del discovery (AC-3)                |
+| `@nestjs/terminus`                                          | **Falta instalar** (AC-2)                                  |
+| `@nestjs/throttler`                                         | **Falta instalar** (AC-5)                                  |
 
 Core NestJS: `@nestjs/common` `10.3.9`, `platform-express` `10.3.9`, `config` `3.2.2`,
 `event-emitter` `2.0.4`, `schedule` `4.0.2`, `passport` `10.0.3`, `jwt` `10.2.0`,

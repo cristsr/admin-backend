@@ -45,17 +45,17 @@ cascada (AC-5). Detalle completo en `docs/diagram.md`.
 
 ### finances
 
-| Método | Ruta | Descripción de negocio |
-|--------|------|-------------------------|
-| POST | /accounts | Crear cuenta declarando `allowNegativeBalance` (AC-1) |
-| PATCH | /accounts/{id} | Actualizar cuenta, incl. `allowNegativeBalance` (AC-1) |
-| DELETE | /accounts/{id} | Archivar cuenta en cascada — reemplaza el bloqueo por movimientos (AC-5) |
-| POST | /movements | Crear movimiento idempotente; `categoryId` opcional con auto-categorización (AC-3/AC-4) |
-| POST | /transfers | Crear transferencia con validación de saldo e idempotencia (AC-1/AC-3) |
-| POST | /categorization-rules | Crear regla de auto-categorización (AC-4) |
-| GET | /categorization-rules | Listar reglas del usuario por prioridad (AC-4) |
-| PATCH | /categorization-rules/{id} | Actualizar una regla (AC-4) |
-| DELETE | /categorization-rules/{id} | Eliminar una regla (AC-4) |
+| Método | Ruta                       | Descripción de negocio                                                                  |
+| ------ | -------------------------- | --------------------------------------------------------------------------------------- |
+| POST   | /accounts                  | Crear cuenta declarando `allowNegativeBalance` (AC-1)                                   |
+| PATCH  | /accounts/{id}             | Actualizar cuenta, incl. `allowNegativeBalance` (AC-1)                                  |
+| DELETE | /accounts/{id}             | Archivar cuenta en cascada — reemplaza el bloqueo por movimientos (AC-5)                |
+| POST   | /movements                 | Crear movimiento idempotente; `categoryId` opcional con auto-categorización (AC-3/AC-4) |
+| POST   | /transfers                 | Crear transferencia con validación de saldo e idempotencia (AC-1/AC-3)                  |
+| POST   | /categorization-rules      | Crear regla de auto-categorización (AC-4)                                               |
+| GET    | /categorization-rules      | Listar reglas del usuario por prioridad (AC-4)                                          |
+| PATCH  | /categorization-rules/{id} | Actualizar una regla (AC-4)                                                             |
+| DELETE | /categorization-rules/{id} | Eliminar una regla (AC-4)                                                               |
 
 > AC-2 (Outbox) no expone endpoints: es infraestructura interna (tabla + relay `@Cron`
 > que re-despacha eventos de dominio). El webhook de ingreso también consume la
@@ -76,12 +76,12 @@ Tablas modificadas: `accounts` (+`allow_negative_balance`), `categories` (+`syst
 No hay `constitution.md` en el proyecto — se aplican los cuatro gates built-in por default.
 Correr `/constitution` los haría exigibles a nivel proyecto.
 
-| Gate | Resultado | Justificación |
-|------|-----------|---------------|
-| Simplicity | ✅ | Se reutiliza el saldo de sm-0001, el publisher PGMQ y el patrón `@Cron`; el outbox re-despacha in-process en vez de sumar cola+consumer; flag booleano en vez de enum de tipos. |
-| Anti-Abstraction | ✅ | Interceptor/scheduler nativos de NestJS y transacciones de TypeORM directas; puertos `abstract class` solo donde ya es el patrón del repo (repositorios, publisher). Sin capas nuevas especulativas. |
-| Integration-First | ✅ | `docs/api.yaml` (OpenAPI 3.1) definido antes del código; `/plan` genera DTOs y entidades conformes al contrato y al `data-model.md`. |
-| Test-First | ✅ | `/plan` escribirá los tests antes del código (TDD); los flujos críticos (validación de saldo, replay idempotente, relay del outbox, cascada de archivado) son verificables por el contrato. |
+| Gate              | Resultado | Justificación                                                                                                                                                                                        |
+| ----------------- | --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Simplicity        | ✅        | Se reutiliza el saldo de sm-0001, el publisher PGMQ y el patrón `@Cron`; el outbox re-despacha in-process en vez de sumar cola+consumer; flag booleano en vez de enum de tipos.                      |
+| Anti-Abstraction  | ✅        | Interceptor/scheduler nativos de NestJS y transacciones de TypeORM directas; puertos `abstract class` solo donde ya es el patrón del repo (repositorios, publisher). Sin capas nuevas especulativas. |
+| Integration-First | ✅        | `docs/api.yaml` (OpenAPI 3.1) definido antes del código; `/plan` genera DTOs y entidades conformes al contrato y al `data-model.md`.                                                                 |
+| Test-First        | ✅        | `/plan` escribirá los tests antes del código (TDD); los flujos críticos (validación de saldo, replay idempotente, relay del outbox, cascada de archivado) son verificables por el contrato.          |
 
 ## Notas de alcance para /plan
 

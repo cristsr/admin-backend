@@ -13,7 +13,7 @@ import { ErrorResponseBody } from './error-response-body.type';
 /** Turns any thrown error into the standard HTTP error body. */
 @Catch()
 export class ExceptionFilter implements IExceptionFilter {
-  #logger = new Logger(ExceptionFilter.name);
+  readonly #logger = new Logger(ExceptionFilter.name);
 
   catch(exception: Error, host: ArgumentsHost): void {
     this.#logger.error(`${exception.name}: ${exception.message}`);
@@ -47,8 +47,6 @@ export class ExceptionFilter implements IExceptionFilter {
   }
 
   private compact(body: ErrorResponseBody): ObjectLiteral {
-    return Object.fromEntries(
-      Object.entries(body).filter(([, value]) => value !== undefined),
-    );
+    return Object.fromEntries(Object.entries(body).filter(([, value]) => value !== undefined));
   }
 }

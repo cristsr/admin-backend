@@ -122,7 +122,6 @@ jobs:
           OIDC_ISSUER: http://localhost:8080/realms/finances
           OIDC_AUDIENCE: finances-api
           AUTH_IDENTITY_PROVIDER: keycloak
-          USERS_API_URL: http://localhost:8080/realms/finances/account
           WEBHOOK_API_KEY: test-key
           EXCHANGE_RATES_URL: http://localhost:8080
           KEYCLOAK_TOKEN_URL: http://localhost:8080/realms/finances/protocol/openid-connect/token

@@ -26,12 +26,8 @@ describe('ReceiveWebhookTransactionUsecase', () => {
     const fakeManager = { id: 'manager' };
     movementRepository = {
       firstMatching: jest.fn().mockResolvedValue(null),
-      runInTransaction: jest
-        .fn()
-        .mockImplementation((work) => work(fakeManager)),
-      saveWithManager: jest
-        .fn()
-        .mockImplementation(async (_manager, m) => ({ ...m, id: 200 })),
+      runInTransaction: jest.fn().mockImplementation((work) => work(fakeManager)),
+      saveWithManager: jest.fn().mockImplementation(async (_manager, m) => ({ ...m, id: 200 })),
     };
     accountRepository = {
       firstMatching: jest.fn().mockResolvedValue(
@@ -52,11 +48,7 @@ describe('ReceiveWebhookTransactionUsecase', () => {
       movementRepository,
       accountRepository,
       categoryResolver,
-      new RecordMovementService(
-        movementRepository,
-        accountRepository,
-        outboxPublisher,
-      ),
+      new RecordMovementService(movementRepository, accountRepository, outboxPublisher),
     );
   });
 

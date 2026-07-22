@@ -42,11 +42,7 @@ describe('MovementSavedEventHandler threshold idempotency', () => {
     };
     budgetSpending = { recordSpending: jest.fn() };
     eventEmitter = { emit: jest.fn() };
-    handler = new MovementSavedEventHandler(
-      budgetRepository,
-      budgetSpending,
-      eventEmitter,
-    );
+    handler = new MovementSavedEventHandler(budgetRepository, budgetSpending, eventEmitter);
   });
 
   it('crossing 80% for the first time persists WARNING and emits', async () => {
@@ -62,9 +58,7 @@ describe('MovementSavedEventHandler threshold idempotency', () => {
   });
 
   it('does not re-emit if a second movement stays at the already-notified 80%', async () => {
-    budgetRepository.matching.mockResolvedValue([
-      buildBudget(BudgetThreshold.WARNING),
-    ]);
+    budgetRepository.matching.mockResolvedValue([buildBudget(BudgetThreshold.WARNING)]);
     budgetSpending.recordSpending = spendOf(85);
 
     await handler.handle(payload);
@@ -74,9 +68,7 @@ describe('MovementSavedEventHandler threshold idempotency', () => {
   });
 
   it('emits EXCEEDED when crossing 100% even if WARNING was already notified', async () => {
-    budgetRepository.matching.mockResolvedValue([
-      buildBudget(BudgetThreshold.WARNING),
-    ]);
+    budgetRepository.matching.mockResolvedValue([buildBudget(BudgetThreshold.WARNING)]);
     budgetSpending.recordSpending = spendOf(100);
 
     await handler.handle(payload);

@@ -13,23 +13,19 @@ describe('GetConsolidatedBalanceUsecase', () => {
 
   beforeEach(() => {
     accountRepository = {
-      matching: jest
-        .fn()
-        .mockResolvedValue([accountIn(1, 'COP'), accountIn(2, 'USD')]),
+      matching: jest.fn().mockResolvedValue([accountIn(1, 'COP'), accountIn(2, 'USD')]),
     };
     summaryRepository = {
-      balance: jest.fn().mockImplementation(({ account }) =>
-        account === 1
-          ? { balance: 1000, incomes: 1000, expenses: 0 }
-          : { balance: 2, incomes: 2, expenses: 0 },
-      ),
+      balance: jest
+        .fn()
+        .mockImplementation(({ account }) =>
+          account === 1
+            ? { balance: 1000, incomes: 1000, expenses: 0 }
+            : { balance: 2, incomes: 2, expenses: 0 },
+        ),
     };
     exchangeRateProvider = { getRate: jest.fn().mockResolvedValue(4000) };
-    usecase = new GetConsolidatedBalanceUsecase(
-      accountRepository,
-      summaryRepository,
-      exchangeRateProvider,
-    );
+    usecase = new GetConsolidatedBalanceUsecase(accountRepository, summaryRepository, exchangeRateProvider);
   });
 
   it('consolidates in the presentation currency converting the ones in another currency', async () => {
@@ -38,11 +34,7 @@ describe('GetConsolidatedBalanceUsecase', () => {
     // COP 1000 at rate 1 + USD 2 at rate 4000 → total 9000
     expect(result.presentationCurrency).toBe('COP');
     expect(result.total).toBe(9000);
-    expect(exchangeRateProvider.getRate).toHaveBeenCalledWith(
-      'USD',
-      'COP',
-      expect.any(Date),
-    );
+    expect(exchangeRateProvider.getRate).toHaveBeenCalledWith('USD', 'COP', expect.any(Date));
     const usd = result.accounts.find((a) => a.accountId === 2);
     expect(usd?.balance).toBe(2);
     expect(usd?.balanceInPresentationCurrency).toBe(8000);

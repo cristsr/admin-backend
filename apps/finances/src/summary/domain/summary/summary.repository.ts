@@ -1,12 +1,6 @@
 import { Nullable } from '@shared';
 import { Movement } from '@app/movement/domain/movement';
-import {
-  Balance,
-  BalanceQuery,
-  Expense,
-  ExpenseQuery,
-  LastMovementsQuery,
-} from './summary.types';
+import { Balance, BalanceQuery, Expense, ExpenseQuery, LastMovementsQuery } from './summary.types';
 
 export abstract class SummaryRepository {
   abstract balance(filter: BalanceQuery): Promise<Nullable<Balance>>;

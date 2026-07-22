@@ -7,10 +7,7 @@ import {
   TransferOutputDto,
   TransferReversalOutputDto,
 } from '@app/transfer/application/dto';
-import {
-  CreateTransferUsecase,
-  ReverseTransferUsecase,
-} from '@app/transfer/application/usecases';
+import { CreateTransferUsecase, ReverseTransferUsecase } from '@app/transfer/application/usecases';
 
 @ApiTags('transfers')
 @ApiBearerAuth()

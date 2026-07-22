@@ -1,8 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class AddSubcategoriesBaseColumns1784073600007
-  implements MigrationInterface
-{
+export class AddSubcategoriesBaseColumns1784073600007 implements MigrationInterface {
   name = 'AddSubcategoriesBaseColumns1784073600007';
 
   public async up(queryRunner: QueryRunner): Promise<void> {

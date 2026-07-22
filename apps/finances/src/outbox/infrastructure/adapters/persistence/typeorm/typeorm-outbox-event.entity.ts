@@ -1,11 +1,5 @@
 import { ObjectLiteral } from '@shared';
-import {
-  Column,
-  CreateDateColumn,
-  Entity,
-  Index,
-  PrimaryGeneratedColumn,
-} from 'typeorm';
+import { Column, CreateDateColumn, Entity, Index, PrimaryGeneratedColumn } from 'typeorm';
 import { OutboxStatus } from '@app/outbox/domain/outbox-event';
 
 @Entity('outbox_events')

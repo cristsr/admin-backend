@@ -1,28 +1,23 @@
 import { HttpModule } from '@nestjs/axios';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ExchangeController } from './controllers';
-import { ExchangeRateProvider } from './domain';
-import { ExchangeEntity } from './entities';
-import { LocalExchangeRateProvider } from './infrastructure/local-exchange-rate.provider';
-import { ExRatesService, ExchangeRatesService } from './providers';
-import { ExchangeRepository } from './repositories';
-import { AppService } from './services';
+import { GetExchangeRateUsecase } from './application/usecases';
+import { ExchangeRateProvider, ExchangeRateRepository, ExchangeRateSource } from './domain';
+import { ExchangeController } from './infrastructure/adapters/http';
+import {
+  TypeOrmExchangeRateEntity,
+  TypeOrmExchangeRateRepository,
+} from './infrastructure/adapters/persistence/typeorm/exchange-rate';
+import { CachingExchangeRateProvider, CuexExchangeRateSource } from './infrastructure/adapters/rates';
 
 @Module({
-  imports: [HttpModule, TypeOrmModule.forFeature([ExchangeEntity])],
+  imports: [HttpModule, TypeOrmModule.forFeature([TypeOrmExchangeRateEntity])],
   controllers: [ExchangeController],
   providers: [
-    {
-      provide: ExchangeRatesService,
-      useClass: ExRatesService,
-    },
-    ExchangeRepository,
-    AppService,
-    {
-      provide: ExchangeRateProvider,
-      useClass: LocalExchangeRateProvider,
-    },
+    { provide: ExchangeRateRepository, useClass: TypeOrmExchangeRateRepository },
+    { provide: ExchangeRateSource, useClass: CuexExchangeRateSource },
+    { provide: ExchangeRateProvider, useClass: CachingExchangeRateProvider },
+    GetExchangeRateUsecase,
   ],
   exports: [ExchangeRateProvider],
 })

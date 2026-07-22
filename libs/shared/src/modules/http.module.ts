@@ -16,8 +16,7 @@ export function createApiClientProvider<T>(client: {
 }): Provider {
   return {
     provide: client.provide,
-    useFactory: (...args: T[]) =>
-      new HttpService(axios.create(client.useFactory(...args))),
+    useFactory: (...args: T[]) => new HttpService(axios.create(client.useFactory(...args))),
     inject: client.inject,
   };
 }
@@ -33,8 +32,7 @@ const { ConfigurableModuleClass } = new ConfigurableModuleBuilder<ApiClientOptio
       {
         provide: extras.name,
         // Own axios instance: a named client's baseURL and timeouts stay independent.
-        useFactory: (options: ApiClientOptions) =>
-          new HttpService(axios.create(options)),
+        useFactory: (options: ApiClientOptions) => new HttpService(axios.create(options)),
         inject: [API_CLIENT_OPTIONS],
       },
     ],

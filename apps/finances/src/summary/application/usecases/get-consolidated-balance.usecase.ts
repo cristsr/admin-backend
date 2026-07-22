@@ -1,15 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import {
-  AccountCriteria,
-  AccountRepository,
-} from '@app/account/domain/account';
+import { AccountLookups, AccountRepository } from '@app/account/domain/account';
 import { ExchangeRateProvider } from '@app/exchange/domain';
 import { Money } from '@app/shared/domain';
 import { SummaryRepository } from '@app/summary/domain/summary';
-import {
-  ConsolidatedBalanceFilterDto,
-  ConsolidatedBalanceOutputDto,
-} from '../dto';
+import { ConsolidatedBalanceFilterDto, ConsolidatedBalanceOutputDto } from '../dto';
 
 /** Fallback presentation currency when the user has neither a claim nor accounts. */
 const DEFAULT_PRESENTATION_CURRENCY = 'USD';
@@ -32,14 +26,9 @@ export class GetConsolidatedBalanceUsecase {
     presentationCurrency?: string,
   ): Promise<ConsolidatedBalanceOutputDto> {
     // Unpaginated on purpose: a total missing a page of accounts would be wrong.
-    const accounts = await this.accountRepository.matching(
-      AccountCriteria.ownedBy(user),
-    );
+    const accounts = await this.accountRepository.matching(AccountLookups.ownedBy(user));
 
-    const presentation =
-      presentationCurrency ??
-      accounts[0]?.currencyCode() ??
-      DEFAULT_PRESENTATION_CURRENCY;
+    const presentation = presentationCurrency ?? accounts[0]?.currencyCode() ?? DEFAULT_PRESENTATION_CURRENCY;
     const rateDate = filter.endDate ?? new Date();
 
     let total = Money.zero(presentation);
@@ -62,12 +51,8 @@ export class GetConsolidatedBalanceUsecase {
       const converted = balance.convertTo(presentation, rate);
 
       total = total.add(converted);
-      incomes = incomes.add(
-        Money.of(period?.incomes ?? 0, currency).convertTo(presentation, rate),
-      );
-      expenses = expenses.add(
-        Money.of(period?.expenses ?? 0, currency).convertTo(presentation, rate),
-      );
+      incomes = incomes.add(Money.of(period?.incomes ?? 0, currency).convertTo(presentation, rate));
+      expenses = expenses.add(Money.of(period?.expenses ?? 0, currency).convertTo(presentation, rate));
 
       accountsOut.push({
         accountId: account.id,
@@ -86,11 +71,7 @@ export class GetConsolidatedBalanceUsecase {
     };
   }
 
-  private async rateFor(
-    from: string,
-    to: string,
-    date: Date,
-  ): Promise<number> {
+  private async rateFor(from: string, to: string, date: Date): Promise<number> {
     if (from === to) return 1;
 
     return this.exchangeRateProvider.getRate(from, to, date);

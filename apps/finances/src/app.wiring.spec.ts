@@ -3,6 +3,18 @@ import { Global, Module } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getDataSourceToken, getEntityManagerToken } from '@nestjs/typeorm';
 
+// The auth module discovers OIDC metadata at bootstrap; stub it so wiring the
+// graph never reaches the network.
+jest.mock('openid-client', () => ({
+  allowInsecureRequests: jest.fn(),
+  discovery: jest.fn().mockResolvedValue({
+    serverMetadata: () => ({
+      issuer: 'https://issuer.test/realms/test',
+      jwks_uri: 'https://issuer.test/realms/test/protocol/openid-connect/certs',
+    }),
+  }),
+}));
+
 /** Every value the config validator demands; must be set before the modules load. */
 const environment: Record<string, string> = {
   ENV: 'test',
@@ -15,7 +27,6 @@ const environment: Record<string, string> = {
   OIDC_ISSUER: 'https://issuer.test/realms/test',
   OIDC_AUDIENCE: 'finances',
   AUTH_IDENTITY_PROVIDER: 'keycloak',
-  USERS_API_URL: 'https://users.test',
   WEBHOOK_API_KEY: 'test-key',
   EXCHANGE_RATES_URL: 'https://rates.test',
 };
@@ -31,15 +42,10 @@ const {
   CategoryResolver,
 } = require('./categorization-rule/domain/categorization-rule');
 const { DatabaseModule } = require('./database/database.module');
-const {
-  SaveMovementUsecase,
-  UpdateMovementUsecase,
-} = require('./movement/application/usecases');
+const { SaveMovementUsecase, UpdateMovementUsecase } = require('./movement/application/usecases');
 const { CreateTransferUsecase } = require('./transfer/application/usecases');
 const { TransferFactory } = require('./transfer/domain');
-const {
-  ReceiveWebhookTransactionUsecase,
-} = require('./webhook/application/usecases');
+const { ReceiveWebhookTransactionUsecase } = require('./webhook/application/usecases');
 
 /**
  * Inert DataSource: `forFeature` providers only call `getRepository` on it,

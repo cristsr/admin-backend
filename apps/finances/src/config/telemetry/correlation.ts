@@ -25,10 +25,7 @@ export function correlationId(): string {
  * Runs background work inside its own span — scheduled jobs have no incoming
  * request to inherit a trace from. Failures are recorded, then rethrown.
  */
-export async function withSpan<T>(
-  name: string,
-  work: () => Promise<T>,
-): Promise<T> {
+export async function withSpan<T>(name: string, work: () => Promise<T>): Promise<T> {
   return trace.getTracer(TRACER_NAME).startActiveSpan(name, async (span) => {
     try {
       return await work();

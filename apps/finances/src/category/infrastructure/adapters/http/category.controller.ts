@@ -47,9 +47,7 @@ export class CategoryController {
   }
 
   @Get()
-  async findAll(
-    @Query() query: CriteriaQueryDto,
-  ): Promise<CategoryOutputDto[]> {
+  async findAll(@Query() query: CriteriaQueryDto): Promise<CategoryOutputDto[]> {
     const categories = await this.findAllCategoriesUsecase.execute(query);
     return categories.map(CategoryMapper.toOutput);
   }
@@ -61,9 +59,7 @@ export class CategoryController {
   }
 
   @Post('batch')
-  async saveMany(
-    @Body() input: CategoriesInputDto,
-  ): Promise<{ status: boolean }> {
+  async saveMany(@Body() input: CategoriesInputDto): Promise<{ status: boolean }> {
     const status = await this.saveManyCategoriesUsecase.execute(input);
     return { status };
   }

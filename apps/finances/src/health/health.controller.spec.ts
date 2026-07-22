@@ -1,22 +1,12 @@
 import { HealthController } from './health.controller';
 
 describe('HealthController', () => {
-  const build = (
-    healthCheckService: any,
-    typeOrmHealthIndicator: any,
-    oidcHealthIndicator: any,
-  ) =>
-    new HealthController(
-      healthCheckService,
-      typeOrmHealthIndicator,
-      oidcHealthIndicator,
-    );
+  const build = (healthCheckService: any, typeOrmHealthIndicator: any, oidcHealthIndicator: any) =>
+    new HealthController(healthCheckService, typeOrmHealthIndicator, oidcHealthIndicator);
 
   it('liveness runs no indicators (proceso vivo, sin tocar dependencias)', async () => {
     const healthCheckService = {
-      check: jest
-        .fn()
-        .mockResolvedValue({ status: 'ok', info: {}, error: {}, details: {} }),
+      check: jest.fn().mockResolvedValue({ status: 'ok', info: {}, error: {}, details: {} }),
     };
     const ctrl = build(healthCheckService, {}, {});
 

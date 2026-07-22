@@ -22,16 +22,16 @@ Historia transversal en **finances**, con dos dependencias externas: lee la tasa
 
 ### finances
 
-| Método | Ruta | Descripción de negocio |
-|--------|------|-------------------------|
-| GET | /accounts/{id}/balance | Saldo vivo de una cuenta (initialBalance + movimientos con signo por tipo) — AC-3 |
-| GET | /accounts | Lista de cuentas con el saldo vivo embebido — AC-3 |
-| PATCH | /movements/{id} | Edita un movimiento sin tocar tipo ni transferencias; en WEBHOOK solo campos del usuario — AC-4 |
-| PATCH | /scheduled/{id} | Edita un programado; solo afecta ocurrencias futuras — AC-5 |
-| POST | /transfers | Transferencia entre cuentas propias, ahora permite distinta moneda con conversión — AC-2 |
-| POST | /transfers/{transferGroup}/reversal | Anula una transferencia con par compensatorio — AC-5 |
-| POST | /webhooks/transactions/{externalReference}/reversal | Revierte un movimiento de webhook (compensatorio, idempotente, API key) — AC-6 |
-| GET | /summary/balance | Balance consolidado en la moneda de presentación del usuario — AC-2 |
+| Método | Ruta                                                | Descripción de negocio                                                                          |
+| ------ | --------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| GET    | /accounts/{id}/balance                              | Saldo vivo de una cuenta (initialBalance + movimientos con signo por tipo) — AC-3               |
+| GET    | /accounts                                           | Lista de cuentas con el saldo vivo embebido — AC-3                                              |
+| PATCH  | /movements/{id}                                     | Edita un movimiento sin tocar tipo ni transferencias; en WEBHOOK solo campos del usuario — AC-4 |
+| PATCH  | /scheduled/{id}                                     | Edita un programado; solo afecta ocurrencias futuras — AC-5                                     |
+| POST   | /transfers                                          | Transferencia entre cuentas propias, ahora permite distinta moneda con conversión — AC-2        |
+| POST   | /transfers/{transferGroup}/reversal                 | Anula una transferencia con par compensatorio — AC-5                                            |
+| POST   | /webhooks/transactions/{externalReference}/reversal | Revierte un movimiento de webhook (compensatorio, idempotente, API key) — AC-6                  |
+| GET    | /summary/balance                                    | Balance consolidado en la moneda de presentación del usuario — AC-2                             |
 
 > AC-1 (notificación de umbral) no expone HTTP: es mensajería async sobre PGMQ. Ver `docs/diagram.md`.
 > Schemas de request/response, validaciones y códigos completos: `docs/api.yaml` (tag `finances`).
@@ -59,12 +59,12 @@ Cambio de esquema en `finances`: columna `notified_threshold` sobre la tabla exi
 
 Sin constitución en el proyecto — se aplican los 4 gates built-in por defecto. Ejecutar `/constitution` los haría exigibles a nivel proyecto.
 
-| Gate | Resultado | Justificación |
-|------|-----------|---------------|
-| Simplicity | ⚠️ | El contrato es grande (8 endpoints + mensajería + 2 dependencias externas) porque la historia agrupa 6 features. No agrega capas innecesarias, pero conviene fragmentar en `/plan` (ver excepción). |
-| Anti-Abstraction | ✅ | Reutiliza el patrón hexagonal existente, `MovementRepository`/`saveAll`, `transfer_group` y `EventEmitter2` ya presentes; el único puerto nuevo (`ExchangeRateProvider`) está justificado por una integración real. |
-| Integration-First | ✅ | `api.yaml` define el contrato antes del código; `/plan` generará DTOs y contract tests a partir de él. |
-| Test-First | ✅ | Se garantiza en `/plan`: los tests (saldo con signos, idempotencia de reversa y de umbral, rechazo de edición en WEBHOOK, conversión cross-currency) se escriben antes del código. |
+| Gate              | Resultado | Justificación                                                                                                                                                                                                       |
+| ----------------- | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Simplicity        | ⚠️        | El contrato es grande (8 endpoints + mensajería + 2 dependencias externas) porque la historia agrupa 6 features. No agrega capas innecesarias, pero conviene fragmentar en `/plan` (ver excepción).                 |
+| Anti-Abstraction  | ✅        | Reutiliza el patrón hexagonal existente, `MovementRepository`/`saveAll`, `transfer_group` y `EventEmitter2` ya presentes; el único puerto nuevo (`ExchangeRateProvider`) está justificado por una integración real. |
+| Integration-First | ✅        | `api.yaml` define el contrato antes del código; `/plan` generará DTOs y contract tests a partir de él.                                                                                                              |
+| Test-First        | ✅        | Se garantiza en `/plan`: los tests (saldo con signos, idempotencia de reversa y de umbral, rechazo de edición en WEBHOOK, conversión cross-currency) se escriben antes del código.                                  |
 
 ## Excepciones a la constitución
 

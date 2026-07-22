@@ -1,42 +1,38 @@
-import { Inject } from '@nestjs/common';
 import { HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
-import { OIDC_DISCOVERY_CACHE, OidcDiscoveryCache } from '@shared';
 
 /**
- * Readiness probe for the OIDC provider. Reuses the JwtStrategy's discovery
- * cache, so a successful probe warms it up for the first token validation.
+ * Readiness probe for the OIDC provider: fetches the JWKS endpoint the JWT
+ * strategy verifies tokens against, bounded by a timeout so a slow IdP never
+ * stalls the probe. The endpoint is discovered once at bootstrap, so the probe
+ * only checks reachability, not re-discovery.
  */
 export class OidcHealthIndicator extends HealthIndicator {
   constructor(
-    @Inject(OIDC_DISCOVERY_CACHE) private readonly discovery: OidcDiscoveryCache,
+    private readonly jwksUri: string,
     private readonly timeoutMs: number,
   ) {
     super();
   }
 
   async isHealthy(key = 'oidc'): Promise<HealthIndicatorResult> {
-    const probe = this.discovery.getJwksUri();
-
-    let timer: NodeJS.Timeout | undefined;
-    const timeout = new Promise<never>((_, reject) => {
-      timer = setTimeout(
-        () =>
-          reject(
-            new Error(`oidc discovery timeout after ${this.timeoutMs}ms`),
-          ),
-        this.timeoutMs,
-      );
-    });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs);
 
     try {
-      await Promise.race([probe, timeout]);
+      const response = await fetch(this.jwksUri, { signal: controller.signal });
+      if (!response.ok) {
+        throw new Error(`jwks endpoint responded ${response.status}`);
+      }
+
       return this.getStatus(key, true);
     } catch (error) {
-      return this.getStatus(key, false, {
-        message: String((error as Error).message),
-      });
+      const message = controller.signal.aborted
+        ? `oidc readiness timeout after ${this.timeoutMs}ms`
+        : String((error as Error).message);
+
+      return this.getStatus(key, false, { message });
     } finally {
-      if (timer) clearTimeout(timer);
+      clearTimeout(timer);
     }
   }
 }

@@ -5,12 +5,7 @@ import { APP_FILTER, APP_GUARD } from '@nestjs/core';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
-import {
-  Auth0IdentityResolver,
-  AuthModule,
-  ExceptionFilter,
-  validatorFactory,
-} from '@shared';
+import { Auth0IdentityResolver, AuthModule, ExceptionFilter, validatorFactory } from '@shared';
 import { LoggerModule } from 'nestjs-pino';
 import { ENV, Environment } from '@app/env';
 import { AccountModule } from './account/account.module';
@@ -47,26 +42,20 @@ import { WebhookModule } from './webhook/webhook.module';
         buildThrottlerOptions({
           THROTTLE_AUTH_TTL_MS: config.get<number>(ENV.THROTTLE_AUTH_TTL_MS),
           THROTTLE_AUTH_LIMIT: config.get<number>(ENV.THROTTLE_AUTH_LIMIT),
-          THROTTLE_WEBHOOK_TTL_MS: config.get<number>(
-            ENV.THROTTLE_WEBHOOK_TTL_MS,
-          ),
-          THROTTLE_WEBHOOK_LIMIT: config.get<number>(
-            ENV.THROTTLE_WEBHOOK_LIMIT,
-          ),
+          THROTTLE_WEBHOOK_TTL_MS: config.get<number>(ENV.THROTTLE_WEBHOOK_TTL_MS),
+          THROTTLE_WEBHOOK_LIMIT: config.get<number>(ENV.THROTTLE_WEBHOOK_LIMIT),
         }),
     }),
     DatabaseModule,
     AuthModule.forRootAsync({
+      // UserModule binds the AuthenticatedUserProvider port the strategy needs.
+      imports: [UserModule],
       inject: [ConfigService],
       // The resolver class must be known at registration time, before DI runs.
-      identityResolver:
-        process.env.AUTH_IDENTITY_PROVIDER === 'auth0'
-          ? Auth0IdentityResolver
-          : undefined,
+      identityResolver: process.env.AUTH_IDENTITY_PROVIDER === 'auth0' ? Auth0IdentityResolver : undefined,
       useFactory: (configService: ConfigService) => ({
         issuer: configService.get(ENV.OIDC_ISSUER),
         audience: configService.get(ENV.OIDC_AUDIENCE),
-        usersServiceUrl: configService.get(ENV.USERS_API_URL),
       }),
     }),
     HealthModule,

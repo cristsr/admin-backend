@@ -13,9 +13,7 @@ export class TypeOrmCategoryMapper {
       icon: entity.icon,
       color: entity.color,
       system: entity.system,
-      subcategories: entity.subcategories?.map(
-        TypeOrmSubcategoryMapper.toDomain,
-      ),
+      subcategories: entity.subcategories?.map(TypeOrmSubcategoryMapper.toDomain),
     });
   }
 

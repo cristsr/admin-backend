@@ -143,7 +143,7 @@ DROP TABLE "outbox_events";
 ```
 
 > El relay selecciona con `... WHERE status IN ('PENDING','FAILED') AND available_at <= NOW()
-> ORDER BY id FOR UPDATE SKIP LOCKED LIMIT :batch` para tolerar concurrencia y reintentos con backoff.
+ORDER BY id FOR UPDATE SKIP LOCKED LIMIT :batch` para tolerar concurrencia y reintentos con backoff.
 
 ---
 
@@ -220,7 +220,7 @@ DROP TABLE "idempotency_keys";
 
 > Flujo: se inserta la fila `PENDING` primero (el índice único bloquea duplicados
 > concurrentes → 409 en curso). Al completar, `UPDATE ... status='COMPLETED',
-> response_status, response_body`. Misma clave + `request_hash` distinto → 422.
+response_status, response_body`. Misma clave + `request_hash` distinto → 422.
 
 ---
 

@@ -72,6 +72,7 @@ Emite `this.eventEmitter.emit(MovementSaved, {...} as MovementSavedPayload)` con
 fuera de la transacción DB. Constante `MovementSaved` en `movement.constants.ts`.
 
 **Cadena de handlers existente**
+
 - `.../budget/infrastructure/adapters/events/movement-saved.event-handler.ts` —
   `@OnEvent(MovementSaved) handle(payload: MovementSavedPayload)`, calcula `percentage`,
   deduplica por `notifiedThreshold`, emite `BudgetThresholdExceeded`.
@@ -105,6 +106,7 @@ crear entidad de dominio + entidad TypeORM + migración + puerto + relay + suscr
 ### AC-3 — Idempotencia por Idempotency-Key (módulos movement + transfer)
 
 **Controladores destino (hoy sin header)**
+
 - `.../movement/infrastructure/adapters/http/movement.controller.ts` — `POST /movements` (`save`),
   `PATCH /movements/:id`, `GET`, `DELETE`. Usa `@CurrentUser() user: AuthenticatedUser`.
   Sin lectura de `Idempotency-Key`.
@@ -121,6 +123,7 @@ Clave de negocio única: `externalReference` en webhook (`findByExternalReferenc
 ### AC-4 — Reglas de auto-categorización (módulos category + webhook + movement)
 
 **Taxonomía de categorías (global, 2 niveles)**
+
 - `.../category/domain/category/category.entity.ts` — `id`, timestamps, `name`, `icon`,
   `color`, `subcategories?: Subcategory[]`.
 - `.../category/domain/subcategory/subcategory.entity.ts` — `id`, timestamps, `name`, `categoryId`.
@@ -178,6 +181,7 @@ migraciones de sm-0003 continúan la numeración.
 categorization-rule) deben registrarse aquí.
 
 **@shared** `D:/Cristian/Nest/admin-back/libs/shared/src`
+
 - Decoradores: `CurrentUser` (`@CurrentUser()`), `Public` (`@Public()`).
 - Excepciones: `BaseException` → `DomainException` (abstract, `status`/`format()`) →
   `DomainNotFoundException` (404), `DomainConflictException` (409);
@@ -199,6 +203,7 @@ No hay `docs/services/<micro>/` por componente.
 ## Gaps detectados
 
 **Artefactos nuevos que la historia debe crear (no existen hoy):**
+
 1. **AC-1:** campo/columna de política de saldo negativo por cuenta (`allowNegativeBalance`
    o `accountType`) en la entidad account — no existe.
 2. **AC-2:** tabla/entidad **outbox**, puerto, relay (cron interno) y suscriptor — no existe
@@ -211,6 +216,7 @@ No hay `docs/services/<micro>/` por componente.
    (cuenta + movimientos + par de transferencias) excluyendo soft-deleted de cálculos.
 
 **Documentación desactualizada (informativo, no bloquea):**
+
 - `RESUMEN_EJECUTIVO.md` §9.7 y `LLUVIA_DE_IDEAS.md` idea #1 dicen que
   `BudgetThresholdExceeded` "no tiene canal de entrega / solo log" — **falso**, ya existe
   `PgmqBudgetNotificationPublisher`. El gap real vigente es solo el outbox transaccional (idea #14).
@@ -223,6 +229,7 @@ No hay `docs/services/<micro>/` por componente.
   (coincide con `CLAUDE.md`, no con el resumen).
 
 **Reutilizables clave (ya implementados, consumir no reimplementar):**
+
 - `GetAccountBalanceUsecase` / `AccountRepository.movementBalance` → saldo vivo para AC-1.
 - `PgmqBudgetNotificationPublisher` + patrón puerto abstract-class → mensajería para AC-2.
 - `manager.transaction(...)` en `typeorm-movement.repository.saveAll` → transacción para outbox.

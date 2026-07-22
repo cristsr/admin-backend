@@ -31,9 +31,7 @@ describe('SaveMovementUsecase', () => {
     movementRepository = {
       firstMatching: jest.fn(),
       runInTransaction: jest.fn().mockImplementation((work) => work(fakeManager)),
-      saveWithManager: jest
-        .fn()
-        .mockImplementation(async (_manager, m) => ({ ...m, id: 100 })),
+      saveWithManager: jest.fn().mockImplementation(async (_manager, m) => ({ ...m, id: 100 })),
     };
     accountRepository = {
       firstMatching: jest.fn().mockResolvedValue(
@@ -47,9 +45,7 @@ describe('SaveMovementUsecase', () => {
       movementBalance: jest.fn().mockResolvedValue(0),
     };
     categoryResolver = {
-      resolveByIds: jest
-        .fn()
-        .mockResolvedValue({ categoryId: 5, subcategoryId: 9 }),
+      resolveByIds: jest.fn().mockResolvedValue({ categoryId: 5, subcategoryId: 9 }),
     };
     outboxPublisher = { publish: jest.fn() };
     // Real service, not a double: its transactional guarantee is what these tests cover.
@@ -57,11 +53,7 @@ describe('SaveMovementUsecase', () => {
       movementRepository,
       accountRepository,
       categoryResolver,
-      new RecordMovementService(
-        movementRepository,
-        accountRepository,
-        outboxPublisher,
-      ),
+      new RecordMovementService(movementRepository, accountRepository, outboxPublisher),
     );
   });
 
@@ -164,8 +156,7 @@ describe('SaveMovementUsecase', () => {
       categoryId: 77,
       subcategoryId: 88,
     });
-    const { category: _category, subcategory: _subcategory, ...noCategory } =
-      input as any;
+    const { category: _category, subcategory: _subcategory, ...noCategory } = input as any;
 
     await usecase.execute(noCategory, 42);
 

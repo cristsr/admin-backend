@@ -15,9 +15,7 @@ export class SaveManyCategoriesUsecase {
         name: c.name,
         icon: c.icon,
         color: c.color,
-        subcategories: c.subcategories?.map((s) =>
-          Subcategory.create({ name: s.name } as Subcategory),
-        ),
+        subcategories: c.subcategories?.map((s) => Subcategory.create({ name: s.name } as Subcategory)),
       } as Category),
     );
 

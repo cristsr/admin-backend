@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: sm-0003 API
-  version: "1.0.0"
+  version: '1.0.0'
   description: >
     Contrato generado por /design para sm-0003: Robustez del dominio y consistencia.
     Cubre validación de saldo en transferencias (AC-1), idempotencia en escrituras de

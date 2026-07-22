@@ -1,9 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import {
-  AccountCriteria,
-  AccountNotFoundException,
-  AccountRepository,
-} from '@app/account/domain/account';
+import { AccountLookups, AccountNotFoundException, AccountRepository } from '@app/account/domain/account';
 import { AccountArchivedOutputDto } from '../dto';
 
 @Injectable()
@@ -15,9 +11,7 @@ export class RemoveAccountUsecase {
    * transfer it participates in go too, so no transfer is left half-valid.
    */
   async execute(id: number, user: number): Promise<AccountArchivedOutputDto> {
-    const account = await this.accountRepository.firstMatching(
-      AccountCriteria.byIdAndUser(id, user),
-    );
+    const account = await this.accountRepository.firstMatching(AccountLookups.byIdAndUser(id, user));
 
     if (!account) {
       throw new AccountNotFoundException('Account not found');

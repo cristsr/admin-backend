@@ -23,30 +23,17 @@ export class SummaryController {
   ) {}
 
   @Get('balance')
-  balance(
-    @CurrentUser() user: AuthenticatedUser,
-    @Query() filter: ConsolidatedBalanceFilterDto,
-  ) {
-    return this.getConsolidatedBalanceUsecase.execute(
-      filter,
-      user.id,
-      user.presentationCurrency,
-    );
+  balance(@CurrentUser() user: AuthenticatedUser, @Query() filter: ConsolidatedBalanceFilterDto) {
+    return this.getConsolidatedBalanceUsecase.execute(filter, user.id, user.presentationCurrency);
   }
 
   @Get('expenses')
-  expenses(
-    @CurrentUser() user: AuthenticatedUser,
-    @Query() filter: ExpenseFilterDto,
-  ) {
+  expenses(@CurrentUser() user: AuthenticatedUser, @Query() filter: ExpenseFilterDto) {
     return this.getExpensesUsecase.execute(filter, user.id);
   }
 
   @Get('last-movements')
-  lastMovements(
-    @CurrentUser() user: AuthenticatedUser,
-    @Query() filter: LastMovementFilterDto,
-  ) {
+  lastMovements(@CurrentUser() user: AuthenticatedUser, @Query() filter: LastMovementFilterDto) {
     return this.getLastMovementsUsecase.execute(filter, user.id);
   }
 }

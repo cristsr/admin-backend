@@ -19,10 +19,7 @@ import {
 } from './infrastructure/adapters/persistence/typeorm';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([TypeOrmCategorizationRuleEntity]),
-    CategoryModule,
-  ],
+  imports: [TypeOrmModule.forFeature([TypeOrmCategorizationRuleEntity]), CategoryModule],
   controllers: [CategorizationRuleController],
   providers: [
     {

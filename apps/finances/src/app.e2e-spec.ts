@@ -37,8 +37,7 @@ describe('Auth happy path e2e', () => {
 
 async function acquireKeycloakToken(): Promise<string> {
   const tokenEndpoint =
-    process.env.KEYCLOAK_TOKEN_URL ??
-    'http://localhost:8080/realms/finances/protocol/openid-connect/token';
+    process.env.KEYCLOAK_TOKEN_URL ?? 'http://localhost:8080/realms/finances/protocol/openid-connect/token';
 
   const body = new URLSearchParams({
     grant_type: 'password',
@@ -54,9 +53,7 @@ async function acquireKeycloakToken(): Promise<string> {
   });
 
   if (!res.ok) {
-    throw new Error(
-      `Keycloak token fetch failed: ${res.status} ${await res.text()}`,
-    );
+    throw new Error(`Keycloak token fetch failed: ${res.status} ${await res.text()}`);
   }
 
   return ((await res.json()) as { access_token: string }).access_token;

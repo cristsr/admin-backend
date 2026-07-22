@@ -17,9 +17,5 @@ export abstract class OutboxRepository {
 
   abstract markDelivered(id: number): Promise<void>;
 
-  abstract markFailed(
-    id: number,
-    error: string,
-    backoffSeconds: number,
-  ): Promise<void>;
+  abstract markFailed(id: number, error: string, backoffSeconds: number): Promise<void>;
 }

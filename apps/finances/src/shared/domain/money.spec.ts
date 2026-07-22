@@ -44,12 +44,8 @@ describe('Money', () => {
   });
 
   it('refuses a non-positive exchange rate', () => {
-    expect(() => Money.of(2, 'USD').convertTo('COP', 0)).toThrow(
-      InvalidMoneyException,
-    );
-    expect(() => Money.of(2, 'USD').convertTo('COP', -1)).toThrow(
-      InvalidMoneyException,
-    );
+    expect(() => Money.of(2, 'USD').convertTo('COP', 0)).toThrow(InvalidMoneyException);
+    expect(() => Money.of(2, 'USD').convertTo('COP', -1)).toThrow(InvalidMoneyException);
   });
 
   it('floors the percentage: 99.6% has not reached 100%', () => {

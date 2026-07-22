@@ -1,9 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /** Creates the categorization_rules table for user-defined auto-categorization. */
-export class CreateCategorizationRulesTable1784073600024
-  implements MigrationInterface
-{
+export class CreateCategorizationRulesTable1784073600024 implements MigrationInterface {
   name = 'CreateCategorizationRulesTable1784073600024';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
@@ -26,9 +24,7 @@ export class CreateCategorizationRulesTable1784073600024
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(
-      `DROP INDEX "idx_categorization_rules_user_priority"`,
-    );
+    await queryRunner.query(`DROP INDEX "idx_categorization_rules_user_priority"`);
     await queryRunner.query(`DROP TABLE "categorization_rules"`);
   }
 }

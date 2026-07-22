@@ -1,11 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Nullable } from '@shared';
-import {
-  Budget,
-  BudgetCriteria,
-  BudgetRepository,
-  BudgetSpendingService,
-} from '@app/budget/domain/budget';
+import { Budget, BudgetLookups, BudgetRepository, BudgetSpendingService } from '@app/budget/domain/budget';
 
 @Injectable()
 export class FindBudgetUsecase {
@@ -15,9 +10,7 @@ export class FindBudgetUsecase {
   ) {}
 
   async execute(id: number, user: number): Promise<Nullable<Budget>> {
-    const budget = await this.budgetRepository.firstMatching(
-      BudgetCriteria.byIdAndUser(id, user),
-    );
+    const budget = await this.budgetRepository.firstMatching(BudgetLookups.byIdAndUser(id, user));
 
     if (!budget) return null;
 

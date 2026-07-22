@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: sm-0001 API
-  version: "1.0.0"
+  version: '1.0.0'
   description: >
     Contrato generado por /design para sm-0001: Cerrar huecos de features a medias.
     Cubre la superficie HTTP nueva o modificada. AC-1 (notificación de umbral de
@@ -196,7 +196,6 @@ paths:
 
 components:
   schemas:
-
     MovementType:
       type: string
       enum: [INCOME, EXPENSE, TRANSFER_IN, TRANSFER_OUT]
@@ -355,7 +354,18 @@ components:
 
     TransferOutput:
       type: object
-      required: [transferGroup, fromMovementId, toMovementId, amount, currency, toAmount, toCurrency, exchangeRate, date]
+      required:
+        [
+          transferGroup,
+          fromMovementId,
+          toMovementId,
+          amount,
+          currency,
+          toAmount,
+          toCurrency,
+          exchangeRate,
+          date,
+        ]
       properties:
         transferGroup: { type: string, format: uuid }
         fromMovementId: { type: integer }

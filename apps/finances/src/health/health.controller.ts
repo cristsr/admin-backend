@@ -1,11 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiSecurity, ApiTags } from '@nestjs/swagger';
-import {
-  HealthCheck,
-  HealthCheckResult,
-  HealthCheckService,
-  TypeOrmHealthIndicator,
-} from '@nestjs/terminus';
+import { HealthCheck, HealthCheckResult, HealthCheckService, TypeOrmHealthIndicator } from '@nestjs/terminus';
 import { Public } from '@shared';
 import { OidcHealthIndicator } from './oidc-health.indicator';
 
@@ -41,9 +36,6 @@ export class HealthController {
   })
   @HealthCheck()
   ready(): Promise<HealthCheckResult> {
-    return this.health.check([
-      () => this.db.pingCheck('db'),
-      () => this.oidc.isHealthy('oidc'),
-    ]);
+    return this.health.check([() => this.db.pingCheck('db'), () => this.oidc.isHealthy('oidc')]);
   }
 }

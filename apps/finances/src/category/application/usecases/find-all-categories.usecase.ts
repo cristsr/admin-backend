@@ -1,16 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { CriteriaQueryDto } from '@shared';
-import {
-  Category,
-  CategoryCriteria,
-  CategoryRepository,
-} from '@app/category/domain/category';
+import { Category, CategoryListing, CategoryRepository } from '@app/category/domain/category';
 
 @Injectable()
 export class FindAllCategoriesUsecase {
   constructor(private readonly categoryRepository: CategoryRepository) {}
 
   async execute(query?: CriteriaQueryDto): Promise<Category[]> {
-    return this.categoryRepository.matching(CategoryCriteria.list(query));
+    return this.categoryRepository.matching(CategoryListing.fromQuery(query));
   }
 }

@@ -92,6 +92,7 @@ Registro: cada `*.module.ts` se importa en `apps\finances\src\app.module.ts`.
 ## Patrón de inyección (use case de referencia)
 
 **Archivo:** `apps\finances\src\transfer\application\usecases\create-transfer.usecase.ts`
+
 ```typescript
 @Injectable()
 export class CreateTransferUsecase {
@@ -102,11 +103,13 @@ export class CreateTransferUsecase {
   async execute(input: TransferInputDto, user: number): Promise<TransferOutputDto> { ... }
 }
 ```
+
 Puertos inyectados por su `abstract class` (sin `Symbol`/token). Un usecase por acción, `execute(...)`.
 
 ## Configuración disponible (env)
 
 **Archivo:** `apps\finances\src\env.ts` — `ENV, PORT, DB_TYPE, DB_URI, DB_SSL, DB_SYNCHRONIZE, SHOW_DOCS, OIDC_ISSUER, OIDC_AUDIENCE, AUTH_IDENTITY_PROVIDER, USERS_API_URL, WEBHOOK_API_KEY`.
+
 - `USERS_API_URL` ya existe → canal para leer la preferencia de moneda del usuario (AC-2).
 - **GAP env:** faltarán claves para la cola sobre Postgres (AC-1) y para `exchanges`/`ExchangeRateProvider` (AC-2).
 

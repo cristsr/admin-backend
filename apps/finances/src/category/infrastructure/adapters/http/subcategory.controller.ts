@@ -33,26 +33,19 @@ export class SubcategoryController {
   }
 
   @Get('category/:id')
-  async findByCategory(
-    @Param('id') id: number,
-  ): Promise<SubcategoryOutputDto[]> {
-    const subcategories =
-      await this.findSubcategoriesByCategoryUsecase.execute(id);
+  async findByCategory(@Param('id') id: number): Promise<SubcategoryOutputDto[]> {
+    const subcategories = await this.findSubcategoriesByCategoryUsecase.execute(id);
     return subcategories.map(SubcategoryMapper.toOutput);
   }
 
   @Post()
-  async save(
-    @Body() input: SubcategoryInputDto,
-  ): Promise<SubcategoryOutputDto> {
+  async save(@Body() input: SubcategoryInputDto): Promise<SubcategoryOutputDto> {
     const subcategory = await this.saveSubcategoryUsecase.execute(input);
     return SubcategoryMapper.toOutput(subcategory);
   }
 
   @Post('batch')
-  async saveMany(
-    @Body() input: SubcategoriesInputDto,
-  ): Promise<{ status: boolean }> {
+  async saveMany(@Body() input: SubcategoriesInputDto): Promise<{ status: boolean }> {
     const status = await this.saveManySubcategoriesUsecase.execute(input);
     return { status };
   }

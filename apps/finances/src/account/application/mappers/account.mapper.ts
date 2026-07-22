@@ -16,10 +16,7 @@ export class AccountMapper {
   }
 
   /** Same output plus the live balance, resolved by the account itself. */
-  static toOutputWithBalance(
-    account: Account,
-    movementBalance: number,
-  ): AccountOutputDto {
+  static toOutputWithBalance(account: Account, movementBalance: number): AccountOutputDto {
     return {
       ...AccountMapper.toOutput(account),
       balance: account.liveBalance(movementBalance).amount,

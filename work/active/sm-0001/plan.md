@@ -9,6 +9,7 @@
 **Stack:** NestJS · TypeScript · TypeORM · PostgreSQL · Jest
 
 **Fragmentación por lotes** (condición de la excepción de Simplicity aprobada en `/design`):
+
 - **Lote 1 — AC-3** (saldo vivo) · autocontenido
 - **Lote 2 — AC-4** (PATCH movimientos) · autocontenido
 - **Lote 3 — AC-5** (editar scheduled + anular transferencia) · autocontenido
@@ -20,14 +21,14 @@
 
 ### Trazabilidad AC → Tareas
 
-| AC | Cubierto por |
-|----|-------------|
-| AC-1 | Tarea 21, 22, 23, 24, 25 |
-| AC-2 | Tarea 26, 27, 28, 29, 30, 31 |
-| AC-3 | Tarea 1, 2, 3, 4, 5, 6 |
-| AC-4 | Tarea 7, 8, 9 |
+| AC   | Cubierto por                         |
+| ---- | ------------------------------------ |
+| AC-1 | Tarea 21, 22, 23, 24, 25             |
+| AC-2 | Tarea 26, 27, 28, 29, 30, 31         |
+| AC-3 | Tarea 1, 2, 3, 4, 5, 6               |
+| AC-4 | Tarea 7, 8, 9                        |
 | AC-5 | Tarea 10, 11, 12, 13, 14, 15, 16, 17 |
-| AC-6 | Tarea 18, 19, 20 |
+| AC-6 | Tarea 18, 19, 20                     |
 
 ---
 
@@ -38,16 +39,20 @@
 **Preguntar:** "¿Cuál es el nombre de la rama? (ej: `feat/SM-0001-close-half-built-features`)"
 
 **Step 1: Verificar base (read-only)**
+
 ```bash
 git branch --show-current
 git status --porcelain
 ```
+
 Esperado: si no estás sobre la base fresca esperada o el working tree está sucio, evaluá `/sync` antes. (Este repo trabaja sobre `feat/core`; confirmá con el usuario si la rama parte de ahí o de `master`.)
 
 **Step 2: Crear rama**
+
 ```bash
 git checkout -b <nombre-de-rama-dado-por-usuario>
 ```
+
 Esperado: rama nueva creada y activa.
 
 ---
@@ -62,11 +67,13 @@ Esperado: rama nueva creada y activa.
 ### Tarea 1: DTOs de saldo de cuenta [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/account/application/dto/account-balance-output.dto.ts`
 - Modificar: `apps/finances/src/account/application/dto/account-output.dto.ts`
 - Modificar: `apps/finances/src/account/application/dto/index.ts`
 
 **Step 1: Crear `AccountBalanceOutputDto`** (response, sin validadores)
+
 ```typescript
 export class AccountBalanceOutputDto {
   accountId: number;
@@ -76,6 +83,7 @@ export class AccountBalanceOutputDto {
 ```
 
 **Step 2: Agregar `balance` a `AccountOutputDto`**
+
 ```typescript
 export class AccountOutputDto {
   id: number;
@@ -90,35 +98,39 @@ export class AccountOutputDto {
 ```
 
 **Step 3: Exportar en el barrel**
+
 ```typescript
 export * from './account-input.dto';
 export * from './account-output.dto';
 export * from './account-filter.dto';
 export * from './account-balance-output.dto';
 ```
+
 (DTOs de respuesta puros: sin test unitario.)
 
 ### Tarea 2: Puerto — métodos de saldo en `AccountRepository` [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/account/domain/account/account.repository.ts`
 
 **Step 1: Test que falla** — `apps/finances/src/account/domain/account/account.repository.spec.ts`
+
 ```typescript
 import { AccountRepository } from './account.repository';
 
 describe('AccountRepository (puerto)', () => {
   it('declara movementBalance y movementBalancesByUser', () => {
     const methods = Object.getOwnPropertyNames(AccountRepository.prototype);
-    expect(methods).toEqual(
-      expect.arrayContaining(['movementBalance', 'movementBalancesByUser']),
-    );
+    expect(methods).toEqual(expect.arrayContaining(['movementBalance', 'movementBalancesByUser']));
   });
 });
 ```
+
 (Puerto abstracto sin cuerpo: este test es opcional; si no aporta, omitir y validar vía la impl en Tarea 3.)
 
 **Step 2: Agregar firmas**
+
 ```typescript
 export abstract class AccountRepository {
   abstract findByIdAndUser(id: number, user: number): Promise<Nullable<Account>>;
@@ -139,10 +151,12 @@ export abstract class AccountRepository {
 ### Tarea 3: Adapter — implementar la agregación en `TypeOrmAccountRepository` [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/account/infrastructure/adapters/persistence/typeorm/account/typeorm-account.repository.ts`
 - Test: `.../typeorm-account.repository.spec.ts`
 
 **Step 1: Test que falla** (integración con repo mockeado del query builder o test unitario del CASE)
+
 ```typescript
 describe('TypeOrmAccountRepository.movementBalance', () => {
   it('suma INCOME/TRANSFER_IN y resta EXPENSE/TRANSFER_OUT, sin soft-deleted', async () => {
@@ -160,12 +174,15 @@ describe('TypeOrmAccountRepository.movementBalance', () => {
 ```
 
 **Step 2: Ejecutar y confirmar que falla**
+
 ```bash
 npx jest apps/finances/src/account/infrastructure/adapters/persistence/typeorm/account/typeorm-account.repository.spec.ts --no-coverage
 ```
+
 Esperado: FAIL — `movementBalance is not a function`.
 
 **Step 3: Implementar** (inyectar el repo de movimientos y usar CASE firmado)
+
 ```typescript
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -208,19 +225,23 @@ async movementBalancesByUser(user: number): Promise<Record<number, number>> {
 ```
 
 **Step 4: Confirmar que pasa**
+
 ```bash
 npx jest apps/finances/src/account/infrastructure/adapters/persistence/typeorm/account/typeorm-account.repository.spec.ts --no-coverage
 ```
+
 Esperado: PASS.
 
 ### Tarea 4: Usecase `GetAccountBalanceUsecase` [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/account/application/usecases/get-account-balance.usecase.ts`
 - Modificar: `apps/finances/src/account/application/usecases/index.ts`
 - Test: `.../get-account-balance.usecase.spec.ts`
 
 **Step 1: Test que falla**
+
 ```typescript
 describe('GetAccountBalanceUsecase', () => {
   const account = { id: 1, initialBalance: 100, currency: 'COP' };
@@ -243,12 +264,15 @@ describe('GetAccountBalanceUsecase', () => {
 ```
 
 **Step 2: Confirmar que falla**
+
 ```bash
 npx jest apps/finances/src/account/application/usecases/get-account-balance.usecase.spec.ts --no-coverage
 ```
+
 Esperado: FAIL — Cannot find module.
 
 **Step 3: Implementar**
+
 ```typescript
 import { Injectable } from '@nestjs/common';
 import { AccountBalanceOutputDto } from '../dto';
@@ -272,19 +296,23 @@ export class GetAccountBalanceUsecase {
 ```
 
 **Step 4: Confirmar que pasa**
+
 ```bash
 npx jest apps/finances/src/account/application/usecases/get-account-balance.usecase.spec.ts --no-coverage
 ```
+
 Esperado: PASS.
 
 ### Tarea 5: Enriquecer `FindAllAccountsUsecase` + mapper con saldo embebido [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/account/application/usecases/find-all-accounts.usecase.ts`
 - Modificar: `apps/finances/src/account/application/mappers/*` (AccountMapper.toOutput debe aceptar balance)
 - Test: `.../find-all-accounts.usecase.spec.ts`
 
 **Step 1: Test que falla**
+
 ```typescript
 it('adjunta el saldo a cada cuenta (AC-3 embebido en listado)', async () => {
   const accountRepo = {
@@ -300,21 +328,27 @@ it('adjunta el saldo a cada cuenta (AC-3 embebido en listado)', async () => {
 **Step 3: Implementar** — el usecase pide `movementBalancesByUser`, y para cada cuenta arma `balance = initialBalance + (map[id] ?? 0)`. `AccountMapper.toOutput` recibe el balance (o el usecase devuelve el DTO ya con balance). Mantener el patrón actual del mapper.
 
 **Step 4: Confirmar que pasa**
+
 ```bash
 npx jest apps/finances/src/account/application/usecases/find-all-accounts.usecase.spec.ts --no-coverage
 ```
+
 Esperado: PASS.
 
 ### Tarea 6: Controller + registro en `AccountModule` [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/account/infrastructure/adapters/http/account.controller.ts`
 - Modificar: `apps/finances/src/account/account.module.ts`
 
 **Step 1: Test e2e/unit del controller** (mockear usecase)
+
 ```typescript
 it('GET /accounts/:id/balance devuelve el saldo (AC-3)', async () => {
-  const usecase = { execute: jest.fn().mockResolvedValue({ accountId: 1, balance: 150, currency: 'COP' }) } as any;
+  const usecase = {
+    execute: jest.fn().mockResolvedValue({ accountId: 1, balance: 150, currency: 'COP' }),
+  } as any;
   const controller = new AccountController(/* find */ {} as any, {} as any, {} as any, {} as any, usecase);
   const result = await controller.balance({ id: 7 } as any, 1);
   expect(result).toEqual({ accountId: 1, balance: 150, currency: 'COP' });
@@ -322,6 +356,7 @@ it('GET /accounts/:id/balance devuelve el saldo (AC-3)', async () => {
 ```
 
 **Step 3: Implementar** — agregar al controller:
+
 ```typescript
 @Get(':id/balance')
 async balance(
@@ -331,7 +366,9 @@ async balance(
   return this.getAccountBalanceUsecase.execute(id, user.id);
 }
 ```
+
 Registrar en `account.module.ts`:
+
 ```typescript
 imports: [TypeOrmModule.forFeature([TypeOrmAccountEntity, TypeOrmMovementEntity])],
 providers: [
@@ -340,12 +377,15 @@ providers: [
   RemoveAccountUsecase, GetAccountBalanceUsecase,
 ],
 ```
+
 (Importar `TypeOrmMovementEntity` desde el módulo de movimientos.)
 
 **Step 4: Correr los tests del módulo**
+
 ```bash
 npx jest apps/finances/src/account/ --no-coverage
 ```
+
 Esperado: PASS.
 
 ---
@@ -355,10 +395,12 @@ Esperado: PASS.
 ### Tarea 7: DTO `MovementPatchDto` [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/movement/application/dto/movement-patch.dto.ts`
 - Modificar: `apps/finances/src/movement/application/dto/index.ts`
 
 **Step 1: Implementar** (todos opcionales; sin `type` ni `account`)
+
 ```typescript
 import { IsEnum, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { PaymentMethod } from '../../domain/movement';
@@ -373,21 +415,31 @@ export class MovementPatchDto {
   @IsOptional() @IsEnum(PaymentMethod) paymentMethod?: PaymentMethod;
 }
 ```
+
 Exportar en el barrel. (Sin test unitario de DTO.)
 
 ### Tarea 8: Usecase `UpdateMovementUsecase` [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/movement/application/usecases/update-movement.usecase.ts`
 - Modificar: `apps/finances/src/movement/application/usecases/index.ts`
 - Crear excepción si hace falta: `MovementNotEditableException` en `movement.exception.ts`
 - Test: `.../update-movement.usecase.spec.ts`
 
 **Step 1: Tests que fallan (cubren AC-4 completo)**
+
 ```typescript
 describe('UpdateMovementUsecase', () => {
-  const base = { id: 1, type: MovementType.EXPENSE, source: MovementSource.MANUAL,
-    categoryId: 3, merchant: 'Uber', notes: 'x', user: 7 };
+  const base = {
+    id: 1,
+    type: MovementType.EXPENSE,
+    source: MovementSource.MANUAL,
+    categoryId: 3,
+    merchant: 'Uber',
+    notes: 'x',
+    user: 7,
+  };
   let movementRepo, categoryRepo, subcategoryRepo, usecase;
   beforeEach(() => {
     movementRepo = { findByIdAndUser: jest.fn(), save: jest.fn((m) => m) };
@@ -426,19 +478,25 @@ describe('UpdateMovementUsecase', () => {
   it('valida subcategoría ∈ categoría al reasignar', async () => {
     movementRepo.findByIdAndUser.mockResolvedValue({ ...base });
     subcategoryRepo.findByIdAndCategory.mockResolvedValue(null);
-    await expect(usecase.execute(1, { subcategory: 9, category: 3 }, 7))
-      .rejects.toThrow(SubcategoryNotFoundException);
+    await expect(usecase.execute(1, { subcategory: 9, category: 3 }, 7)).rejects.toThrow(
+      SubcategoryNotFoundException,
+    );
   });
 });
 ```
 
 **Step 3: Implementar**
+
 ```typescript
 import { Injectable } from '@nestjs/common';
 import { SubcategoryNotFoundException, SubcategoryRepository } from '../../../category/domain/subcategory';
 import {
-  Movement, MovementNotEditableException, MovementNotFoundException,
-  MovementRepository, MovementSource, MovementType,
+  Movement,
+  MovementNotEditableException,
+  MovementNotFoundException,
+  MovementRepository,
+  MovementSource,
+  MovementType,
 } from '../../domain/movement';
 import { MovementPatchDto } from '../dto';
 
@@ -490,21 +548,26 @@ export class UpdateMovementUsecase {
   }
 }
 ```
+
 `MovementNotEditableException` en `movement.exception.ts`: mapear a HTTP 422 (seguir el patrón de excepciones de dominio con status del commit `893a1ff`).
 
 **Step 4: Confirmar que pasa**
+
 ```bash
 npx jest apps/finances/src/movement/application/usecases/update-movement.usecase.spec.ts --no-coverage
 ```
+
 Esperado: PASS.
 
 ### Tarea 9: Controller `PATCH /movements/:id` + registro [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/movement/infrastructure/adapters/http/movement.controller.ts`
 - Modificar: `apps/finances/src/movement/movement.module.ts` (agregar `UpdateMovementUsecase` a providers; importa `CategoryModule` que expone `SubcategoryRepository`)
 
 **Step 3: Implementar**
+
 ```typescript
 @Patch(':id')
 async update(
@@ -516,12 +579,15 @@ async update(
   return MovementMapper.toOutput(movement);
 }
 ```
+
 Registrar el usecase en `movement.module.ts`. Verificar que `CategoryModule` exporte `SubcategoryRepository` (si no, ya está disponible vía el import existente de `CategoryModule`).
 
 **Step 4:**
+
 ```bash
 npx jest apps/finances/src/movement/ --no-coverage
 ```
+
 Esperado: PASS.
 
 ---
@@ -531,9 +597,11 @@ Esperado: PASS.
 ### Tarea 10: Puerto — `MovementRepository.findByTransferGroup` [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/movement/domain/movement/movement.repository.ts`
 
 **Step 1: Agregar firma**
+
 ```typescript
 /** Ambas patas (o el par compensatorio) que comparten un transferGroup, del usuario. */
 abstract findByTransferGroup(transferGroup: string, user: number): Promise<Movement[]>;
@@ -542,12 +610,14 @@ abstract findByTransferGroup(transferGroup: string, user: number): Promise<Movem
 ### Tarea 11: Adapter — implementar `findByTransferGroup` [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/movement/infrastructure/adapters/persistence/typeorm/movement/typeorm-movement.repository.ts`
 - Test: `.../typeorm-movement.repository.spec.ts`
 
 **Step 1: Test que falla** → busca por `transfer_group` + `user`, ordena por tipo.
 
 **Step 3: Implementar**
+
 ```typescript
 async findByTransferGroup(transferGroup: string, user: number): Promise<Movement[]> {
   const entities = await this.repository.find({
@@ -559,14 +629,17 @@ async findByTransferGroup(transferGroup: string, user: number): Promise<Movement
 ```
 
 **Step 4:**
+
 ```bash
 npx jest apps/finances/src/movement/infrastructure/adapters/persistence/typeorm/movement/typeorm-movement.repository.spec.ts --no-coverage
 ```
+
 Esperado: PASS.
 
 ### Tarea 12: DTO `ScheduledPatchDto` [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/scheduled/application/dto/scheduled-patch.dto.ts`
 - Modificar: `apps/finances/src/scheduled/application/dto/index.ts`
 
@@ -588,37 +661,51 @@ export class ScheduledPatchDto {
 ### Tarea 13: Usecase `UpdateScheduledUsecase` [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/scheduled/application/usecases/update-scheduled.usecase.ts`
 - Modificar barrel de usecases.
 - Test: `.../update-scheduled.usecase.spec.ts`
 
 **Step 1: Tests que fallan**
+
 ```typescript
 it('404 si el programado es de otro usuario', async () => {
   scheduledRepo.findByIdAndUser.mockResolvedValue(null);
   await expect(usecase.execute(1, { amount: 10 }, 7)).rejects.toThrow(ScheduledNotFoundException);
 });
 it('actualiza monto/frecuencia sin tocar type (AC-5)', async () => {
-  scheduledRepo.findByIdAndUser.mockResolvedValue({ id: 1, type: MovementType.EXPENSE, amount: 5, frequency: Frequency.MONTHLY, update(p){ Object.assign(this,p);} });
+  scheduledRepo.findByIdAndUser.mockResolvedValue({
+    id: 1,
+    type: MovementType.EXPENSE,
+    amount: 5,
+    frequency: Frequency.MONTHLY,
+    update(p) {
+      Object.assign(this, p);
+    },
+  });
   const result = await usecase.execute(1, { amount: 10, frequency: Frequency.WEEKLY }, 7);
   expect(result.amount).toBe(10);
   expect(result.frequency).toBe(Frequency.WEEKLY);
   expect(result.type).toBe(MovementType.EXPENSE);
 });
 ```
+
 > Nota AC-5: editar el template NO toca los movimientos ya materializados (son filas `movements` aparte); no se recalcula nada del pasado. El test lo documenta con un comentario y no invoca ninguna regeneración.
 
 **Step 3: Implementar** — `findByIdAndUser`, validar subcategoría∈categoría si cambia, `scheduled.update({...})` solo con campos provistos, `scheduledRepository.save`.
 
 **Step 4:**
+
 ```bash
 npx jest apps/finances/src/scheduled/application/usecases/update-scheduled.usecase.spec.ts --no-coverage
 ```
+
 Esperado: PASS.
 
 ### Tarea 14: Controller `PATCH /scheduled/:id` + registro [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/scheduled/infrastructure/adapters/http/scheduled.controller.ts`
 - Modificar: `apps/finances/src/scheduled/scheduled.module.ts`
 
@@ -629,6 +716,7 @@ Esperado: PASS.
 ### Tarea 15: DTO `TransferReversalOutputDto` [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/transfer/application/dto/transfer-reversal-output.dto.ts`
 - Modificar: `apps/finances/src/transfer/application/dto/index.ts`
 
@@ -644,6 +732,7 @@ export class TransferReversalOutputDto {
 ### Tarea 16: Usecase `ReverseTransferUsecase` [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/transfer/application/usecases/reverse-transfer.usecase.ts`
 - Modificar barrel de usecases.
 - Crear excepción `TransferNotFoundException` / `TransferAlreadyReversedException` en `transfer/domain`.
@@ -654,6 +743,7 @@ export class TransferReversalOutputDto {
 que ya existen patas con ese group → 409.
 
 **Step 1: Tests que fallan**
+
 ```typescript
 it('404 si el transferGroup no existe para el usuario', async () => {
   movementRepo.findByTransferGroup.mockResolvedValue([]);
@@ -661,9 +751,26 @@ it('404 si el transferGroup no existe para el usuario', async () => {
 });
 it('crea un par compensatorio (OUT↔IN invertidos) con reversalTransferGroup', async () => {
   movementRepo.findByTransferGroup
-    .mockResolvedValueOnce([ // original
-      { id: 10, type: MovementType.TRANSFER_OUT, accountId: 1, amount: 100, currency: 'COP', transferGroup: 'grp', user: 7 },
-      { id: 11, type: MovementType.TRANSFER_IN, accountId: 2, amount: 100, currency: 'COP', transferGroup: 'grp', user: 7 },
+    .mockResolvedValueOnce([
+      // original
+      {
+        id: 10,
+        type: MovementType.TRANSFER_OUT,
+        accountId: 1,
+        amount: 100,
+        currency: 'COP',
+        transferGroup: 'grp',
+        user: 7,
+      },
+      {
+        id: 11,
+        type: MovementType.TRANSFER_IN,
+        accountId: 2,
+        amount: 100,
+        currency: 'COP',
+        transferGroup: 'grp',
+        user: 7,
+      },
     ])
     .mockResolvedValueOnce([]); // no existe reversa aún
   movementRepo.saveAll.mockResolvedValue([{ id: 20 }, { id: 21 }]);
@@ -680,6 +787,7 @@ it('409 si la transferencia ya fue anulada', async () => {
 ```
 
 **Step 3: Implementar**
+
 ```typescript
 @Injectable()
 export class ReverseTransferUsecase {
@@ -720,21 +828,26 @@ export class ReverseTransferUsecase {
   }
 }
 ```
+
 Excepciones → 404 y 409 respectivamente.
 
 **Step 4:**
+
 ```bash
 npx jest apps/finances/src/transfer/application/usecases/reverse-transfer.usecase.spec.ts --no-coverage
 ```
+
 Esperado: PASS.
 
 ### Tarea 17: Controller `POST /transfers/:transferGroup/reversal` + registro [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/transfer/infrastructure/adapters/http/transfer.controller.ts`
 - Modificar: `apps/finances/src/transfer/transfer.module.ts` (agregar `ReverseTransferUsecase`)
 
 **Step 3: Implementar**
+
 ```typescript
 @Post(':transferGroup/reversal')
 async reverse(
@@ -754,8 +867,10 @@ async reverse(
 ### Tarea 18: DTO `MovementReversalOutputDto` [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/webhook/application/dto/movement-reversal-output.dto.ts`
 - Modificar barrel de dto.
+
 ```typescript
 export class MovementReversalOutputDto {
   externalReference: string;
@@ -767,6 +882,7 @@ export class MovementReversalOutputDto {
 ### Tarea 19: Usecase `ReverseWebhookTransactionUsecase` [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/webhook/application/usecases/reverse-webhook-transaction.usecase.ts`
 - Modificar barrel.
 - Test: `.../reverse-webhook-transaction.usecase.spec.ts`
@@ -776,6 +892,7 @@ export class MovementReversalOutputDto {
 movimiento y devuelve el mismo resultado (200 idempotente), sin duplicar.
 
 **Step 1: Tests que fallan**
+
 ```typescript
 it('404 si no existe movimiento con ese externalReference', async () => {
   movementRepo.findByExternalReference.mockResolvedValue(null);
@@ -783,7 +900,16 @@ it('404 si no existe movimiento con ese externalReference', async () => {
 });
 it('crea un movimiento compensatorio con el tipo invertido', async () => {
   movementRepo.findByExternalReference
-    .mockResolvedValueOnce({ id: 5, type: MovementType.EXPENSE, amount: 30, currency: 'COP', categoryId: 3, accountId: 2, user: 7, externalReference: 'ext-1' })
+    .mockResolvedValueOnce({
+      id: 5,
+      type: MovementType.EXPENSE,
+      amount: 30,
+      currency: 'COP',
+      categoryId: 3,
+      accountId: 2,
+      user: 7,
+      externalReference: 'ext-1',
+    })
     .mockResolvedValueOnce(null); // no hay reversa aún
   movementRepo.save.mockResolvedValue({ id: 9 });
   const result = await usecase.execute('ext-1');
@@ -800,6 +926,7 @@ it('es idempotente: segunda llamada no duplica', async () => {
 ```
 
 **Step 3: Implementar**
+
 ```typescript
 @Injectable()
 export class ReverseWebhookTransactionUsecase {
@@ -815,7 +942,8 @@ export class ReverseWebhookTransactionUsecase {
       return { externalReference, originalMovementId: original.id, reversalMovementId: existing.id };
     }
 
-    const flip = (t: MovementType) => (t === MovementType.EXPENSE ? MovementType.INCOME : MovementType.EXPENSE);
+    const flip = (t: MovementType) =>
+      t === MovementType.EXPENSE ? MovementType.INCOME : MovementType.EXPENSE;
     const compensation = Movement.create({
       date: new Date(),
       type: flip(original.type),
@@ -837,18 +965,22 @@ export class ReverseWebhookTransactionUsecase {
 ```
 
 **Step 4:**
+
 ```bash
 npx jest apps/finances/src/webhook/application/usecases/reverse-webhook-transaction.usecase.spec.ts --no-coverage
 ```
+
 Esperado: PASS.
 
 ### Tarea 20: Controller `POST /webhooks/transactions/:externalReference/reversal` + registro [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/webhook/infrastructure/adapters/http/webhook.controller.ts`
 - Modificar: `apps/finances/src/webhook/webhook.module.ts`
 
 **Step 3: Implementar** (mantiene `@Public()` + `WebhookApiKeyGuard` del controller)
+
 ```typescript
 @Post('transactions/:externalReference/reversal')
 async reverse(
@@ -867,6 +999,7 @@ async reverse(
 ### Tarea 21: Entidad + migración `budgets.notified_threshold` [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/budget/infrastructure/adapters/persistence/typeorm/budget/typeorm-budget.entity.ts`
 - Modificar: `apps/finances/src/budget/domain/budget/budget.entity.ts` (agregar `notifiedThreshold`)
 - Modificar: mapper de budget.
@@ -875,13 +1008,16 @@ async reverse(
 **Fuente de verdad:** `docs/data-model.md`.
 
 **Step 1: Entidad TypeORM**
+
 ```typescript
 @Column({ name: 'notified_threshold', type: 'varchar', nullable: true })
 notifiedThreshold: BudgetThreshold | null;
 ```
+
 (Importar `BudgetThreshold` desde `budget.constants`.)
 
 **Step 2: Migración**
+
 ```typescript
 export class AddBudgetNotifiedThreshold1784073600017 implements MigrationInterface {
   name = 'AddBudgetNotifiedThreshold1784073600017';
@@ -895,15 +1031,18 @@ export class AddBudgetNotifiedThreshold1784073600017 implements MigrationInterfa
 ```
 
 **Step 3: Correr migración**
+
 ```bash
 TS_NODE_PROJECT=apps/finances/tsconfig.app.json NODE_OPTIONS="-r tsconfig-paths/register" \
   npx typeorm-ts-node-commonjs migration:run -d apps/finances/src/database/data-source.ts
 ```
+
 Esperado: `Migration AddBudgetNotifiedThreshold1784073600017 has been executed successfully`.
 
 ### Tarea 22: Puerto de mensajería `BudgetNotificationPublisher` [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/budget/domain/budget/budget-notification.publisher.ts`
 
 ```typescript
@@ -918,6 +1057,7 @@ export abstract class BudgetNotificationPublisher {
 ### Tarea 23: Adapter PGMQ `PgmqBudgetNotificationPublisher` ⚠️ INFRA NUEVA [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/budget/infrastructure/adapters/messaging/pgmq-budget-notification.publisher.ts`
 - Modificar: `apps/finances/src/env.ts` (agregar `PGMQ_QUEUE` / config de cola)
 
@@ -928,25 +1068,32 @@ export abstract class BudgetNotificationPublisher {
 > `docker-compose.yml` y una migración que cree la cola.
 
 **Implementación (envío vía SQL sobre la conexión existente):**
+
 ```typescript
 @Injectable()
 export class PgmqBudgetNotificationPublisher implements BudgetNotificationPublisher {
-  constructor(private readonly dataSource: DataSource, private readonly config: ConfigService) {}
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly config: ConfigService,
+  ) {}
   async publish(payload: BudgetThresholdExceededPayload): Promise<void> {
     const queue = this.config.get(ENV.PGMQ_QUEUE);
     await this.dataSource.query(`SELECT pgmq.send($1, $2)`, [queue, JSON.stringify(payload)]);
   }
 }
 ```
+
 **Test:** mockear `dataSource.query` y verificar que se llama con la cola y el payload serializado.
 
 ### Tarea 24: `MovementSavedEventHandler` — notificar una vez por umbral y período [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/budget/infrastructure/adapters/events/movement-saved.event-handler.ts`
 - Test: `.../movement-saved.event-handler.spec.ts`
 
 **Step 1: Tests que fallan (AC-1 idempotencia)**
+
 ```typescript
 it('emite al cruzar 80% la primera vez y persiste notifiedThreshold=WARNING', async () => { ... });
 it('NO reemite si un segundo movimiento mantiene el presupuesto sobre 80% ya notificado', async () => { ... });
@@ -954,6 +1101,7 @@ it('emite EXCEEDED al cruzar 100% aunque WARNING ya se notificó', async () => {
 ```
 
 **Step 3: Implementar** — tras calcular `threshold`, comparar con `budget.notifiedThreshold`:
+
 ```typescript
 if (!threshold) continue;
 // jerarquía: EXCEEDED > WARNING. Solo notificar si el umbral alcanzado supera al ya notificado.
@@ -963,19 +1111,28 @@ if (rank[threshold] <= alreadyRank) continue;
 
 budget.notifiedThreshold = threshold;
 await this.budgetRepository.save(budget);
-this.eventEmitter.emit(BudgetThresholdExceeded, { budgetId: budget.id, percentage, threshold, user: budget.user });
+this.eventEmitter.emit(BudgetThresholdExceeded, {
+  budgetId: budget.id,
+  percentage,
+  threshold,
+  user: budget.user,
+});
 ```
+
 (El handler sigue emitiendo el evento interno; el sink de Tarea 25 lo publica en PGMQ.)
 
 **Step 4:**
+
 ```bash
 npx jest apps/finances/src/budget/infrastructure/adapters/events/movement-saved.event-handler.spec.ts --no-coverage
 ```
+
 Esperado: PASS.
 
 ### Tarea 25: Reemplazar el placeholder por el publisher PGMQ + registro [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/budget/infrastructure/adapters/events/budget-threshold-exceeded.event-handler.ts`
 - Modificar: `apps/finances/src/budget/budget.module.ts` (proveer `BudgetNotificationPublisher→PgmqBudgetNotificationPublisher`)
 
@@ -995,7 +1152,9 @@ Esperado: PASS.
 ### Tarea 26: `presentationCurrency` en `AuthenticatedUser` ⚠️ CROSS-LIB / EXTERNO [X]
 
 **Archivos:**
+
 - Modificar: `libs/shared/src/auth/authenticated-user.type.ts`
+
 ```typescript
 export interface AuthenticatedUser {
   id: number;
@@ -1006,6 +1165,7 @@ export interface AuthenticatedUser {
   presentationCurrency?: string; // AC-2: claim emitido por users
 }
 ```
+
 > ⚠️ Externo: requiere que `users` agregue el claim al token y que el guard de `@shared` lo mapee
 > desde el JWT. Coordinar con el micro `users`. Hasta entonces, `presentationCurrency` puede venir
 > `undefined` → fallback a la moneda de la primera cuenta o a un default configurable.
@@ -1013,18 +1173,22 @@ export interface AuthenticatedUser {
 ### Tarea 27: Puerto `ExchangeRateProvider` [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/exchange/domain/exchange-rate.provider.ts`
+
 ```typescript
 /** Tasa de conversión entre dos monedas a una fecha (carry-forward si no hay exacta). */
 export abstract class ExchangeRateProvider {
   abstract getRate(from: string, to: string, date: Date): Promise<number>;
 }
 ```
+
 Excepción `ExchangeRateUnavailableException` (→ 422) si no hay ninguna tasa histórica.
 
 ### Tarea 28: Adapter HTTP `HttpExchangeRateProvider` ⚠️ EXTERNO [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/exchange/infrastructure/http-exchange-rate.provider.ts`
 - Modificar: `apps/finances/src/env.ts` (`EXCHANGES_API_URL`)
 
@@ -1035,12 +1199,14 @@ Excepción `ExchangeRateUnavailableException` (→ 422) si no hay ninguna tasa h
 ### Tarea 29: Transferencia cross-currency [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/transfer/application/usecases/create-transfer.usecase.ts`
 - Modificar: `apps/finances/src/transfer/application/dto/transfer-output.dto.ts` (agregar `toAmount`, `toCurrency`, `exchangeRate`)
 - Modificar: `apps/finances/src/transfer/transfer.module.ts` (inyectar `ExchangeRateProvider`)
 - Test: `create-transfer.usecase.spec.ts`
 
 **Step 1: Tests que fallan**
+
 ```typescript
 it('misma moneda: rate=1, toAmount=amount', async () => { ... expect(result.exchangeRate).toBe(1); });
 it('distinta moneda: toAmount = amount * rate del provider', async () => {
@@ -1056,6 +1222,7 @@ it('422 si no hay tasa histórica', async () => {
 ```
 
 **Step 3: Implementar** — reemplazar el bloque que lanza `TransferCurrencyMismatchException` por:
+
 ```typescript
 let exchangeRate = 1;
 let toAmount = input.amount;
@@ -1064,18 +1231,23 @@ if (from.currency !== to.currency) {
   toAmount = Math.round(input.amount * exchangeRate * 100) / 100;
 }
 ```
+
 Las patas: `TRANSFER_OUT` con `amount=input.amount, currency=from.currency`; `TRANSFER_IN` con `amount=toAmount, currency=to.currency`. Output agrega `toAmount, toCurrency: to.currency, exchangeRate`.
+
 > `TransferCurrencyMismatchException` se retira del camino (o se conserva solo si el provider no está disponible).
 
 **Step 4:**
+
 ```bash
 npx jest apps/finances/src/transfer/application/usecases/create-transfer.usecase.spec.ts --no-coverage
 ```
+
 Esperado: PASS.
 
 ### Tarea 30: Balance consolidado en moneda de presentación [X]
 
 **Archivos:**
+
 - Crear: `apps/finances/src/summary/application/dto/consolidated-balance-output.dto.ts`
 - Modificar: `GetBalanceUsecase` (summary) para consolidar por `presentationCurrency`
 - Modificar: `SummaryRepository` / adapter si hace falta saldo por cuenta y moneda
@@ -1090,10 +1262,12 @@ Esperado: PASS.
 ### Tarea 31: Controller `GET /summary/balance` (output consolidado) + registro [X]
 
 **Archivos:**
+
 - Modificar: `apps/finances/src/summary/infrastructure/adapters/http/summary.controller.ts`
 - Modificar: `apps/finances/src/summary/summary.module.ts` (inyectar `ExchangeRateProvider`)
 
 **Step 3: Implementar** — el endpoint pasa `user.presentationCurrency` al usecase y devuelve `ConsolidatedBalanceOutputDto`.
+
 > ⚠️ Cambia el shape de respuesta actual de `Balance` — coordinar con el front (documentado en `api.yaml`).
 
 **Step 4:** `npx jest apps/finances/src/summary/ --no-coverage` → PASS.
@@ -1105,6 +1279,7 @@ Esperado: PASS.
 ```bash
 npx nx test finances
 ```
+
 Esperado: PASS — todos los tests de `finances` en verde. Si algún lote quedó bloqueado por trabajo
 externo (Tareas 23, 26, 28), sus tests corren contra el puerto mockeado; la integración real se
 valida cuando la infra/otros micros estén listos.

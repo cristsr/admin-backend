@@ -3,12 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Nullable, TypeOrmCriteriaConverter } from '@shared';
 import { DataSource, In, Repository } from 'typeorm';
 import { TypeOrmCategoryEntity } from '@app/category/infrastructure/adapters/persistence/typeorm/category';
-import {
-  Movement,
-  MovementCriteria,
-  MovementField,
-  MovementType,
-} from '@app/movement/domain/movement';
+import { Movement, MovementField, MovementReports, MovementType } from '@app/movement/domain/movement';
 import {
   MOVEMENT_CRITERIA_FIELDS,
   TypeOrmMovementEntity,
@@ -27,11 +22,6 @@ const LAST_MOVEMENTS_LIMIT = 5;
 
 @Injectable()
 export class TypeOrmSummaryRepository implements SummaryRepository {
-  readonly #criteria = new TypeOrmCriteriaConverter<
-    TypeOrmMovementEntity,
-    MovementField
-  >(MOVEMENT_CRITERIA_FIELDS);
-
   constructor(
     @InjectRepository(TypeOrmMovementEntity)
     private readonly movementRepository: Repository<TypeOrmMovementEntity>,
@@ -43,11 +33,7 @@ export class TypeOrmSummaryRepository implements SummaryRepository {
   async balance(filter: BalanceQuery): Promise<Nullable<Balance>> {
     const query = this.dataSource
       .createQueryBuilder()
-      .select([
-        'incomes',
-        'expenses',
-        'initial_balance + accumulated_balance AS balance',
-      ])
+      .select(['incomes', 'expenses', 'initial_balance + accumulated_balance AS balance'])
       .from(
         (qb) =>
           qb
@@ -108,9 +94,7 @@ export class TypeOrmSummaryRepository implements SummaryRepository {
       })
       .limit(5)
       .getRawMany<{ amount: string; categoryId: number }>()
-      .then((rows) =>
-        rows.map((row) => ({ ...row, amount: Number(row.amount) })),
-      );
+      .then((rows) => rows.map((row) => ({ ...row, amount: Number(row.amount) })));
 
     if (!data.length) {
       return [];
@@ -139,18 +123,17 @@ export class TypeOrmSummaryRepository implements SummaryRepository {
   }
 
   /**
-   * Reuses `MovementCriteria` so the dashboard strip and the movements list
+   * Reuses `MovementReports` so the dashboard strip and the movements list
    * agree on what "newest" means.
    */
   async lastMovements(filter: LastMovementsQuery): Promise<Movement[]> {
-    const criteria = MovementCriteria.latestForAccount(
-      filter.user,
-      filter.account,
-      LAST_MOVEMENTS_LIMIT,
-    );
+    const criteria = MovementReports.latestForAccount(filter.user, filter.account, LAST_MOVEMENTS_LIMIT);
 
     const entities = await this.movementRepository.find({
-      ...this.#criteria.toFindOptions(criteria),
+      ...TypeOrmCriteriaConverter.toFindOptions<TypeOrmMovementEntity, MovementField>(
+        MOVEMENT_CRITERIA_FIELDS,
+        criteria,
+      ),
       relations: ['category', 'subcategory'],
     });
 

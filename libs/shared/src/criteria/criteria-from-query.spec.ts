@@ -1,11 +1,7 @@
 import { Criteria } from './criteria';
 import { criteriaFromQuery } from './criteria-from-query';
 import { CriteriaQueryDto } from './criteria-query.dto';
-import {
-  CriteriaSchema,
-  CriteriaValueType,
-  IDENTITY_OPERATORS,
-} from './criteria-schema';
+import { CriteriaSchema, CriteriaValueType, IDENTITY_OPERATORS } from './criteria-schema';
 import { FilterOperator } from './filter-operator';
 import { InvalidCriteriaException } from './invalid-criteria.exception';
 import { OrderType } from './order-type';
@@ -20,8 +16,7 @@ const schema: CriteriaSchema<Field> = {
   isSettled: { type: CriteriaValueType.BOOLEAN },
 };
 
-const query = (partial: Partial<CriteriaQueryDto>): CriteriaQueryDto =>
-  partial as CriteriaQueryDto;
+const query = (partial: Partial<CriteriaQueryDto>): CriteriaQueryDto => partial as CriteriaQueryDto;
 
 describe('criteriaFromQuery', () => {
   it('always paginates, so a list endpoint can never return the whole table', () => {
@@ -48,9 +43,7 @@ describe('criteriaFromQuery', () => {
   it('reads a list operator from either a comma-separated string or repeated entries', () => {
     const fromCsv = criteriaFromQuery(
       query({
-        filters: [
-          { field: 'type', operator: FilterOperator.IN, value: 'EXPENSE, INCOME' },
-        ],
+        filters: [{ field: 'type', operator: FilterOperator.IN, value: 'EXPENSE, INCOME' }],
       }),
       schema,
     );
@@ -77,9 +70,7 @@ describe('criteriaFromQuery', () => {
     it('survives a query that filters on other fields', () => {
       const criteria = criteriaFromQuery(
         query({
-          filters: [
-            { field: 'amount', operator: FilterOperator.EQUAL, value: '10' },
-          ],
+          filters: [{ field: 'amount', operator: FilterOperator.EQUAL, value: '10' }],
         }),
         schema,
         base,
@@ -93,9 +84,7 @@ describe('criteriaFromQuery', () => {
       expect(() =>
         criteriaFromQuery(
           query({
-            filters: [
-              { field: 'user', operator: FilterOperator.EQUAL, value: '9' },
-            ],
+            filters: [{ field: 'user', operator: FilterOperator.EQUAL, value: '9' }],
           }),
           schema,
           base,
@@ -109,9 +98,7 @@ describe('criteriaFromQuery', () => {
       expect(() =>
         criteriaFromQuery(
           query({
-            filters: [
-              { field: 'nope', operator: FilterOperator.EQUAL, value: '1' },
-            ],
+            filters: [{ field: 'nope', operator: FilterOperator.EQUAL, value: '1' }],
           }),
           schema,
         ),
@@ -161,9 +148,7 @@ describe('criteriaFromQuery', () => {
       expect(() =>
         criteriaFromQuery(
           query({
-            filters: [
-              { field: 'amount', operator: FilterOperator.EQUAL, value: 'ten' },
-            ],
+            filters: [{ field: 'amount', operator: FilterOperator.EQUAL, value: 'ten' }],
           }),
           schema,
         ),
@@ -171,20 +156,16 @@ describe('criteriaFromQuery', () => {
     });
 
     it('refuses sorting by a field that is not sortable', () => {
-      expect(() =>
-        criteriaFromQuery(query({ orderBy: 'merchant' }), schema),
-      ).toThrow(InvalidCriteriaException);
+      expect(() => criteriaFromQuery(query({ orderBy: 'merchant' }), schema)).toThrow(
+        InvalidCriteriaException,
+      );
     });
   });
 
   it('sorts ascending unless the caller says otherwise', () => {
-    expect(criteriaFromQuery(query({ orderBy: 'date' }), schema).orders[0].type)
-      .toBe(OrderType.ASC);
-    expect(
-      criteriaFromQuery(
-        query({ orderBy: 'date', order: OrderType.DESC }),
-        schema,
-      ).orders[0].type,
-    ).toBe(OrderType.DESC);
+    expect(criteriaFromQuery(query({ orderBy: 'date' }), schema).orders[0].type).toBe(OrderType.ASC);
+    expect(criteriaFromQuery(query({ orderBy: 'date', order: OrderType.DESC }), schema).orders[0].type).toBe(
+      OrderType.DESC,
+    );
   });
 });

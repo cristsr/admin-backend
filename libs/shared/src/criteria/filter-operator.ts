@@ -22,10 +22,7 @@ export enum FilterOperator {
 }
 
 /** Operators whose value is a list rather than a scalar. */
-export const LIST_OPERATORS: readonly FilterOperator[] = [
-  FilterOperator.IN,
-  FilterOperator.BETWEEN,
-];
+export const LIST_OPERATORS: readonly FilterOperator[] = [FilterOperator.IN, FilterOperator.BETWEEN];
 
 /** Operators that take no value at all. */
 export const VALUELESS_OPERATORS: readonly FilterOperator[] = [

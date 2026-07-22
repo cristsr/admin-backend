@@ -1,10 +1,4 @@
-import {
-  CallHandler,
-  ExecutionContext,
-  Injectable,
-  Logger,
-  NestInterceptor,
-} from '@nestjs/common';
+import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common';
 import { Observable, firstValueFrom, from } from 'rxjs';
 import {
   IdempotencyConflictException,
@@ -58,15 +52,11 @@ export class IdempotencyInterceptor implements NestInterceptor {
 
     if (!created) {
       if (row.requestHash !== requestHash) {
-        throw new IdempotencyConflictException(
-          'Idempotency-Key already used with a different request body',
-        );
+        throw new IdempotencyConflictException('Idempotency-Key already used with a different request body');
       }
 
       if (row.status === IdempotencyStatus.PENDING) {
-        throw new IdempotencyInProgressException(
-          'A request with this Idempotency-Key is still in progress',
-        );
+        throw new IdempotencyInProgressException('A request with this Idempotency-Key is still in progress');
       }
 
       response.status(row.responseStatus);
@@ -84,11 +74,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
   ): Promise<unknown> {
     try {
       const body = await firstValueFrom(next.handle());
-      await this.idempotencyRepository.complete(
-        rowId,
-        response.statusCode,
-        body,
-      );
+      await this.idempotencyRepository.complete(rowId, response.statusCode, body);
       return body;
     } catch (error) {
       await this.release(rowId);
@@ -101,11 +87,7 @@ export class IdempotencyInterceptor implements NestInterceptor {
     try {
       await this.idempotencyRepository.release(rowId);
     } catch (error) {
-      this.#logger.error(
-        `Could not release idempotency reservation ${rowId}: ${
-          (error as Error).message
-        }`,
-      );
+      this.#logger.error(`Could not release idempotency reservation ${rowId}: ${(error as Error).message}`);
     }
   }
 }

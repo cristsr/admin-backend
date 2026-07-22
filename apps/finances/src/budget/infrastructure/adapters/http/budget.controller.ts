@@ -1,12 +1,4 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  Param,
-  Post,
-  Query,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, CriteriaQueryDto, CurrentUser } from '@shared';
 import { BudgetInputDto, BudgetOutputDto } from '@app/budget/application/dto';
@@ -32,10 +24,7 @@ export class BudgetController {
   ) {}
 
   @Get(':id')
-  async findOne(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('id') id: number,
-  ): Promise<BudgetOutputDto> {
+  async findOne(@CurrentUser() user: AuthenticatedUser, @Param('id') id: number): Promise<BudgetOutputDto> {
     const budget = await this.findBudgetUsecase.execute(id, user.id);
     return budget && BudgetMapper.toOutput(budget);
   }
@@ -55,10 +44,7 @@ export class BudgetController {
   }
 
   @Post()
-  async save(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body() data: BudgetInputDto,
-  ): Promise<BudgetOutputDto> {
+  async save(@CurrentUser() user: AuthenticatedUser, @Body() data: BudgetInputDto): Promise<BudgetOutputDto> {
     const budget = await this.saveBudgetUsecase.execute(data, user.id);
     return BudgetMapper.toOutput(budget);
   }

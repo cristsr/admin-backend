@@ -10,10 +10,7 @@ describe('TypeOrmAccountRepository balance', () => {
     const balance = await repo.movementBalance(1, 7);
 
     expect(balance).toBe(150);
-    expect(dataSource.query).toHaveBeenCalledWith(
-      expect.stringContaining('CASE'),
-      [1, 7],
-    );
+    expect(dataSource.query).toHaveBeenCalledWith(expect.stringContaining('CASE'), [1, 7]);
   });
 
   it('movementBalancesByUser indexes by account_id', async () => {

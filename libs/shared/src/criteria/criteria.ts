@@ -4,7 +4,7 @@ import { Pagination } from '../functions/pagination.type';
 import { Nullable } from '../types/nullable.type';
 import { Filter, FilterScalar, FilterValue } from './filter';
 import { FilterOperator } from './filter-operator';
-import { Order } from './order';
+import { Order, OrderClause } from './order';
 import { OrderType } from './order-type';
 
 /**
@@ -37,18 +37,10 @@ export class Criteria<TField extends string = string> {
 
   /** Escape hatch for runtime-resolved operators; prefer the named helpers. */
   add(filter: Filter<TField>): Criteria<TField> {
-    return new Criteria(
-      [...this.filters, filter],
-      this.orders,
-      this.pagination,
-    );
+    return new Criteria([...this.filters, filter], this.orders, this.pagination);
   }
 
-  where(
-    field: TField,
-    operator: FilterOperator,
-    value?: FilterValue,
-  ): Criteria<TField> {
+  where(field: TField, operator: FilterOperator, value?: FilterValue): Criteria<TField> {
     return this.add(Filter.of(field, operator, value));
   }
 
@@ -64,10 +56,7 @@ export class Criteria<TField extends string = string> {
     return this.compare(field, FilterOperator.GREATER_THAN, value);
   }
 
-  greaterOrEqual(
-    field: TField,
-    value?: Nullable<FilterScalar>,
-  ): Criteria<TField> {
+  greaterOrEqual(field: TField, value?: Nullable<FilterScalar>): Criteria<TField> {
     return this.compare(field, FilterOperator.GREATER_OR_EQUAL, value);
   }
 
@@ -92,20 +81,13 @@ export class Criteria<TField extends string = string> {
   }
 
   /** Membership. An absent or empty list means "do not filter by this". */
-  oneOf(
-    field: TField,
-    values?: Nullable<readonly FilterScalar[]>,
-  ): Criteria<TField> {
+  oneOf(field: TField, values?: Nullable<readonly FilterScalar[]>): Criteria<TField> {
     if (!values?.length) return this;
     return this.where(field, FilterOperator.IN, values);
   }
 
   /** Inclusive range; a missing bound degrades to the matching comparison. */
-  between(
-    field: TField,
-    from?: Nullable<FilterScalar>,
-    to?: Nullable<FilterScalar>,
-  ): Criteria<TField> {
+  between(field: TField, from?: Nullable<FilterScalar>, to?: Nullable<FilterScalar>): Criteria<TField> {
     if (from === undefined || from === null) return this.lessOrEqual(field, to);
     if (to === undefined || to === null) return this.greaterOrEqual(field, from);
     return this.where(field, FilterOperator.BETWEEN, [from, to]);
@@ -121,20 +103,25 @@ export class Criteria<TField extends string = string> {
 
   /** Appends a sort clause; earlier clauses keep precedence. */
   orderBy(field: TField, type: OrderType = OrderType.ASC): Criteria<TField> {
-    return new Criteria(
-      this.filters,
-      [...this.orders, new Order(field, type)],
-      this.pagination,
+    return new Criteria(this.filters, [...this.orders, new Order(field, type)], this.pagination);
+  }
+
+  /**
+   * Fallback ordering: the clauses apply only when no order was stated, so an
+   * explicit caller sort always wins. Clauses keep the given precedence.
+   */
+  orderByDefault(...clauses: readonly OrderClause<TField>[]): Criteria<TField> {
+    if (this.hasOrders) return this;
+
+    return clauses.reduce<Criteria<TField>>(
+      (criteria, clause) => criteria.orderBy(clause.field, clause.type),
+      this,
     );
   }
 
   /** Applies the shared page-size normalization (default and hard cap). */
   paginate(input: PaginationInput): Criteria<TField> {
-    return new Criteria(
-      this.filters,
-      this.orders,
-      normalizePagination(input),
-    );
+    return new Criteria(this.filters, this.orders, normalizePagination(input));
   }
 
   /** Caps the result set without paging; for internal bounded-batch readers. */
@@ -142,11 +129,7 @@ export class Criteria<TField extends string = string> {
     return new Criteria(this.filters, this.orders, { take, skip: 0 });
   }
 
-  private compare(
-    field: TField,
-    operator: FilterOperator,
-    value?: Nullable<FilterScalar>,
-  ): Criteria<TField> {
+  private compare(field: TField, operator: FilterOperator, value?: Nullable<FilterScalar>): Criteria<TField> {
     if (value === undefined || value === null) return this;
     return this.where(field, operator, value);
   }

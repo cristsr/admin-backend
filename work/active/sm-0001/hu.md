@@ -144,9 +144,11 @@ contrapartida. Debe existir una operación para revertir un movimiento identific
 ## Technical Context
 
 ### Microservicio objetivo
+
 - finances (`apps/finances`)
 
 ### Artefactos a reutilizar
+
 - `MovementRepository` / `Movement` (domain) — reversas de AC-5/AC-6 y cálculo de saldo (AC-3)
 - `MovementSource`, `MovementType`, `reportableMovementTypes` — clasificación de movimientos
 - `AccountRepository` — saldo vivo por cuenta (AC-3)
@@ -156,12 +158,14 @@ contrapartida. Debe existir una operación para revertir un movimiento identific
 - `ReceiveWebhookTransactionUsecase` — idempotencia por `externalReference` (AC-6)
 
 ### Patrones obligatorios
+
 - Arquitectura hexagonal por módulo (`domain`/`application`/`infrastructure`); un usecase por acción de negocio
 - Puertos como `abstract class` (sin `Symbol`/`InjectionToken`); mappers dominio↔TypeORM separados
 - Columnas tipo-enum como varchar; valores permitidos en la capa de aplicación (memoria no-db-enums)
 - Migraciones TypeORM (no `synchronize`); toda lectura/escritura de datos personales scopeada por `user.id`
 
 ### Restricciones técnicas
+
 - **Mensajería sobre PostgreSQL** (postgresmq/PGMQ): AC-1 publica el evento en una cola implementada
   sobre la DB existente; no se suma un broker externo (Redis/RabbitMQ/Kafka)
 - No dejar nunca una transferencia con una sola pata del `transferGroup`
@@ -169,5 +173,6 @@ contrapartida. Debe existir una operación para revertir un movimiento identific
 - Reversa/compensación en vez de borrado (AC-5, AC-6): nada se elimina, se compensa preservando el rastro
 
 ### Deuda técnica relevante
+
 - `apps/exchanges` huérfano y roto — es la fuente de tasas decidida para AC-2, hay que reactivarlo/rehacerlo antes de consumirlo
 - `BudgetThresholdExceeded` hoy solo hace `log`; la cola sobre Postgres es infraestructura nueva a introducir

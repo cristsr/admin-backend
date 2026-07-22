@@ -4,7 +4,7 @@ import {
   CategorizationRuleRepository,
 } from '@app/categorization-rule/domain/categorization-rule';
 import {
-  CategoryCriteria,
+  CategoryLookups,
   CategoryNotFoundException,
   CategoryRepository,
 } from '@app/category/domain/category';
@@ -17,18 +17,11 @@ export class CreateCategorizationRuleUsecase {
     private readonly categoryRepository: CategoryRepository,
   ) {}
 
-  async execute(
-    input: CategorizationRuleInputDto,
-    user: number,
-  ): Promise<CategorizationRule> {
-    const category = await this.categoryRepository.firstMatching(
-      CategoryCriteria.byId(input.categoryId),
-    );
+  async execute(input: CategorizationRuleInputDto, user: number): Promise<CategorizationRule> {
+    const category = await this.categoryRepository.firstMatching(CategoryLookups.byId(input.categoryId));
 
     if (!category) {
-      throw new CategoryNotFoundException(
-        `Category ${input.categoryId} not found`,
-      );
+      throw new CategoryNotFoundException(`Category ${input.categoryId} not found`);
     }
 
     const rule = CategorizationRule.create({

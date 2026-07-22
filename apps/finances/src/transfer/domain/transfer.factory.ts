@@ -36,17 +36,14 @@ export class TransferFactory {
     const { from, to, amount, date } = command;
 
     if (from.id === to.id) {
-      throw new SameAccountTransferException(
-        'Cannot transfer to the same account',
-      );
+      throw new SameAccountTransferException('Cannot transfer to the same account');
     }
 
     const exchangeRate = await this.rateBetween(from, to, date);
     const credited = amount.convertTo(to.currencyCode(), exchangeRate);
 
     const transferGroup = randomUUID();
-    const description =
-      command.description ?? `Transfer ${from.name} → ${to.name}`;
+    const description = command.description ?? `Transfer ${from.name} → ${to.name}`;
 
     const leg = (type: MovementType, accountId: number, money: Money) =>
       Movement.transferLeg({
@@ -82,17 +79,9 @@ export class TransferFactory {
     return `${REVERSAL_PREFIX}${transferGroup}`;
   }
 
-  private async rateBetween(
-    from: Account,
-    to: Account,
-    date: Date,
-  ): Promise<number> {
+  private async rateBetween(from: Account, to: Account, date: Date): Promise<number> {
     if (from.currencyCode() === to.currencyCode()) return 1;
 
-    return this.exchangeRateProvider.getRate(
-      from.currencyCode(),
-      to.currencyCode(),
-      date,
-    );
+    return this.exchangeRateProvider.getRate(from.currencyCode(), to.currencyCode(), date);
   }
 }
