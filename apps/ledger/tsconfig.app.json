@@ -14,7 +14,8 @@
     "**/*.spec.ts",
     "**/*.test.ts",
     "**/*.e2e-spec.ts",
-    "src/shared/testing"
+    "src/shared/testing",
+    "src/shared-kernel/infrastructure/testing"
   ],
   "include": ["src/**/*.ts"]
 }
