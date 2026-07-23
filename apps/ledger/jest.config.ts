@@ -14,6 +14,10 @@ module.exports = {
   moduleFileExtensions: ['ts', 'js', 'html'],
   coverageDirectory: '../../coverage/apps/ledger',
 
+  // Include EP-3 application-level e2e suites (`*.e2e-spec.ts`) alongside units;
+  // the default preset only matches `*.spec.ts`/`*.test.ts`.
+  testMatch: ['**/*.spec.ts', '**/*.e2e-spec.ts'],
+
   // `jose` ships ESM only; this CJS runner must transform it.
   transformIgnorePatterns: ['/node_modules/(?!jose/)'],
 
