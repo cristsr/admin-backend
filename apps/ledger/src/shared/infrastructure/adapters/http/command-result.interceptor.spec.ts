@@ -1,6 +1,6 @@
 import { CallHandler, ExecutionContext, HttpStatus } from '@nestjs/common';
 import { firstValueFrom, of } from 'rxjs';
-import { CommandResult } from '@ledger/shared/application/ep1-contracts.assumed';
+import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 import { CommandResultInterceptor, STREAM_POSITION_HEADER } from './command-result.interceptor';
 import { CommandAcceptedDto } from './dto/command-accepted.dto';
 
@@ -21,8 +21,7 @@ describe('CommandResultInterceptor', () => {
 
   const commandResult = (overrides: Partial<CommandResult> = {}): CommandResult => ({
     aggregateId: 'agg-1',
-    sequence: 1,
-    streamPosition: 42,
+    streamPosition: 42n,
     idempotentReplay: false,
     ...overrides,
   });
@@ -31,7 +30,7 @@ describe('CommandResultInterceptor', () => {
     const { result, setHeader, status } = await run(commandResult());
 
     expect(result).toBeInstanceOf(CommandAcceptedDto);
-    expect(result).toEqual({ id: 'agg-1', sequence: 1, streamPosition: 42 });
+    expect(result).toEqual({ id: 'agg-1', streamPosition: '42' });
     expect(setHeader).toHaveBeenCalledWith(STREAM_POSITION_HEADER, '42');
     expect(status).not.toHaveBeenCalled();
   });

@@ -1,7 +1,8 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsDateString, IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
-import { DerivedKind, TransactionStatus } from '@ledger/shared/domain/ep1-contracts.assumed';
+import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
+import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 
 /** Largest page the `transaction_list` projection will return in one call. */
 export const MAX_TRANSACTION_PAGE_SIZE = 200;

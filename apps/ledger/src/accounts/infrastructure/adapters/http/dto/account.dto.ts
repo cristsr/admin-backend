@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { AccountType } from '@ledger/shared/domain/ep1-contracts.assumed';
+import { AccountType } from '@ledger/shared-kernel/domain/value-objects';
 
 /**
  * A single account node as served by the `account_tree` projection. A read

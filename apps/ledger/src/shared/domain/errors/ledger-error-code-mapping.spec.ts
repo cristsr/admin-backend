@@ -2,17 +2,20 @@ import { ArgumentsHost, HttpStatus } from '@nestjs/common';
 import { DomainException, ExceptionFilter } from '@shared';
 import {
   AccountClosedException,
-  AccountNotFoundException,
-  ConcurrencyConflictException,
   CurrencyNotAllowedException,
-  DuplicateExternalRefException,
-  ImmutableTransactionException,
-  LedgerNotInitializedException,
   NameCollisionException,
   SystemAccountProtectedException,
+} from '@ledger/accounts/domain/account/exceptions/account.exception';
+import { AccountNotFoundException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
+import {
+  ConcurrencyConflictException,
+  DuplicateExternalRefException,
+} from '@ledger/shared-kernel/domain/exceptions/event-store.exception';
+import {
+  ImmutableTransactionException,
   TransactionNotFoundException,
   UnbalancedTransactionException,
-} from '@ledger/shared/domain/ep1-contracts.assumed';
+} from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
 import { LEDGER_ERROR_CODE } from './ledger-error-code';
 
 /**
@@ -38,13 +41,14 @@ describe('Ledger error code → HTTP status contract (RF-14)', () => {
   const cases: ReadonlyArray<[DomainException, number, string]> = [
     [new UnbalancedTransactionException('unbalanced'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.UNBALANCED_TRANSACTION],
     [new CurrencyNotAllowedException('bad currency'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.CURRENCY_NOT_ALLOWED],
-    [new AccountClosedException('closed'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.ACCOUNT_CLOSED],
+    // Divergence from EP-2's assumed contract: the real EP-1 `AccountClosedException`
+    // is an unprocessable-entity (INV-3, posting to a closed account), not a conflict.
+    [new AccountClosedException('closed'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.ACCOUNT_CLOSED],
     [new ImmutableTransactionException('immutable'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.IMMUTABLE_TRANSACTION],
     [new NameCollisionException('collision'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.NAME_COLLISION],
     [new SystemAccountProtectedException('protected'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.SYSTEM_ACCOUNT_PROTECTED],
     [new ConcurrencyConflictException('conflict'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.CONCURRENCY_CONFLICT],
     [new DuplicateExternalRefException('duplicate'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.DUPLICATE_EXTERNAL_REF],
-    [new LedgerNotInitializedException('not initialized'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.LEDGER_NOT_INITIALIZED],
     [new AccountNotFoundException('no account'), HttpStatus.NOT_FOUND, LEDGER_ERROR_CODE.ACCOUNT_NOT_FOUND],
     [new TransactionNotFoundException('no transaction'), HttpStatus.NOT_FOUND, LEDGER_ERROR_CODE.TRANSACTION_NOT_FOUND],
   ];

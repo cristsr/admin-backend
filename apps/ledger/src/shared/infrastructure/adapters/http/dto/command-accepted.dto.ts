@@ -1,29 +1,27 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CommandResult } from '@ledger/shared/application/ep1-contracts.assumed';
+import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 
 /**
- * The standard body of every write (RNF-10): the affected aggregate's id, its
- * new sequence, and the global stream position for read-your-writes (RNF-9).
- * Never a read view — to see the resource, the client issues a follow-up GET.
+ * The standard body of every write (RNF-10): the affected aggregate's id and the
+ * global stream position for read-your-writes (RNF-9). The position is a `bigint`
+ * in the core and is serialized as a decimal string here so it survives JSON
+ * without precision loss. Never a read view — to see the resource, the client
+ * issues a follow-up GET.
  */
 export class CommandAcceptedDto {
   @ApiProperty({ format: 'uuid', description: 'Identifier of the affected aggregate.' })
   readonly id: string;
 
-  @ApiProperty({ description: 'Per-aggregate sequence reached by this command.' })
-  readonly sequence: number;
+  @ApiProperty({ description: 'Global stream position for read-your-writes (RNF-9), as a decimal string.' })
+  readonly streamPosition: string;
 
-  @ApiProperty({ description: 'Global stream position for read-your-writes (RNF-9).' })
-  readonly streamPosition: number;
-
-  private constructor(id: string, sequence: number, streamPosition: number) {
+  private constructor(id: string, streamPosition: string) {
     this.id = id;
-    this.sequence = sequence;
     this.streamPosition = streamPosition;
   }
 
   /** Projects the write-only fields of a {@link CommandResult} into the response shape. */
   static from(result: CommandResult): CommandAcceptedDto {
-    return new CommandAcceptedDto(result.aggregateId, result.sequence, result.streamPosition);
+    return new CommandAcceptedDto(result.aggregateId, String(result.streamPosition));
   }
 }

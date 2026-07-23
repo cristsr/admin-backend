@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { DerivedKind, TransactionStatus } from '@ledger/shared/domain/ep1-contracts.assumed';
+import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
+import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 
 /** A posting as served by the `transaction_list` projection. */
 export class TransactionPostingDto {
