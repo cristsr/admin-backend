@@ -1,5 +1,8 @@
 # Integración EP-1 + EP-2 + EP-3 — mapa de reconciliación
 
+**Estado: COMPLETA.** `apps/ledger` compila, linta y pasa tests como un solo
+árbol (255 tests, 1 suite Postgres saltada) en `feat/ledger-integration`.
+
 Rama: `feat/ledger-integration` (merge de las 3 ramas de worktree hecho;
 1 conflicto trivial resuelto en `transactions/.../http/index.ts`).
 
@@ -57,9 +60,15 @@ imports: hay **desajustes estructurales** que exigen adaptar call-sites.
   `LEDGER_NOT_INITIALIZED` no tiene excepción real; `DerivedKind` usa **`COMPOUND`**
   (no `ADJUSTMENT`); `OpenAccountCommand` no lleva `type`/`parentId` (se derivan del
   nombre jerárquico); varios filtros de query son más magros que lo asumido.
-- ⏳ **Stage 3 (EP-3)** — PENDIENTE. Único assumed restante:
-  `shared/ep1-ep2-contracts.assumed.ts` (+ stand-in `shared/infrastructure/http/authenticated-context.ts`),
-  consumido por **50 archivos**. Es reescritura all-or-nothing, no repunte.
+- ✅ **Stage 3 (EP-3)** — commit `6363467`. `BalanceAssertion` reescrito sobre
+  `DomainEvent` abstracto + `AggregateRoot` + `StoredEvent`; `BalanceAssertionRepository`
+  extiende el `EventSourcedRepository` real; `ResolveDiscrepancy`/`MergePendingTransfers`
+  reutilizan los commands reales de `transactions` vía `CommandBus.dispatch(cmd, ctx)`
+  (el agregado genera el id, los handlers enhebran `CommandResult.aggregateId` de
+  vuelta); `LedgerSettingsReader`/`SystemAccountLookup`/`AccountLookup` con adaptadores
+  reales sobre `proj_ledger_settings`/`proj_accounts`; módulos `Reconciliation`/
+  `Transactions` montados en `AppModule`. Los 2 archivos `*assumed*` restantes
+  eliminados — **cero referencias a `assumed` en `apps/ledger/src`**.
 
 ### Stage 3 — bloqueos precisos (contrato para el ejecutor)
 
