@@ -16,6 +16,11 @@
       "@shared/*": ["libs/shared/src/*"],
       "@ledger/*": ["apps/ledger/src/*"]
     },
+    // The event store models `global_position` as `bigint` (never `number`),
+    // so BigInt literals and the global must be available. Node 22 supports
+    // them natively; this raises only the ledger app above the es2017 base.
+    "target": "es2021",
+    "lib": ["es2021"],
     "ignoreDeprecations": "6.0",
     // `big.js` is a CJS `export =` package; the `Money` value object imports it
     // with a default import, which requires the interop helper. Scoped to this

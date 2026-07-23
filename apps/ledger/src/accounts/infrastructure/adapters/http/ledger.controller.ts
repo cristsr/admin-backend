@@ -1,0 +1,60 @@
+import { Body, Controller, Get, Post, UseInterceptors } from '@nestjs/common';
+import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Nullable } from '@shared';
+import { InitializeLedgerCommand } from '@ledger/ledger/application/initialize-ledger/initialize-ledger.command';
+import { GetLedgerSettingsQuery } from '@ledger/read-side/get-ledger-settings/get-ledger-settings.query';
+import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
+import {
+  CommandAcceptedDto,
+  CommandResultInterceptor,
+  Context,
+  ExternalRef,
+} from '@ledger/shared/infrastructure/adapters/http';
+import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
+import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
+import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
+import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
+import { InitializeLedgerRequestDto } from './dto/initialize-ledger-request.dto';
+import { LedgerSettingsDto } from './dto/ledger-settings.dto';
+
+/**
+ * Ledger-level lifecycle: initialization and settings read. A pure driving
+ * adapter — it maps HTTP to the command/query buses and nothing else (RNF-10).
+ * Settings mutations belong to EP-4 and are intentionally absent.
+ */
+@ApiTags('ledger')
+@Controller({ path: 'ledger', version: '1' })
+@UseInterceptors(CommandResultInterceptor)
+export class LedgerController {
+  constructor(
+    private readonly commandBus: CommandBus,
+    private readonly queryBus: QueryBus,
+  ) {}
+
+  @Post('initialize')
+  @ApiOperation({ summary: 'Initialize the ledger (creates the technical system accounts).' })
+  @ApiCreatedResponse({ type: CommandAcceptedDto })
+  initialize(
+    @Context() context: LedgerContext,
+    @ExternalRef() externalRef: Nullable<string>,
+    @Body() dto: InitializeLedgerRequestDto,
+  ): Promise<CommandResult> {
+    const command = new InitializeLedgerCommand(dto.presentationCurrency, dto.timezone);
+    const ctx: AuthContext = {
+      userId: context.userId,
+      clientId: context.clientId,
+      externalRef,
+    };
+
+    return this.commandBus.dispatch(command, ctx);
+  }
+
+  @Get('settings')
+  @ApiOperation({ summary: 'Read the ledger settings projection.' })
+  @ApiOkResponse({ type: LedgerSettingsDto })
+  settings(@Context() context: LedgerContext): Promise<LedgerSettingsDto> {
+    return this.queryBus.ask<LedgerSettingsDto>(new GetLedgerSettingsQuery(), {
+      userId: context.userId,
+    });
+  }
+}
