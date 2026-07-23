@@ -1,12 +1,15 @@
 // MUST stay the first import: auto-instrumentations patch modules as they are
 // required, so anything loaded earlier is never traced.
 import '@shared/telemetry/instrumentation';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { ExceptionFilter } from '@shared';
+import { useContainer } from 'class-validator';
 import { Logger as PinoLogger } from 'nestjs-pino';
 import { AppConfig, appConfig } from '@ledger/config/environment';
 import { AppModule } from './app.module';
+import { maybeMountSwagger } from './config/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -20,7 +23,28 @@ async function bootstrap() {
   app.useLogger(app.get(PinoLogger));
   app.flushLogs();
 
+  // URI versioning under a global `api` prefix: every resource hangs off
+  // `/api/v1/...` (RNF-8). A breaking change opens `/api/v2` alongside v1.
+  app.setGlobalPrefix('api');
+  app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      forbidUnknownValues: false,
+    }),
+  );
+
+  // Every domain and port failure becomes the standard error body with its
+  // stable RF-14 `code` (EP-2.6).
+  app.useGlobalFilters(new ExceptionFilter());
+
+  useContainer(app.select(AppModule), { fallbackOnErrors: true });
+
   const config = app.get<AppConfig>(appConfig.KEY);
+
+  // Mount the Swagger UI only outside production.
+  maybeMountSwagger(app, config.showDocs);
 
   await app.listen(config.port);
 

@@ -9,6 +9,7 @@ describe('Environment', () => {
     DB_URI: 'postgres://user:pass@localhost:5432/ledger',
     DB_SSL: 'false',
     DB_SYNCHRONIZE: 'false',
+    SHOW_DOCS: 'false',
   };
 
   it('fails fast when a required variable is missing', () => {

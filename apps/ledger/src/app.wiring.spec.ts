@@ -11,6 +11,7 @@ const environment: Record<string, string> = {
   DB_URI: 'postgres://user:pass@localhost:5432/ledger_test',
   DB_SSL: 'false',
   DB_SYNCHRONIZE: 'false',
+  SHOW_DOCS: 'false',
 };
 
 Object.assign(process.env, environment);
