@@ -1,5 +1,5 @@
 import { Nullable } from '@shared';
-import { LocalDate } from '@ledger/shared/ep1-ep2-contracts.assumed';
+import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 import { AssertionStatus } from '../balance-assertion/enums/assertion-status.enum';
 
 /** A materialized `assertion_status` row (proj_assertions, §6.2). */
@@ -53,6 +53,6 @@ export abstract class AssertionStatusStore {
   abstract nonRevokedOnAccountFrom(
     userId: string,
     accountId: string,
-    from: LocalDate,
+    from: LedgerDate,
   ): Promise<readonly string[]>;
 }

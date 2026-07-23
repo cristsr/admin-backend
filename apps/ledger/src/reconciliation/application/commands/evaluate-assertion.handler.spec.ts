@@ -1,33 +1,40 @@
+import { createReconciliationEventRegistry } from '@ledger/reconciliation/application/reconciliation-event-registry.factory';
 import { BalanceAssertion } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.aggregate';
+import { BalanceAssertionRepository } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.repository';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
 import { AssertionNotFoundException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { AssertionEvaluator } from '@ledger/reconciliation/domain/services/assertion-evaluator.service';
 import { IntlDayBoundaryResolver } from '@ledger/reconciliation/domain/services/day-boundary.resolver';
-import { EventStoreBalanceAssertionRepository } from '@ledger/reconciliation/infrastructure/adapters/persistence/event-store-balance-assertion.repository';
 import { InMemoryAssertionPostingReader } from '@ledger/reconciliation/infrastructure/adapters/persistence/in-memory/in-memory-assertion-posting-reader';
 import { Money } from '@ledger/shared/domain/money';
-import {
-  AuthenticatedContext,
-  LocalDate,
-  TransactionStatus,
-} from '@ledger/shared/ep1-ep2-contracts.assumed';
-import { InMemoryEventStore } from '@ledger/shared/infrastructure/in-memory-event-store';
-import { FixedClock, FixedSettingsReader, aMoney } from '@ledger/shared/testing';
+import { FixedClock, FixedSettingsReader, SequentialIdGenerator, aMoney } from '@ledger/shared/testing';
+import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
+import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
+import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
+import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { EvaluateAssertionCommand } from './evaluate-assertion.command';
 import { EvaluateAssertionHandler } from './evaluate-assertion.handler';
 
 describe('EvaluateAssertionHandler', () => {
-  const context = new AuthenticatedContext('user-1', 'client-1');
+  const ctx: AuthContext = { userId: 'user-1', clientId: 'client-1', externalRef: null };
   const clock = new FixedClock(new Date('2026-07-22T10:00:00.000Z'));
+  const catalog = new SeedCurrencyCatalog();
 
   let eventStore: InMemoryEventStore;
-  let repository: EventStoreBalanceAssertionRepository;
+  let repository: BalanceAssertionRepository;
   let reader: InMemoryAssertionPostingReader;
   let handler: EvaluateAssertionHandler;
+  let assertionId: string;
 
   beforeEach(async () => {
     eventStore = new InMemoryEventStore();
-    repository = new EventStoreBalanceAssertionRepository(eventStore);
+    repository = new BalanceAssertionRepository(
+      eventStore,
+      createReconciliationEventRegistry(catalog),
+      new EnvelopeFactory(clock, new SequentialIdGenerator()),
+    );
     reader = new InMemoryAssertionPostingReader();
     handler = new EvaluateAssertionHandler(
       repository,
@@ -38,31 +45,29 @@ describe('EvaluateAssertionHandler', () => {
 
     const assertion = BalanceAssertion.assert(
       {
-        assertionId: 'assert-1',
-        context,
-        externalRef: null,
         accountId: 'acc-1',
-        date: LocalDate.of('2026-07-22'),
+        date: LedgerDate.of('2026-07-22'),
         occurredAt: null,
         expectedAmount: aMoney().of('1000').inUsd(),
         tolerance: Money.zero(aMoney().of('0').inUsd().currency),
       },
-      clock,
+      new SequentialIdGenerator(),
     );
-    await repository.save(assertion, 0);
+    assertionId = assertion.id;
+    await repository.save(assertion, ctx);
   });
 
   it('evaluates and persists the verdict', async () => {
     reader.add('user-1', 'acc-1', {
       amount: aMoney().of('600').inUsd(),
-      date: LocalDate.of('2026-07-20'),
+      date: LedgerDate.of('2026-07-20'),
       occurredAt: null,
       status: TransactionStatus.CONFIRMED,
     });
 
-    await handler.execute(new EvaluateAssertionCommand(context, 'assert-1'));
+    await handler.execute(new EvaluateAssertionCommand(assertionId), ctx);
 
-    const reloaded = await repository.load('assert-1');
+    const reloaded = await repository.load('user-1', assertionId);
     expect(reloaded?.currentStatus).toBe(AssertionStatus.MISMATCHED);
     expect(reloaded?.difference?.toDecimalString()).toBe('400');
   });
@@ -70,23 +75,25 @@ describe('EvaluateAssertionHandler', () => {
   it('appends nothing when the verdict is unchanged (idempotent re-evaluation)', async () => {
     reader.add('user-1', 'acc-1', {
       amount: aMoney().of('600').inUsd(),
-      date: LocalDate.of('2026-07-20'),
+      date: LedgerDate.of('2026-07-20'),
       occurredAt: null,
       status: TransactionStatus.CONFIRMED,
     });
 
-    await handler.execute(new EvaluateAssertionCommand(context, 'assert-1'));
-    const afterFirst = (await eventStore.load('assert-1')).length;
+    const stream = { userId: 'user-1', aggregateType: 'BalanceAssertion', aggregateId: assertionId };
 
-    await handler.execute(new EvaluateAssertionCommand(context, 'assert-1'));
-    const afterSecond = (await eventStore.load('assert-1')).length;
+    await handler.execute(new EvaluateAssertionCommand(assertionId), ctx);
+    const afterFirst = (await eventStore.load(stream)).length;
+
+    await handler.execute(new EvaluateAssertionCommand(assertionId), ctx);
+    const afterSecond = (await eventStore.load(stream)).length;
 
     expect(afterSecond).toBe(afterFirst);
   });
 
   it('rejects a missing assertion', async () => {
     await expect(
-      handler.execute(new EvaluateAssertionCommand(context, 'missing')),
+      handler.execute(new EvaluateAssertionCommand('missing'), ctx),
     ).rejects.toBeInstanceOf(AssertionNotFoundException);
   });
 });

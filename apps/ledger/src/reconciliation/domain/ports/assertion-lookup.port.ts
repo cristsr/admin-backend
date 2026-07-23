@@ -1,4 +1,4 @@
-import { LocalDate } from '@ledger/shared/ep1-ep2-contracts.assumed';
+import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 
 /**
  * Read-side port answering "which assertions could be affected by a change on
@@ -9,6 +9,6 @@ export abstract class AssertionLookupPort {
   abstract onAccountFrom(
     userId: string,
     accountId: string,
-    affectedFrom: LocalDate,
+    affectedFrom: LedgerDate,
   ): Promise<readonly string[]>;
 }

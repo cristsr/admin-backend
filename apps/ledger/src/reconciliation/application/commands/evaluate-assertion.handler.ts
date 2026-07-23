@@ -1,16 +1,17 @@
 import { Injectable } from '@nestjs/common';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.repository';
 import { AssertionNotFoundException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
+import { LedgerSettingsReader } from '@ledger/reconciliation/domain/ports/ledger-settings-reader.port';
 import { AssertionEvaluator } from '@ledger/reconciliation/domain/services/assertion-evaluator.service';
 import { Clock } from '@ledger/shared/domain/ports';
-import { CommandResult, LedgerSettingsReader } from '@ledger/shared/ep1-ep2-contracts.assumed';
+import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
 import { EvaluateAssertionCommand } from './evaluate-assertion.command';
 
 /**
  * Loads the assertion, resolves its cutoff (timezone from `proj_ledger_settings`),
  * runs the evaluator and feeds the verdict back. Persists a new evaluation event
- * only when the verdict changed (the aggregate decides). The write is guarded by
- * optimistic concurrency; a conflict surfaces as `CONCURRENCY_CONFLICT`.
+ * only when the verdict changed (the aggregate decides). An evaluation never
+ * carries an `external_ref` — it is a follow-up, not a client command.
  */
 @Injectable()
 export class EvaluateAssertionHandler {
@@ -21,17 +22,16 @@ export class EvaluateAssertionHandler {
     private readonly clock: Clock,
   ) {}
 
-  async execute(command: EvaluateAssertionCommand): Promise<CommandResult> {
-    const assertion = await this.repository.load(command.assertionId);
+  async execute(command: EvaluateAssertionCommand, ctx: AuthContext): Promise<void> {
+    const assertion = await this.repository.load(ctx.userId, command.assertionId);
 
     if (!assertion) {
       throw new AssertionNotFoundException(`Assertion "${command.assertionId}" not found`);
     }
 
-    const expectedVersion = assertion.currentVersion;
-    const timezone = await this.settings.timezoneOf(assertion.owner);
+    const timezone = await this.settings.timezoneOf(ctx.userId);
 
-    const evaluation = await this.evaluator.evaluate(assertion, {
+    const evaluation = await this.evaluator.evaluate(ctx.userId, assertion, {
       date: assertion.assertedDate,
       occurredAt: assertion.assertedOccurredAt,
       timezone,
@@ -40,10 +40,8 @@ export class EvaluateAssertionHandler {
     assertion.applyEvaluation(evaluation, this.clock);
 
     // Unchanged verdict: the aggregate raised nothing, so there is nothing to append.
-    if (assertion.currentVersion === expectedVersion) {
-      return { aggregateId: assertion.id, streamPosition: expectedVersion };
-    }
+    if (!assertion.hasUncommittedChanges) return;
 
-    return this.repository.save(assertion, expectedVersion);
+    await this.repository.save(assertion, { ...ctx, externalRef: null });
   }
 }

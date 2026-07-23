@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AssertionLookupPort } from '@ledger/reconciliation/domain/ports/assertion-lookup.port';
 import { AssertionStatusStore } from '@ledger/reconciliation/domain/ports/assertion-status-store.port';
-import { LocalDate } from '@ledger/shared/ep1-ep2-contracts.assumed';
+import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 
 /**
  * Implements the reactor's lookup over the `assertion_status` projection, so the
@@ -16,7 +16,7 @@ export class StoreBackedAssertionLookup extends AssertionLookupPort {
   onAccountFrom(
     userId: string,
     accountId: string,
-    affectedFrom: LocalDate,
+    affectedFrom: LedgerDate,
   ): Promise<readonly string[]> {
     return this.store.nonRevokedOnAccountFrom(userId, accountId, affectedFrom);
   }

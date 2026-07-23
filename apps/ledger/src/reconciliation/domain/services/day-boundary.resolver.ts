@@ -1,9 +1,16 @@
-import { LocalDate } from '@ledger/shared/ep1-ep2-contracts.assumed';
+import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 
 /** UTC half-open window `[startUtc, endUtc)` covering one local calendar day. */
 export interface DayWindow {
   readonly startUtc: Date;
   readonly endUtc: Date;
+}
+
+/** The numeric `year`/`month`/`day` components of a {@link LedgerDate}. */
+interface DateParts {
+  readonly year: number;
+  readonly month: number;
+  readonly day: number;
 }
 
 /**
@@ -14,10 +21,10 @@ export interface DayWindow {
  */
 export abstract class DayBoundaryResolver {
   /** The UTC window that the given local date occupies in the timezone. */
-  abstract resolve(date: LocalDate, timezone: string): DayWindow;
+  abstract resolve(date: LedgerDate, timezone: string): DayWindow;
 
   /** The local calendar date a UTC instant falls on, in the timezone. */
-  abstract localDateOf(instant: Date, timezone: string): LocalDate;
+  abstract localDateOf(instant: Date, timezone: string): LedgerDate;
 }
 
 /**
@@ -26,22 +33,23 @@ export abstract class DayBoundaryResolver {
  * DST-correct at day boundaries — the case §2.4 hinges on.
  */
 export class IntlDayBoundaryResolver extends DayBoundaryResolver {
-  resolve(date: LocalDate, timezone: string): DayWindow {
+  resolve(date: LedgerDate, timezone: string): DayWindow {
     const startUtc = this.startOfDayUtc(date, timezone);
     const endUtc = this.startOfDayUtc(this.nextDay(date), timezone);
 
     return { startUtc, endUtc };
   }
 
-  localDateOf(instant: Date, timezone: string): LocalDate {
+  localDateOf(instant: Date, timezone: string): LedgerDate {
     const parts = this.wallClockParts(instant, timezone);
 
-    return LocalDate.of(`${parts.year}-${parts.month}-${parts.day}`);
+    return LedgerDate.of(`${parts.year}-${parts.month}-${parts.day}`);
   }
 
   /** UTC instant whose local wall clock in the timezone is that date at 00:00. */
-  private startOfDayUtc(date: LocalDate, timezone: string): Date {
-    const naiveUtc = Date.UTC(date.year, date.month - 1, date.day, 0, 0, 0);
+  private startOfDayUtc(date: LedgerDate, timezone: string): Date {
+    const { year, month, day } = this.partsOf(date);
+    const naiveUtc = Date.UTC(year, month - 1, day, 0, 0, 0);
     const offset = this.offsetMs(new Date(naiveUtc), timezone);
 
     return new Date(naiveUtc - offset);
@@ -86,12 +94,18 @@ export class IntlDayBoundaryResolver extends DayBoundaryResolver {
     return parts as Record<'year' | 'month' | 'day' | 'hour' | 'minute' | 'second', string>;
   }
 
-  private nextDay(date: LocalDate): LocalDate {
-    const asUtc = new Date(Date.UTC(date.year, date.month - 1, date.day));
+  private nextDay(date: LedgerDate): LedgerDate {
+    const { year, month, day } = this.partsOf(date);
+    const asUtc = new Date(Date.UTC(year, month - 1, day));
     asUtc.setUTCDate(asUtc.getUTCDate() + 1);
 
-    const iso = asUtc.toISOString().slice(0, 10);
+    return LedgerDate.of(asUtc.toISOString().slice(0, 10));
+  }
 
-    return LocalDate.of(iso);
+  /** Splits a {@link LedgerDate}'s `YYYY-MM-DD` value into numeric components. */
+  private partsOf(date: LedgerDate): DateParts {
+    const [year, month, day] = date.value.split('-').map(Number);
+
+    return { year, month, day };
   }
 }

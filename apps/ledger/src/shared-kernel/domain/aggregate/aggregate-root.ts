@@ -17,6 +17,11 @@ export abstract class AggregateRoot<TId> {
     return this.persistedVersion;
   }
 
+  /** True while there are raised-but-unpersisted events awaiting a save. */
+  get hasUncommittedChanges(): boolean {
+    return this.changes.length > 0;
+  }
+
   /** Returns and clears the uncommitted events raised since the last pull. */
   pullChanges(): readonly DomainEvent[] {
     const pending = [...this.changes];

@@ -1,11 +1,12 @@
 import { Nullable } from '@shared';
 import { Money } from '@ledger/shared/domain/money';
-import { LocalDate, TransactionStatus } from '@ledger/shared/ep1-ep2-contracts.assumed';
+import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 
 /** A posting of the asserted account, as materialized by `proj_postings` (EP-1). */
 export interface AssertablePosting {
   readonly amount: Money;
-  readonly date: LocalDate;
+  readonly date: LedgerDate;
   readonly occurredAt: Nullable<Date>;
   readonly status: TransactionStatus;
 }
@@ -20,6 +21,6 @@ export abstract class AssertionPostingReader {
   abstract byAccountUpToDate(
     userId: string,
     accountId: string,
-    date: LocalDate,
+    date: LedgerDate,
   ): Promise<readonly AssertablePosting[]>;
 }

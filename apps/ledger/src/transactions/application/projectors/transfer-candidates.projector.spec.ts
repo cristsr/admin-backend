@@ -1,14 +1,9 @@
 import { Nullable } from '@shared';
-import {
-  AccountFacts,
-  AccountLookup,
-  DomainEvent,
-  PostingSnapshot,
-  TRANSACTION_CONFIRMED,
-  TRANSACTION_RECORDED,
-  TransactionStatus,
-} from '@ledger/shared/ep1-ep2-contracts.assumed';
+import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
+import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { AccountFacts, AccountLookup } from '@ledger/transactions/domain/ports/account-lookup.port';
 import { TransferDetector } from '@ledger/transactions/domain/services/transfer-detector.service';
+import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { InMemoryTransferCandidateStore } from '@ledger/transactions/infrastructure/adapters/persistence/in-memory/in-memory-transfer-candidate-store';
 import { TransferCandidatesProjector } from './transfer-candidates.projector';
 
@@ -23,31 +18,27 @@ const leg = (
   transactionId: string,
   accountId: string,
   amount: string,
-  status = TransactionStatus.PENDING,
-): DomainEvent =>
-  new DomainEvent(
-    status === TransactionStatus.CONFIRMED ? TRANSACTION_CONFIRMED : TRANSACTION_RECORDED,
+  status: TransactionStatus = TransactionStatus.PENDING,
+): StoredEvent => ({
+  eventId: `evt-${transactionId}`,
+  userId: 'user-1',
+  aggregateType: 'LedgerTransaction',
+  aggregateId: transactionId,
+  sequence: 1,
+  eventType: status === TransactionStatus.CONFIRMED ? 'TransactionConfirmed' : 'TransactionRecorded',
+  schemaVersion: 1,
+  clientId: 'client-1',
+  externalRef: `ref-${transactionId}`,
+  payload: {
     transactionId,
-    'LedgerTransaction',
-    1,
-    'user-1',
-    'client-1',
-    `ref-${transactionId}`,
-    new Date('2026-07-20T10:00:00.000Z'),
-    {
-      transactionId,
-      postings: [
-        {
-          accountId,
-          amount,
-          currency: 'USD',
-          date: '2026-07-20',
-          occurredAt: null,
-          status,
-        } satisfies PostingSnapshot,
-      ],
-    },
-  );
+    date: '2026-07-20',
+    status,
+    postings: [{ accountId, amount, currency: 'USD' }],
+  },
+  occurredAt: new Date('2026-07-20T10:00:00.000Z'),
+  recordedAt: new Date('2026-07-20T10:00:00.000Z'),
+  globalPosition: 1n,
+});
 
 describe('TransferCandidatesProjector', () => {
   let store: InMemoryTransferCandidateStore;
@@ -59,6 +50,7 @@ describe('TransferCandidatesProjector', () => {
       store,
       new TransferDetector({ windowDays: 3, amountTolerance: '0' }),
       new AllAssetsLookup(),
+      new SeedCurrencyCatalog(),
     );
   });
 

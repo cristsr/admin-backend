@@ -4,12 +4,16 @@ import {
   AdjustmentAuditStore,
 } from '@ledger/reconciliation/domain/ports/adjustment-audit-store.port';
 import { Money } from '@ledger/shared/domain/money';
-import { resolveAssumedCurrency } from '@ledger/shared/ep1-ep2-contracts.assumed';
+import { CurrencyCatalog, CurrencyCode } from '@ledger/shared-kernel/domain/value-objects';
 
 /** In-memory double of {@link AdjustmentAuditStore}, shared by contract tests. */
 export class InMemoryAdjustmentAuditStore extends AdjustmentAuditStore {
   private readonly entries = new Map<string, AdjustmentAuditEntry>();
   private readonly summaries = new Map<string, AdjustmentAuditRow>();
+
+  constructor(private readonly catalog: CurrencyCatalog) {
+    super();
+  }
 
   record(entry: AdjustmentAuditEntry): Promise<void> {
     if (this.entries.has(entry.adjustmentTxnId)) return Promise.resolve(); // idempotent replay
@@ -37,7 +41,7 @@ export class InMemoryAdjustmentAuditStore extends AdjustmentAuditStore {
 
   private accumulate(entry: AdjustmentAuditEntry): void {
     const key = `${entry.userId}:${entry.accountId}:${entry.currencyCode}`;
-    const currency = resolveAssumedCurrency(entry.currencyCode);
+    const currency = this.catalog.resolve(CurrencyCode.of(entry.currencyCode));
     const existing = this.summaries.get(key);
 
     const previousTotal = existing ? Money.of(existing.totalAdjusted, currency) : Money.zero(currency);

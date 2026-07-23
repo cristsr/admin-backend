@@ -4,7 +4,7 @@ import {
   AssertionStatusRow,
   AssertionStatusStore,
 } from '@ledger/reconciliation/domain/ports/assertion-status-store.port';
-import { LocalDate } from '@ledger/shared/ep1-ep2-contracts.assumed';
+import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 
 /** In-memory double of {@link AssertionStatusStore}, shared by contract tests. */
 export class InMemoryAssertionStatusStore extends AssertionStatusStore {
@@ -62,7 +62,7 @@ export class InMemoryAssertionStatusStore extends AssertionStatusStore {
   nonRevokedOnAccountFrom(
     userId: string,
     accountId: string,
-    from: LocalDate,
+    from: LedgerDate,
   ): Promise<readonly string[]> {
     const matches = [...this.rows.values()]
       .filter(
@@ -70,7 +70,7 @@ export class InMemoryAssertionStatusStore extends AssertionStatusStore {
           row.userId === userId &&
           row.accountId === accountId &&
           row.status !== AssertionStatus.REVOKED &&
-          LocalDate.of(row.date).isOnOrAfter(from),
+          LedgerDate.of(row.date).isSameOrAfter(from),
       )
       .map((row) => row.assertionId);
 

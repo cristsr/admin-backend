@@ -2,52 +2,50 @@ import { Injectable } from '@nestjs/common';
 import { BalanceAssertion } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.aggregate';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.repository';
 import { Money } from '@ledger/shared/domain/money';
-import { Clock, IdGenerator } from '@ledger/shared/domain/ports';
-import {
-  CommandBus,
-  LocalDate,
-  resolveAssumedCurrency,
-} from '@ledger/shared/ep1-ep2-contracts.assumed';
+import { IdGenerator } from '@ledger/shared/domain/ports';
+import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
+import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 import { AssertBalanceOutputDto } from '../dto/assert-balance-output.dto';
 import { AssertBalanceCommand } from './assert-balance.command';
 import { EvaluateAssertionCommand } from './evaluate-assertion.command';
+import { EvaluateAssertionHandler } from './evaluate-assertion.handler';
 
 /**
- * Persists `BalanceAsserted`, then dispatches the internal `EvaluateAssertion`
- * so the caller gets an immediate first verdict (read-your-writes via the
- * synchronous follow-up dispatch, not by reading the write side, §3.2).
+ * Persists `BalanceAsserted`, then runs an immediate `EvaluateAssertion` so the
+ * caller gets a first verdict on the same stream (§3.2). The follow-up
+ * evaluation is dispatched without the declaration's `external_ref` so its own
+ * append does not clash with the anchor.
  */
 @Injectable()
 export class AssertBalanceHandler {
   constructor(
     private readonly repository: BalanceAssertionRepository,
-    private readonly commandBus: CommandBus,
+    private readonly evaluate: EvaluateAssertionHandler,
+    private readonly catalog: CurrencyCatalog,
     private readonly ids: IdGenerator,
-    private readonly clock: Clock,
   ) {}
 
-  async execute(command: AssertBalanceCommand): Promise<AssertBalanceOutputDto> {
-    const currency = resolveAssumedCurrency(command.currency);
-    const assertionId = this.ids.next();
+  async execute(command: AssertBalanceCommand, ctx: AuthContext): Promise<AssertBalanceOutputDto> {
+    const currency = this.catalog.resolve(CurrencyCode.of(command.currency));
 
     const assertion = BalanceAssertion.assert(
       {
-        assertionId,
-        context: command.context,
-        externalRef: command.externalRef,
         accountId: command.accountId,
-        date: LocalDate.of(command.date),
+        date: LedgerDate.of(command.date),
         occurredAt: command.occurredAt ? new Date(command.occurredAt) : null,
         expectedAmount: Money.of(command.expectedAmount, currency),
         tolerance: Money.of(command.tolerance, currency),
       },
-      this.clock,
+      this.ids,
     );
 
-    const result = await this.repository.save(assertion, 0);
+    const result = await this.repository.save(assertion, ctx);
 
-    await this.commandBus.execute(new EvaluateAssertionCommand(command.context, assertionId));
+    await this.evaluate.execute(new EvaluateAssertionCommand(assertion.id), {
+      ...ctx,
+      externalRef: null,
+    });
 
-    return { assertionId, streamPosition: result.streamPosition };
+    return { assertionId: assertion.id, streamPosition: result.lastPosition };
   }
 }

@@ -4,23 +4,29 @@ import {
   AssertionNotFoundException,
   DiscrepancyNotResolvableException,
 } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
+import { SystemAccountLookup } from '@ledger/reconciliation/domain/ports/system-account-lookup.port';
 import { AdjustmentFactory } from '@ledger/reconciliation/domain/services/adjustment.factory';
-import { Clock, IdGenerator } from '@ledger/shared/domain/ports';
-import {
-  CommandBus,
-  ConfirmTransactionCommand,
-  PostingLine,
-  RecordTransactionCommand,
-  SystemAccountLookup,
-} from '@ledger/shared/ep1-ep2-contracts.assumed';
+import { Clock } from '@ledger/shared/domain/ports';
+import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
+import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
+import { PostingInput } from '@ledger/transactions/application/posting-input.type';
+import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
+import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
+import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { ResolveDiscrepancyOutputDto } from '../dto/resolve-discrepancy-output.dto';
 import { ResolveDiscrepancyCommand } from './resolve-discrepancy.command';
 
 /**
- * Closes a `MISMATCHED` discrepancy (§7.5): records+confirms a system adjustment
- * between the affected account and `Equity:Adjustments` for the exact difference
- * (reusing EP-1 commands, DRY), then emits `DiscrepancyResolved`. The adjustment
- * re-triggers the reactor (EP-3.4), which re-evaluates the assertion to MATCHED.
+ * Closes a `MISMATCHED` discrepancy (§7.5): records a system adjustment
+ * (directly `CONFIRMED`) between the affected account and `Equity:Adjustments`
+ * for the exact difference (reusing the real EP-1 `RecordTransaction`, DRY), then
+ * emits `DiscrepancyResolved` linked to the adjustment. The adjustment's own
+ * `TransactionRecorded` re-triggers the reactor (EP-3.4), which re-evaluates the
+ * assertion to MATCHED.
+ *
+ * TODO(atomicity): shared-transaction adapter across streams — the adjustment
+ * append and the `DiscrepancyResolved` append are two separate streams; in the
+ * dev phase this is append-per-stream, not one cross-aggregate transaction.
  */
 @Injectable()
 export class ResolveDiscrepancyHandler {
@@ -29,12 +35,14 @@ export class ResolveDiscrepancyHandler {
     private readonly commandBus: CommandBus,
     private readonly accounts: SystemAccountLookup,
     private readonly factory: AdjustmentFactory,
-    private readonly ids: IdGenerator,
     private readonly clock: Clock,
   ) {}
 
-  async execute(command: ResolveDiscrepancyCommand): Promise<ResolveDiscrepancyOutputDto> {
-    const assertion = await this.assertions.load(command.assertionId);
+  async execute(
+    command: ResolveDiscrepancyCommand,
+    ctx: AuthContext,
+  ): Promise<ResolveDiscrepancyOutputDto> {
+    const assertion = await this.assertions.load(ctx.userId, command.assertionId);
 
     if (!assertion) {
       throw new AssertionNotFoundException(`Assertion "${command.assertionId}" not found`);
@@ -48,43 +56,42 @@ export class ResolveDiscrepancyHandler {
       );
     }
 
-    const adjustmentsAccountId = await this.accounts.adjustmentsAccountId(assertion.owner);
-    const adjustmentTxnId = this.ids.next();
+    const adjustmentsAccountId = await this.accounts.adjustmentsAccountId(ctx.userId);
     const postings = this.factory.build(assertion.account, adjustmentsAccountId, difference);
 
-    await this.recordAndConfirmAdjustment(command, assertion.id, adjustmentTxnId, postings);
+    // The adjustment carries the command's external_ref, so the money movement
+    // is the idempotency anchor; the linking append below stays unstamped.
+    const recordResult = await this.commandBus.dispatch(
+      new RecordTransactionCommand(
+        this.clock.now().toISOString().slice(0, 10),
+        null,
+        'Reconciliation adjustment',
+        postings.map((posting) => this.toInput(posting)),
+        TransactionStatus.CONFIRMED,
+        null,
+        [],
+        { source: 'system', resolves_assertion: assertion.id },
+      ),
+      ctx,
+    );
 
-    const expectedVersion = assertion.currentVersion;
-    assertion.markResolved(adjustmentTxnId, this.clock);
-    const result = await this.assertions.save(assertion, expectedVersion);
+    const adjustmentTxnId = recordResult.aggregateId;
+    assertion.markResolved(adjustmentTxnId);
+    const result = await this.assertions.save(assertion, { ...ctx, externalRef: null });
 
     return {
       assertionId: assertion.id,
       adjustmentTransactionId: adjustmentTxnId,
-      streamPosition: result.streamPosition,
+      streamPosition: result.lastPosition,
     };
   }
 
-  private async recordAndConfirmAdjustment(
-    command: ResolveDiscrepancyCommand,
-    assertionId: string,
-    adjustmentTxnId: string,
-    postings: readonly PostingLine[],
-  ): Promise<void> {
-    await this.commandBus.execute(
-      new RecordTransactionCommand(
-        command.context,
-        command.externalRef,
-        adjustmentTxnId,
-        this.clock.now().toISOString().slice(0, 10),
-        'Reconciliation adjustment',
-        postings.map((posting) => posting.toInput()),
-        { source: 'system', resolves_assertion: assertionId },
-      ),
-    );
-
-    await this.commandBus.execute(
-      new ConfirmTransactionCommand(command.context, null, adjustmentTxnId),
-    );
+  private toInput(posting: PostingLine): PostingInput {
+    return {
+      accountId: posting.accountId,
+      amount: posting.amount.toDecimalString(),
+      currency: posting.currencyCode,
+      metadata: posting.metadata,
+    };
   }
 }

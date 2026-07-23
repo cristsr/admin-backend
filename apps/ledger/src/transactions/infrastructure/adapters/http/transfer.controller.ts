@@ -1,41 +1,46 @@
-import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Post } from '@nestjs/common';
-import { CommandBus, QueryBus } from '@ledger/shared/ep1-ep2-contracts.assumed';
-import {
-  contextFromHeaders,
-  externalRefFromHeaders,
-} from '@ledger/shared/infrastructure/http/authenticated-context';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/common';
+import { Nullable } from '@shared';
+import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
+import { Context, ExternalRef } from '@ledger/shared/infrastructure/adapters/http';
+import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
 import { MergePendingTransfersCommand } from '@ledger/transactions/application/commands/merge-pending-transfers.command';
-import { ListTransferCandidatesQuery } from '@ledger/transactions/application/queries/list-transfer-candidates.query';
+import { MergePendingTransfersHandler } from '@ledger/transactions/application/commands/merge-pending-transfers.handler';
+import {
+  ListTransferCandidatesHandler,
+  ListTransferCandidatesQuery,
+} from '@ledger/transactions/application/queries/list-transfer-candidates.query';
 
 /** Body for the merge endpoint: exactly two pending transaction ids. */
 interface MergeTransfersInputDto {
   readonly pendingIds: readonly [string, string];
 }
 
-/** HTTP surface for transfers (EP-2 pattern): candidates listing and merge. */
-@Controller('transfers')
+/** HTTP surface for transfers (§7.2): candidates listing and merge. */
+@Controller({ path: 'transfers', version: '1' })
 export class TransferController {
   constructor(
-    private readonly commandBus: CommandBus,
-    private readonly queryBus: QueryBus,
+    private readonly mergeTransfers: MergePendingTransfersHandler,
+    private readonly listCandidates: ListTransferCandidatesHandler,
   ) {}
 
   @Get('candidates')
-  candidates(@Headers() headers: Record<string, unknown>) {
-    return this.queryBus.execute(
-      new ListTransferCandidatesQuery(contextFromHeaders(headers).userId),
-    );
+  candidates(@Context() context: LedgerContext) {
+    return this.listCandidates.execute(new ListTransferCandidatesQuery(context.userId));
   }
 
   @Post('merge')
   @HttpCode(HttpStatus.OK)
-  merge(@Headers() headers: Record<string, unknown>, @Body() body: MergeTransfersInputDto) {
-    return this.commandBus.execute(
-      new MergePendingTransfersCommand(
-        contextFromHeaders(headers),
-        externalRefFromHeaders(headers),
-        body.pendingIds,
-      ),
-    );
+  merge(
+    @Context() context: LedgerContext,
+    @ExternalRef() externalRef: Nullable<string>,
+    @Body() body: MergeTransfersInputDto,
+  ) {
+    const ctx: AuthContext = {
+      userId: context.userId,
+      clientId: context.clientId,
+      externalRef,
+    };
+
+    return this.mergeTransfers.execute(new MergePendingTransfersCommand(body.pendingIds), ctx);
   }
 }

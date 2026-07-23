@@ -2,5 +2,5 @@
 export interface ResolveDiscrepancyOutputDto {
   readonly assertionId: string;
   readonly adjustmentTransactionId: string;
-  readonly streamPosition: number;
+  readonly streamPosition: bigint;
 }

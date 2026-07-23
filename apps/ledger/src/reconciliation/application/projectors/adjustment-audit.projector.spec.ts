@@ -1,11 +1,10 @@
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
-import {
-  DISCREPANCY_RESOLVED,
-  DiscrepancyResolved,
-} from '@ledger/reconciliation/domain/balance-assertion/events';
+import { DISCREPANCY_RESOLVED } from '@ledger/reconciliation/domain/balance-assertion/events';
 import { InMemoryAdjustmentAuditStore } from '@ledger/reconciliation/infrastructure/adapters/persistence/in-memory/in-memory-adjustment-audit-store';
 import { InMemoryAssertionStatusStore } from '@ledger/reconciliation/infrastructure/adapters/persistence/in-memory/in-memory-assertion-status-store';
-import { DomainEvent } from '@ledger/shared/ep1-ep2-contracts.assumed';
+import { EventPayload } from '@ledger/shared-kernel/domain/event/event-payload.type';
+import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
+import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
 import { AdjustmentAuditProjector } from './adjustment-audit.projector';
 
 describe('AdjustmentAuditProjector', () => {
@@ -14,7 +13,7 @@ describe('AdjustmentAuditProjector', () => {
   let projector: AdjustmentAuditProjector;
 
   beforeEach(() => {
-    audit = new InMemoryAdjustmentAuditStore();
+    audit = new InMemoryAdjustmentAuditStore(new SeedCurrencyCatalog());
     status = new InMemoryAssertionStatusStore();
     projector = new AdjustmentAuditProjector(audit, status);
   });
@@ -42,18 +41,31 @@ describe('AdjustmentAuditProjector', () => {
     await status.applyEvaluation(assertionId, AssertionStatus.MISMATCHED, difference, new Date());
   };
 
-  const resolvedEvent = (assertionId: string, adjustmentTxnId: string): DomainEvent =>
-    new DomainEvent(
-      DISCREPANCY_RESOLVED,
+  const storedEvent = (
+    eventType: string,
+    aggregateId: string,
+    payload: EventPayload,
+  ): StoredEvent => ({
+    eventId: `evt-${aggregateId}`,
+    userId: 'user-1',
+    aggregateType: 'BalanceAssertion',
+    aggregateId,
+    sequence: 3,
+    eventType,
+    schemaVersion: 1,
+    clientId: 'client-1',
+    externalRef: null,
+    payload,
+    occurredAt: new Date('2026-07-22T10:00:00.000Z'),
+    recordedAt: new Date('2026-07-22T10:00:00.000Z'),
+    globalPosition: 1n,
+  });
+
+  const resolvedEvent = (assertionId: string, adjustmentTxnId: string): StoredEvent =>
+    storedEvent(DISCREPANCY_RESOLVED, assertionId, {
       assertionId,
-      'BalanceAssertion',
-      3,
-      'user-1',
-      'client-1',
-      null,
-      new Date('2026-07-22T10:00:00.000Z'),
-      new DiscrepancyResolved(assertionId, adjustmentTxnId),
-    );
+      adjustmentTransactionId: adjustmentTxnId,
+    });
 
   it('accumulates total and count across resolutions on the same account', async () => {
     await seedResolvedAssertion('assert-1', '400');
@@ -68,9 +80,7 @@ describe('AdjustmentAuditProjector', () => {
   });
 
   it('ignores non-resolution events (guard)', async () => {
-    await projector.project(
-      new DomainEvent('TransactionRecorded', 'txn-1', 'LedgerTransaction', 1, 'user-1', 'client-1', null, new Date(), {}),
-    );
+    await projector.project(storedEvent('TransactionRecorded', 'txn-1', {}));
 
     expect(await audit.byAccount('user-1', 'acc-1')).toHaveLength(0);
   });

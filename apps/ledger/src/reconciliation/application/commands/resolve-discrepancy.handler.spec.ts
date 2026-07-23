@@ -1,45 +1,50 @@
+import { createReconciliationEventRegistry } from '@ledger/reconciliation/application/reconciliation-event-registry.factory';
 import { BalanceAssertion } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.aggregate';
+import { BalanceAssertionRepository } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.repository';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
 import { DiscrepancyNotResolvableException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { AdjustmentFactory } from '@ledger/reconciliation/domain/services/adjustment.factory';
-import { EventStoreBalanceAssertionRepository } from '@ledger/reconciliation/infrastructure/adapters/persistence/event-store-balance-assertion.repository';
 import { Money } from '@ledger/shared/domain/money';
 import {
-  AuthenticatedContext,
-  ConfirmTransactionCommand,
-  LocalDate,
-  RecordTransactionCommand,
-} from '@ledger/shared/ep1-ep2-contracts.assumed';
-import { InMemoryEventStore } from '@ledger/shared/infrastructure/in-memory-event-store';
-import {
-  FakeCommandBus,
   FixedClock,
   FixedSystemAccountLookup,
+  RecordingCommandBus,
   SequentialIdGenerator,
   aMoney,
 } from '@ledger/shared/testing';
+import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
+import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
+import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
+import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
+import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { ResolveDiscrepancyCommand } from './resolve-discrepancy.command';
 import { ResolveDiscrepancyHandler } from './resolve-discrepancy.handler';
 
 describe('ResolveDiscrepancyHandler', () => {
-  const context = new AuthenticatedContext('user-1', 'client-1');
+  const ctx: AuthContext = { userId: 'user-1', clientId: 'client-1', externalRef: 'ext-1' };
   const clock = new FixedClock(new Date('2026-07-22T10:00:00.000Z'));
+  const catalog = new SeedCurrencyCatalog();
 
-  let eventStore: InMemoryEventStore;
-  let repository: EventStoreBalanceAssertionRepository;
-  let bus: FakeCommandBus;
+  let repository: BalanceAssertionRepository;
+  let bus: RecordingCommandBus;
   let handler: ResolveDiscrepancyHandler;
+  let assertionId: string;
 
   beforeEach(() => {
-    eventStore = new InMemoryEventStore();
-    repository = new EventStoreBalanceAssertionRepository(eventStore);
-    bus = new FakeCommandBus();
+    const eventStore = new InMemoryEventStore();
+    repository = new BalanceAssertionRepository(
+      eventStore,
+      createReconciliationEventRegistry(catalog),
+      new EnvelopeFactory(clock, new SequentialIdGenerator()),
+    );
+    bus = new RecordingCommandBus('adj-txn-1');
     handler = new ResolveDiscrepancyHandler(
       repository,
       bus,
       new FixedSystemAccountLookup('equity-adjustments'),
       new AdjustmentFactory(),
-      new SequentialIdGenerator(),
       clock,
     );
   });
@@ -47,41 +52,40 @@ describe('ResolveDiscrepancyHandler', () => {
   const seed = async (status: AssertionStatus, difference: string): Promise<void> => {
     const assertion = BalanceAssertion.assert(
       {
-        assertionId: 'assert-1',
-        context,
-        externalRef: null,
         accountId: 'acc-1',
-        date: LocalDate.of('2026-07-22'),
+        date: LedgerDate.of('2026-07-22'),
         occurredAt: null,
         expectedAmount: aMoney().of('1000').inUsd(),
         tolerance: Money.zero(aMoney().of('0').inUsd().currency),
       },
-      clock,
+      new SequentialIdGenerator(),
     );
+    assertionId = assertion.id;
     assertion.applyEvaluation(
       { status, actualAmount: aMoney().of('600').inUsd(), difference: aMoney().of(difference).inUsd() },
       clock,
     );
-    await repository.save(assertion, 0);
+    await repository.save(assertion, ctx);
   };
 
-  it('records+confirms the adjustment and emits DiscrepancyResolved', async () => {
+  it('records a CONFIRMED adjustment and emits DiscrepancyResolved', async () => {
     await seed(AssertionStatus.MISMATCHED, '400');
 
-    const output = await handler.execute(new ResolveDiscrepancyCommand(context, 'ext-1', 'assert-1'));
+    const output = await handler.execute(new ResolveDiscrepancyCommand(assertionId), ctx);
 
     const records = bus.dispatchedOf(RecordTransactionCommand);
     expect(records).toHaveLength(1);
-    expect(records[0].transactionId).toBe(output.adjustmentTransactionId);
-    expect(records[0].metadata).toMatchObject({ source: 'system', resolves_assertion: 'assert-1' });
+    expect(output.adjustmentTransactionId).toBe('adj-txn-1');
+    expect(records[0].metadata).toMatchObject({ source: 'system', resolves_assertion: assertionId });
     // Balanced adjustment: +400 on the account, -400 on Equity:Adjustments.
     expect(records[0].postings).toEqual([
       expect.objectContaining({ accountId: 'acc-1', amount: '400' }),
       expect.objectContaining({ accountId: 'equity-adjustments', amount: '-400' }),
     ]);
-    expect(bus.dispatchedOf(ConfirmTransactionCommand)).toHaveLength(1);
+    // The adjustment is recorded directly CONFIRMED; no separate confirm dispatch.
+    expect(bus.dispatchedOf(ConfirmTransactionCommand)).toHaveLength(0);
 
-    const reloaded = await repository.load('assert-1');
+    const reloaded = await repository.load('user-1', assertionId);
     expect(reloaded?.isResolvable).toBe(false);
   });
 
@@ -89,7 +93,7 @@ describe('ResolveDiscrepancyHandler', () => {
     await seed(AssertionStatus.MATCHED, '0');
 
     await expect(
-      handler.execute(new ResolveDiscrepancyCommand(context, 'ext-1', 'assert-1')),
+      handler.execute(new ResolveDiscrepancyCommand(assertionId), ctx),
     ).rejects.toBeInstanceOf(DiscrepancyNotResolvableException);
   });
 });

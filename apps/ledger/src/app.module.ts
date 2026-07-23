@@ -5,8 +5,10 @@ import { AccountsHttpModule } from '@ledger/accounts/infrastructure/adapters/htt
 import { appConfig, databaseConfig } from '@ledger/config/environment';
 import { loadEnvironment } from '@ledger/env';
 import { LedgerCoreModule } from '@ledger/ledger/ledger-core.module';
+import { ReconciliationModule } from '@ledger/reconciliation/reconciliation.module';
 import { SharedHttpModule } from '@ledger/shared/infrastructure/adapters/http';
 import { TransactionsHttpModule } from '@ledger/transactions/infrastructure/adapters/http';
+import { TransactionsModule } from '@ledger/transactions/transactions.module';
 import { buildPinoModuleOptions } from './config/logger/logger.config';
 import { DatabaseModule } from './database/database.module';
 
@@ -28,6 +30,9 @@ import { DatabaseModule } from './database/database.module';
     LedgerCoreModule,
     AccountsHttpModule,
     TransactionsHttpModule,
+    // EP-3: reconciliation and the transfer feature, mounted on the real core.
+    ReconciliationModule,
+    TransactionsModule,
   ],
 })
 export class AppModule {}

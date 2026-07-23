@@ -1,5 +1,5 @@
-import { LocalDate } from '@ledger/shared/ep1-ep2-contracts.assumed';
 import { defineContract } from '@ledger/shared/testing';
+import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 import { AssertionStatus } from '../balance-assertion/enums/assertion-status.enum';
 import { AssertionStatusRow, AssertionStatusStore } from './assertion-status-store.port';
 
@@ -57,7 +57,7 @@ export function runAssertionStatusStoreContract(makeStore: () => AssertionStatus
         await store.upsertAsserted(rowFor('a-2', 'acc-1'));
         await store.markRevoked('a-2', 'typo');
 
-        const affected = await store.nonRevokedOnAccountFrom('user-1', 'acc-1', LocalDate.of('2026-07-01'));
+        const affected = await store.nonRevokedOnAccountFrom('user-1', 'acc-1', LedgerDate.of('2026-07-01'));
         expect(affected).toEqual(['a-1']);
       },
     },
@@ -67,7 +67,7 @@ export function runAssertionStatusStoreContract(makeStore: () => AssertionStatus
         const store = makeStore();
         await store.upsertAsserted(rowFor('a-1', 'acc-1'));
 
-        const affected = await store.nonRevokedOnAccountFrom('user-1', 'acc-1', LocalDate.of('2026-08-01'));
+        const affected = await store.nonRevokedOnAccountFrom('user-1', 'acc-1', LedgerDate.of('2026-08-01'));
         expect(affected).toEqual([]);
       },
     },

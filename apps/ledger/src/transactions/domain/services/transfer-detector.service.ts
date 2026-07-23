@@ -1,14 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { Nullable } from '@shared';
 import { Money } from '@ledger/shared/domain/money';
-import { LocalDate } from '@ledger/shared/ep1-ep2-contracts.assumed';
+import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 
 /** A pending transaction leg on a real account, as seen by the detector. */
 export interface PendingLeg {
   readonly transactionId: string;
   readonly accountId: string;
   readonly amount: Money;
-  readonly date: LocalDate;
+  readonly date: LedgerDate;
   readonly isRealAccount: boolean;
 }
 
@@ -75,7 +75,7 @@ export class TransferDetector {
     return magnitude.compareTo(tolerance) <= 0;
   }
 
-  private withinWindow(a: LocalDate, b: LocalDate): boolean {
+  private withinWindow(a: LedgerDate, b: LedgerDate): boolean {
     return this.gapDays(a, b) <= this.config.windowDays;
   }
 
@@ -94,11 +94,18 @@ export class TransferDetector {
     };
   }
 
-  private gapDays(a: LocalDate, b: LocalDate): number {
+  private gapDays(a: LedgerDate, b: LedgerDate): number {
     const dayMs = 86_400_000;
-    const epochA = Date.UTC(a.year, a.month - 1, a.day) / dayMs;
-    const epochB = Date.UTC(b.year, b.month - 1, b.day) / dayMs;
+    const epochA = this.epochDay(a);
+    const epochB = this.epochDay(b);
 
-    return Math.abs(epochA - epochB);
+    return Math.abs(epochA - epochB) / dayMs;
+  }
+
+  /** Milliseconds since the Unix epoch for a `LedgerDate`'s calendar day (UTC). */
+  private epochDay(date: LedgerDate): number {
+    const [year, month, day] = date.value.split('-').map(Number);
+
+    return Date.UTC(year, month - 1, day);
   }
 }

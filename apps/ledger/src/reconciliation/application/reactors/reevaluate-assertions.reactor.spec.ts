@@ -1,14 +1,9 @@
 import { AssertionLookupPort } from '@ledger/reconciliation/domain/ports/assertion-lookup.port';
-import {
-  DomainEvent,
-  LocalDate,
-  TRANSACTION_RECORDED,
-  TRANSACTION_REVERSED,
-  TransactionEventPayload,
-  TransactionStatus,
-} from '@ledger/shared/ep1-ep2-contracts.assumed';
-import { FakeCommandBus } from '@ledger/shared/testing';
+import { EventPayload } from '@ledger/shared-kernel/domain/event/event-payload.type';
+import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
+import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 import { EvaluateAssertionCommand } from '../commands/evaluate-assertion.command';
+import { EvaluateAssertionHandler } from '../commands/evaluate-assertion.handler';
 import { ReevaluateAssertionsReactor } from './reevaluate-assertions.reactor';
 
 /** Records the last lookup call and returns pre-seeded assertion ids per account. */
@@ -19,107 +14,105 @@ class StubLookup extends AssertionLookupPort {
     super();
   }
 
-  onAccountFrom(_userId: string, accountId: string, affectedFrom: LocalDate): Promise<readonly string[]> {
-    this.calls.push({ accountId, from: affectedFrom.toString() });
+  onAccountFrom(_userId: string, accountId: string, affectedFrom: LedgerDate): Promise<readonly string[]> {
+    this.calls.push({ accountId, from: affectedFrom.value });
 
     return Promise.resolve(this.byAccount[accountId] ?? []);
   }
 }
 
-const txnEvent = (
-  type: string,
-  postings: TransactionEventPayload['postings'],
-): DomainEvent<TransactionEventPayload> =>
-  new DomainEvent(
-    type,
-    'txn-1',
-    'LedgerTransaction',
-    1,
-    'user-1',
-    'client-1',
-    null,
-    new Date('2026-07-22T10:00:00.000Z'),
-    { transactionId: 'txn-1', postings },
-  );
+/** Spy on the evaluate handler: records every command it is asked to run. */
+class SpyEvaluate {
+  readonly dispatched: EvaluateAssertionCommand[] = [];
 
-const posting = (accountId: string, date: string) => ({
-  accountId,
-  amount: '100',
-  currency: 'USD',
-  date,
-  occurredAt: null,
-  status: TransactionStatus.CONFIRMED,
-});
+  async execute(command: EvaluateAssertionCommand): Promise<void> {
+    this.dispatched.push(command);
+  }
+}
+
+const txnEvent = (eventType: string, date: string, accountIds: readonly string[]): StoredEvent => {
+  const payload: EventPayload = {
+    date,
+    postings: accountIds.map((accountId) => ({ accountId, amount: '100', currency: 'USD' })),
+  };
+
+  return {
+    eventId: 'evt-1',
+    userId: 'user-1',
+    aggregateType: 'LedgerTransaction',
+    aggregateId: 'txn-1',
+    sequence: 1,
+    eventType,
+    schemaVersion: 1,
+    clientId: 'client-1',
+    externalRef: null,
+    payload,
+    occurredAt: new Date('2026-07-22T10:00:00.000Z'),
+    recordedAt: new Date('2026-07-22T10:00:00.000Z'),
+    globalPosition: 1n,
+  };
+};
 
 describe('ReevaluateAssertionsReactor', () => {
-  let bus: FakeCommandBus;
+  let spy: SpyEvaluate;
+
+  const reactorWith = (lookup: StubLookup): ReevaluateAssertionsReactor =>
+    new ReevaluateAssertionsReactor(lookup, spy as unknown as EvaluateAssertionHandler);
 
   beforeEach(() => {
-    bus = new FakeCommandBus();
+    spy = new SpyEvaluate();
   });
 
-  it('dispatches EvaluateAssertion for each affected assertion on a triggering event', async () => {
+  it('runs EvaluateAssertion for each affected assertion on a triggering event', async () => {
     const lookup = new StubLookup({ 'acc-1': ['assert-a', 'assert-b'] });
-    const reactor = new ReevaluateAssertionsReactor(lookup, bus);
 
-    await reactor.on(txnEvent(TRANSACTION_REVERSED, [posting('acc-1', '2026-07-10')]));
+    await reactorWith(lookup).on(txnEvent('TransactionRecorded', '2026-07-10', ['acc-1']));
 
-    const dispatched = bus.dispatchedOf(EvaluateAssertionCommand);
-    expect(dispatched.map((command) => command.assertionId)).toEqual(['assert-a', 'assert-b']);
+    expect(spy.dispatched.map((command) => command.assertionId)).toEqual(['assert-a', 'assert-b']);
   });
 
-  it('scopes the lookup to the earliest altered date on the account', async () => {
+  it('scopes the lookup to the transaction date', async () => {
     const lookup = new StubLookup({ 'acc-1': [] });
-    const reactor = new ReevaluateAssertionsReactor(lookup, bus);
 
-    await reactor.on(
-      txnEvent(TRANSACTION_RECORDED, [posting('acc-1', '2026-07-20'), posting('acc-1', '2026-07-05')]),
-    );
+    await reactorWith(lookup).on(txnEvent('TransactionRecorded', '2026-07-05', ['acc-1']));
 
     expect(lookup.calls).toEqual([{ accountId: 'acc-1', from: '2026-07-05' }]);
   });
 
-  it('does not dispatch when no assertion is affected', async () => {
+  it('does not run when no assertion is affected', async () => {
     const lookup = new StubLookup({ 'acc-1': [] });
-    const reactor = new ReevaluateAssertionsReactor(lookup, bus);
 
-    await reactor.on(txnEvent(TRANSACTION_RECORDED, [posting('acc-1', '2026-07-20')]));
+    await reactorWith(lookup).on(txnEvent('TransactionRecorded', '2026-07-20', ['acc-1']));
 
-    expect(bus.dispatched).toHaveLength(0);
+    expect(spy.dispatched).toHaveLength(0);
   });
 
   it('ignores non-triggering event types (guard)', async () => {
     const lookup = new StubLookup({ 'acc-1': ['assert-a'] });
-    const reactor = new ReevaluateAssertionsReactor(lookup, bus);
 
-    await reactor.on(txnEvent('TransactionAnnotated', [posting('acc-1', '2026-07-20')]));
+    await reactorWith(lookup).on(txnEvent('TransactionConfirmed', '2026-07-20', ['acc-1']));
 
-    expect(bus.dispatched).toHaveLength(0);
+    expect(spy.dispatched).toHaveLength(0);
     expect(lookup.calls).toHaveLength(0);
   });
 
-  it('dispatches one command per affected assertion across multiple accounts', async () => {
+  it('runs one command per affected assertion across multiple accounts', async () => {
     const lookup = new StubLookup({ 'acc-1': ['assert-a'], 'acc-2': ['assert-b', 'assert-c'] });
-    const reactor = new ReevaluateAssertionsReactor(lookup, bus);
 
-    await reactor.on(
-      txnEvent(TRANSACTION_RECORDED, [posting('acc-1', '2026-07-20'), posting('acc-2', '2026-07-21')]),
-    );
+    await reactorWith(lookup).on(txnEvent('TransactionRecorded', '2026-07-20', ['acc-1', 'acc-2']));
 
-    expect(bus.dispatchedOf(EvaluateAssertionCommand)).toHaveLength(3);
+    expect(spy.dispatched).toHaveLength(3);
   });
 
-  it('reprocessing the same event yields the same dispatches (idempotent)', async () => {
+  it('reprocessing the same event yields the same runs (idempotent)', async () => {
     const lookup = new StubLookup({ 'acc-1': ['assert-a'] });
-    const reactor = new ReevaluateAssertionsReactor(lookup, bus);
-    const event = txnEvent(TRANSACTION_REVERSED, [posting('acc-1', '2026-07-10')]);
+    const reactor = reactorWith(lookup);
+    const event = txnEvent('TransactionRecorded', '2026-07-10', ['acc-1']);
 
     await reactor.on(event);
     await reactor.on(event);
 
-    expect(bus.dispatchedOf(EvaluateAssertionCommand)).toHaveLength(2);
-    expect(bus.dispatchedOf(EvaluateAssertionCommand).every((c) => c.assertionId === 'assert-a')).toBe(
-      true,
-    );
+    expect(spy.dispatched).toHaveLength(2);
+    expect(spy.dispatched.every((command) => command.assertionId === 'assert-a')).toBe(true);
   });
 });

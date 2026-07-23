@@ -1,10 +1,9 @@
-import {
-  AuthenticatedContext,
-  ConfirmTransactionCommand,
-  RecordTransactionCommand,
-  VoidPendingTransactionCommand,
-} from '@ledger/shared/ep1-ep2-contracts.assumed';
-import { FakeCommandBus, SequentialIdGenerator } from '@ledger/shared/testing';
+import { RecordingCommandBus } from '@ledger/shared/testing';
+import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
+import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
+import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
+import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';
 import {
   NotATransferPairException,
   PendingLegNotFoundException,
@@ -16,20 +15,20 @@ import { MergePendingTransfersCommand } from './merge-pending-transfers.command'
 import { MergePendingTransfersHandler } from './merge-pending-transfers.handler';
 
 describe('MergePendingTransfersHandler', () => {
-  const context = new AuthenticatedContext('user-1', 'client-1');
+  const ctx: AuthContext = { userId: 'user-1', clientId: 'client-1', externalRef: 'merge-ref' };
 
   let store: InMemoryTransferCandidateStore;
-  let bus: FakeCommandBus;
+  let bus: RecordingCommandBus;
   let handler: MergePendingTransfersHandler;
 
   beforeEach(() => {
     store = new InMemoryTransferCandidateStore();
-    bus = new FakeCommandBus();
+    bus = new RecordingCommandBus('transfer-txn-1');
     handler = new MergePendingTransfersHandler(
       store,
       new TransferDetector({ windowDays: 3, amountTolerance: '0' }),
       bus,
-      new SequentialIdGenerator(),
+      new SeedCurrencyCatalog(),
     );
   });
 
@@ -43,11 +42,11 @@ describe('MergePendingTransfersHandler', () => {
     ...overrides,
   });
 
-  it('voids both legs and records+confirms a single transfer preserving external refs', async () => {
+  it('voids both legs and records a single confirmed transfer preserving external refs', async () => {
     await store.upsertPendingLeg(pendingLeg({ transactionId: 't1', accountId: 'acc-out', amount: '-500' }));
     await store.upsertPendingLeg(pendingLeg({ transactionId: 't2', accountId: 'acc-in', amount: '500' }));
 
-    await handler.execute(new MergePendingTransfersCommand(context, 'merge-ref', ['t1', 't2']));
+    await handler.execute(new MergePendingTransfersCommand(['t1', 't2']), ctx);
 
     expect(bus.dispatchedOf(VoidPendingTransactionCommand)).toHaveLength(2);
 
@@ -57,16 +56,17 @@ describe('MergePendingTransfersHandler', () => {
       expect.objectContaining({ accountId: 'acc-out', amount: '-500' }),
       expect.objectContaining({ accountId: 'acc-in', amount: '500' }),
     ]);
-    expect(records[0].metadata).toMatchObject({ merged_external_refs: ['ref-t1', 'ref-t2'] });
+    expect(records[0].metadata).toMatchObject({ merged_external_refs: 'ref-t1,ref-t2' });
 
-    expect(bus.dispatchedOf(ConfirmTransactionCommand)).toHaveLength(1);
+    // The transfer is recorded directly CONFIRMED; no separate confirm dispatch.
+    expect(bus.dispatchedOf(ConfirmTransactionCommand)).toHaveLength(0);
   });
 
   it('rejects when a referenced leg is not pending', async () => {
     await store.upsertPendingLeg(pendingLeg({ transactionId: 't1', accountId: 'acc-out', amount: '-500' }));
 
     await expect(
-      handler.execute(new MergePendingTransfersCommand(context, null, ['t1', 't2'])),
+      handler.execute(new MergePendingTransfersCommand(['t1', 't2']), ctx),
     ).rejects.toBeInstanceOf(PendingLegNotFoundException);
   });
 
@@ -75,7 +75,7 @@ describe('MergePendingTransfersHandler', () => {
     await store.upsertPendingLeg(pendingLeg({ transactionId: 't2', accountId: 'acc-in', amount: '-500' }));
 
     await expect(
-      handler.execute(new MergePendingTransfersCommand(context, null, ['t1', 't2'])),
+      handler.execute(new MergePendingTransfersCommand(['t1', 't2']), ctx),
     ).rejects.toBeInstanceOf(NotATransferPairException);
   });
 });

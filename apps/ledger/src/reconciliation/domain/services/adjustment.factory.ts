@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Money } from '@ledger/shared/domain/money';
-import { PostingLine } from '@ledger/shared/ep1-ep2-contracts.assumed';
+import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
 import { DiscrepancyNotResolvableException } from '../balance-assertion/exceptions/balance-assertion.exception';
 
 /**
@@ -20,8 +20,8 @@ export class AdjustmentFactory {
     }
 
     return [
-      new PostingLine(accountId, difference),
-      new PostingLine(adjustmentsAccountId, difference.negate()),
+      PostingLine.of({ accountId, amount: difference, metadata: {} }),
+      PostingLine.of({ accountId: adjustmentsAccountId, amount: difference.negate(), metadata: {} }),
     ];
   }
 }

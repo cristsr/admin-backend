@@ -4,6 +4,7 @@ import { MergePendingTransfersHandler } from './application/commands/merge-pendi
 import { TransferCandidatesProjector } from './application/projectors/transfer-candidates.projector';
 import { ListTransferCandidatesHandler } from './application/queries/list-transfer-candidates.query';
 import { transferDetectionConfig } from './config/transfer-detection.config';
+import { AccountLookup } from './domain/ports/account-lookup.port';
 import { TransferCandidateStore } from './domain/ports/transfer-candidate-store.port';
 import {
   TRANSFER_DETECTION_CONFIG,
@@ -11,13 +12,13 @@ import {
 } from './domain/services/transfer-detector.service';
 import { TransferController } from './infrastructure/adapters/http/transfer.controller';
 import { InMemoryTransferCandidateStore } from './infrastructure/adapters/persistence/in-memory/in-memory-transfer-candidate-store';
+import { ReadModelAccountLookup } from './infrastructure/adapters/persistence/read-model-account-lookup';
 
 /**
- * EP-3.7 additions to the transactions module: transfer detection projection and
- * the merge command. The assumed EP-1/EP-2 collaborators (`CommandBus`,
- * `QueryBus`, `AccountLookup`) and the real `LedgerTransaction` aggregate are
- * provided at integration; the in-memory candidate store is the placeholder the
- * TypeORM adapter replaces.
+ * EP-3.7 transfer feature mounted on the real EP-1 core: transfer-detection
+ * projection and the merge command, which reuses the real `RecordTransaction`/
+ * `VoidPendingTransaction` through the {@link CommandBus}. The candidate store is
+ * a bespoke in-memory double driven by the async pump (TODO(persistence)).
  */
 @Module({
   imports: [ConfigModule.forFeature(transferDetectionConfig)],
@@ -26,6 +27,7 @@ import { InMemoryTransferCandidateStore } from './infrastructure/adapters/persis
     TransferDetector,
     { provide: TRANSFER_DETECTION_CONFIG, useFactory: () => transferDetectionConfig() },
     { provide: TransferCandidateStore, useClass: InMemoryTransferCandidateStore },
+    { provide: AccountLookup, useClass: ReadModelAccountLookup },
     TransferCandidatesProjector,
     MergePendingTransfersHandler,
     ListTransferCandidatesHandler,

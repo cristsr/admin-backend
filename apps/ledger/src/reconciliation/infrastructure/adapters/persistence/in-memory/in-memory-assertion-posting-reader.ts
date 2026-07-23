@@ -3,7 +3,8 @@ import {
   AssertablePosting,
   AssertionPostingReader,
 } from '@ledger/reconciliation/domain/ports/assertion-posting-reader.port';
-import { LocalDate, TransactionStatus } from '@ledger/shared/ep1-ep2-contracts.assumed';
+import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 
 /** A stored posting row keyed by owner and account, for the in-memory reader. */
 interface StoredPosting extends AssertablePosting {
@@ -35,10 +36,10 @@ export class InMemoryAssertionPostingReader extends AssertionPostingReader {
   byAccountUpToDate(
     userId: string,
     accountId: string,
-    date: LocalDate,
+    date: LedgerDate,
   ): Promise<readonly AssertablePosting[]> {
     const matches = this.rows.filter(
-      (row) => row.userId === userId && row.accountId === accountId && row.date.isOnOrBefore(date),
+      (row) => row.userId === userId && row.accountId === accountId && row.date.isSameOrBefore(date),
     );
 
     return Promise.resolve(matches.map((row) => this.strip(row)));

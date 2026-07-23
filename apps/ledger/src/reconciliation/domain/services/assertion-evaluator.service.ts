@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Nullable } from '@shared';
 import { Money } from '@ledger/shared/domain/money';
-import { LocalDate } from '@ledger/shared/ep1-ep2-contracts.assumed';
+import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 import { BalanceAssertion } from '../balance-assertion/balance-assertion.aggregate';
 import { AssertionStatus } from '../balance-assertion/enums/assertion-status.enum';
 import { AssertionCurrencyMismatchException } from '../balance-assertion/exceptions/balance-assertion.exception';
@@ -11,7 +11,7 @@ import { DayBoundaryResolver } from './day-boundary.resolver';
 
 /** Temporal cutoff of an assertion: its date, optional intraday instant, timezone. */
 export interface AssertionCutoff {
-  readonly date: LocalDate;
+  readonly date: LedgerDate;
   readonly occurredAt: Nullable<Date>;
   readonly timezone: string;
 }
@@ -35,12 +35,16 @@ export class AssertionEvaluator {
     private readonly dayBoundary: DayBoundaryResolver,
   ) {}
 
-  async evaluate(assertion: BalanceAssertion, cutoff: AssertionCutoff): Promise<AssertionEvaluation> {
+  async evaluate(
+    userId: string,
+    assertion: BalanceAssertion,
+    cutoff: AssertionCutoff,
+  ): Promise<AssertionEvaluation> {
     const expected = assertion.expectedAmount;
     const currency = expected.currency;
 
     const population = await this.reader.byAccountUpToDate(
-      assertion.owner,
+      userId,
       assertion.account,
       cutoff.date,
     );

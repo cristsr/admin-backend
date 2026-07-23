@@ -1,51 +1,116 @@
 import { Money } from '@ledger/shared/domain/money';
-import {
-  AuthenticatedContext,
-  DomainEvent,
-  LocalDate,
-  RecordTransactionCommand,
-  TRANSACTION_RECORDED,
-  TransactionStatus,
-} from '@ledger/shared/ep1-ep2-contracts.assumed';
-import { InMemoryEventStore } from '@ledger/shared/infrastructure/in-memory-event-store';
-import {
-  FakeCommandBus,
-  FixedClock,
-  FixedSettingsReader,
-  FixedSystemAccountLookup,
-  SequentialIdGenerator,
-  aMoney,
-} from '@ledger/shared/testing';
+import { Clock, IdGenerator } from '@ledger/shared/domain/ports';
+import { FixedClock, FixedSettingsReader, FixedSystemAccountLookup, SequentialIdGenerator, aMoney } from '@ledger/shared/testing';
+import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
+import { Command } from '@ledger/shared-kernel/application/command-bus/command';
+import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
+import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
+import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
+import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
+import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
+import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { AssertBalanceCommand } from './application/commands/assert-balance.command';
 import { AssertBalanceHandler } from './application/commands/assert-balance.handler';
-import { EvaluateAssertionCommand } from './application/commands/evaluate-assertion.command';
 import { EvaluateAssertionHandler } from './application/commands/evaluate-assertion.handler';
 import { ResolveDiscrepancyCommand } from './application/commands/resolve-discrepancy.command';
 import { ResolveDiscrepancyHandler } from './application/commands/resolve-discrepancy.handler';
 import { AdjustmentAuditProjector } from './application/projectors/adjustment-audit.projector';
 import { AssertionStatusProjector } from './application/projectors/assertion-status.projector';
 import { ReevaluateAssertionsReactor } from './application/reactors/reevaluate-assertions.reactor';
+import { createReconciliationEventRegistry } from './application/reconciliation-event-registry.factory';
+import { BalanceAssertionRepository } from './domain/balance-assertion/balance-assertion.repository';
 import { AssertionStatus } from './domain/balance-assertion/enums/assertion-status.enum';
 import { AdjustmentFactory } from './domain/services/adjustment.factory';
 import { AssertionEvaluator } from './domain/services/assertion-evaluator.service';
 import { IntlDayBoundaryResolver } from './domain/services/day-boundary.resolver';
-import { EventStoreBalanceAssertionRepository } from './infrastructure/adapters/persistence/event-store-balance-assertion.repository';
 import { InMemoryAdjustmentAuditStore } from './infrastructure/adapters/persistence/in-memory/in-memory-adjustment-audit-store';
 import { InMemoryAssertionPostingReader } from './infrastructure/adapters/persistence/in-memory/in-memory-assertion-posting-reader';
 import { InMemoryAssertionStatusStore } from './infrastructure/adapters/persistence/in-memory/in-memory-assertion-status-store';
 import { StoreBackedAssertionLookup } from './infrastructure/adapters/persistence/store-backed-assertion-lookup';
 
 /**
- * End-to-end reconciliation flow (spec §7.5) with the assumed EP-1/EP-2
- * contracts mocked: declare an assertion against a short balance → MISMATCHED →
- * resolve → the system adjustment closes the gap → the reactor re-evaluates the
- * assertion to MATCHED and the audit accumulates. Projections and the reactor
- * are driven from the in-memory event store with a checkpoint, as the real
- * async dispatcher would.
+ * Test double for the write side of `transactions`: appends a `TransactionRecorded`
+ * event straight to the shared event store and mirrors it into the posting reader,
+ * the way the real EP-1 handler + `account_balances` projector would. Only
+ * `RecordTransactionCommand` is exercised in this flow (ResolveDiscrepancy).
+ */
+class TransactionRecordingBus extends CommandBus {
+  readonly recorded: RecordTransactionCommand[] = [];
+
+  constructor(
+    private readonly eventStore: InMemoryEventStore,
+    private readonly reader: InMemoryAssertionPostingReader,
+    private readonly catalog: CurrencyCatalog,
+    private readonly ids: IdGenerator,
+    private readonly clock: Clock,
+  ) {
+    super();
+  }
+
+  async dispatch(command: Command, ctx: AuthContext): Promise<CommandResult> {
+    if (!(command instanceof RecordTransactionCommand)) {
+      throw new Error(`Unsupported command in this e2e double: ${command.commandType}`);
+    }
+
+    this.recorded.push(command);
+    const transactionId = this.ids.next();
+
+    for (const posting of command.postings) {
+      this.reader.add(ctx.userId, posting.accountId, {
+        amount: Money.of(posting.amount, this.catalog.resolve(CurrencyCode.of(posting.currency))),
+        date: LedgerDate.of(command.date),
+        occurredAt: null,
+        status: TransactionStatus.CONFIRMED,
+      });
+    }
+
+    const now = this.clock.now();
+    const result = await this.eventStore.append(
+      { userId: ctx.userId, aggregateType: 'LedgerTransaction', aggregateId: transactionId },
+      0,
+      [
+        {
+          eventId: this.ids.next(),
+          userId: ctx.userId,
+          aggregateType: 'LedgerTransaction',
+          aggregateId: transactionId,
+          sequence: 1,
+          eventType: 'TransactionRecorded',
+          schemaVersion: 1,
+          clientId: ctx.clientId,
+          externalRef: ctx.externalRef,
+          payload: {
+            transactionId,
+            date: command.date,
+            status: TransactionStatus.CONFIRMED,
+            postings: command.postings.map((posting) => ({ ...posting })),
+          },
+          occurredAt: now,
+          recordedAt: now,
+        },
+      ],
+    );
+
+    return { aggregateId: transactionId, streamPosition: result.lastPosition, idempotentReplay: false };
+  }
+}
+
+/**
+ * End-to-end reconciliation flow (spec §7.5) over the real EP-1 event store and
+ * ports, with a transaction-recording double standing in for the transactions
+ * module's write side: declare an assertion against a short balance → MISMATCHED
+ * → resolve → the system adjustment closes the gap → the reactor re-evaluates the
+ * assertion to MATCHED and the audit accumulates. Projections and the reactor are
+ * driven from the in-memory event store with a checkpoint, as the real async
+ * dispatcher would.
  */
 describe('Reconciliation discrepancy flow (e2e)', () => {
-  const context = new AuthenticatedContext('user-1', 'client-1');
+  const ctx: AuthContext = { userId: 'user-1', clientId: 'client-1', externalRef: 'ext-assert' };
   const clock = new FixedClock(new Date('2026-07-22T10:00:00.000Z'));
+  const catalog = new SeedCurrencyCatalog();
+  const ids = new SequentialIdGenerator();
 
   let eventStore: InMemoryEventStore;
   let reader: InMemoryAssertionPostingReader;
@@ -56,62 +121,22 @@ describe('Reconciliation discrepancy flow (e2e)', () => {
   let reactor: ReevaluateAssertionsReactor;
   let assertHandler: AssertBalanceHandler;
   let resolveHandler: ResolveDiscrepancyHandler;
-  let recorded: RecordTransactionCommand[];
-  let checkpoint: number;
-
-  /** Replays the assumed transaction command onto the event store and read model. */
-  const transactionRecorder = {
-    execute(command: RecordTransactionCommand): Promise<{ aggregateId: string; streamPosition: number }> {
-      recorded.push(command);
-
-      for (const posting of command.postings) {
-        reader.add('user-1', posting.accountId, {
-          amount: Money.of(posting.amount, aMoney().of('0').inUsd().currency),
-          date: LocalDate.of(command.date),
-          occurredAt: null,
-          status: TransactionStatus.CONFIRMED,
-        });
-      }
-
-      const event = new DomainEvent(
-        TRANSACTION_RECORDED,
-        command.transactionId,
-        'LedgerTransaction',
-        1,
-        'user-1',
-        'client-1',
-        command.externalRef,
-        clock.now(),
-        {
-          transactionId: command.transactionId,
-          postings: command.postings.map((posting) => ({
-            accountId: posting.accountId,
-            amount: posting.amount,
-            currency: posting.currency,
-            date: command.date,
-            occurredAt: null,
-            status: TransactionStatus.CONFIRMED,
-          })),
-        },
-      );
-
-      return eventStore.append(command.transactionId, 0, [event]);
-    },
-  };
+  let bus: TransactionRecordingBus;
+  let checkpoint: bigint;
 
   /** Drains the stream past the checkpoint into projectors and the reactor. */
   const pump = async (): Promise<void> => {
-    let batch = await eventStore.readAll(checkpoint);
+    let batch = await eventStore.readAll(checkpoint, 100);
 
     while (batch.length) {
-      for (const { position, event } of batch) {
+      for (const event of batch) {
         await statusProjector.project(event);
         await auditProjector.project(event);
         await reactor.on(event);
-        checkpoint = position;
+        checkpoint = event.globalPosition;
       }
 
-      batch = await eventStore.readAll(checkpoint);
+      batch = await eventStore.readAll(checkpoint, 100);
     }
   };
 
@@ -119,37 +144,35 @@ describe('Reconciliation discrepancy flow (e2e)', () => {
     eventStore = new InMemoryEventStore();
     reader = new InMemoryAssertionPostingReader();
     statusStore = new InMemoryAssertionStatusStore();
-    auditStore = new InMemoryAdjustmentAuditStore();
+    auditStore = new InMemoryAdjustmentAuditStore(catalog);
     statusProjector = new AssertionStatusProjector(statusStore);
     auditProjector = new AdjustmentAuditProjector(auditStore, statusStore);
-    recorded = [];
-    checkpoint = 0;
+    checkpoint = 0n;
 
-    const repository = new EventStoreBalanceAssertionRepository(eventStore);
+    const repository = new BalanceAssertionRepository(
+      eventStore,
+      createReconciliationEventRegistry(catalog),
+      new EnvelopeFactory(clock, ids),
+    );
     const evaluator = new AssertionEvaluator(reader, new IntlDayBoundaryResolver());
     const settings = new FixedSettingsReader('America/Bogota');
-    const bus = new FakeCommandBus();
-
-    const ids = new SequentialIdGenerator();
     const evaluateHandler = new EvaluateAssertionHandler(repository, evaluator, settings, clock);
-    reactor = new ReevaluateAssertionsReactor(new StoreBackedAssertionLookup(statusStore), bus);
-    assertHandler = new AssertBalanceHandler(repository, bus, ids, clock);
+
+    bus = new TransactionRecordingBus(eventStore, reader, catalog, ids, clock);
+    reactor = new ReevaluateAssertionsReactor(new StoreBackedAssertionLookup(statusStore), evaluateHandler);
+    assertHandler = new AssertBalanceHandler(repository, evaluateHandler, catalog, ids);
     resolveHandler = new ResolveDiscrepancyHandler(
       repository,
       bus,
       new FixedSystemAccountLookup('equity-adjustments'),
       new AdjustmentFactory(),
-      ids,
       clock,
     );
-
-    bus.register(EvaluateAssertionCommand, evaluateHandler);
-    bus.register(RecordTransactionCommand, transactionRecorder);
 
     // The account really holds 600, but the bank statement says 1000.
     reader.add('user-1', 'acc-1', {
       amount: aMoney().of('600').inUsd(),
-      date: LocalDate.of('2026-07-20'),
+      date: LedgerDate.of('2026-07-20'),
       occurredAt: null,
       status: TransactionStatus.CONFIRMED,
     });
@@ -157,7 +180,8 @@ describe('Reconciliation discrepancy flow (e2e)', () => {
 
   it('declares MISMATCHED, resolves it, and re-evaluates to MATCHED with an audited adjustment', async () => {
     const declared = await assertHandler.execute(
-      new AssertBalanceCommand(context, 'ext-assert', 'acc-1', '2026-07-22', null, '1000', 'USD', '0'),
+      new AssertBalanceCommand('acc-1', '2026-07-22', null, '1000', 'USD', '0'),
+      ctx,
     );
     await pump();
 
@@ -166,13 +190,14 @@ describe('Reconciliation discrepancy flow (e2e)', () => {
     expect(afterDeclare?.difference).toBe('400');
 
     const resolved = await resolveHandler.execute(
-      new ResolveDiscrepancyCommand(context, 'ext-resolve', declared.assertionId),
+      new ResolveDiscrepancyCommand(declared.assertionId),
+      { ...ctx, externalRef: 'ext-resolve' },
     );
     await pump();
 
     // (a) the adjustment was posted against Equity:Adjustments
-    expect(recorded).toHaveLength(1);
-    expect(recorded[0].postings).toEqual([
+    expect(bus.recorded).toHaveLength(1);
+    expect(bus.recorded[0].postings).toEqual([
       expect.objectContaining({ accountId: 'acc-1', amount: '400' }),
       expect.objectContaining({ accountId: 'equity-adjustments', amount: '-400' }),
     ]);

@@ -1,25 +1,23 @@
 import { Nullable } from '@shared';
-import {
-  AccountFacts,
-  AccountLookup,
-  AuthenticatedContext,
-  ConfirmTransactionCommand,
-  DomainEvent,
-  RecordTransactionCommand,
-  TRANSACTION_CONFIRMED,
-  TRANSACTION_RECORDED,
-  TRANSACTION_VOIDED,
-  TransactionStatus,
-  VoidPendingTransactionCommand,
-} from '@ledger/shared/ep1-ep2-contracts.assumed';
-import { InMemoryEventStore } from '@ledger/shared/infrastructure/in-memory-event-store';
-import { FakeCommandBus, SequentialIdGenerator } from '@ledger/shared/testing';
+import { IdGenerator } from '@ledger/shared/domain/ports';
+import { SequentialIdGenerator } from '@ledger/shared/testing';
+import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
+import { Command } from '@ledger/shared-kernel/application/command-bus/command';
+import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
+import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
+import { EventEnvelope } from '@ledger/shared-kernel/domain/event/event-envelope.type';
+import { StreamId } from '@ledger/shared-kernel/domain/event/stream-id.type';
+import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { MergePendingTransfersCommand } from './application/commands/merge-pending-transfers.command';
 import { MergePendingTransfersHandler } from './application/commands/merge-pending-transfers.handler';
 import { TransferCandidatesProjector } from './application/projectors/transfer-candidates.projector';
-import { ListTransferCandidatesQuery } from './application/queries/list-transfer-candidates.query';
-import { ListTransferCandidatesHandler } from './application/queries/list-transfer-candidates.query';
+import { ListTransferCandidatesHandler, ListTransferCandidatesQuery } from './application/queries/list-transfer-candidates.query';
+import { RecordTransactionCommand } from './application/record-transaction/record-transaction.command';
+import { VoidPendingTransactionCommand } from './application/void-transaction/void-pending-transaction.command';
+import { AccountFacts, AccountLookup } from './domain/ports/account-lookup.port';
 import { TransferDetector } from './domain/services/transfer-detector.service';
+import { TransactionStatus } from './domain/transaction/transaction-status';
 import { InMemoryTransferCandidateStore } from './infrastructure/adapters/persistence/in-memory/in-memory-transfer-candidate-store';
 
 /** Every account is a real ASSETS account for this flow. */
@@ -30,116 +28,139 @@ class AllAssetsLookup extends AccountLookup {
 }
 
 /**
- * End-to-end transfer flow (spec §7.2) with the assumed EP-1/EP-2 contracts
- * mocked: two opposite pending legs are detected as a candidate pair, the merge
- * voids both and records+confirms a single transfer, and the pair disappears.
+ * Test double for the write side of `transactions`: appends `TransactionVoided`
+ * (continuing the leg's own stream) and `TransactionRecorded` (a fresh stream for
+ * the merged transfer) straight to the shared event store, the way the real EP-1
+ * handlers would. Only what `MergePendingTransfersHandler` dispatches.
+ */
+class TransferFlowBus extends CommandBus {
+  constructor(
+    private readonly eventStore: InMemoryEventStore,
+    private readonly ids: IdGenerator,
+  ) {
+    super();
+  }
+
+  async dispatch(command: Command, ctx: AuthContext): Promise<CommandResult> {
+    if (command instanceof VoidPendingTransactionCommand) {
+      return this.appendTo(command.transactionId, ctx, 'TransactionVoided', {
+        transactionId: command.transactionId,
+        postings: [],
+      });
+    }
+
+    if (command instanceof RecordTransactionCommand) {
+      const transactionId = this.ids.next();
+
+      return this.appendTo(transactionId, ctx, 'TransactionRecorded', {
+        transactionId,
+        date: command.date,
+        status: command.initialStatus,
+        postings: command.postings.map((posting) => ({ ...posting })),
+      });
+    }
+
+    throw new Error(`Unsupported command in this e2e double: ${command.commandType}`);
+  }
+
+  private async appendTo(
+    aggregateId: string,
+    ctx: AuthContext,
+    eventType: string,
+    payload: Record<string, unknown>,
+  ): Promise<CommandResult> {
+    const stream: StreamId = { userId: ctx.userId, aggregateType: 'LedgerTransaction', aggregateId };
+    const version = (await this.eventStore.load(stream)).length;
+    const now = new Date('2026-07-21T10:00:00.000Z');
+
+    const envelope: EventEnvelope = {
+      eventId: this.ids.next(),
+      userId: ctx.userId,
+      aggregateType: 'LedgerTransaction',
+      aggregateId,
+      sequence: version + 1,
+      eventType,
+      schemaVersion: 1,
+      clientId: ctx.clientId,
+      externalRef: version === 0 ? ctx.externalRef : null,
+      payload,
+      occurredAt: now,
+      recordedAt: now,
+    };
+
+    const result = await this.eventStore.append(stream, version, [envelope]);
+
+    return { aggregateId, streamPosition: result.lastPosition, idempotentReplay: false };
+  }
+}
+
+/**
+ * End-to-end transfer flow (spec §7.2) over the real EP-1 event store and ports,
+ * with a transaction-recording double standing in for the transactions module's
+ * write side: two opposite pending legs are detected as a candidate pair, the
+ * merge voids both and records a single confirmed transfer, and the pair
+ * disappears.
  */
 describe('Transfer merge flow (e2e)', () => {
-  const context = new AuthenticatedContext('user-1', 'client-1');
+  const ids = new SequentialIdGenerator();
+  const ctx: AuthContext = { userId: 'user-1', clientId: 'client-1', externalRef: 'merge-1' };
 
   let eventStore: InMemoryEventStore;
   let candidateStore: InMemoryTransferCandidateStore;
   let projector: TransferCandidatesProjector;
   let mergeHandler: MergePendingTransfersHandler;
   let listHandler: ListTransferCandidatesHandler;
-  let checkpoint: number;
+  let checkpoint: bigint;
 
   const recordPending = (transactionId: string, accountId: string, amount: string): Promise<unknown> => {
-    const event = new DomainEvent(
-      TRANSACTION_RECORDED,
-      transactionId,
-      'LedgerTransaction',
-      1,
-      'user-1',
-      'client-1',
-      `ref-${transactionId}`,
-      new Date('2026-07-20T10:00:00.000Z'),
-      {
+    const stream: StreamId = { userId: 'user-1', aggregateType: 'LedgerTransaction', aggregateId: transactionId };
+    const envelope: EventEnvelope = {
+      eventId: `evt-${transactionId}`,
+      userId: 'user-1',
+      aggregateType: 'LedgerTransaction',
+      aggregateId: transactionId,
+      sequence: 1,
+      eventType: 'TransactionRecorded',
+      schemaVersion: 1,
+      clientId: 'client-1',
+      externalRef: `ref-${transactionId}`,
+      payload: {
         transactionId,
-        postings: [
-          { accountId, amount, currency: 'USD', date: '2026-07-20', occurredAt: null, status: TransactionStatus.PENDING },
-        ],
+        date: '2026-07-20',
+        status: TransactionStatus.PENDING,
+        postings: [{ accountId, amount, currency: 'USD' }],
       },
-    );
+      occurredAt: new Date('2026-07-20T10:00:00.000Z'),
+      recordedAt: new Date('2026-07-20T10:00:00.000Z'),
+    };
 
-    return eventStore.append(transactionId, 0, [event]);
-  };
-
-  /** Fake transaction command executor: reflects writes back onto the event store. */
-  const transactionExecutor = {
-    execute(command: object): Promise<{ aggregateId: string; streamPosition: number }> {
-      if (command instanceof VoidPendingTransactionCommand) {
-        return appendTxnEvent(TRANSACTION_VOIDED, command.transactionId, [], command.externalRef);
-      }
-
-      if (command instanceof RecordTransactionCommand) {
-        return appendTxnEvent(
-          TRANSACTION_RECORDED,
-          command.transactionId,
-          command.postings.map((posting) => ({
-            accountId: posting.accountId,
-            amount: posting.amount,
-            currency: posting.currency,
-            date: command.date,
-            occurredAt: null,
-            status: TransactionStatus.PENDING,
-          })),
-          command.externalRef,
-        );
-      }
-
-      return appendTxnEvent(TRANSACTION_CONFIRMED, (command as ConfirmTransactionCommand).transactionId, [], null);
-    },
-  };
-
-  const appendTxnEvent = (
-    type: string,
-    transactionId: string,
-    postings: readonly object[],
-    externalRef: Nullable<string>,
-  ): Promise<{ aggregateId: string; streamPosition: number }> => {
-    const event = new DomainEvent(
-      type,
-      `${type}:${transactionId}`,
-      'LedgerTransaction',
-      1,
-      'user-1',
-      'client-1',
-      externalRef,
-      new Date('2026-07-21T10:00:00.000Z'),
-      { transactionId, postings },
-    );
-
-    return eventStore.append(`${type}:${transactionId}`, 0, [event]);
+    return eventStore.append(stream, 0, [envelope]);
   };
 
   const pump = async (): Promise<void> => {
-    let batch = await eventStore.readAll(checkpoint);
+    let batch = await eventStore.readAll(checkpoint, 100);
 
     while (batch.length) {
-      for (const { position, event } of batch) {
+      for (const event of batch) {
         await projector.project(event);
-        checkpoint = position;
+        checkpoint = event.globalPosition;
       }
 
-      batch = await eventStore.readAll(checkpoint);
+      batch = await eventStore.readAll(checkpoint, 100);
     }
   };
 
   beforeEach(() => {
     eventStore = new InMemoryEventStore();
     candidateStore = new InMemoryTransferCandidateStore();
-    checkpoint = 0;
+    checkpoint = 0n;
 
     const detector = new TransferDetector({ windowDays: 3, amountTolerance: '0' });
-    projector = new TransferCandidatesProjector(candidateStore, detector, new AllAssetsLookup());
+    projector = new TransferCandidatesProjector(candidateStore, detector, new AllAssetsLookup(), new SeedCurrencyCatalog());
 
-    const bus = new FakeCommandBus();
-    bus.register(VoidPendingTransactionCommand, transactionExecutor);
-    bus.register(RecordTransactionCommand, transactionExecutor);
-    bus.register(ConfirmTransactionCommand, transactionExecutor);
+    const bus = new TransferFlowBus(eventStore, ids);
 
-    mergeHandler = new MergePendingTransfersHandler(candidateStore, detector, bus, new SequentialIdGenerator());
+    mergeHandler = new MergePendingTransfersHandler(candidateStore, detector, bus, new SeedCurrencyCatalog());
     listHandler = new ListTransferCandidatesHandler(candidateStore);
   });
 
@@ -153,11 +174,11 @@ describe('Transfer merge flow (e2e)', () => {
     expect(candidates[0].outgoingTxnId).toBe('t1');
     expect(candidates[0].incomingTxnId).toBe('t2');
 
-    const output = await mergeHandler.execute(new MergePendingTransfersCommand(context, 'merge-1', ['t1', 't2']));
+    const output = await mergeHandler.execute(new MergePendingTransfersCommand(['t1', 't2']), ctx);
     await pump();
 
     // Both original legs voided, a single confirmed transfer recorded.
-    const voided = (await eventStore.readAll(0)).filter((entry) => entry.event.type === TRANSACTION_VOIDED);
+    const voided = (await eventStore.readAll(0n, 100)).filter((entry) => entry.eventType === 'TransactionVoided');
     expect(voided).toHaveLength(2);
     expect(output.voidedTransactionIds).toEqual(['t1', 't2']);
 

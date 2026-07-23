@@ -1,6 +1,6 @@
 import { Money } from '@ledger/shared/domain/money';
-import { LocalDate } from '@ledger/shared/ep1-ep2-contracts.assumed';
 import { aMoney } from '@ledger/shared/testing';
+import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 import { PendingLeg, TransferDetector } from './transfer-detector.service';
 
 describe('TransferDetector', () => {
@@ -8,7 +8,7 @@ describe('TransferDetector', () => {
 
   const leg = (overrides: Partial<PendingLeg> & { transactionId: string; amount: Money }): PendingLeg => ({
     accountId: 'acc-out',
-    date: LocalDate.of('2026-07-20'),
+    date: LedgerDate.of('2026-07-20'),
     isRealAccount: true,
     ...overrides,
   });
@@ -31,7 +31,7 @@ describe('TransferDetector', () => {
       transactionId: 't2',
       accountId: 'acc-in',
       amount: aMoney().of('500').inUsd(),
-      date: LocalDate.of('2026-07-30'),
+      date: LedgerDate.of('2026-07-30'),
     });
 
     expect(detector.match(outgoing, [incoming])).toBeNull();

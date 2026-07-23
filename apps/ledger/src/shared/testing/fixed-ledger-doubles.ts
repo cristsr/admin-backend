@@ -1,4 +1,5 @@
-import { LedgerSettingsReader, SystemAccountLookup } from '@ledger/shared/ep1-ep2-contracts.assumed';
+import { LedgerSettingsReader } from '@ledger/reconciliation/domain/ports/ledger-settings-reader.port';
+import { SystemAccountLookup } from '@ledger/reconciliation/domain/ports/system-account-lookup.port';
 
 /** Test double: every user resolves to a single pinned timezone. */
 export class FixedSettingsReader extends LedgerSettingsReader {

@@ -38,3 +38,11 @@ export class DiscrepancyNotResolvableException extends DomainConflictException {
 export class AssertionCurrencyMismatchException extends DomainUnprocessableException {
   readonly code = 'ASSERTION_CURRENCY_MISMATCH';
 }
+
+/**
+ * The user's ledger has not been initialized, so its settings (timezone, system
+ * accounts) are missing — reconciliation cannot resolve a day boundary yet.
+ */
+export class LedgerNotInitializedException extends DomainUnprocessableException {
+  readonly code = 'LEDGER_NOT_INITIALIZED';
+}
