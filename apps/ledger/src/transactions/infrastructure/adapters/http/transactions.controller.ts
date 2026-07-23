@@ -1,7 +1,8 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseInterceptors } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Nullable } from '@shared';
-import { CommandBus, CommandResult, QueryBus } from '@ledger/shared/application/ep1-contracts.assumed';
+import { GetTransactionByIdQuery } from '@ledger/read-side/get-transaction-by-id/get-transaction-by-id.query';
+import { ListTransactionsQuery } from '@ledger/read-side/list-transactions/list-transactions.query';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import {
   CommandAcceptedDto,
@@ -9,17 +10,19 @@ import {
   Context,
   ExternalRef,
 } from '@ledger/shared/infrastructure/adapters/http';
-import {
-  AmendPendingTransactionCommand,
-  AnnotateTransactionCommand,
-  CommandPosting,
-  ConfirmTransactionCommand,
-  RecordTransactionCommand,
-  ReverseConfirmedTransactionCommand,
-  TransactionByIdQuery,
-  TransactionListQuery,
-  VoidPendingTransactionCommand,
-} from '@ledger/transactions/application/ep1-contracts.assumed';
+import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
+import { Command } from '@ledger/shared-kernel/application/command-bus/command';
+import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
+import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
+import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
+import { QueryContext } from '@ledger/shared-kernel/application/query-bus/query-handler';
+import { AmendPendingTransactionCommand } from '@ledger/transactions/application/amend-transaction/amend-pending-transaction.command';
+import { AnnotateTransactionCommand } from '@ledger/transactions/application/annotate-transaction/annotate-transaction.command';
+import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
+import { PostingInput } from '@ledger/transactions/application/posting-input.type';
+import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
+import { ReverseConfirmedTransactionCommand } from '@ledger/transactions/application/reverse-transaction/reverse-confirmed-transaction.command';
+import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';
 import { AmendTransactionRequestDto } from './dto/amend-transaction-request.dto';
 import { AnnotateTransactionRequestDto } from './dto/annotate-transaction-request.dto';
 import { ConfirmTransactionRequestDto } from './dto/confirm-transaction-request.dto';
@@ -34,8 +37,9 @@ import { VoidTransactionRequestDto } from './dto/void-transaction-request.dto';
 /**
  * Transaction lifecycle and reads (§7.1–§7.4). Each state transition is its own
  * POST action sub-resource mapping to a distinct command with distinct
- * invariants; the controller only maps HTTP to the buses (RNF-10). Writes return
- * a {@link CommandAcceptedDto}; reads return the projection unchanged.
+ * invariants; the controller maps HTTP to the buses and passes the authenticated
+ * {@link AuthContext} separately (RNF-10). Writes return a {@link CommandAcceptedDto};
+ * reads return the projection unchanged.
  */
 @ApiTags('transactions')
 @Controller({ path: 'transactions', version: '1' })
@@ -54,21 +58,18 @@ export class TransactionsController {
     @ExternalRef() externalRef: Nullable<string>,
     @Body() dto: RecordTransactionRequestDto,
   ): Promise<CommandResult> {
-    const command = new RecordTransactionCommand({
-      userId: context.userId,
-      clientId: context.clientId,
-      externalRef,
-      date: dto.date,
-      payee: dto.payee ?? null,
-      description: dto.description,
-      status: dto.status,
-      postings: this.toCommandPostings(dto.postings),
-      invoiceUrl: dto.invoiceUrl ?? null,
-      tags: dto.tags ?? [],
-      metadata: dto.metadata ?? null,
-    });
+    const command = new RecordTransactionCommand(
+      dto.date,
+      dto.payee ?? null,
+      dto.description,
+      this.toPostings(dto.postings),
+      dto.status,
+      dto.invoiceUrl ?? null,
+      dto.tags ?? [],
+      this.toStringMetadata(dto.metadata),
+    );
 
-    return this.commandBus.dispatch<CommandResult>(command);
+    return this.dispatch(command, context, externalRef);
   }
 
   @Get()
@@ -76,20 +77,16 @@ export class TransactionsController {
   @ApiOkResponse({ type: TransactionListDto })
   list(@Context() context: LedgerContext, @Query() query: TransactionQueryDto): Promise<TransactionListDto> {
     return this.queryBus.ask<TransactionListDto>(
-      new TransactionListQuery({
-        userId: context.userId,
-        filters: {
-          accountId: query.account ?? null,
-          from: query.from ?? null,
-          to: query.to ?? null,
-          status: query.status ?? null,
-          derivedKind: query.derivedKind ?? null,
-          payee: query.payee ?? null,
-          clientId: query.clientId ?? null,
-          limit: query.limit ?? null,
-          offset: query.offset ?? null,
-        },
-      }),
+      new ListTransactionsQuery(
+        query.account ?? null,
+        query.status ?? null,
+        query.derivedKind ?? null,
+        query.payee ?? null,
+        query.from ?? null,
+        query.to ?? null,
+        query.limit ?? null,
+      ),
+      this.queryContext(context),
     );
   }
 
@@ -97,7 +94,10 @@ export class TransactionsController {
   @ApiOperation({ summary: 'Get a single transaction.' })
   @ApiOkResponse({ type: TransactionDto })
   getOne(@Context() context: LedgerContext, @Param('id') id: string): Promise<TransactionDto> {
-    return this.queryBus.ask<TransactionDto>(new TransactionByIdQuery({ userId: context.userId, transactionId: id }));
+    return this.queryBus.ask<TransactionDto>(
+      new GetTransactionByIdQuery(id),
+      this.queryContext(context),
+    );
   }
 
   @Post(':id/amend')
@@ -110,16 +110,13 @@ export class TransactionsController {
     @Param('id') id: string,
     @Body() dto: AmendTransactionRequestDto,
   ): Promise<CommandResult> {
-    const command = new AmendPendingTransactionCommand({
-      userId: context.userId,
-      clientId: context.clientId,
-      externalRef,
-      transactionId: id,
-      postings: dto.postings ? this.toCommandPostings(dto.postings) : null,
-      date: dto.date ?? null,
-    });
+    const command = new AmendPendingTransactionCommand(
+      id,
+      dto.date ?? '',
+      dto.postings ? this.toPostings(dto.postings) : [],
+    );
 
-    return this.commandBus.dispatch<CommandResult>(command);
+    return this.dispatch(command, context, externalRef);
   }
 
   @Post(':id/annotate')
@@ -132,19 +129,16 @@ export class TransactionsController {
     @Param('id') id: string,
     @Body() dto: AnnotateTransactionRequestDto,
   ): Promise<CommandResult> {
-    const command = new AnnotateTransactionCommand({
-      userId: context.userId,
-      clientId: context.clientId,
-      externalRef,
-      transactionId: id,
-      payee: dto.payee ?? null,
-      description: dto.description ?? null,
-      invoiceUrl: dto.invoiceUrl ?? null,
-      tags: dto.tags ?? null,
-      metadata: dto.metadata ?? null,
-    });
+    const command = new AnnotateTransactionCommand(
+      id,
+      dto.payee ?? null,
+      dto.description ?? '',
+      dto.invoiceUrl ?? null,
+      dto.tags ?? [],
+      this.toStringMetadata(dto.metadata),
+    );
 
-    return this.commandBus.dispatch<CommandResult>(command);
+    return this.dispatch(command, context, externalRef);
   }
 
   @Post(':id/confirm')
@@ -155,17 +149,9 @@ export class TransactionsController {
     @Context() context: LedgerContext,
     @ExternalRef() externalRef: Nullable<string>,
     @Param('id') id: string,
-    @Body() dto: ConfirmTransactionRequestDto,
+    @Body() _dto: ConfirmTransactionRequestDto,
   ): Promise<CommandResult> {
-    const command = new ConfirmTransactionCommand({
-      userId: context.userId,
-      clientId: context.clientId,
-      externalRef,
-      transactionId: id,
-      postings: dto.postings ? this.toCommandPostings(dto.postings) : null,
-    });
-
-    return this.commandBus.dispatch<CommandResult>(command);
+    return this.dispatch(new ConfirmTransactionCommand(id), context, externalRef);
   }
 
   @Post(':id/void')
@@ -178,15 +164,7 @@ export class TransactionsController {
     @Param('id') id: string,
     @Body() dto: VoidTransactionRequestDto,
   ): Promise<CommandResult> {
-    const command = new VoidPendingTransactionCommand({
-      userId: context.userId,
-      clientId: context.clientId,
-      externalRef,
-      transactionId: id,
-      reason: dto.reason,
-    });
-
-    return this.commandBus.dispatch<CommandResult>(command);
+    return this.dispatch(new VoidPendingTransactionCommand(id, dto.reason), context, externalRef);
   }
 
   @Post(':id/reverse')
@@ -196,26 +174,47 @@ export class TransactionsController {
     @Context() context: LedgerContext,
     @ExternalRef() externalRef: Nullable<string>,
     @Param('id') id: string,
-    @Body() dto: ReverseTransactionRequestDto,
+    @Body() _dto: ReverseTransactionRequestDto,
   ): Promise<CommandResult> {
-    const command = new ReverseConfirmedTransactionCommand({
+    return this.dispatch(new ReverseConfirmedTransactionCommand(id), context, externalRef);
+  }
+
+  /** Dispatches a command with the write-side context assembled from the request. */
+  private dispatch(
+    command: Command,
+    context: LedgerContext,
+    externalRef: Nullable<string>,
+  ): Promise<CommandResult> {
+    const ctx: AuthContext = {
       userId: context.userId,
       clientId: context.clientId,
       externalRef,
-      transactionId: id,
-      reason: dto.reason ?? null,
-    });
+    };
 
-    return this.commandBus.dispatch<CommandResult>(command);
+    return this.commandBus.dispatch(command, ctx);
   }
 
-  /** Maps request postings to command postings, defaulting absent metadata to null. */
-  private toCommandPostings(postings: readonly PostingDto[]): CommandPosting[] {
+  /** Builds the read-side context: the owning user that partitions every read (INV-9). */
+  private queryContext(context: LedgerContext): QueryContext {
+    return { userId: context.userId };
+  }
+
+  /** Maps request postings to the API-shaped {@link PostingInput}. */
+  private toPostings(postings: readonly PostingDto[]): PostingInput[] {
     return postings.map((posting) => ({
       accountId: posting.accountId,
       amount: posting.amount,
       currency: posting.currency,
-      metadata: posting.metadata ?? null,
+      ...(posting.metadata ? { metadata: this.toStringMetadata(posting.metadata) } : {}),
     }));
+  }
+
+  /** Coerces free-form request metadata to the string-valued map the domain stores. */
+  private toStringMetadata(metadata: Nullable<Record<string, unknown>> | undefined): Record<string, string> {
+    if (!metadata) return {};
+
+    return Object.fromEntries(
+      Object.entries(metadata).map(([key, value]) => [key, String(value)]),
+    );
   }
 }

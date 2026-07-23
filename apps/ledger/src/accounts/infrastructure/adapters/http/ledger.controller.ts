@@ -1,15 +1,8 @@
 import { Body, Controller, Get, Post, UseInterceptors } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Nullable } from '@shared';
-import {
-  InitializeLedgerCommand,
-  LedgerSettingsQuery,
-} from '@ledger/accounts/application/ep1-contracts.assumed';
-import {
-  CommandBus,
-  CommandResult,
-  QueryBus,
-} from '@ledger/shared/application/ep1-contracts.assumed';
+import { InitializeLedgerCommand } from '@ledger/ledger/application/initialize-ledger/initialize-ledger.command';
+import { GetLedgerSettingsQuery } from '@ledger/read-side/get-ledger-settings/get-ledger-settings.query';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import {
   CommandAcceptedDto,
@@ -17,6 +10,10 @@ import {
   Context,
   ExternalRef,
 } from '@ledger/shared/infrastructure/adapters/http';
+import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
+import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
+import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
+import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
 import { InitializeLedgerRequestDto } from './dto/initialize-ledger-request.dto';
 import { LedgerSettingsDto } from './dto/ledger-settings.dto';
 
@@ -42,21 +39,22 @@ export class LedgerController {
     @ExternalRef() externalRef: Nullable<string>,
     @Body() dto: InitializeLedgerRequestDto,
   ): Promise<CommandResult> {
-    const command = new InitializeLedgerCommand({
+    const command = new InitializeLedgerCommand(dto.presentationCurrency, dto.timezone);
+    const ctx: AuthContext = {
       userId: context.userId,
       clientId: context.clientId,
       externalRef,
-      presentationCurrency: dto.presentationCurrency,
-      timezone: dto.timezone,
-    });
+    };
 
-    return this.commandBus.dispatch<CommandResult>(command);
+    return this.commandBus.dispatch(command, ctx);
   }
 
   @Get('settings')
   @ApiOperation({ summary: 'Read the ledger settings projection.' })
   @ApiOkResponse({ type: LedgerSettingsDto })
   settings(@Context() context: LedgerContext): Promise<LedgerSettingsDto> {
-    return this.queryBus.ask<LedgerSettingsDto>(new LedgerSettingsQuery({ userId: context.userId }));
+    return this.queryBus.ask<LedgerSettingsDto>(new GetLedgerSettingsQuery(), {
+      userId: context.userId,
+    });
   }
 }

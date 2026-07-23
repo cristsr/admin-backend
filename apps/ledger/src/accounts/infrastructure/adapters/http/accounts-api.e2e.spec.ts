@@ -3,24 +3,22 @@ import { Test } from '@nestjs/testing';
 import { ExceptionFilter } from '@shared';
 import request from 'supertest';
 import {
-  AssumedEp1BusModule,
-  CommandBus,
-  CommandResult,
-  QueryBus,
-} from '@ledger/shared/application/ep1-contracts.assumed';
-import {
-  AccountType,
   NameCollisionException,
   SystemAccountProtectedException,
-} from '@ledger/shared/domain/ep1-contracts.assumed';
+} from '@ledger/accounts/domain/account/exceptions/account.exception';
+import { LedgerCoreModule } from '@ledger/ledger/ledger-core.module';
 import { STREAM_POSITION_HEADER, SharedHttpModule } from '@ledger/shared/infrastructure/adapters/http';
 import { GATEWAY_CONTEXT_HEADER } from '@ledger/shared/infrastructure/adapters/http/resolvers/gateway-header-context.resolver';
+import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
+import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
+import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
+import { AccountType } from '@ledger/shared-kernel/domain/value-objects';
 import { AccountsHttpModule } from './accounts-http.module';
 
 /**
- * End-to-end HTTP behaviour of the accounts + ledger adapters with the EP-1
- * buses mocked. Covers initialization, read-your-writes and the account-specific
- * stable error codes (EP-2.4 / EP-2.6).
+ * End-to-end HTTP behaviour of the accounts + ledger adapters with the real
+ * buses replaced by mocks. Covers initialization, read-your-writes and the
+ * account-specific stable error codes (EP-2.4 / EP-2.6).
  */
 describe('Accounts API (e2e, buses mocked)', () => {
   let app: INestApplication;
@@ -38,11 +36,11 @@ describe('Accounts API (e2e, buses mocked)', () => {
     isBankMirror: true,
   };
 
-  const accepted: CommandResult = { aggregateId: 'acc-1', sequence: 1, streamPosition: 7, idempotentReplay: false };
+  const accepted: CommandResult = { aggregateId: 'acc-1', streamPosition: 7n, idempotentReplay: false };
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [AssumedEp1BusModule, SharedHttpModule, AccountsHttpModule],
+      imports: [LedgerCoreModule, SharedHttpModule, AccountsHttpModule],
     })
       .overrideProvider(CommandBus)
       .useValue({ dispatch })
@@ -80,7 +78,7 @@ describe('Accounts API (e2e, buses mocked)', () => {
         .send({ presentationCurrency: 'COP', timezone: 'America/Bogota' }),
     ).expect(201);
 
-    expect(response.body).toEqual({ id: 'ledger-1', sequence: 1, streamPosition: 7 });
+    expect(response.body).toEqual({ id: 'ledger-1', streamPosition: '7' });
     expect(response.headers[STREAM_POSITION_HEADER.toLowerCase()]).toBe('7');
   });
 

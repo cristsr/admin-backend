@@ -1,9 +1,12 @@
 import { AccountValidationService } from '@ledger/accounts/application/account-validation.service';
 import { AccountRepository } from '@ledger/accounts/application/account.repository';
+import { CloseAccountHandler } from '@ledger/accounts/application/close-account/close-account.handler';
 import { OpenAccountHandler } from '@ledger/accounts/application/open-account/open-account.handler';
+import { RenameAccountHandler } from '@ledger/accounts/application/rename-account/rename-account.handler';
 import { AccountTreeProjector } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { InitializeLedgerHandler } from '@ledger/ledger/application/initialize-ledger/initialize-ledger.handler';
 import { LedgerSettingsRepository } from '@ledger/ledger/application/ledger-settings.repository';
+import { LedgerSettingsProjector } from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
 import { Clock, IdGenerator } from '@ledger/shared/domain/ports';
 import { CommandBus, PolicyCommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
 import { AuthenticatedContextPolicy } from '@ledger/shared-kernel/application/command-bus/policies/authenticated-context.policy';
@@ -60,6 +63,7 @@ export function createLedgerApplication(deps: LedgerApplicationDeps): LedgerAppl
     new AccountTreeProjector(),
     new TransactionListProjector(),
     new AccountBalancesProjector(catalog),
+    new LedgerSettingsProjector(),
   ];
   const dispatcher = new SynchronousProjectionDispatcher(projectors, readModel);
 
@@ -82,6 +86,8 @@ export function createLedgerApplication(deps: LedgerApplicationDeps): LedgerAppl
     'OpenAccount',
     new OpenAccountHandler(accounts, readModel, idGenerator, dispatcher),
   );
+  commandBus.register('RenameAccount', new RenameAccountHandler(accounts, dispatcher));
+  commandBus.register('CloseAccount', new CloseAccountHandler(accounts, dispatcher));
   commandBus.register(
     'RecordTransaction',
     new RecordTransactionHandler(transactions, validation, catalog, balance, idGenerator, dispatcher),

@@ -1,11 +1,14 @@
-import { InitializeLedgerCommand, LedgerSettingsQuery } from '@ledger/accounts/application/ep1-contracts.assumed';
-import { CommandBus, CommandResult, QueryBus } from '@ledger/shared/application/ep1-contracts.assumed';
+import { InitializeLedgerCommand } from '@ledger/ledger/application/initialize-ledger/initialize-ledger.command';
+import { GetLedgerSettingsQuery } from '@ledger/read-side/get-ledger-settings/get-ledger-settings.query';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
+import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
+import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
+import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
 import { LedgerController } from './ledger.controller';
 
 describe('LedgerController', () => {
   const context: LedgerContext = { userId: 'user-1', clientId: 'frontend' };
-  const result: CommandResult = { aggregateId: 'ledger-1', sequence: 1, streamPosition: 1, idempotentReplay: false };
+  const result: CommandResult = { aggregateId: 'ledger-1', streamPosition: 1n, idempotentReplay: false };
 
   let commandBus: jest.Mocked<CommandBus>;
   let queryBus: jest.Mocked<QueryBus>;
@@ -17,32 +20,27 @@ describe('LedgerController', () => {
     controller = new LedgerController(commandBus, queryBus);
   });
 
-  it('dispatches InitializeLedgerCommand built from body, context and external_ref', async () => {
+  it('dispatches InitializeLedgerCommand with the context carried separately', async () => {
     await controller.initialize(context, 'ref-init', {
       presentationCurrency: 'COP',
       timezone: 'America/Bogota',
     });
 
-    const [command] = commandBus.dispatch.mock.calls[0];
+    const [command, ctx] = commandBus.dispatch.mock.calls[0];
     expect(command).toBeInstanceOf(InitializeLedgerCommand);
-    expect(command).toMatchObject({
-      userId: 'user-1',
-      clientId: 'frontend',
-      externalRef: 'ref-init',
-      presentationCurrency: 'COP',
-      timezone: 'America/Bogota',
-    });
+    expect(command).toMatchObject({ presentationCurrency: 'COP', timezone: 'America/Bogota' });
+    expect(ctx).toEqual({ userId: 'user-1', clientId: 'frontend', externalRef: 'ref-init' });
   });
 
-  it('asks the settings projection scoped to the context user', async () => {
+  it('asks GetLedgerSettingsQuery scoped to the context user', async () => {
     const settings = { presentationCurrency: 'COP', timezone: 'America/Bogota', isInitialized: true };
     queryBus.ask.mockResolvedValue(settings);
 
     const returned = await controller.settings(context);
 
-    const [query] = queryBus.ask.mock.calls[0];
-    expect(query).toBeInstanceOf(LedgerSettingsQuery);
-    expect(query).toMatchObject({ userId: 'user-1' });
+    const [query, ctx] = queryBus.ask.mock.calls[0];
+    expect(query).toBeInstanceOf(GetLedgerSettingsQuery);
+    expect(ctx).toEqual({ userId: 'user-1' });
     expect(returned).toBe(settings);
   });
 });

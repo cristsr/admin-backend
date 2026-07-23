@@ -1,0 +1,33 @@
+import { Criteria, Nullable } from '@shared';
+import {
+  LedgerSettingsRow,
+  PROJ_LEDGER_SETTINGS,
+} from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
+import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
+import {
+  QueryContext,
+  QueryHandler,
+} from '@ledger/shared-kernel/application/query-bus/query-handler';
+import { GetLedgerSettingsQuery } from './get-ledger-settings.query';
+
+/** Serves the user's ledger settings from `proj_ledger_settings` (INV-9). */
+export class GetLedgerSettingsHandler extends QueryHandler<
+  GetLedgerSettingsQuery,
+  Nullable<LedgerSettingsRow>
+> {
+  constructor(private readonly readModel: ReadModelStore) {
+    super();
+  }
+
+  async execute(
+    _query: GetLedgerSettingsQuery,
+    ctx: QueryContext,
+  ): Promise<Nullable<LedgerSettingsRow>> {
+    const [row] = await this.readModel.query<LedgerSettingsRow>(
+      PROJ_LEDGER_SETTINGS,
+      Criteria.none().equals('user_id', ctx.userId),
+    );
+
+    return row ?? null;
+  }
+}

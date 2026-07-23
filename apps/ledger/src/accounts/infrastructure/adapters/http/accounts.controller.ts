@@ -1,16 +1,12 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseInterceptors } from '@nestjs/common';
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Nullable } from '@shared';
-import {
-  AccountBalancesQuery,
-  AccountByIdQuery,
-  AccountTreeQuery,
-  AccountTreeView,
-  CloseAccountCommand,
-  OpenAccountCommand,
-  RenameAccountCommand,
-} from '@ledger/accounts/application/ep1-contracts.assumed';
-import { CommandBus, CommandResult, QueryBus } from '@ledger/shared/application/ep1-contracts.assumed';
+import { CloseAccountCommand } from '@ledger/accounts/application/close-account/close-account.command';
+import { OpenAccountCommand } from '@ledger/accounts/application/open-account/open-account.command';
+import { RenameAccountCommand } from '@ledger/accounts/application/rename-account/rename-account.command';
+import { GetAccountBalancesQuery } from '@ledger/read-side/get-account-balances/get-account-balances.query';
+import { GetAccountByIdQuery } from '@ledger/read-side/get-account-by-id/get-account-by-id.query';
+import { GetAccountTreeQuery } from '@ledger/read-side/get-account-tree/get-account-tree.query';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import {
   CommandAcceptedDto,
@@ -18,6 +14,11 @@ import {
   Context,
   ExternalRef,
 } from '@ledger/shared/infrastructure/adapters/http';
+import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
+import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
+import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
+import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
+import { QueryContext } from '@ledger/shared-kernel/application/query-bus/query-handler';
 import { AccountBalanceQueryDto } from './dto/account-balance-query.dto';
 import { AccountBalanceDto } from './dto/account-balance.dto';
 import { AccountTreeQueryDto } from './dto/account-tree-query.dto';
@@ -28,10 +29,11 @@ import { OpenAccountRequestDto } from './dto/open-account-request.dto';
 import { RenameAccountRequestDto } from './dto/rename-account-request.dto';
 
 /**
- * Account lifecycle and reads. Writes map to commands and return a
- * {@link CommandAcceptedDto} (never a read view, RNF-10); reads ask the query bus
- * and return the projection unchanged. `rename`/`close` are POST action
- * sub-resources, not PATCH/DELETE: they are event-sourced lifecycle transitions.
+ * Account lifecycle and reads. Writes map to a command dispatched with the
+ * authenticated {@link AuthContext} carried separately (RNF-10) and return a
+ * {@link CommandAcceptedDto}; reads ask the query bus and return the projection
+ * unchanged. `rename`/`close` are POST action sub-resources, not PATCH/DELETE:
+ * they are event-sourced lifecycle transitions.
  */
 @ApiTags('accounts')
 @Controller({ path: 'accounts', version: '1' })
@@ -50,35 +52,23 @@ export class AccountsController {
     @ExternalRef() externalRef: Nullable<string>,
     @Body() dto: OpenAccountRequestDto,
   ): Promise<CommandResult> {
-    const command = new OpenAccountCommand({
-      userId: context.userId,
-      clientId: context.clientId,
-      externalRef,
-      type: dto.type,
-      name: dto.name,
-      parentId: dto.parentId ?? null,
-      currencies: dto.currencies,
-      openedOn: dto.openedOn,
-      isBankMirror: dto.isBankMirror,
-    });
+    const command = new OpenAccountCommand(dto.name, dto.currencies, dto.openedOn, dto.isBankMirror);
 
-    return this.commandBus.dispatch<CommandResult>(command);
+    return this.commandBus.dispatch(command, this.authContext(context, externalRef));
   }
 
   @Get()
   @ApiOperation({ summary: 'List the account tree.' })
   @ApiOkResponse({ type: AccountTreeDto })
-  list(@Context() context: LedgerContext, @Query() query: AccountTreeQueryDto): Promise<AccountTreeDto> {
-    return this.queryBus.ask<AccountTreeDto>(
-      new AccountTreeQuery({ userId: context.userId, view: query.view ?? AccountTreeView.TREE }),
-    );
+  list(@Context() context: LedgerContext, @Query() _query: AccountTreeQueryDto): Promise<AccountTreeDto> {
+    return this.queryBus.ask<AccountTreeDto>(new GetAccountTreeQuery(), this.queryContext(context));
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a single account.' })
   @ApiOkResponse({ type: AccountDto })
   getOne(@Context() context: LedgerContext, @Param('id') id: string): Promise<AccountDto> {
-    return this.queryBus.ask<AccountDto>(new AccountByIdQuery({ userId: context.userId, accountId: id }));
+    return this.queryBus.ask<AccountDto>(new GetAccountByIdQuery(id), this.queryContext(context));
   }
 
   @Get(':id/balance')
@@ -87,10 +77,11 @@ export class AccountsController {
   balance(
     @Context() context: LedgerContext,
     @Param('id') id: string,
-    @Query() query: AccountBalanceQueryDto,
+    @Query() _query: AccountBalanceQueryDto,
   ): Promise<AccountBalanceDto[]> {
     return this.queryBus.ask<AccountBalanceDto[]>(
-      new AccountBalancesQuery({ userId: context.userId, accountId: id, currency: query.currency ?? null }),
+      new GetAccountBalancesQuery(id),
+      this.queryContext(context),
     );
   }
 
@@ -104,15 +95,9 @@ export class AccountsController {
     @Param('id') id: string,
     @Body() dto: RenameAccountRequestDto,
   ): Promise<CommandResult> {
-    const command = new RenameAccountCommand({
-      userId: context.userId,
-      clientId: context.clientId,
-      externalRef,
-      accountId: id,
-      newName: dto.newName,
-    });
+    const command = new RenameAccountCommand(id, dto.newName);
 
-    return this.commandBus.dispatch<CommandResult>(command);
+    return this.commandBus.dispatch(command, this.authContext(context, externalRef));
   }
 
   @Post(':id/close')
@@ -125,14 +110,18 @@ export class AccountsController {
     @Param('id') id: string,
     @Body() dto: CloseAccountRequestDto,
   ): Promise<CommandResult> {
-    const command = new CloseAccountCommand({
-      userId: context.userId,
-      clientId: context.clientId,
-      externalRef,
-      accountId: id,
-      closedOn: dto.closedOn,
-    });
+    const command = new CloseAccountCommand(id, dto.closedOn);
 
-    return this.commandBus.dispatch<CommandResult>(command);
+    return this.commandBus.dispatch(command, this.authContext(context, externalRef));
+  }
+
+  /** Builds the write-side context: identity plus the optional idempotency key. */
+  private authContext(context: LedgerContext, externalRef: Nullable<string>): AuthContext {
+    return { userId: context.userId, clientId: context.clientId, externalRef };
+  }
+
+  /** Builds the read-side context: the owning user that partitions every read (INV-9). */
+  private queryContext(context: LedgerContext): QueryContext {
+    return { userId: context.userId };
   }
 }
