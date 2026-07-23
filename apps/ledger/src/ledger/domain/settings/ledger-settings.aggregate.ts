@@ -1,6 +1,9 @@
 import { AggregateRoot } from '@ledger/shared-kernel/domain/aggregate/aggregate-root';
 import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
 import { LedgerInitialized } from './events/ledger-initialized.event';
+import { PresentationCurrencyChanged, TimezoneChanged } from '../../../settings/domain/ledger-settings/events';
+import { CurrencyCode } from '../../../settings/domain/ledger-settings/value-objects';
+import { IanaTimeZone } from '../../../settings/domain/ledger-settings/value-objects';
 
 /** Arguments to initialize a user's ledger. */
 export type InitializeLedgerArgs = {
@@ -18,6 +21,8 @@ export type InitializeLedgerArgs = {
  */
 export class LedgerSettings extends AggregateRoot<string> {
   private initialized = false;
+  private presentationCurrency: string = '';
+  private timezone: string = '';
 
   /** Creates the ledger, emitting {@link LedgerInitialized}. */
   static initialize(args: InitializeLedgerArgs): LedgerSettings {
@@ -45,7 +50,45 @@ export class LedgerSettings extends AggregateRoot<string> {
     return this.initialized;
   }
 
+  /**
+   * Change the presentation currency. No-op if the currency is already set to this value (idempotent).
+   * @param currency The new currency code
+   */
+  changePresentationCurrency(currency: CurrencyCode): void {
+    const newValue = currency.toString();
+    if (this.presentationCurrency === newValue) {
+      return; // idempotent: no-op if unchanged
+    }
+
+    this.raise(
+      new PresentationCurrencyChanged(this.id, newValue),
+    );
+  }
+
+  /**
+   * Change the timezone. No-op if the timezone is already set to this value (idempotent).
+   * @param timezone The new IANA timezone
+   */
+  changeTimezone(timezone: IanaTimeZone): void {
+    const newValue = timezone.toString();
+    if (this.timezone === newValue) {
+      return; // idempotent: no-op if unchanged
+    }
+
+    this.raise(
+      new TimezoneChanged(this.id, newValue),
+    );
+  }
+
   protected apply(event: DomainEvent): void {
-    if (event instanceof LedgerInitialized) this.initialized = true;
+    if (event instanceof LedgerInitialized) {
+      this.initialized = true;
+      this.presentationCurrency = event.props.presentationCurrency;
+      this.timezone = event.props.timezone;
+    } else if (event instanceof PresentationCurrencyChanged) {
+      this.presentationCurrency = event.presentationCurrency;
+    } else if (event instanceof TimezoneChanged) {
+      this.timezone = event.timezone;
+    }
   }
 }

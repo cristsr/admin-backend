@@ -10,20 +10,17 @@ import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus'
 import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 import { CurrencyCatalog } from '@ledger/shared-kernel/domain/value-objects/currency-catalog';
 import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
-import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
-import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
+import { PostgresEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/postgres/postgres-event-store';
+import { PostgresReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';
 
 /**
  * Composition root that mounts EP-1's real write/read buses into Nest DI so the
  * HTTP adapters (EP-2/EP-3) resolve the same `CommandBus`/`QueryBus` the tests
  * exercise directly. Global, so every feature module inherits the buses.
  *
- * TODO(persistence): this wires the in-memory {@link EventStore} and
- * {@link ReadModelStore} doubles — correct for a single-process dev run and the
- * contract suites (RNF-11). Swap {@link InMemoryEventStore} for the Postgres
- * adapter and {@link InMemoryReadModelStore} for the Postgres read-model store
- * once EP-1's persistence adapters land; the composition and the projection
- * dispatcher are already wired for read-your-writes (RNF-9).
+ * EP-5.0: Swapped to PostgreSQL persistence adapters for production readiness.
+ * EventStore and ReadModelStore now persist to Postgres with LWW conflict resolution
+ * via global_position and checkpoint-based projection lag tracking (RNF-5, RNF-9).
  */
 @Global()
 @Module({
@@ -31,8 +28,8 @@ import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/ada
     { provide: Clock, useClass: SystemClock },
     { provide: IdGenerator, useClass: UuidIdGenerator },
     { provide: CurrencyCatalog, useClass: SeedCurrencyCatalog },
-    { provide: EventStore, useClass: InMemoryEventStore },
-    { provide: ReadModelStore, useClass: InMemoryReadModelStore },
+    { provide: EventStore, useClass: PostgresEventStore },
+    { provide: ReadModelStore, useClass: PostgresReadModelStore },
     {
       provide: CommandBus,
       inject: [EventStore, ReadModelStore, Clock, IdGenerator, CurrencyCatalog],
