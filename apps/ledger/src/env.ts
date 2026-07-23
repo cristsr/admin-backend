@@ -24,6 +24,11 @@ export class Environment {
   @IsBoolean()
   DB_SYNCHRONIZE: boolean;
 
+  /** Whether to expose the Swagger UI; kept false in production. */
+  @ToBoolean()
+  @IsBoolean()
+  SHOW_DOCS: boolean;
+
   /** Opt-in: when unset the SDK never starts; other `OTEL_*` vars are read by the SDK itself. */
   @IsOptional()
   @IsString()
