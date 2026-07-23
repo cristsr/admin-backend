@@ -9,7 +9,10 @@
     "test": "nx test",
     "migration:generate:finances": "typeorm-ts-node-commonjs migration:generate -d apps/finances/src/database/data-source.ts",
     "migration:run:finances": "typeorm-ts-node-commonjs migration:run -d apps/finances/src/database/data-source.ts",
-    "migration:revert:finances": "typeorm-ts-node-commonjs migration:revert -d apps/finances/src/database/data-source.ts"
+    "migration:revert:finances": "typeorm-ts-node-commonjs migration:revert -d apps/finances/src/database/data-source.ts",
+    "migration:generate:ledger": "typeorm-ts-node-commonjs migration:generate -d apps/ledger/src/database/data-source.ts",
+    "migration:run:ledger": "typeorm-ts-node-commonjs migration:run -d apps/ledger/src/database/data-source.ts",
+    "migration:revert:ledger": "typeorm-ts-node-commonjs migration:revert -d apps/ledger/src/database/data-source.ts"
   },
   "private": true,
   "dependencies": {
@@ -38,6 +41,7 @@
     "@types/supertest": "^7.2.1",
     "apollo-server-express": "^3.13.0",
     "axios": "^1.18.1",
+    "big.js": "^6.2.2",
     "cache-manager": "^7.2.9",
     "cheerio": "^1.2.0",
     "class-transformer": "^0.5.1",
@@ -72,6 +76,7 @@
     "@nx/workspace": "23.1.0",
     "@swc-node/register": "^1.12.1",
     "@swc/core": "^1.15.46",
+    "@types/big.js": "^6.2.2",
     "@types/glob": "^8.1.0",
     "@types/jest": "30.0.0",
     "@types/lodash-es": "^4.17.12",

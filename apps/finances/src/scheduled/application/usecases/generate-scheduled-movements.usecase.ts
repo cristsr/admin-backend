@@ -1,6 +1,6 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
+import { correlationId, withSpan } from '@shared';
 import { DateTime } from 'luxon';
-import { correlationId, withSpan } from '@app/config/telemetry/correlation';
 import { MovementRepository } from '@app/movement/domain/movement';
 import {
   Scheduled,

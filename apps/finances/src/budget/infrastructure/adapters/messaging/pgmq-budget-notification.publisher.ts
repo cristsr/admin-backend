@@ -1,8 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { BudgetNotificationPublisher, BudgetThresholdExceededPayload } from '@app/budget/domain/budget';
-import { ENV } from '@app/env';
+import { MessagingConfig, messagingConfig } from '@app/config/environment';
 
 /**
  * Publishes the alert on a PGMQ queue over the same database. Requires the
@@ -14,11 +13,11 @@ export class PgmqBudgetNotificationPublisher implements BudgetNotificationPublis
 
   constructor(
     private readonly dataSource: DataSource,
-    private readonly config: ConfigService,
+    @Inject(messagingConfig.KEY) private readonly config: MessagingConfig,
   ) {}
 
   async publish(payload: BudgetThresholdExceededPayload): Promise<void> {
-    const queue = this.config.get<string>(ENV.PGMQ_BUDGET_QUEUE) ?? 'budget_threshold';
+    const queue = this.config.budgetQueue;
     try {
       await this.dataSource.query('SELECT pgmq.send($1, $2)', [queue, JSON.stringify(payload)]);
     } catch (error) {

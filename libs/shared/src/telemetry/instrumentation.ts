@@ -5,6 +5,10 @@ import { buildNodeSDK, isTelemetryEnabled } from './telemetry.config';
 /**
  * Starts OpenTelemetry; must load first, since auto-instrumentations patch
  * modules at require time. Collector failures never take the service down.
+ *
+ * Deliberately excluded from the `@shared` barrel: importing this module has
+ * the side effect of starting the SDK, so each app imports it directly — as
+ * `@shared/telemetry/instrumentation` — on the very first line of `main.ts`.
  */
 function startTelemetry(): void {
   if (!isTelemetryEnabled(process.env)) return;

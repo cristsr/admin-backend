@@ -37,23 +37,23 @@ describe('buildNodeSDK', () => {
   const resourceOf = (sdk: unknown) =>
     (sdk as { _resource: { attributes: Record<string, unknown> } })._resource.attributes;
 
-  it('identifies the service, defaulting the name to finances', () => {
+  it('falls back to the unknown-service convention when no name is configured', () => {
     const attributes = resourceOf(buildNodeSDK(endpoint));
 
-    expect(attributes[ATTR_SERVICE_NAME]).toBe('finances');
+    expect(attributes[ATTR_SERVICE_NAME]).toBe('unknown_service');
   });
 
   it('takes the service name, version and environment from the environment', () => {
     const attributes = resourceOf(
       buildNodeSDK({
         ...endpoint,
-        OTEL_SERVICE_NAME: 'finances-api',
+        OTEL_SERVICE_NAME: 'ledger-api',
         npm_package_version: '2.1.0',
         ENV: 'staging',
       }),
     );
 
-    expect(attributes[ATTR_SERVICE_NAME]).toBe('finances-api');
+    expect(attributes[ATTR_SERVICE_NAME]).toBe('ledger-api');
     expect(attributes[ATTR_SERVICE_VERSION]).toBe('2.1.0');
     expect(attributes[ATTR_DEPLOYMENT_ENVIRONMENT_NAME]).toBe('staging');
   });

@@ -11,7 +11,7 @@ const payload = {
 describe('PgmqBudgetNotificationPublisher', () => {
   it('publishes to the configured queue with the serialized payload', async () => {
     const dataSource = { query: jest.fn().mockResolvedValue([]) } as any;
-    const config = { get: jest.fn().mockReturnValue('budget_threshold') } as any;
+    const config = { budgetQueue: 'budget_threshold' } as any;
     const publisher = new PgmqBudgetNotificationPublisher(dataSource, config);
 
     await publisher.publish(payload);
@@ -26,7 +26,7 @@ describe('PgmqBudgetNotificationPublisher', () => {
     const dataSource = {
       query: jest.fn().mockRejectedValue(new Error('pgmq missing')),
     } as any;
-    const config = { get: jest.fn().mockReturnValue(undefined) } as any;
+    const config = { budgetQueue: 'budget_threshold' } as any;
     const publisher = new PgmqBudgetNotificationPublisher(dataSource, config);
 
     await expect(publisher.publish(payload)).resolves.toBeUndefined();

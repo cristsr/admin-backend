@@ -13,7 +13,13 @@ import { TelemetryEnvironment } from './telemetry-environment.type';
 
 const METRIC_EXPORT_INTERVAL_MS = 60_000;
 
-const DEFAULT_SERVICE_NAME = 'finances';
+/**
+ * Fallback when `OTEL_SERVICE_NAME` is unset, per the OpenTelemetry
+ * specification's unknown-service convention. Every app should declare its own
+ * `OTEL_SERVICE_NAME` (e.g. `finances`, `ledger`) so backends can tell them
+ * apart.
+ */
+const DEFAULT_SERVICE_NAME = 'unknown_service';
 
 /**
  * Telemetry is opt-in: off without a collector endpoint, or when the standard

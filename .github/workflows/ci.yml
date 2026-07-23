@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [master]
   pull_request:
 
 jobs:
@@ -35,10 +35,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # `finances` is now the single monolith: it owns the users and exchanges
-      # tables, so one build/migration/test pass covers everything.
-      - name: Build finances
-        run: npx nx build finances
+      # One workspace, two apps: `run-many` covers both without duplicating
+      # steps. No `nx affected`, so the checkout needs no full history.
+      - name: Lint workspace
+        run: npx nx run-many -t lint --projects=finances,ledger,shared
+
+      - name: Build apps
+        run: npx nx run-many -t build --projects=finances,ledger
 
       - name: Run finances migrations against a fresh database
         env:
@@ -48,8 +51,22 @@ jobs:
           NODE_OPTIONS="-r tsconfig-paths/register" \
           npx typeorm-ts-node-commonjs migration:run -d apps/finances/src/database/data-source.ts
 
-      - name: Test finances
-        run: npx nx test finances
+      # The ledger event store lives in its own database on the same instance.
+      - name: Create the ledger database
+        run: PGPASSWORD=admin psql -h localhost -U postgres -d finances -c 'CREATE DATABASE ledger;'
+
+      # Wired from EP-0.5 so the event store schema (EP-1.5) applies on every
+      # run; passes with zero migrations until then.
+      - name: Run ledger migrations against a fresh database
+        env:
+          DB_URI: postgres://postgres:admin@localhost:5432/ledger
+        run: |
+          TS_NODE_PROJECT=apps/ledger/tsconfig.app.json \
+          NODE_OPTIONS="-r tsconfig-paths/register" \
+          npx typeorm-ts-node-commonjs migration:run -d apps/ledger/src/database/data-source.ts
+
+      - name: Test workspace
+        run: npx nx run-many -t test --projects=finances,ledger,shared
 
   # AC-6 (sm-0004): auth happy path against a real Keycloak, using the same
   # realm import committed under docker/keycloak/import.

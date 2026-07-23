@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
+import { currentTraceId } from '@shared';
 import { Account, AccountRepository } from '@app/account/domain/account';
-import { currentTraceId } from '@app/config/telemetry/correlation';
 import { Movement, MovementRepository } from '@app/movement/domain/movement';
 import { DomainEventOutboxPublisher } from '@app/outbox/application/services/domain-event-outbox.publisher';
 import { MovementSavedPayload } from '../movement-saved-payload.type';

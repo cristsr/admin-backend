@@ -1,13 +1,12 @@
 // MUST stay the first import: auto-instrumentations patch modules as they are
 // required, so anything loaded earlier is never traced.
-import './config/telemetry/instrumentation';
+import '@shared/telemetry/instrumentation';
 import { Logger, ValidationPipe } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { useContainer } from 'class-validator';
 import { Logger as PinoLogger } from 'nestjs-pino';
-import { ENV } from '@app/env';
+import { AppConfig, appConfig } from '@app/config/environment';
 import { AppModule } from './app.module';
 import { maybeMountSwagger } from './config/swagger/swagger.builder';
 
@@ -32,15 +31,13 @@ async function bootstrap() {
 
   useContainer(app.select(AppModule), { fallbackOnErrors: true });
 
-  const config = app.get(ConfigService);
+  const config = app.get<AppConfig>(appConfig.KEY);
 
   // Mount the Swagger UI only outside production.
-  maybeMountSwagger(app, config.get<boolean>(ENV.SHOW_DOCS) === true);
+  maybeMountSwagger(app, config.showDocs);
 
-  const port = config.get(ENV.PORT);
+  await app.listen(config.port);
 
-  await app.listen(port);
-
-  Logger.log(`🚀 Finances microservice is running on port ${port}`);
+  Logger.log(`🚀 Finances microservice is running on port ${config.port}`);
 }
 bootstrap();

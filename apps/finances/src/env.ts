@@ -1,19 +1,11 @@
-import { mapEnvironmentKeys } from '@shared';
-import { Transform, TransformFnParams } from 'class-transformer';
+import { ToBoolean, ToNumber, configValidator } from '@shared';
 import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
-
-/** Empty string means "not set"; anything else is coerced to a number. */
-function toOptionalNumber({ value }: TransformFnParams): number | undefined {
-  if (value === '') return undefined;
-
-  return Number(value);
-}
 
 export class Environment {
   @IsString()
   ENV: string;
 
-  @Transform(({ value }) => Number(value))
+  @ToNumber()
   @IsNumber()
   PORT: number;
 
@@ -23,15 +15,15 @@ export class Environment {
   @IsString()
   DB_URI: string;
 
-  @Transform(({ value }) => value === 'true')
+  @ToBoolean()
   @IsBoolean()
   DB_SSL: boolean;
 
-  @Transform(({ value }) => value === 'true')
+  @ToBoolean()
   @IsBoolean()
   DB_SYNCHRONIZE: boolean;
 
-  @Transform(({ value }) => value === 'true')
+  @ToBoolean()
   @IsBoolean()
   SHOW_DOCS: boolean;
 
@@ -68,24 +60,35 @@ export class Environment {
   OTEL_SDK_DISABLED?: string;
 
   @IsOptional()
-  @Transform(toOptionalNumber)
+  @ToNumber()
   @IsNumber()
   THROTTLE_AUTH_TTL_MS?: number;
 
   @IsOptional()
-  @Transform(toOptionalNumber)
+  @ToNumber()
   @IsNumber()
   THROTTLE_AUTH_LIMIT?: number;
 
   @IsOptional()
-  @Transform(toOptionalNumber)
+  @ToNumber()
   @IsNumber()
   THROTTLE_WEBHOOK_TTL_MS?: number;
 
   @IsOptional()
-  @Transform(toOptionalNumber)
+  @ToNumber()
   @IsNumber()
   THROTTLE_WEBHOOK_LIMIT?: number;
 }
 
-export const ENV = mapEnvironmentKeys(Environment);
+/**
+ * The validated, coerced environment — computed once and shared. Every config
+ * namespace factory reads from here, so coercion and validation live only in
+ * {@link Environment} and never diverge. Call only from within `registerAs`
+ * factories or `ConfigModule.validate`, i.e. after env files are loaded. The
+ * cache is enclosed in the closure so nothing mutable leaks into module scope.
+ */
+export const loadEnvironment: () => Environment = (() => {
+  let cached: Environment | undefined;
+
+  return () => (cached ??= configValidator(process.env, Environment) as Environment);
+})();

@@ -1,7 +1,7 @@
 import { Injectable, Logger, Optional } from '@nestjs/common';
+import { correlationId, withSpan } from '@shared';
 import { DateTime } from 'luxon';
 import { Budget, BudgetReports, BudgetRepository } from '@app/budget/domain/budget';
-import { correlationId, withSpan } from '@app/config/telemetry/correlation';
 
 /** Regenerates repeating budgets whose period has closed, logging per-run counters. */
 @Injectable()

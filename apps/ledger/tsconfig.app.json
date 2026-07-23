@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc",
+    "module": "commonjs",
+    "types": ["node"],
+    "emitDecoratorMetadata": true,
+    "target": "es2021"
+  },
+  // Test code — including the testing harness, whose contract suites use
+  // jest's globals — is excluded so the app build type-checks without them.
+  "exclude": [
+    "jest.config.ts",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/*.e2e-spec.ts",
+    "src/shared/testing"
+  ],
+  "include": ["src/**/*.ts"]
+}

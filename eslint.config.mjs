@@ -13,9 +13,10 @@ export default [
         'error',
         {
           enforceBuildableLibDependency: true,
-          // The app reaches its own files through @app/*; Nx would otherwise
-          // demand relative paths for anything inside the same project.
-          allow: ['@app/**'],
+          // Each app reaches its own files through its alias (@app/*,
+          // @ledger/*); Nx would otherwise demand relative paths for anything
+          // inside the same project.
+          allow: ['@app/**', '@ledger/**'],
           depConstraints: [
             {
               sourceTag: '*',
@@ -88,8 +89,13 @@ export default [
               group: 'internal',
               position: 'before',
             },
+            {
+              pattern: '@ledger/**',
+              group: 'internal',
+              position: 'before',
+            },
           ],
-          pathGroupsExcludedImportTypes: ['@nestjs/**', '@admin-back/**', '@app/**'],
+          pathGroupsExcludedImportTypes: ['@nestjs/**', '@admin-back/**', '@app/**', '@ledger/**'],
           'newlines-between': 'never',
           alphabetize: {
             order: 'asc',

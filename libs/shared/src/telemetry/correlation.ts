@@ -1,8 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { SpanStatusCode, isSpanContextValid, trace } from '@opentelemetry/api';
-import { Nullable } from '@shared';
+import { Nullable } from '../types';
 
-const TRACER_NAME = 'finances';
+/** Instrumentation scope shared by every app in this workspace. */
+const TRACER_NAME = 'admin-back';
 
 /**
  * Trace id of the active span, read from AsyncLocalStorage context; null when

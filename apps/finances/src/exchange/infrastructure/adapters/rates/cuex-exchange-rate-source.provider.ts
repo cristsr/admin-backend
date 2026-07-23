@@ -1,11 +1,10 @@
 import { HttpService } from '@nestjs/axios';
-import { Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Inject, Injectable } from '@nestjs/common';
 import { Nullable } from '@shared';
 import * as cheerio from 'cheerio';
 import { DateTime } from 'luxon';
 import { firstValueFrom } from 'rxjs';
-import { ENV } from '@app/env';
+import { ExchangeConfig, exchangeConfig } from '@app/config/environment';
 import { ExchangeRateSource } from '@app/exchange/domain';
 
 /** Currencies whose display name the scraped historical table is keyed by. */
@@ -21,20 +20,18 @@ const CURRENCY_NAMES: Readonly<Record<string, string>> = {
  * `null` so the caller treats it as a miss rather than a crash.
  */
 @Injectable()
-export class CuexExchangeRateSource extends ExchangeRateSource {
+export class CuexExchangeRateSource implements ExchangeRateSource {
   constructor(
-    private readonly config: ConfigService,
+    @Inject(exchangeConfig.KEY) private readonly config: ExchangeConfig,
     private readonly httpService: HttpService,
-  ) {
-    super();
-  }
+  ) {}
 
   async fetchRate(from: string, to: string, date: Date): Promise<Nullable<number>> {
     const targetName = CURRENCY_NAMES[to];
     if (!targetName) return null;
 
     try {
-      const url = `${this.config.get(ENV.EXCHANGE_RATES_URL)}/historical`;
+      const url = `${this.config.ratesUrl}/historical`;
       const response = await firstValueFrom(
         this.httpService.get(url, {
           params: {

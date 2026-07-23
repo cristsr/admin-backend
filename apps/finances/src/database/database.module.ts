@@ -1,27 +1,17 @@
 import { Global, Module } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ENV } from '@app/env';
+import { DatabaseModule as SharedDatabaseModule } from '@shared';
+import { databaseConfig } from '@app/config/environment';
 
+/**
+ * Finances' database wiring: delegates to the shared module with this app's
+ * `database` config namespace and migration glob.
+ */
 @Global()
 @Module({
   imports: [
-    TypeOrmModule.forRootAsync({
-      useFactory: (configService: ConfigService) => ({
-        type: configService.get<any>(ENV.DB_TYPE),
-        url: configService.get(ENV.DB_URI),
-        // Strict === true: an untyped get() can return the truthy string 'false'.
-        synchronize: configService.get<boolean>(ENV.DB_SYNCHRONIZE) === true,
-        autoLoadEntities: true,
-        debug: true,
-        migrations: ['dist/apps/finances/database/migrations/*.js'],
-        extra: {
-          columnTypes: {
-            timestamp: 'timestamp with time zone',
-          },
-        },
-      }),
-      inject: [ConfigService],
+    SharedDatabaseModule.forRoot({
+      configKey: databaseConfig.KEY,
+      migrations: ['dist/apps/finances/database/migrations/*.js'],
     }),
   ],
 })

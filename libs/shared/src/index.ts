@@ -11,3 +11,5 @@ export * from './functions';
 export * from './types';
 export * from './entities';
 export * from './modules';
+export * from './database';
+export * from './telemetry';

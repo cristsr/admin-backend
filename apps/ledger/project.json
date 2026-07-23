@@ -1,0 +1,55 @@
+{
+  "name": "ledger",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/ledger/src",
+  "projectType": "application",
+  "tags": [],
+  "targets": {
+    "build": {
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/apps/ledger",
+        "main": "apps/ledger/src/main.ts",
+        "tsConfig": "apps/ledger/tsconfig.app.json",
+        "assets": [],
+        "compiler": "tsc",
+        "target": "node",
+        "webpackConfig": "apps/ledger/webpack.config.js"
+      },
+      "configurations": {
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false
+        }
+      }
+    },
+    "serve": {
+      "executor": "@nx/js:node",
+      "options": {
+        "buildTarget": "ledger:build"
+      },
+      "configurations": {
+        "production": {
+          "buildTarget": "ledger:build:production"
+        }
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"],
+      "options": {
+        "lintFilePatterns": ["apps/ledger/**/*.ts"]
+      }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/ledger"],
+      "options": {
+        "jestConfig": "apps/ledger/jest.config.ts",
+        "passWithNoTests": true
+      }
+    }
+  }
+}
