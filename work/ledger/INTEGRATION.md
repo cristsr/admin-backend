@@ -40,3 +40,49 @@ imports: hay **desajustes estructurales** que exigen adaptar call-sites.
 4. **Faltantes**: proyector `proj_ledger_settings`; adaptador Postgres de `ReadModelStore` (EP-1 lo dejó para integración); montar `Reconciliation`/`Transactions` modules en `AppModule`.
 5. **Decisión de diseño abierta**: atomicidad cross-stream de commands multi-agregado (`InitializeLedger`, `Reverse`, `MergePendingTransfers`, `ResolveDiscrepancy`). EP-1 dejó append por-stream (no atómico cross-agregado) — aceptable en fase dev, o adaptador de transacción compartida. **Requiere confirmación.**
 6. **Verde total**: `nx build ledger` + `nx lint ledger` + `nx test ledger` en un solo árbol; e2e con dominio real (EP-2 usaba buses mockeados).
+
+---
+
+## Progreso
+
+- ✅ **Stage 1 + 2 + parte de 4 (EP-1 ↔ EP-2)** — commits `0857a0d`, `06db90d`, `ade5679`.
+  `nx build/lint/test ledger` **VERDE** (255 passed, 1 skipped PG). 4 de 5 assumed
+  borrados. Además se llenaron gaps que EP-2 asumía pero EP-1 no había cableado:
+  `RenameAccount`/`CloseAccount` commands+handlers, `GetAccountById`/
+  `GetTransactionById`/`GetLedgerSettings` queries+handlers, y el **proyector
+  `proj_ledger_settings`** (`ledger/infrastructure/projections/ledger-settings.projector.ts`).
+  `LedgerCoreModule` cablea buses reales + doubles in-memory (con `TODO(persistence)`
+  para el adaptador Postgres).
+  Desajustes reales confirmados vs el mapa: `ACCOUNT_CLOSED` es **422** (no 409);
+  `LEDGER_NOT_INITIALIZED` no tiene excepción real; `DerivedKind` usa **`COMPOUND`**
+  (no `ADJUSTMENT`); `OpenAccountCommand` no lleva `type`/`parentId` (se derivan del
+  nombre jerárquico); varios filtros de query son más magros que lo asumido.
+- ⏳ **Stage 3 (EP-3)** — PENDIENTE. Único assumed restante:
+  `shared/ep1-ep2-contracts.assumed.ts` (+ stand-in `shared/infrastructure/http/authenticated-context.ts`),
+  consumido por **50 archivos**. Es reescritura all-or-nothing, no repunte.
+
+### Stage 3 — bloqueos precisos (contrato para el ejecutor)
+
+1. **Modelo de eventos**: el agregado `BalanceAssertion` emite un `DomainEvent`
+   *concreto* con envelope (`.type/.aggregateId/.payload/.context/.sequence`) y usa
+   `pullEvents()`/`fromHistory()`/`currentVersion`. Real EP-1: `DomainEvent`
+   **abstracto** (`eventType`/`schemaVersion`/`toPayload()`) + `AggregateRoot`
+   (`pullChanges`/`loadFromHistory`/`version`) + `EventEnvelope`/`StoredEvent` +
+   `EventRegistry` para deserializar. Reescribir agregado, eventos, reactor y ambos
+   projectors para emitir eventos abstractos y leer `StoredEvent`.
+2. **Puerto `EventStore`**: repuntar la repo de `BalanceAssertion` y el double
+   `shared/infrastructure/in-memory-event-store.ts` al puerto real
+   (`append(stream: StreamId, v, EventEnvelope[])`, `load→StoredEvent[]`,
+   `readAll(bigint, limit)`, `findByExternalRef`) y al `InMemoryEventStore` real de EP-1.
+3. **Reuso de commands (rediseño de flujo, no rename)**: `ResolveDiscrepancyHandler`
+   pre-genera el id del ajuste y llama `RecordTransactionCommand(ctx, ref, txnId, …)`.
+   El real **no** acepta id del caller (el agregado lo genera) y usa `dispatch(cmd, ctx)`;
+   hay que enhebrar `CommandResult.aggregateId` de vuelta. Igual para `MergePendingTransfers`
+   (reusar el command real `transactions/application/commands/merge-pending-transfers.command.ts`).
+4. **VOs/buses**: `PostingLine.of({...})`/`.negated()` (sin `toInput()`) en `AdjustmentFactory`;
+   `LedgerDate` (`.value`, `isSameOrBefore/After`) reemplaza `LocalDate` (`.year/.month/.day`,
+   `isOnOrBefore/After`) en `IntlDayBoundaryResolver`/evaluador; `LedgerConcurrencyException`
+   → `ConcurrencyConflictException` real; `CommandBus.execute`→`dispatch`,
+   `QueryBus.execute`→`ask`; puertos reales para `LedgerSettingsReader`/`SystemAccountLookup`/
+   `AccountLookup` sobre `proj_ledger_settings` (ya existe) / `proj_accounts`.
+5. Atomicidad cross-stream: dejar **append-per-stream** con `// TODO(atomicity)`.
