@@ -27,3 +27,8 @@ export class InvalidCurrencyCodeException extends DomainUnprocessableException {
 export class UnknownCurrencyException extends DomainUnprocessableException {
   readonly code: string = 'UNKNOWN_CURRENCY';
 }
+
+/** The payee (merchant/counterparty) exceeds its length bound. */
+export class InvalidPayeeException extends DomainUnprocessableException {
+  readonly code: string = 'INVALID_PAYEE';
+}

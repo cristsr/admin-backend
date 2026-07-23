@@ -1,12 +1,8 @@
-import { DomainUnprocessableException, Nullable } from '@shared';
+import { Nullable } from '@shared';
+import { InvalidPayeeException } from './value-object.exception';
 
 /** Upper bound on a payee label, guarding the read-model column. */
 const MAX_LENGTH = 255;
-
-/** The payee (merchant/counterparty) exceeds its length bound. */
-export class InvalidPayeeException extends DomainUnprocessableException {
-  readonly code: string = 'INVALID_PAYEE';
-}
 
 /**
  * First-class merchant/counterparty of a transaction (§2.2). Trimmed and
