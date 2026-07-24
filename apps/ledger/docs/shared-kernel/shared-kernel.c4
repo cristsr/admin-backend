@@ -1,0 +1,68 @@
+// C4 Nivel 3 — shared-kernel (apps/ledger) — query bus, read model, event store adapters.
+// Extiende admin.ledger.shared definido en docs/architecture/landscape.c4.
+// Acumula: hu-0005 (query bus), hu-0006 (proyectores), hu-0007 (adaptadores Postgres).
+
+model {
+  extend admin.ledger.shared {
+    query = component 'Query' {
+      technology 'Application · Base'
+      description 'abstract class Query { queryType: string }.'
+    }
+    queryHandler = component 'QueryHandler' {
+      technology 'Application · Base'
+      description 'abstract execute(query, QueryContext): TResult. QueryContext = { userId }.'
+    }
+    readModel = store 'ReadModelStore' {
+      technology 'InMemory / PostgreSQL'
+      description 'Tablas proj_* del read model. Schema-on-read, sin TypeORM.'
+    }
+    projectionDispatcher = component 'ProjectionDispatcher' {
+      technology 'Application · Dispatcher'
+      description 'SynchronousProjectionDispatcher. Itera projectores por evento.'
+    }
+    postgresReadModelStore = component 'PostgresReadModelStore' {
+      technology 'Infrastructure · PostgreSQL'
+      description 'Upsert, delete, query, truncate contra proj_* via DataSource.query(). Verificado por contract test (hu-0007).'
+    }
+    postgresEventStore = component 'PostgresEventStore' {
+      technology 'Infrastructure · PostgreSQL'
+      description 'Append/load/readAll/findByExternalRef contra event_store. INSERT multi-fila batch. Verificado por contract test (hu-0007).'
+    }
+    postgresReadModelStoreSpec = component 'PostgresReadModelStoreSpec' {
+      technology 'Jest · Contract Test'
+      description 'describeReadModelStoreContract(() => new PostgresReadModelStore(dataSource)). AC-8 (hu-0007).'
+    }
+
+    // Relaciones del query bus
+    admin.ledger.shared.queryBus -> admin.ledger.shared.query 'rutea queries por queryType'
+    admin.ledger.shared.queryBus -> admin.ledger.shared.queryHandler 'invoca handler'
+    admin.ledger.shared.queryHandler -> admin.ledger.shared.readModel 'lee proj_*'
+
+    // Relaciones de adaptadores Postgres (hu-0007)
+    admin.ledger.shared.postgresEventStore -> admin.ledger.shared.eventStore 'implements'
+    admin.ledger.shared.postgresReadModelStore -> admin.ledger.shared.readModel 'implements'
+    admin.ledger.shared.postgresReadModelStoreSpec -> admin.ledger.shared.readModel 'verifies contract (AC-8)'
+  }
+}
+
+views {
+  // --- Dynamic views de adaptadores Postgres (hu-0007) ---
+
+  dynamic view shared_kernel_read_model_upsert {
+    title 'ReadModelStore.upsert (Postgres, key-driven ON CONFLICT) · trigger: sync-call'
+    admin.ledger.shared.postgresReadModelStore -> admin.ledger.shared.readModel 'upsert(table, key, row): INSERT … ON CONFLICT (key) DO UPDATE SET'
+    autoLayout TopBottom
+  }
+
+  dynamic view shared_kernel_event_store_batch_append {
+    title 'EventStore.append (Postgres, batch INSERT) · trigger: sync-call'
+    admin.ledger.shared.postgresEventStore -> admin.ledger.shared.eventStore 'append(stream, expectedVersion, events): INSERT multi-fila transaccional'
+    autoLayout TopBottom
+  }
+
+  dynamic view shared_kernel_contract_test {
+    title 'PostgresReadModelStore contract test (AC-8) · trigger: cli'
+    admin.ledger.shared.postgresReadModelStoreSpec -> admin.ledger.shared.readModel 'contract test verify upsert/delete/query/truncate semantics'
+    autoLayout TopBottom
+  }
+}
