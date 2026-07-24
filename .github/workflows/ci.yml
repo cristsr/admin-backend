@@ -6,6 +6,42 @@ on:
   pull_request:
 
 jobs:
+  # Documentación como código: el modelo LikeC4 debe compilar y los contratos
+  # OpenAPI canónicos por módulo no deben introducir breaking changes no declarados.
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # oasdiff compara contra la rama base
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate LikeC4 model
+        run: npm run docs:validate
+
+      # Detecta breaking changes en cada api.yaml de módulo frente a la rama base.
+      # Informativo (no bloquea el merge todavía): cuando el equipo lo adopte,
+      # quitar `continue-on-error` para convertirlo en gate duro.
+      - name: OpenAPI breaking-change diff (oasdiff)
+        if: github.event_name == 'pull_request'
+        continue-on-error: true
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/oasdiff/oasdiff/main/install.sh | sh
+          git worktree add /tmp/base "origin/${{ github.base_ref }}"
+          for spec in $(git ls-files 'apps/**/docs/**/api.yaml'); do
+            if [ -f "/tmp/base/$spec" ]; then
+              echo "== oasdiff $spec =="
+              oasdiff breaking "/tmp/base/$spec" "$spec" --fail-on ERR || echo "::warning file=$spec::breaking changes detectados en $spec"
+            fi
+          done
+
   build-and-test:
     runs-on: ubuntu-latest
 
