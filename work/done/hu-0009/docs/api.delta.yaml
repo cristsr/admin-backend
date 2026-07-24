@@ -1,0 +1,56 @@
+openapi: 3.1.0
+info:
+  title: hu-0009 — HTTP adapter scaffolding
+  version: "1.0.0"
+  description: |
+    Delta del contrato HTTP para el kernel de adaptadores del ledger.
+    Documenta el endpoint de Swagger docs y el schema CommandAcceptedDto
+    (respuesta estándar de toda escritura, RNF-10).
+
+tags:
+  - name: shared
+    description: Endpoints y schemas transversales del kernel HTTP del ledger.
+
+paths:
+  /api/docs:
+    get:
+      tags: [shared]
+      operationId: getSwaggerDocs
+      summary: Swagger UI — contrato OpenAPI generado desde decoradores de código.
+      description: |
+        Sirve Swagger UI en `/api/docs` cuando `NODE_ENV !== 'production'`. 
+        El documento se genera con `SwaggerModule.createDocument` a partir de
+        decoradores `@Api*` en controllers y DTOs. Incluye esquemas de seguridad
+        `gatewayContext` (apiKey, header `x-user-id`, default) y `bearerAuth` (JWT).
+      responses:
+        '200':
+          description: HTML de Swagger UI.
+          content:
+            text/html:
+              schema:
+                type: string
+        '404':
+          description: Entorno producción — la ruta no se registra y el router devuelve 404.
+
+components:
+  schemas:
+    CommandAcceptedDto:
+      type: object
+      description: |
+        Cuerpo estándar de toda respuesta de escritura (RNF-10). Contiene el
+        identificador del agregado afectado y la posición global en el stream
+        para read-your-writes (RNF-9). `streamPosition` es un `bigint` en el
+        core, serializado como string decimal para evitar pérdida de precisión
+        en JSON.
+      required: [id, streamPosition]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador del agregado afectado (`CommandResult.aggregateId`).
+        streamPosition:
+          type: string
+          description: Posición global en el stream como string decimal (`bigint` serializado).
+      example:
+        id: "550e8400-e29b-41d4-a716-446655440000"
+        streamPosition: "42"
