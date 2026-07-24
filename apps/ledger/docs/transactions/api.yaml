@@ -1,160 +1,16 @@
 openapi: 3.1.0
 info:
-  title: hu-0003 API
+  title: Ledger — Transactions API
   version: "1.0.0"
-  description: "hu-0003: Agregados Account y LedgerTransaction — ciclo de vida contable completo."
+  description: >
+    Contrato canónico del módulo transactions (apps/ledger). Documento vivo: /sync
+    reconcilia aquí el api.delta.yaml de cada historia (merge de paths/schemas +
+    oasdiff). Introducido por hu-0003 (split del spec mixto accounts+transactions).
 tags:
-  - name: accounts
-    description: Endpoints del agregado Account expuestos por apps/ledger
   - name: transactions
-    description: Endpoints del agregado LedgerTransaction expuestos por apps/ledger
+    description: Endpoints del agregado LedgerTransaction expuestos por apps/ledger.
 
 paths:
-  /accounts:
-    post:
-      tags: [accounts]
-      operationId: openAccount
-      summary: Open an account.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/OpenAccountRequest'
-      responses:
-        '201':
-          description: Account opened successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CommandAccepted'
-        '422':
-          description: Real account with more than one currency rejected (AC-2).
-    get:
-      tags: [accounts]
-      operationId: listAccounts
-      summary: List the account tree.
-      parameters:
-        - name: view
-          in: query
-          required: false
-          schema:
-            $ref: '#/components/schemas/AccountTreeView'
-      responses:
-        '200':
-          description: Account tree returned.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AccountTree'
-
-  /accounts/{id}:
-    get:
-      tags: [accounts]
-      operationId: getAccount
-      summary: Get a single account.
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      responses:
-        '200':
-          description: Account found.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Account'
-        '404':
-          description: Account not found.
-
-  /accounts/{id}/balance:
-    get:
-      tags: [accounts]
-      operationId: getAccountBalances
-      summary: Account balances (confirmed and pending per currency).
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-        - name: currency
-          in: query
-          required: false
-          schema:
-            type: string
-            example: COP
-          description: Restrict to a single currency; omit for all.
-      responses:
-        '200':
-          description: Balances returned.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/AccountBalance'
-
-  /accounts/{id}/rename:
-    post:
-      tags: [accounts]
-      operationId: renameAccount
-      summary: Rename an account.
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/RenameAccountRequest'
-      responses:
-        '200':
-          description: Account renamed successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CommandAccepted'
-        '409':
-          description: Root type immutable (INV-14) or system account protected (INV-13).
-
-  /accounts/{id}/close:
-    post:
-      tags: [accounts]
-      operationId: closeAccount
-      summary: Close an account.
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-            format: uuid
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CloseAccountRequest'
-      responses:
-        '200':
-          description: Account closed successfully.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CommandAccepted'
-        '409':
-          description: System account protected (INV-13).
-
   /transactions:
     post:
       tags: [transactions]
@@ -409,7 +265,7 @@ paths:
 
 components:
   schemas:
-    # --- Shared ---
+    # --- Shared (copiado en cada spec de módulo para que sea autocontenido) ---
     CommandAccepted:
       type: object
       required: [id, streamPosition]
@@ -421,116 +277,6 @@ components:
         streamPosition:
           type: string
           description: Global stream position for read-your-writes (RNF-9), as a decimal string.
-
-    # --- Account ---
-    AccountType:
-      type: string
-      enum: [ASSETS, LIABILITIES, INCOME, EXPENSES, EQUITY]
-
-    OpenAccountRequest:
-      type: object
-      required: [type, name, currencies, openedOn, isBankMirror]
-      properties:
-        type:
-          $ref: '#/components/schemas/AccountType'
-        name:
-          type: string
-          example: Assets:Bancolombia:Savings
-          description: Hierarchical account name.
-        parentId:
-          type: string
-          format: uuid
-          description: Parent node; omitted for a root account.
-        currencies:
-          type: array
-          items:
-            type: string
-          example: [COP]
-          minItems: 1
-        openedOn:
-          type: string
-          format: date
-          example: "2026-07-20"
-          description: Plain accounting date, no timezone (RNF-7).
-        isBankMirror:
-          type: boolean
-          description: True when this account mirrors a real bank account or wallet.
-
-    RenameAccountRequest:
-      type: object
-      required: [newName]
-      properties:
-        newName:
-          type: string
-          example: Assets:Bancolombia:Checking
-
-    CloseAccountRequest:
-      type: object
-      required: [closedOn]
-      properties:
-        closedOn:
-          type: string
-          format: date
-          example: "2026-07-20"
-          description: Plain accounting date the account closes on (RNF-7).
-
-    AccountTreeView:
-      type: string
-      enum: [tree, flat]
-
-    Account:
-      type: object
-      required: [id, type, name, currencies, isClosed, isSystem]
-      properties:
-        id:
-          type: string
-          format: uuid
-        type:
-          $ref: '#/components/schemas/AccountType'
-        name:
-          type: string
-          example: Assets:Bancolombia:Savings
-        parentId:
-          type: string
-          format: uuid
-        currencies:
-          type: array
-          items:
-            type: string
-          example: [COP]
-        isClosed:
-          type: boolean
-          description: True once the account has been closed.
-        isSystem:
-          type: boolean
-          description: True for technical system accounts that cannot be closed (INV-13).
-
-    AccountTree:
-      type: object
-      required: [view, accounts]
-      properties:
-        view:
-          $ref: '#/components/schemas/AccountTreeView'
-        accounts:
-          type: array
-          items:
-            $ref: '#/components/schemas/Account'
-
-    AccountBalance:
-      type: object
-      required: [currency, confirmed, pending]
-      properties:
-        currency:
-          type: string
-          example: COP
-        confirmed:
-          type: string
-          example: "125000"
-          description: Balance from confirmed transactions.
-        pending:
-          type: string
-          example: "-31900"
-          description: Delta from still-pending transactions.
 
     # --- LedgerTransaction ---
     TransactionStatus:

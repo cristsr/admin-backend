@@ -1,0 +1,110 @@
+// C4 Nivel 3 — modulo accounts (apps/ledger/src/accounts).
+// Extiende admin.ledger (definido en docs/architecture/landscape.c4).
+
+model {
+  extend admin.ledger {
+    accounts = module 'Accounts' {
+      description 'Ciclo de vida de cuentas: apertura, renombre, cierre y lecturas del arbol.'
+
+      // --- Domain ---
+      account = component 'Account' {
+        technology 'Domain · Aggregate'
+        description 'Agregado event-sourced. open / rename / close. Invariantes de moneda y proteccion de cuentas de sistema.'
+      }
+      accountEvents = component 'Account Events' {
+        technology 'Domain · Events'
+        description 'AccountOpened · AccountRenamed · AccountClosed.'
+      }
+      accountException = component 'AccountException' {
+        technology 'Domain · Exceptions'
+        description 'Jerarquia de excepciones de dominio (7 clases).'
+      }
+
+      // --- Application ---
+      accountRepository = component 'AccountRepository' {
+        technology 'Application · Repository'
+        description 'extends EventSourcedRepository<Account>.'
+      }
+      accountValidation = component 'AccountValidationService' {
+        technology 'Application · Service'
+        description 'Validacion cruzada INV-3 / INV-4.'
+      }
+      openHandler = component 'OpenAccountHandler' {
+        technology 'Application · CommandHandler'
+      }
+      renameHandler = component 'RenameAccountHandler' {
+        technology 'Application · CommandHandler'
+      }
+      closeHandler = component 'CloseAccountHandler' {
+        technology 'Application · CommandHandler'
+      }
+
+      // --- Infrastructure ---
+      controller = component 'AccountsController' {
+        technology 'Infrastructure · REST'
+        description 'POST /accounts · GET /accounts · GET /accounts/{id} · GET /accounts/{id}/balance · POST /accounts/{id}/rename · POST /accounts/{id}/close'
+      }
+      treeProjector = component 'AccountTreeProjector' {
+        technology 'Infrastructure · Projector'
+        description 'Construye la proyeccion proj_accounts (arbol de cuentas).'
+      }
+    }
+  }
+
+  // Relaciones estructurales
+  admin.ledger.accounts.account -> admin.ledger.accounts.accountEvents 'emite'
+  admin.ledger.accounts.account -> admin.ledger.accounts.accountException 'valida con'
+  admin.ledger.accounts.accountRepository -> admin.ledger.accounts.account 'rehidrata / persiste'
+  admin.ledger.accounts.openHandler -> admin.ledger.accounts.accountRepository 'usa'
+  admin.ledger.accounts.renameHandler -> admin.ledger.accounts.accountRepository 'usa'
+  admin.ledger.accounts.closeHandler -> admin.ledger.accounts.accountRepository 'usa'
+  admin.ledger.accounts.accountValidation -> admin.ledger.accounts.account 'valida'
+  admin.ledger.accounts.controller -> admin.ledger.shared.commandBus 'despacha commands'
+  admin.ledger.accounts.controller -> admin.ledger.shared.queryBus 'lecturas'
+  admin.ledger.accounts.treeProjector -> admin.ledger.shared.eventStore 'consume eventos'
+}
+
+views {
+  view accountsComponents {
+    title 'Accounts — componentes (C4 L3)'
+    include admin.ledger.accounts, admin.ledger.accounts.*
+    include admin.ledger.shared.commandBus, admin.ledger.shared.queryBus, admin.ledger.shared.eventStore
+  }
+
+  // --- Dynamic views (un flujo por caso de uso) ---
+
+  dynamic view openAccount {
+    title 'Abrir cuenta · trigger REST'
+    user -> admin.ledger.accounts.controller 'POST /accounts (OpenAccountRequestDto)'
+    admin.ledger.accounts.controller -> admin.ledger.shared.commandBus 'dispatch(OpenAccountCommand)'
+    admin.ledger.shared.commandBus -> admin.ledger.accounts.openHandler 'handle'
+    admin.ledger.accounts.openHandler -> admin.ledger.accounts.account 'Account.open(id, name, currencies, openedOn) — valida AC-2'
+    admin.ledger.accounts.account -> admin.ledger.accounts.accountEvents 'raise(AccountOpened)'
+    admin.ledger.accounts.openHandler -> admin.ledger.accounts.accountRepository 'save(account)'
+    admin.ledger.accounts.accountRepository -> admin.ledger.shared.eventStore 'append(AccountOpened)'
+  }
+
+  dynamic view renameAccount {
+    title 'Renombrar cuenta · trigger REST'
+    user -> admin.ledger.accounts.controller 'POST /accounts/{id}/rename (RenameAccountRequestDto)'
+    admin.ledger.accounts.controller -> admin.ledger.shared.commandBus 'dispatch(RenameAccountCommand)'
+    admin.ledger.shared.commandBus -> admin.ledger.accounts.renameHandler 'handle'
+    admin.ledger.accounts.renameHandler -> admin.ledger.accounts.accountRepository 'load(id)'
+    admin.ledger.accounts.renameHandler -> admin.ledger.accounts.account 'rename(newName) — INV-13 / INV-14'
+    admin.ledger.accounts.account -> admin.ledger.accounts.accountEvents 'raise(AccountRenamed)'
+    admin.ledger.accounts.renameHandler -> admin.ledger.accounts.accountRepository 'save(account)'
+    admin.ledger.accounts.accountRepository -> admin.ledger.shared.eventStore 'append(AccountRenamed)'
+  }
+
+  dynamic view closeAccount {
+    title 'Cerrar cuenta · trigger REST'
+    user -> admin.ledger.accounts.controller 'POST /accounts/{id}/close (CloseAccountRequestDto)'
+    admin.ledger.accounts.controller -> admin.ledger.shared.commandBus 'dispatch(CloseAccountCommand)'
+    admin.ledger.shared.commandBus -> admin.ledger.accounts.closeHandler 'handle'
+    admin.ledger.accounts.closeHandler -> admin.ledger.accounts.accountRepository 'load(id)'
+    admin.ledger.accounts.closeHandler -> admin.ledger.accounts.account 'close(closedOn) — INV-13'
+    admin.ledger.accounts.account -> admin.ledger.accounts.accountEvents 'raise(AccountClosed)'
+    admin.ledger.accounts.closeHandler -> admin.ledger.accounts.accountRepository 'save(account)'
+    admin.ledger.accounts.accountRepository -> admin.ledger.shared.eventStore 'append(AccountClosed)'
+  }
+}

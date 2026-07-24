@@ -1,0 +1,201 @@
+// C4 Nivel 3 — modulo transactions (apps/ledger/src/transactions).
+// Extiende admin.ledger (definido en docs/architecture/landscape.c4).
+
+model {
+  extend admin.ledger {
+    transactions = module 'Transactions' {
+      description 'Registro y ciclo de vida de asientos por partida doble; deteccion de transferencias.'
+
+      // --- Domain ---
+      ledgerTransaction = component 'LedgerTransaction' {
+        technology 'Domain · Aggregate'
+        description 'record / amend / annotate / confirm / void / reverse. Event-sourced.'
+      }
+      transactionEvents = component 'Transaction Events' {
+        technology 'Domain · Events'
+        description 'Recorded · Amended · Annotated · Confirmed · Voided · Reversed.'
+      }
+      balanceRule = component 'BalanceRule' {
+        technology 'Domain · Policy'
+        description 'ZeroSumBalanceRule: balanceo a cero por moneda (INV-1 / INV-11).'
+      }
+      posting = component 'PostingLine' {
+        technology 'Domain · Value Object'
+        description 'Linea de asiento; PostingSerializer para persistencia.'
+      }
+      kindDeriver = component 'TransactionKindDeriver' {
+        technology 'Domain · Service'
+        description 'Clasifica DerivedKind (EXPENSE/INCOME/TRANSFER/COMPOUND) — RF-4.'
+      }
+      transferDetector = component 'TransferDetector' {
+        technology 'Domain · Service'
+        description 'Empareja postings candidatos como transferencia entre cuentas.'
+      }
+      transactionException = component 'TransactionException' {
+        technology 'Domain · Exceptions'
+      }
+
+      // --- Application ---
+      transactionRepository = component 'LedgerTransactionRepository' {
+        technology 'Application · Repository'
+        description 'extends EventSourcedRepository<LedgerTransaction>.'
+      }
+      postingFactory = component 'PostingFactory' {
+        technology 'Application · Factory'
+      }
+      recordHandler = component 'RecordTransactionHandler' {
+        technology 'Application · CommandHandler'
+      }
+      amendHandler = component 'AmendPendingTransactionHandler' {
+        technology 'Application · CommandHandler'
+      }
+      annotateHandler = component 'AnnotateTransactionHandler' {
+        technology 'Application · CommandHandler'
+      }
+      confirmHandler = component 'ConfirmTransactionHandler' {
+        technology 'Application · CommandHandler'
+      }
+      voidHandler = component 'VoidPendingTransactionHandler' {
+        technology 'Application · CommandHandler'
+      }
+      reverseHandler = component 'ReverseConfirmedTransactionHandler' {
+        technology 'Application · CommandHandler'
+      }
+      mergeTransfersHandler = component 'MergePendingTransfersHandler' {
+        technology 'Application · CommandHandler'
+      }
+      transferCandidatesProjector = component 'TransferCandidatesProjector' {
+        technology 'Application · Projector'
+        description 'Mantiene proj de candidatos a transferencia consumiendo TransactionRecorded.'
+      }
+
+      // --- Infrastructure ---
+      controller = component 'TransactionsController' {
+        technology 'Infrastructure · REST'
+        description 'POST /transactions · GET /transactions · GET /transactions/{id} · amend · annotate · confirm · void · reverse'
+      }
+      transferController = component 'TransferController' {
+        technology 'Infrastructure · REST'
+        description 'Endpoints de candidatos y merge de transferencias.'
+      }
+      listProjector = component 'TransactionListProjector' {
+        technology 'Infrastructure · Projector'
+        description 'proj_transactions · proj_postings.'
+      }
+      balancesProjector = component 'AccountBalancesProjector' {
+        technology 'Infrastructure · Projector'
+        description 'proj_balances (saldos por cuenta y moneda).'
+      }
+    }
+  }
+
+  // Relaciones estructurales
+  admin.ledger.transactions.ledgerTransaction -> admin.ledger.transactions.transactionEvents 'emite'
+  admin.ledger.transactions.ledgerTransaction -> admin.ledger.transactions.balanceRule 'valida con'
+  admin.ledger.transactions.ledgerTransaction -> admin.ledger.transactions.posting 'compone'
+  admin.ledger.transactions.ledgerTransaction -> admin.ledger.transactions.transactionException 'valida con'
+  admin.ledger.transactions.transactionRepository -> admin.ledger.transactions.ledgerTransaction 'rehidrata / persiste'
+  admin.ledger.transactions.recordHandler -> admin.ledger.transactions.transactionRepository 'usa'
+  admin.ledger.transactions.recordHandler -> admin.ledger.transactions.postingFactory 'usa'
+  admin.ledger.transactions.recordHandler -> admin.ledger.transactions.balanceRule 'usa'
+  admin.ledger.transactions.confirmHandler -> admin.ledger.transactions.transactionRepository 'usa'
+  admin.ledger.transactions.reverseHandler -> admin.ledger.transactions.transactionRepository 'usa'
+  admin.ledger.transactions.controller -> admin.ledger.shared.commandBus 'despacha commands'
+  admin.ledger.transactions.controller -> admin.ledger.shared.queryBus 'lecturas'
+  admin.ledger.transactions.transferController -> admin.ledger.shared.commandBus 'despacha merge'
+  admin.ledger.transactions.listProjector -> admin.ledger.shared.eventStore 'consume eventos'
+  admin.ledger.transactions.balancesProjector -> admin.ledger.shared.eventStore 'consume eventos'
+  admin.ledger.transactions.transferCandidatesProjector -> admin.ledger.shared.eventStore 'consume TransactionRecorded'
+  admin.ledger.transactions.transferCandidatesProjector -> admin.ledger.transactions.transferDetector 'empareja'
+  admin.ledger.transactions.kindDeriver -> admin.ledger.transactions.posting 'clasifica'
+}
+
+views {
+  view transactionsComponents {
+    title 'Transactions — componentes (C4 L3)'
+    include admin.ledger.transactions, admin.ledger.transactions.*
+    include admin.ledger.shared.commandBus, admin.ledger.shared.queryBus, admin.ledger.shared.eventStore
+  }
+
+  // --- Dynamic views: escrituras REST ---
+
+  dynamic view recordTransaction {
+    title 'Registrar transacción · trigger REST'
+    user -> admin.ledger.transactions.controller 'POST /transactions (RecordTransactionRequestDto)'
+    admin.ledger.transactions.controller -> admin.ledger.shared.commandBus 'dispatch(RecordTransactionCommand)'
+    admin.ledger.shared.commandBus -> admin.ledger.transactions.recordHandler 'handle'
+    admin.ledger.transactions.recordHandler -> admin.ledger.transactions.postingFactory 'build(postings)'
+    admin.ledger.transactions.recordHandler -> admin.ledger.transactions.ledgerTransaction 'record(...) — INV-2'
+    admin.ledger.transactions.ledgerTransaction -> admin.ledger.transactions.balanceRule 'ensureBalanced() — INV-1 / INV-11'
+    admin.ledger.transactions.ledgerTransaction -> admin.ledger.transactions.transactionEvents 'raise(TransactionRecorded)'
+    admin.ledger.transactions.recordHandler -> admin.ledger.transactions.transactionRepository 'save(tx)'
+    admin.ledger.transactions.transactionRepository -> admin.ledger.shared.eventStore 'append(TransactionRecorded)'
+  }
+
+  dynamic view amendTransaction {
+    title 'Enmendar transacción pendiente · trigger REST'
+    user -> admin.ledger.transactions.controller 'POST /transactions/{id}/amend'
+    admin.ledger.transactions.controller -> admin.ledger.shared.commandBus 'dispatch(AmendPendingTransactionCommand)'
+    admin.ledger.shared.commandBus -> admin.ledger.transactions.amendHandler 'handle'
+    admin.ledger.transactions.amendHandler -> admin.ledger.transactions.transactionRepository 'load(id)'
+    admin.ledger.transactions.amendHandler -> admin.ledger.transactions.ledgerTransaction 'amend(postings, date) — solo PENDING (INV-6)'
+    admin.ledger.transactions.ledgerTransaction -> admin.ledger.transactions.balanceRule 'ensureBalanced()'
+    admin.ledger.transactions.ledgerTransaction -> admin.ledger.transactions.transactionEvents 'raise(TransactionAmended)'
+    admin.ledger.transactions.amendHandler -> admin.ledger.transactions.transactionRepository 'save(tx)'
+  }
+
+  dynamic view annotateTransaction {
+    title 'Anotar transacción · trigger REST'
+    user -> admin.ledger.transactions.controller 'POST /transactions/{id}/annotate'
+    admin.ledger.transactions.controller -> admin.ledger.shared.commandBus 'dispatch(AnnotateTransactionCommand)'
+    admin.ledger.shared.commandBus -> admin.ledger.transactions.annotateHandler 'handle'
+    admin.ledger.transactions.annotateHandler -> admin.ledger.transactions.transactionRepository 'load(id)'
+    admin.ledger.transactions.annotateHandler -> admin.ledger.transactions.ledgerTransaction 'annotate(...) — cualquier estado salvo VOIDED'
+    admin.ledger.transactions.ledgerTransaction -> admin.ledger.transactions.transactionEvents 'raise(TransactionAnnotated)'
+    admin.ledger.transactions.annotateHandler -> admin.ledger.transactions.transactionRepository 'save(tx)'
+  }
+
+  dynamic view confirmTransaction {
+    title 'Confirmar transacción · trigger REST'
+    user -> admin.ledger.transactions.controller 'POST /transactions/{id}/confirm'
+    admin.ledger.transactions.controller -> admin.ledger.shared.commandBus 'dispatch(ConfirmTransactionCommand)'
+    admin.ledger.shared.commandBus -> admin.ledger.transactions.confirmHandler 'handle'
+    admin.ledger.transactions.confirmHandler -> admin.ledger.transactions.transactionRepository 'load(id)'
+    admin.ledger.transactions.confirmHandler -> admin.ledger.transactions.ledgerTransaction 'confirm() — PENDING → CONFIRMED'
+    admin.ledger.transactions.ledgerTransaction -> admin.ledger.transactions.transactionEvents 'raise(TransactionConfirmed)'
+    admin.ledger.transactions.confirmHandler -> admin.ledger.transactions.transactionRepository 'save(tx)'
+  }
+
+  dynamic view voidTransaction {
+    title 'Anular transacción pendiente · trigger REST'
+    user -> admin.ledger.transactions.controller 'POST /transactions/{id}/void'
+    admin.ledger.transactions.controller -> admin.ledger.shared.commandBus 'dispatch(VoidPendingTransactionCommand)'
+    admin.ledger.shared.commandBus -> admin.ledger.transactions.voidHandler 'handle'
+    admin.ledger.transactions.voidHandler -> admin.ledger.transactions.transactionRepository 'load(id)'
+    admin.ledger.transactions.voidHandler -> admin.ledger.transactions.ledgerTransaction 'void(reason) — solo PENDING'
+    admin.ledger.transactions.ledgerTransaction -> admin.ledger.transactions.transactionEvents 'raise(TransactionVoided)'
+    admin.ledger.transactions.voidHandler -> admin.ledger.transactions.transactionRepository 'save(tx)'
+  }
+
+  dynamic view reverseTransaction {
+    title 'Reversar transacción confirmada · trigger REST'
+    user -> admin.ledger.transactions.controller 'POST /transactions/{id}/reverse'
+    admin.ledger.transactions.controller -> admin.ledger.shared.commandBus 'dispatch(ReverseConfirmedTransactionCommand)'
+    admin.ledger.shared.commandBus -> admin.ledger.transactions.reverseHandler 'handle'
+    admin.ledger.transactions.reverseHandler -> admin.ledger.transactions.transactionRepository 'load(id)'
+    admin.ledger.transactions.reverseHandler -> admin.ledger.transactions.ledgerTransaction 'reverse(reversalId) — solo CONFIRMED; ReversalPlan'
+    admin.ledger.transactions.ledgerTransaction -> admin.ledger.transactions.transactionEvents 'raise(TransactionReversed)'
+    admin.ledger.transactions.reverseHandler -> admin.ledger.transactions.transactionRepository 'save(tx) + save(reversal)'
+  }
+
+  // --- Dynamic view: trigger NO-REST (domain-event) ---
+
+  dynamic view detectTransfer {
+    title 'Detectar transferencia · trigger domain-event'
+    admin.ledger.shared.eventStore -> admin.ledger.transactions.transferCandidatesProjector 'TransactionRecorded'
+    admin.ledger.transactions.transferCandidatesProjector -> admin.ledger.transactions.transferDetector 'match(candidatos)'
+    admin.ledger.transactions.transferDetector -> admin.ledger.transactions.transferCandidatesProjector 'candidatos emparejados'
+    admin.ledger.transactions.transferCandidatesProjector -> admin.ledger.shared.commandBus 'dispatch(MergePendingTransfersCommand)'
+    admin.ledger.shared.commandBus -> admin.ledger.transactions.mergeTransfersHandler 'handle'
+  }
+}
