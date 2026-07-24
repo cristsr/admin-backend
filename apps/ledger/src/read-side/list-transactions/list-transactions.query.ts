@@ -10,9 +10,11 @@ export class ListTransactionsQuery extends Query {
     readonly status: Nullable<string> = null,
     readonly derivedKind: Nullable<string> = null,
     readonly payee: Nullable<string> = null,
+    readonly clientId: Nullable<string> = null,
     readonly fromDate: Nullable<string> = null,
     readonly toDate: Nullable<string> = null,
     readonly limit: Nullable<number> = null,
+    readonly offset: Nullable<number> = null,
   ) {
     super();
   }

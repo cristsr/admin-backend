@@ -34,10 +34,13 @@ export class ListTransactionsHandler extends QueryHandler<
       .equals('status', query.status)
       .equals('derived_kind', query.derivedKind)
       .equalsIgnoreCase('payee', query.payee)
+      .equals('client_id', query.clientId)
       .between('date', query.fromDate, query.toDate)
       .orderBy('date', OrderType.DESC);
 
-    if (query.limit) criteria = criteria.limitTo(query.limit);
+    if (query.limit) {
+      criteria = criteria.paginate({ offset: query.offset ?? 0, limit: query.limit });
+    }
 
     const rows = await this.readModel.query<TransactionRow>(PROJ_TRANSACTIONS, criteria);
 
