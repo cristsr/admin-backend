@@ -10,9 +10,6 @@ import { SharedHttpModule } from '@ledger/shared/infrastructure/adapters/http';
 import { TransactionsHttpModule } from '@ledger/transactions/infrastructure/adapters/http';
 import { TransactionsModule } from '@ledger/transactions/transactions.module';
 import { SettingsModule } from '@ledger/settings/settings.module';
-import { ReferenceModule } from '@ledger/reference/reference.module';
-import { ProductModule } from '@ledger/product/product.module';
-import { ReportingModule } from '@ledger/reporting/reporting.module';
 import { buildPinoModuleOptions } from './config/logger/logger.config';
 import { DatabaseModule } from './database/database.module';
 
@@ -34,12 +31,9 @@ import { DatabaseModule } from './database/database.module';
     LedgerCoreModule,
     // EP-4.1: LedgerSettings (presentation currency + timezone management)
     SettingsModule,
-    // EP-4.2: Reference data (currencies, prices)
-    ReferenceModule,
-    // EP-4.3/4.4: Product layer (budgets, goals)
-    ProductModule,
-    // EP-4.5/4.6: Reporting (net worth, expenses)
-    ReportingModule,
+    // EP-4.2/4.3/4.4/4.5/4.6 (Reference, Product, Reporting): pending
+    // migration to current shared-kernel APIs — imported via @nestjs/cqrs +
+    // SharedKernelModule that no longer exist.
     AccountsHttpModule,
     TransactionsHttpModule,
     // EP-3: reconciliation and the transfer feature, mounted on the real core.

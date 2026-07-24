@@ -82,9 +82,11 @@ export class TransactionsController {
         query.status ?? null,
         query.derivedKind ?? null,
         query.payee ?? null,
+        query.clientId ?? null,
         query.from ?? null,
         query.to ?? null,
         query.limit ?? null,
+        query.offset ?? null,
       ),
       this.queryContext(context),
     );

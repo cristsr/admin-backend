@@ -1,40 +1,53 @@
 import { Injectable } from '@nestjs/common';
-import { Projector } from '../../../shared-kernel/application/projection/projector';
-import { ReadModelStore } from '../../../shared-kernel/application/projection/read-model-store';
-import { DomainEvent } from '../../../shared-kernel/domain/aggregate/domain-event';
-import { LedgerInitialized } from '../../../ledger/domain/settings/events/ledger-initialized.event';
-import { PresentationCurrencyChanged, TimezoneChanged } from '../../domain/ledger-settings/events';
+import { Projector } from '@ledger/shared-kernel/application/projection/projector';
+import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
+import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
 
 /**
- * Projects LedgerSettings events to proj_ledger_settings table.
- * - LedgerInitialized: inserts row with initial currency + timezone
- * - PresentationCurrencyChanged: updates presentation_currency column
- * - TimezoneChanged: updates timezone column
+ * Maintains `proj_ledger_settings` from settings events. Handles:
+ * - LedgerInitialized: inserts the initial row (presentation currency, timezone, system accounts)
+ * - PresentationCurrencyChanged: updates `presentation_currency`
+ * - TimezoneChanged: updates `timezone`
+ *
+ * The stream is keyed by `{ user_id }` — one row per user.
  */
 @Injectable()
 export class LedgerSettingsProjector extends Projector {
-  constructor(private readModelStore: ReadModelStore) {
-    super();
+  readonly name = 'ledger_settings';
+  readonly consumes = ['LedgerInitialized', 'PresentationCurrencyChanged', 'TimezoneChanged'];
+
+  async project(event: StoredEvent, store: ReadModelStore): Promise<void> {
+    if (event.eventType === 'LedgerInitialized') return this.onLedgerInitialized(event, store);
+    if (event.eventType === 'PresentationCurrencyChanged') return this.onPresentationCurrencyChanged(event, store);
+    if (event.eventType === 'TimezoneChanged') return this.onTimezoneChanged(event, store);
   }
 
-  async project(event: DomainEvent): Promise<void> {
-    if (event instanceof LedgerInitialized) {
-      await this.readModelStore.upsert('proj_ledger_settings', event.props.userId as string, {
-        user_id: event.props.userId,
-        presentation_currency: event.props.presentationCurrency,
-        timezone: event.props.timezone,
-        updated_at: new Date(),
-      });
-    } else if (event instanceof PresentationCurrencyChanged) {
-      await this.readModelStore.upsert('proj_ledger_settings', event.userId, {
-        presentation_currency: event.presentationCurrency,
-        updated_at: new Date(),
-      });
-    } else if (event instanceof TimezoneChanged) {
-      await this.readModelStore.upsert('proj_ledger_settings', event.userId, {
-        timezone: event.timezone,
-        updated_at: new Date(),
-      });
-    }
+  private async onLedgerInitialized(event: StoredEvent, store: ReadModelStore): Promise<void> {
+    const payload = event.payload as Record<string, unknown>;
+
+    await store.upsert('proj_ledger_settings', { user_id: event.userId }, {
+      user_id: event.userId,
+      presentation_currency: payload.presentationCurrency,
+      timezone: payload.timezone,
+      updated_at: new Date(),
+    });
+  }
+
+  private async onPresentationCurrencyChanged(event: StoredEvent, store: ReadModelStore): Promise<void> {
+    const payload = event.payload as Record<string, unknown>;
+
+    await store.upsert('proj_ledger_settings', { user_id: event.userId }, {
+      presentation_currency: payload.presentationCurrency,
+      updated_at: new Date(),
+    });
+  }
+
+  private async onTimezoneChanged(event: StoredEvent, store: ReadModelStore): Promise<void> {
+    const payload = event.payload as Record<string, unknown>;
+
+    await store.upsert('proj_ledger_settings', { user_id: event.userId }, {
+      timezone: payload.timezone,
+      updated_at: new Date(),
+    });
   }
 }

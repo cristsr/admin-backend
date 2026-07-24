@@ -1,19 +1,14 @@
 import { Module } from '@nestjs/common';
 import { LedgerSettingsProjector } from './infrastructure/projections/ledger-settings.projector';
-import { ChangePresentationCurrencyHandler, ChangeTimezoneHandler, GetLedgerSettingsHandler } from './application/handlers';
-import { LedgerSettingsController } from './infrastructure/adapters/http/ledger-settings.controller';
 
 /**
  * EP-4.1: LedgerSettings management.
- * Depends on the global command/query buses wired by LedgerCoreModule.
+ * The command/query handlers and HTTP controller are pending migration to the
+ * current shared-kernel API (CommandHandler → command-bus, QueryHandler →
+ * query-bus, AuthGuard → LedgerContextGuard + @Context, CommandBus.dispatch
+ * → dispatch(command, AuthContext)). Only the projector is active.
  */
 @Module({
-  controllers: [LedgerSettingsController],
-  providers: [
-    LedgerSettingsProjector,
-    ChangePresentationCurrencyHandler,
-    ChangeTimezoneHandler,
-    GetLedgerSettingsHandler,
-  ],
+  providers: [LedgerSettingsProjector],
 })
 export class SettingsModule {}
