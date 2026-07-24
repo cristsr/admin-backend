@@ -44,5 +44,7 @@ Thumbs.db
 
 # AI agent config (personal, per-dev)
 .agents/
+.claude
 CLAUDE.md
 AGENTS.md
+.mcp.json
