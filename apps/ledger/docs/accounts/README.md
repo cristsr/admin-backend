@@ -21,13 +21,13 @@ Para previsualizar localmente: extensión LikeC4 de VS Code, o `npx likec4 start
 ## Casos de uso (flujos)
 
 | Caso de uso | Trigger | Entrypoint | Doc |
-|---|---|---|---|
+|---|---|---|---|---|
 | Abrir cuenta | rest | `POST /accounts` | [open-account](./flows/open-account.md) |
 | Renombrar cuenta | rest | `POST /accounts/{id}/rename` | [rename-account](./flows/rename-account.md) |
 | Cerrar cuenta | rest | `POST /accounts/{id}/close` | [close-account](./flows/close-account.md) |
-| Listar árbol de cuentas | rest | `GET /accounts` | *(read-side)* |
+| Listar árbol de cuentas | rest | `GET /accounts` | [list-accounts](./flows/list-accounts.md) |
 | Consultar cuenta | rest | `GET /accounts/{id}` | *(read-side)* |
-| Consultar saldos | rest | `GET /accounts/{id}/balance` | *(read-side)* |
+| Consultar saldos | rest | `GET /accounts/{id}/balance` | [get-account-balances](./flows/get-account-balances.md) |
 
 ## Invariantes de dominio
 

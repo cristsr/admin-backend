@@ -170,6 +170,31 @@ graph TD
 2. Registra los 10 handlers por `commandType`.
 3. `LedgerCoreModule` provee `CommandBus` vía `useFactory` → `createLedgerApplication().commandBus`.
 
+## Componentes nuevos en hu-0006 — Query bus
+
+| Capa | Componente | Archivo |
+|------|-----------|---------|
+| Application | `Query` (abstract) | `shared-kernel/application/query-bus/query.ts` |
+| Application | `QueryHandler<TQuery, TResult>` (abstract) | `shared-kernel/application/query-bus/query-handler.ts` |
+| Application | `QueryBus` (abstract) / `RegistryQueryBus` (concrete) | `shared-kernel/application/query-bus/query-bus.ts` |
+| Application | `QueryContext` (type) | `shared-kernel/application/query-bus/query-handler.ts` |
+| Application | `UnregisteredQueryException` | `shared-kernel/application/query-bus/query-bus.ts` |
+
+### Query handlers registrados en `createQueryBus()`
+
+| Handler | Módulo | QueryType |
+|---------|--------|-----------|
+| `ListTransactionsHandler` | `read-side/list-transactions/` | `ListTransactions` |
+| `GetTransactionByIdHandler` | `read-side/get-transaction-by-id/` | `GetTransactionById` |
+| `GetAccountTreeHandler` | `read-side/get-account-tree/` | `GetAccountTree` |
+| `GetAccountByIdHandler` | `read-side/get-account-by-id/` | `GetAccountById` |
+| `GetAccountBalancesHandler` | `read-side/get-account-balances/` | `GetAccountBalances` |
+| `GetLedgerSettingsHandler` | `read-side/get-ledger-settings/` | `GetLedgerSettings` |
+
+### Wiring
+
+`createQueryBus(readModel)` en `read-side/query-bus.factory.ts` — crea `RegistryQueryBus` y registra los 6 handlers con sus query types. Se expone en `LedgerCoreModule` vía `useFactory`.
+
 ## Componentes existentes (sin cambios)
 
 - `EventStore`, `EventEnvelope`, `StoredEvent`, `StreamId`, `AppendResult`, `EventPayload` — de hu-0001.

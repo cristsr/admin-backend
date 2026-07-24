@@ -18,19 +18,19 @@ a transferencia.
 ## Casos de uso (flujos)
 
 | Caso de uso | Trigger | Entrypoint | Doc |
-|---|---|---|---|
+|---|---|---|---|---|
 | Registrar transacción | rest | `POST /transactions` | [record-transaction](./flows/record-transaction.md) |
 | Enmendar (pendiente) | rest | `POST /transactions/{id}/amend` | *(view `amendTransaction`)* |
 | Anotar | rest | `POST /transactions/{id}/annotate` | *(view `annotateTransaction`)* |
 | Confirmar | rest | `POST /transactions/{id}/confirm` | *(view `confirmTransaction`)* |
 | Anular (pendiente) | rest | `POST /transactions/{id}/void` | *(view `voidTransaction`)* |
 | Reversar (confirmada) | rest | `POST /transactions/{id}/reverse` | *(view `reverseTransaction`)* |
-| Listar / consultar | rest | `GET /transactions`, `GET /transactions/{id}` | *(read-side)* |
+| Listar transacciones | rest | `GET /transactions` | [list-transactions](./flows/list-transactions.md) |
+| **Proyectar transaction_list** | **domain-event** | `SynchronousProjectionDispatcher` → `TransactionListProjector` | [project-transaction-list](./flows/project-transaction-list.md) |
+| **Proyectar account_balances** | **domain-event** | `SynchronousProjectionDispatcher` → `AccountBalancesProjector` | [project-account-balances](./flows/project-account-balances.md) |
 | **Detectar transferencia** | **domain-event** | `TransactionRecorded` → `MergePendingTransfersCommand` | [detect-transfer](./flows/detect-transfer.md) |
 
-> El flujo *detectar transferencia* no lo inicia un usuario por REST sino un evento de
-> dominio consumido por un projector. Es el ejemplo de por qué `trigger` es la clave
-> que organiza `flows/`: un mismo módulo tiene entrypoints heterogéneos.
+> Los flujos *detectar transferencia*, *proyectar transaction_list* y *proyectar account_balances* no los inicia un usuario por REST sino eventos de dominio consumidos por proyectores. Son el ejemplo de por qué `trigger` es la clave que organiza `flows/`: un mismo módulo tiene entrypoints heterogéneos.
 
 ## Invariantes de dominio
 

@@ -1,0 +1,91 @@
+// Delta LikeC4 para hu-0006: proyectores transaction_list/account_balances + query bus.
+// Extiende admin.ledger (landscape.c4) y los modulos accounts, transactions, shared.
+// queryBus ya esta definido en landscape.c4 (admin.ledger.shared.queryBus).
+
+model {
+
+  // Componentes nuevos en shared kernel
+
+  extend admin.ledger.shared {
+    query = component 'Query' {
+      technology 'Application · Base'
+      description 'abstract class Query { queryType: string }.'
+    }
+    queryHandler = component 'QueryHandler' {
+      technology 'Application · Base'
+      description 'abstract execute(query, QueryContext): TResult. QueryContext = { userId }.'
+    }
+    readModel = store 'ReadModelStore' {
+      technology 'InMemory / PostgreSQL'
+      description 'Tablas proj_* del read model. Schema-on-read, sin TypeORM.'
+    }
+    projectionDispatcher = component 'ProjectionDispatcher' {
+      technology 'Application · Dispatcher'
+      description 'SynchronousProjectionDispatcher. Itera projectores por evento.'
+    }
+  }
+
+  // Relaciones nuevas
+
+  admin.ledger.shared.queryBus -> admin.ledger.shared.query 'rutea queries por queryType'
+  admin.ledger.shared.queryBus -> admin.ledger.shared.queryHandler 'invoca handler'
+  admin.ledger.shared.queryHandler -> admin.ledger.shared.readModel 'lee proj_*'
+
+  admin.ledger.shared.projectionDispatcher -> admin.ledger.transactions.listProjector 'invoca project()'
+  admin.ledger.shared.projectionDispatcher -> admin.ledger.transactions.balancesProjector 'invoca project() despues de transaction_list'
+  admin.ledger.transactions.listProjector -> admin.ledger.shared.readModel 'upsert proj_transactions / proj_postings'
+  admin.ledger.transactions.balancesProjector -> admin.ledger.shared.readModel 'upsert proj_balances'
+
+  admin.ledger.transactions.controller -> admin.ledger.shared.queryBus 'GET /transactions'
+  admin.ledger.accounts.controller -> admin.ledger.shared.queryBus 'GET /accounts'
+  admin.ledger.accounts.controller -> admin.ledger.shared.queryBus 'GET /accounts/{id}/balance'
+}
+
+views {
+
+  // Dynamic views: proyectores (trigger domain-event)
+
+  dynamic view projectTransactionList {
+    title 'Proyectar transaction_list · trigger domain-event'
+    admin.ledger.shared.projectionDispatcher -> admin.ledger.transactions.listProjector 'dispatch(StoredEvent)'
+    admin.ledger.transactions.listProjector -> admin.ledger.shared.readModel 'query account_tree para deriveKind'
+    admin.ledger.transactions.listProjector -> admin.ledger.transactions.kindDeriver 'derive(accountTypes)'
+    admin.ledger.transactions.listProjector -> admin.ledger.shared.readModel 'upsert proj_transactions + proj_postings'
+  }
+
+  dynamic view projectAccountBalances {
+    title 'Proyectar account_balances · trigger domain-event'
+    admin.ledger.shared.projectionDispatcher -> admin.ledger.transactions.balancesProjector 'dispatch(StoredEvent)'
+    admin.ledger.transactions.balancesProjector -> admin.ledger.shared.readModel 'query proj_postings'
+    admin.ledger.transactions.balancesProjector -> admin.ledger.shared.readModel 'recompute confirmed + pending por cuenta/moneda'
+    admin.ledger.transactions.balancesProjector -> admin.ledger.shared.readModel 'upsert proj_balances'
+  }
+
+  // Dynamic views: queries (trigger rest)
+
+  dynamic view listTransactions {
+    title 'Listar transacciones · trigger REST'
+    user -> admin.ledger.transactions.controller 'GET /transactions'
+    admin.ledger.transactions.controller -> admin.ledger.shared.queryBus 'ask(ListTransactionsQuery, ctx)'
+    admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'query proj_transactions con Criteria + userId'
+    admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'postfiltro accountId via proj_postings'
+    admin.ledger.transactions.controller -> user '200 TransactionRow[]'
+  }
+
+  dynamic view listAccounts {
+    title 'Listar cuentas (arbol) · trigger REST'
+    user -> admin.ledger.accounts.controller 'GET /accounts'
+    admin.ledger.accounts.controller -> admin.ledger.shared.queryBus 'ask(GetAccountTreeQuery, ctx)'
+    admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'query proj_accounts por userId, order name ASC'
+    admin.ledger.accounts.controller -> user '200 AccountRow[]'
+  }
+
+  dynamic view getAccountBalances {
+    title 'Consultar saldos · trigger REST'
+    user -> admin.ledger.accounts.controller 'GET /accounts/{id}/balance'
+    admin.ledger.accounts.controller -> admin.ledger.shared.queryBus 'ask(GetAccountBalancesQuery, ctx)'
+    admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'query proj_accounts para owned IDs'
+    admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'query proj_balances filtrado por owned'
+    admin.ledger.accounts.controller -> user '200 BalanceRow[]'
+  }
+}

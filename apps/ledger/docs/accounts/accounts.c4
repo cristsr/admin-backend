@@ -107,4 +107,21 @@ views {
     admin.ledger.accounts.closeHandler -> admin.ledger.accounts.accountRepository 'save(account)'
     admin.ledger.accounts.accountRepository -> admin.ledger.shared.eventStore 'append(AccountClosed)'
   }
+
+  // --- Dynamic views: queries (trigger REST) ---
+
+  dynamic view listAccounts {
+    title 'Listar cuentas (arbol) · trigger REST'
+    user -> admin.ledger.accounts.controller 'GET /accounts'
+    admin.ledger.accounts.controller -> admin.ledger.shared.queryBus 'ask(GetAccountTreeQuery, ctx)'
+    admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'query proj_accounts por userId, order name ASC'
+  }
+
+  dynamic view getAccountBalances {
+    title 'Consultar saldos · trigger REST'
+    user -> admin.ledger.accounts.controller 'GET /accounts/{id}/balance'
+    admin.ledger.accounts.controller -> admin.ledger.shared.queryBus 'ask(GetAccountBalancesQuery, ctx)'
+    admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'query proj_accounts para owned IDs'
+    admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'query proj_balances filtrado por owned'
+  }
 }
