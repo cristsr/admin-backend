@@ -1,0 +1,15 @@
+# Decisiones de Diseño — admin-back
+
+> Log acumulativo de decisiones significativas de diseño, tomadas literalmente
+> de la sección "Decisiones de Diseño" de cada historia que las generó (no
+> solo las cross-cutting — también decisiones de un solo módulo). Lo mantiene
+> `/sync` automáticamente al cerrar cada historia. Append-only: las entradas
+> nunca se editan ni se borran; una decisión obsoleta se supersede con una
+> entrada nueva que la referencia. Orden cronológico inverso (más reciente
+> primero).
+
+## HU-0002 — Puerto `EventStore` + adaptador in-memory + contract tests (2026-07-23)
+
+- **AC-11 — Ubicación del guard de lote vacío:** guard en ambos lados — `EventSourcedRepository.save()` retorna early si `pullChanges()` está vacío, **y** `InMemoryEventStore.append()` maneja `events: []` como no-op. Defensa en profundidad: el repositorio nunca llama al store sin cambios, y el store tolera lotes vacíos independientemente del caller.
+
+---
