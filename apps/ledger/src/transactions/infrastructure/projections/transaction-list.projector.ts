@@ -53,6 +53,7 @@ export class TransactionListProjector extends Projector {
     'TransactionAnnotated',
     'TransactionConfirmed',
     'TransactionVoided',
+    'TransactionReversed',
   ];
 
   constructor(private readonly deriver: TransactionKindDeriver = new TransactionKindDeriver()) {
@@ -67,6 +68,7 @@ export class TransactionListProjector extends Projector {
     if (event.eventType === 'TransactionAnnotated') return this.onAnnotated(event, payload, store);
     if (event.eventType === 'TransactionConfirmed') return this.onStatus(event, 'CONFIRMED', store);
     if (event.eventType === 'TransactionVoided') return this.onStatus(event, 'VOIDED', store);
+    if (event.eventType === 'TransactionReversed') return this.onReversed(event, payload, store);
   }
 
   private async onRecorded(
@@ -191,6 +193,25 @@ export class TransactionListProjector extends Projector {
 
         return store.upsert(PROJ_POSTINGS, { posting_id: row.posting_id }, row);
       }),
+    );
+  }
+
+  private async onReversed(
+    event: StoredEvent,
+    payload: Record<string, unknown>,
+    store: ReadModelStore,
+  ): Promise<void> {
+    const existing = await this.transaction(event.aggregateId, store);
+
+    if (!existing) return;
+
+    await store.upsert(
+      PROJ_TRANSACTIONS,
+      { transaction_id: event.aggregateId },
+      {
+        ...existing,
+        reverses_id: payload.reversalTransactionId as string,
+      },
     );
   }
 

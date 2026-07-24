@@ -34,6 +34,7 @@ export class AccountBalancesProjector extends Projector {
     'TransactionAmended',
     'TransactionConfirmed',
     'TransactionVoided',
+    'TransactionReversed',
   ];
 
   constructor(private readonly catalog: CurrencyCatalog = new SeedCurrencyCatalog()) {
