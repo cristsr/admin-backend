@@ -1,0 +1,121 @@
+// C4 Nivel 3 — shared (apps/ledger) — HTTP adapter infrastructure.
+// Extiende admin.ledger.shared definido en docs/architecture/landscape.c4.
+// hu-0009: documenta el patrón controller->bus, Swagger/OpenAPI, y el kernel HTTP.
+
+model {
+  extend admin.ledger.shared {
+
+    // --- HTTP kernel components (hu-0009) ---
+
+    sharedHttpModule = component 'SharedHttpModule' {
+      technology 'Infrastructure · NestJS'
+      description '@Global() module que cablea CommandResultInterceptor, LedgerContextGuard (APP_GUARD), y LedgerContextResolver. Swap del resolver para cambiar el mecanismo de auth.'
+      metadata {
+        introducedIn 'hu-0009'
+      }
+    }
+
+    commandAcceptedDto = component 'CommandAcceptedDto' {
+      technology 'Infrastructure · DTO'
+      description '{ id: aggregateId, streamPosition: string (bigint serializado) }. static from(CommandResult). Jamás una vista de lectura (RNF-10).'
+      metadata {
+        introducedIn 'hu-0009'
+      }
+    }
+
+    commandResultInterceptor = component 'CommandResultInterceptor' {
+      technology 'Infrastructure · NestInterceptor'
+      description 'Intercepta la respuesta de toda escritura: CommandResult → CommandAcceptedDto, agrega header X-Ledger-Stream-Position, downgradea replays idempotentes a 200.'
+      metadata {
+        introducedIn 'hu-0009'
+      }
+    }
+
+    ledgerContextGuard = component 'LedgerContextGuard' {
+      technology 'Infrastructure · NestJS Guard (APP_GUARD)'
+      description 'RF-26: resuelve LedgerContext via LedgerContextResolver en cada request y lo adjunta al request. Rechaza 401 si no hay contexto; bypass @Public().'
+      metadata {
+        introducedIn 'hu-0009'
+      }
+    }
+
+    ledgerContextResolver = component 'LedgerContextResolver' {
+      technology 'Application · Port (abstract class)'
+      description 'Puerto abstracto para resolver el contexto autenticado. Implementado actualmente por GatewayHeaderContextResolver (headers x-user-id / x-client-id).'
+      metadata {
+        introducedIn 'hu-0009'
+      }
+    }
+
+    gatewayHeaderContextResolver = component 'GatewayHeaderContextResolver' {
+      technology 'Infrastructure · Resolver'
+      description 'Lee x-user-id y x-client-id de los headers HTTP. Swap por el mecanismo definitivo cuando se defina el servicio de identidad (hu-0010).'
+      metadata {
+        introducedIn 'hu-0009'
+      }
+    }
+
+    swaggerBuilder = component 'SwaggerBuilder' {
+      technology 'Infrastructure · OpenAPI'
+      description 'buildSwaggerDocument(): OpenAPIObject con title "Ledger API" v1.0.0 + esquemas gatewayContext (apiKey x-user-id) y bearerAuth (JWT). maybeMountSwagger(app, showDocs) monta Swagger UI en /api/docs si NODE_ENV !== production.'
+      metadata {
+        introducedIn 'hu-0009'
+      }
+    }
+
+    // --- Relaciones del kernel HTTP ---
+
+    admin.ledger.shared.sharedHttpModule -> admin.ledger.shared.commandResultInterceptor 'provides'
+    admin.ledger.shared.sharedHttpModule -> admin.ledger.shared.ledgerContextGuard 'provides APP_GUARD'
+    admin.ledger.shared.sharedHttpModule -> admin.ledger.shared.ledgerContextResolver 'provides (useClass: GatewayHeaderContextResolver)'
+
+    admin.ledger.shared.gatewayHeaderContextResolver -> admin.ledger.shared.ledgerContextResolver 'implements'
+
+    admin.ledger.shared.commandResultInterceptor -> admin.ledger.shared.commandAcceptedDto 'maps CommandResult to'
+    admin.ledger.shared.commandResultInterceptor -> admin.ledger.shared.commandBus 'intercepts response of dispatched commands'
+  }
+}
+
+views 'Shared · HTTP adapter' {
+  // Vista estática de todos los componentes del kernel HTTP + buses
+  view shared_http_kernel of admin.ledger.shared {
+    title 'Kernel HTTP'
+    include admin.ledger.shared, admin.ledger.shared.*
+  }
+
+  // Flujo de dispatch de un command via HTTP
+  dynamic view shared_http_command_dispatch {
+    title 'POST /api/v1/* → CommandBus · trigger: rest'
+    description 'AC-4, AC-5, AC-6: el controller construye un command desde headers (@Context, @ExternalRef) + body, lo despacha al CommandBus, y CommandResultInterceptor transforma el resultado en CommandAcceptedDto.'
+
+    admin.ledger.shared.ledgerContextGuard -> admin.ledger.shared.ledgerContextResolver 'resolve context'
+    admin.ledger.shared.ledgerContextResolver -> admin.ledger.shared.gatewayHeaderContextResolver 'reads x-user-id, x-client-id'
+
+    admin.ledger.shared.commandBus -> admin.ledger.shared.commandResultInterceptor 'returns CommandResult'
+    admin.ledger.shared.commandResultInterceptor -> admin.ledger.shared.commandAcceptedDto 'maps to { id, streamPosition }'
+
+    autoLayout LeftRight
+  }
+
+  // Flujo de consulta via HTTP
+  dynamic view shared_http_query_dispatch {
+    title 'GET /api/v1/* → QueryBus · trigger: rest'
+    description 'AC-4: el controller construye un query desde el contexto y parámetros y lo pregunta al QueryBus. La respuesta se devuelve sin transformar.'
+
+    admin.ledger.shared.ledgerContextGuard -> admin.ledger.shared.ledgerContextResolver 'resolve context'
+    admin.ledger.shared.ledgerContextResolver -> admin.ledger.shared.gatewayHeaderContextResolver 'reads x-user-id'
+
+    autoLayout TopBottom
+  }
+
+  // Montaje de Swagger en bootstrap
+  dynamic view shared_swagger_docs {
+    title 'GET /api/docs (Swagger UI) · trigger: rest'
+    description 'AC-2: SwaggerBuilder.maybeMountSwagger monta Swagger UI en /api/docs cuando NODE_ENV !== "production". El documento OpenAPI incluye los esquemas gatewayContext (apiKey) y bearerAuth (JWT) con gatewayContext como default.'
+
+    admin.ledger.shared.swaggerBuilder -> admin.ledger.shared.commandBus 'documents bus contract'
+    admin.ledger.shared.swaggerBuilder -> admin.ledger.shared.queryBus 'documents bus contract'
+
+    autoLayout TopBottom
+  }
+}
