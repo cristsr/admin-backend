@@ -41,3 +41,8 @@ Thumbs.db
 .nx
 
 .claude/worktrees
+
+# AI agent config (personal, per-dev)
+.agents/
+CLAUDE.md
+AGENTS.md
