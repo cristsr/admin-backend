@@ -1,0 +1,51 @@
+// model.delta.c4 — hu-0007: Postgres adapters contract test verification.
+// Extiende admin.ledger.shared (shared-kernel.c4). No hay nuevos componentes —
+// los adaptadores Postgres ya existen y ya están cableados en LedgerCoreModule.
+// Este delta documenta:
+//   (a) la configuración del contract test faltante para PostgresReadModelStore,
+//   (b) la corrección de firma de upsert (key: ReadModelKey),
+//   (c) la corrección a batch INSERT en PostgresEventStore.append.
+
+model {
+  extend admin.ledger.shared {
+    postgresReadModelStore = component 'PostgresReadModelStore' {
+      technology 'Infrastructure · PostgreSQL'
+      description 'Upsert, delete, query, truncate contra proj_* via DataSource.query(). Correccion: upsert(table, key, row) usa key para ON CONFLICT.'
+    }
+    postgresEventStore = component 'PostgresEventStore' {
+      technology 'Infrastructure · PostgreSQL'
+      description 'Append/load/readAll/findByExternalRef contra event_store. Correccion: INSERT multi-fila en append.'
+    }
+    postgresReadModelStoreSpec = component 'PostgresReadModelStoreSpec' {
+      technology 'Jest · Contract Test (AC-8)'
+      description 'describeReadModelStoreContract(() => new PostgresReadModelStore(dataSource)). Gated: RUN_PG_TESTS=1.'
+    }
+  }
+
+  // Los adaptadores implementan los puertos del dominio
+  admin.ledger.shared.postgresEventStore -> admin.ledger.shared.eventStore 'implements'
+  admin.ledger.shared.postgresReadModelStore -> admin.ledger.shared.readModel 'implements'
+  // Spec verifica el contrato
+  admin.ledger.shared.postgresReadModelStoreSpec -> admin.ledger.shared.readModel 'verifies'
+}
+
+views {
+
+  dynamic view shared_kernel_read_model_upsert {
+    title 'ReadModelStore.upsert (Postgres, key-driven ON CONFLICT) · trigger: sync-call'
+
+    admin.ledger.shared.postgresReadModelStore -> admin.ledger.shared.readModel 'upsert(table, key, row): INSERT … ON CONFLICT (key) DO UPDATE SET'
+  }
+
+  dynamic view shared_kernel_event_store_batch_append {
+    title 'EventStore.append (Postgres, batch INSERT) · trigger: sync-call'
+
+    admin.ledger.shared.postgresEventStore -> admin.ledger.shared.eventStore 'append(stream, expectedVersion, events): INSERT multi-fila transaccional'
+  }
+
+  dynamic view shared_kernel_contract_test {
+    title 'PostgresReadModelStore contract test (AC-8) · trigger: cli'
+
+    admin.ledger.shared.postgresReadModelStoreSpec -> admin.ledger.shared.readModel 'contract test verify upsert/delete/query/truncate semantics'
+  }
+}
