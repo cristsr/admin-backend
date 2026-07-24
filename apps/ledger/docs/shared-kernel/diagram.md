@@ -1,96 +1,129 @@
-# Diagrama de flujo: hu-0004
+# Diagrama de flujo: hu-0005
 
-## Proyección síncrona (en transacción del command, RNF-9)
+## Dispatch de un command con cadena de políticas
 
 ```mermaid
 sequenceDiagram
-  participant CH as CommandHandler
-  participant ESR as EventSourcedRepository
+  actor Client
+  participant CB as PolicyCommandBus
+  participant ACP as AuthenticatedContextPolicy
+  participant IP as IdempotencyPolicy
+  participant OCP as OptimisticConcurrencyPolicy
+  participant H as CommandHandler
+  participant A as Aggregate
+  participant R as EventSourcedRepository
   participant ES as EventStore
-  participant SD as SynchronousProjectionDispatcher
-  participant P as Projector (account_tree, …)
-  participant RMS as ReadModelStore
+  participant PD as ProjectionDispatcher
 
-  CH->>ESR: save(aggregate, ctx)
-  ESR->>ESR: aggregate.pullChanges()
-  ESR->>ES: append(stream, expectedVersion, envelopes)
-  ES-->>ESR: AppendResult { events, version, lastPosition }
-  ESR->>SD: dispatch(result.events)
-  loop for each event
-    loop for each projector
-      alt projector.handles(event.eventType)
-        SD->>P: project(event, store)
-        P->>RMS: upsert(table, key, row)
-        Note over P,RMS: Idempotent by key — no duplicates on replay (AC-4, AC-5)
+  Client->>CB: dispatch(command, authContext)
+  CB->>CB: lookup handler by commandType
+  alt unregistered
+    CB-->>Client: UnregisteredCommandException
+  else found
+    CB->>ACP: handle(command, ctx, next)
+    ACP->>ACP: validate userId/clientId non-empty
+    alt missing
+      ACP-->>Client: MissingAuthContextException<br/>(MISSING_AUTH_CONTEXT)
+    else valid
+      ACP->>IP: next() → handle(command, ctx, next)
+      IP->>IP: ctx.externalRef ?
+      alt externalRef present
+        IP->>ES: findByExternalRef(userId, externalRef)
+        ES-->>IP: anchor StoredEvent | null
+        alt anchor found
+          IP-->>Client: CommandResult {<br/>aggregateId, streamPosition,<br/>idempotentReplay: true }
+        end
       end
-    end
-  end
-  SD-->>ESR: void
-  ESR-->>CH: AppendResult
-
-  Note over CH,RMS: Si el projector falla, la transacción completa (evento + proyección) revierte (AC-3)
-```
-
-## Proyección asíncrona (polling con checkpoint)
-
-```mermaid
-sequenceDiagram
-  participant Cron as Cron/Scheduler
-  participant PD as PollingProjectionDispatcher
-  participant CPR as ProjectionCheckpointRepository
-  participant ES as EventStore
-  participant P as Projector (account_tree, …)
-  participant RMS as ReadModelStore
-
-  Cron->>PD: pollOnce()
-  PD->>CPR: lastPosition(projectionName)
-  CPR-->>PD: position (bigint)
-  PD->>ES: readAll(fromPosition, batchSize)
-  ES-->>PD: StoredEvent[]
-  alt events.length === 0
-    PD-->>Cron: 0 (caught up)
-  else events.length > 0
-    PD->>PD: dispatch(events)
-    loop for each event
-      loop for each projector
-        alt projector.handles(event.eventType)
-          PD->>P: project(event, store)
-          P->>RMS: upsert(table, key, row)
-          Note over P,RMS: Same projector code as sync mode (AC-2, AC-5)
+      IP->>OCP: next() → handle(command, ctx, next)
+      loop max 1 retry on conflict
+        OCP->>H: next() → execute(command, ctx)
+        H->>H: parse args + cross-validate<br/>(account_tree, balance, …)
+        alt validation fails
+          H-->>Client: DomainException<br/>(NAME_COLLISION, UNBALANCED,<br/>ACCOUNT_CLOSED, CURRENCY_NOT_ALLOWED,<br/>LEDGER_ALREADY_INITIALIZED, …)
+        else valid
+          H->>A: static factory / instance method
+          A-->>H: events emitted
+          H->>R: save(aggregate, ctx)
+          R->>R: aggregate.pullChanges()
+          R->>ES: append(stream, expectedVersion, envelopes)
+          alt concurrency conflict
+            ES-->>OCP: ConcurrencyConflictException
+            Note over OCP: retry once (MAX_RETRIES=1)
+          else success
+            ES-->>R: AppendResult { events, version, lastPosition }
+            R->>PD: dispatch(result.events)
+            PD-->>R: void
+            R-->>H: AppendResult
+            H-->>Client: CommandResult {<br/>aggregateId, streamPosition,<br/>idempotentReplay: false }
+          end
         end
       end
     end
-    PD->>CPR: advance(projectionName, lastEvent.globalPosition)
-    CPR-->>PD: void
-    PD-->>Cron: events.length
   end
 ```
 
-## Rebuild completo (RNF-5)
+## Inicialización de ledger (InitializeLedger — detalle del handler)
 
 ```mermaid
 sequenceDiagram
-  participant RB as ProjectionRebuilder
-  participant RMS as ReadModelStore
-  participant CPR as ProjectionCheckpointRepository
-  participant PD as PollingProjectionDispatcher
+  participant H as InitializeLedgerHandler
+  participant SR as LedgerSettingsRepository
+  participant AR as AccountRepository
+  participant IG as IdGenerator
   participant ES as EventStore
+  participant PD as ProjectionDispatcher
 
-  RB->>RB: rebuild(target)
-  loop for each table in target.tables
-    RB->>RMS: truncate(table)
+  H->>H: execute(command, ctx)
+  H->>SR: load(ctx.userId, ctx.userId)
+  SR->>ES: load(stream)
+  ES-->>SR: events
+  SR-->>H: LedgerSettings | null
+  alt settings.isInitialized === true
+    H-->>H: throw LedgerAlreadyInitializedException
+  else
+    H->>AR: save(Account.open(Equity:OpeningBalances, …))
+    AR->>ES: append(...) → AppendResult
+    H->>AR: save(Account.open(Equity:Adjustments, …))
+    AR->>ES: append(...) → AppendResult
+    H->>SR: save(LedgerSettings.initialize({...}))
+    SR->>ES: append(anchor with ctx.externalRef)
+    ES-->>SR: AppendResult
+    SR->>PD: dispatch([anchor + account events])
+    SR-->>H: AppendResult
+    H-->>H: return { aggregateId: ctx.userId, streamPosition, idempotentReplay: false }
   end
-  RB->>CPR: advance(projectionName, 0n)
-  RB->>PD: catchUp()
-  loop while events remain
-    PD->>CPR: lastPosition(projectionName)
-    PD->>ES: readAll(fromPosition, batchSize)
-    PD->>PD: dispatch(events)
-    PD->>CPR: advance(projectionName, lastPosition)
-  end
-  PD-->>RB: total applied
 ```
 
-> **Nota:** Este es un flujo interno de `apps/ledger`. No hay comunicación entre microservicios.
-> El mismo código de projector (AC-2) se ejecuta idénticamente en modo síncrono y asíncrono;
-> el modo es configuración del dispatcher, nunca una bifurcación en el projector (AC-5).
+## ReverseConfirmedTransaction — append atómico con reversa
+
+```mermaid
+sequenceDiagram
+  participant H as ReverseConfirmedTransactionHandler
+  participant TR as LedgerTransactionRepository
+  participant IG as IdGenerator
+  participant ES as EventStore
+  participant PD as ProjectionDispatcher
+
+  H->>H: execute(command, ctx)
+  H->>TR: load(ctx.userId, command.transactionId)
+  TR->>ES: load(stream)
+  ES-->>TR: StoredEvent[]
+  TR-->>H: LedgerTransaction
+  H->>H: transaction.reverse(reversalId = IG.next())
+  H-->>H: ReversalPlan { reversalId, postings, … }
+  H->>H: create reversing LedgerTransaction<br/>(postings negados, metadata.reverses_id)
+  H->>TR: save(original, ctx)  ← anchor con externalRef
+  TR->>ES: append(TransactionReversed)
+  ES-->>TR: AppendResult
+  H->>TR: save(reversing, ctx)  ← sin anchor (externalRef: null)
+  TR->>ES: append(TransactionRecorded + Confirmed)
+  ES-->>TR: AppendResult
+  H->>PD: dispatch(events from both saves)
+  PD-->>H: void
+  H-->>H: return { aggregateId: reversalId, streamPosition, idempotentReplay: false }
+```
+
+> **Flujo interno de `apps/ledger`.** No hay comunicación entre microservicios.
+> El orden fijo de políticas (`AuthenticatedContextPolicy` → `IdempotencyPolicy` →
+> `OptimisticConcurrencyPolicy`) está cableado en `createLedgerApplication()` y
+> nunca se invierte ni se omite.
