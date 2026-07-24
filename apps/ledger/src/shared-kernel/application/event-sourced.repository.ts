@@ -42,6 +42,11 @@ export abstract class EventSourcedRepository<TAggregate extends AggregateRoot<st
   /** Appends the aggregate's uncommitted changes; a no-op when there are none. */
   async save(aggregate: TAggregate, ctx: AuthContext): Promise<AppendResult> {
     const changes = aggregate.pullChanges();
+
+    if (changes.length === 0) {
+      return { events: [], version: aggregate.version, lastPosition: 0n };
+    }
+
     const stream = this.streamId(ctx.userId, aggregate.id);
 
     const envelopes = this.envelopes.build(stream, aggregate.version, changes, ctx);

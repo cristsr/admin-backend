@@ -198,5 +198,16 @@ export function describeEventStoreContract(
 
       expect(await store.load(stream)).toHaveLength(1);
     });
+
+    it('treats an empty batch as a no-op (AC-11)', async () => {
+      const stream = streamFor('user-1', 'agg-1');
+      await store.append(stream, 0, [anEnvelope(stream, { sequence: 1 })]);
+
+      const result = await store.append(stream, 1, []);
+
+      expect(result.events).toEqual([]);
+      expect(result.version).toBe(1);
+      expect(await store.load(stream)).toHaveLength(1);
+    });
   });
 }

@@ -26,6 +26,10 @@ export class InMemoryEventStore extends EventStore {
   ): Promise<AppendResult> {
     const current = this.streamEvents(stream);
 
+    if (events.length === 0) {
+      return { events: [], version: expectedVersion, lastPosition: 0n };
+    }
+
     if (current.length !== expectedVersion) {
       throw new ConcurrencyConflictException(
         `Expected version ${expectedVersion} for ${stream.aggregateId}, found ${current.length}`,

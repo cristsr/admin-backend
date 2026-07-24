@@ -38,7 +38,7 @@ export class PostgresEventStore extends EventStore {
     events: readonly EventEnvelope[],
   ): Promise<AppendResult> {
     if (!events.length) {
-      throw new ConcurrencyConflictException('Refusing to append an empty batch');
+      return { events: [], version: expectedVersion, lastPosition: 0n };
     }
 
     try {
