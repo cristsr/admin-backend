@@ -1,7 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { Criteria, Filter, FilterOperator } from '@shared';
-import { ReadModelKey, ReadModelRow, ReadModelStore } from '../../application/projection/read-model-store';
+import {
+  ReadModelKey,
+  ReadModelRow,
+  ReadModelStore,
+} from '@ledger/shared-kernel/application/projection/read-model-store';
 
 /**
  * PostgreSQL {@link ReadModelStore} implementation.
@@ -13,16 +17,22 @@ export class PostgresReadModelStore extends ReadModelStore {
     super();
   }
 
-  async upsert(table: string, row: ReadModelRow): Promise<void> {
-    const keys = Object.keys(row);
+  async upsert(table: string, key: ReadModelKey, row: ReadModelRow): Promise<void> {
+    const cols = Object.keys(row);
     const values = Object.values(row);
-    const placeholders = keys.map((_, i) => `$${i + 1}`).join(', ');
-    const updates = keys.map((k) => `${k} = EXCLUDED.${k}`).join(', ');
+    const keyCols = Object.keys(key);
+    const placeholders = cols.map((_, i) => `$${i + 1}`).join(', ');
+    const updateCols = cols.filter((c) => !keyCols.includes(c));
+
+    const conflictClause =
+      keyCols.length > 0 && updateCols.length > 0
+        ? `ON CONFLICT (${keyCols.join(', ')}) DO UPDATE SET ${updateCols.map((c) => `${c} = EXCLUDED.${c}`).join(', ')}`
+        : 'ON CONFLICT DO NOTHING';
 
     const sql = `
-      INSERT INTO ${table} (${keys.join(', ')})
+      INSERT INTO ${table} (${cols.join(', ')})
       VALUES (${placeholders})
-      ON CONFLICT DO UPDATE SET ${updates}
+      ${conflictClause}
     `;
 
     await this.dataSource.query(sql, values);
