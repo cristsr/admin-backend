@@ -93,35 +93,40 @@ export class PostgresEventStore extends EventStore {
     manager: EntityManager,
     events: readonly EventEnvelope[],
   ): Promise<StoredEvent[]> {
-    const stored: StoredEvent[] = [];
+    const valuesClauses: string[] = [];
+    const params: unknown[] = [];
+    let idx = 1;
 
     for (const event of events) {
-      const [row]: EventStoreRow[] = await manager.query(
-        `INSERT INTO event_store
-           (event_id, user_id, aggregate_type, aggregate_id, sequence, event_type,
-            schema_version, client_id, external_ref, payload, occurred_at, recorded_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
-         RETURNING ${SELECT_COLUMNS}`,
-        [
-          event.eventId,
-          event.userId,
-          event.aggregateType,
-          event.aggregateId,
-          event.sequence,
-          event.eventType,
-          event.schemaVersion,
-          event.clientId,
-          event.externalRef,
-          JSON.stringify(event.payload),
-          event.occurredAt.toISOString(),
-          event.recordedAt.toISOString(),
-        ],
+      const placeholders = Array.from({ length: 12 }, (_, i) => `$${idx + i}`);
+      valuesClauses.push(`(${placeholders.join(', ')})`);
+      params.push(
+        event.eventId,
+        event.userId,
+        event.aggregateType,
+        event.aggregateId,
+        event.sequence,
+        event.eventType,
+        event.schemaVersion,
+        event.clientId,
+        event.externalRef,
+        JSON.stringify(event.payload),
+        event.occurredAt.toISOString(),
+        event.recordedAt.toISOString(),
       );
-
-      stored.push(toStoredEvent(row));
+      idx += 12;
     }
 
-    return stored;
+    const rows: EventStoreRow[] = await manager.query(
+      `INSERT INTO event_store
+         (event_id, user_id, aggregate_type, aggregate_id, sequence, event_type,
+          schema_version, client_id, external_ref, payload, occurred_at, recorded_at)
+       VALUES ${valuesClauses.join(', ')}
+       RETURNING ${SELECT_COLUMNS}`,
+      params,
+    );
+
+    return rows.map(toStoredEvent);
   }
 
   private translate(error: unknown): Error {
