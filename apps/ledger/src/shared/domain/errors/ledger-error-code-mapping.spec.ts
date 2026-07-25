@@ -7,6 +7,17 @@ import {
   SystemAccountProtectedException,
 } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { AccountNotFoundException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
+import { LedgerNotInitializedException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
+import {
+  InvalidCurrencyCodeException as SettingsInvalidCurrencyCodeException,
+  InvalidTimeZoneException,
+} from '@ledger/settings/domain/ledger-settings/exceptions/settings.exception';
+import {
+  CurrencyMismatchException,
+  InvalidCurrencyException,
+  InvalidMoneyException,
+  MoneyScaleException,
+} from '@ledger/shared/domain/money/money.exception';
 import {
   ConcurrencyConflictException,
   DuplicateExternalRefException,
@@ -51,6 +62,13 @@ describe('Ledger error code → HTTP status contract (RF-14)', () => {
     [new DuplicateExternalRefException('duplicate'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.DUPLICATE_EXTERNAL_REF],
     [new AccountNotFoundException('no account'), HttpStatus.NOT_FOUND, LEDGER_ERROR_CODE.ACCOUNT_NOT_FOUND],
     [new TransactionNotFoundException('no transaction'), HttpStatus.NOT_FOUND, LEDGER_ERROR_CODE.TRANSACTION_NOT_FOUND],
+    [new LedgerNotInitializedException('not initialized'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.LEDGER_NOT_INITIALIZED],
+    [new SettingsInvalidCurrencyCodeException('XX'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.INVALID_CURRENCY_CODE],
+    [new InvalidTimeZoneException('Bogota'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.INVALID_TIME_ZONE],
+    [new InvalidMoneyException('not a decimal'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.INVALID_MONEY],
+    [new CurrencyMismatchException('USD vs COP'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.CURRENCY_MISMATCH],
+    [new MoneyScaleException('too many decimals'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.MONEY_SCALE],
+    [new InvalidCurrencyException('blank code'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.INVALID_CURRENCY],
   ];
 
   it.each(cases)('maps %s to its stable status and code', (exception, expectedStatus, expectedCode) => {
