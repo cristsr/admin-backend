@@ -1,6 +1,6 @@
 // C4 Nivel 3 — shared-kernel (apps/ledger) — query bus, read model, event store adapters.
 // Extiende admin.ledger.shared definido en docs/architecture/landscape.c4.
-// Acumula: hu-0005 (query bus), hu-0006 (proyectores), hu-0007 (adaptadores Postgres).
+// Acumula: hu-0005 (query bus), hu-0006 (proyectores), hu-0007 (adaptadores Postgres), hu-0008 (rebuilder/verifier/CLI), hu-0010 (auth context policy).
 
 model {
   extend admin.ledger.shared {
@@ -33,6 +33,49 @@ model {
       description 'describeReadModelStoreContract(() => new PostgresReadModelStore(dataSource)). AC-8 (hu-0007).'
     }
 
+    // --- hu-0008: tooling de rebuild/verification ---
+
+    projectionRegistry = component 'ProjectionRegistry' {
+      technology 'Application · Registry'
+      description 'Registry that maps projection names to their projectors and read-model tables. Used by ProjectionRebuilder for by-name resolution (AC-1, AC-3).'
+      metadata {
+        introducedIn 'hu-0008'
+      }
+    }
+
+    consistencyVerifier = component 'ConsistencyVerifier' {
+      technology 'Application · Verifier'
+      description 'Recomputes balances directly from the event stream (via EventStore.readAll + EventRegistry.deserialize) and compares them against proj_balances using exact decimal comparison (Money.equals, INV-8). Detects and reports drift per account+currency (AC-5). Never writes to the EventStore (AC-6).'
+      metadata {
+        introducedIn 'hu-0008'
+      }
+    }
+
+    rebuildReport = component 'RebuildReport' {
+      technology 'Application · DTO'
+      description 'Type { projectionName, success, eventsApplied, error? } returned by rebuildAll() (AC-3).'
+      metadata {
+        introducedIn 'hu-0008'
+      }
+    }
+
+    balanceVerificationReport = component 'BalanceVerificationReport' {
+      technology 'Application · DTO'
+      description 'Type: { ok: true } | { ok: false, discrepancies: [{ accountId, currencyCode, streamBalance, projectedBalance, drift }] } returned by verifyBalances() (AC-5).'
+      metadata {
+        introducedIn 'hu-0008'
+      }
+    }
+
+    projectionRebuilder = component 'ProjectionRebuilder' {
+      technology 'Application · Rebuilder'
+      description 'Rebuilds projections by replaying the event stream. API: rebuild(projectionName) uses ProjectionRegistry (AC-1), rebuildAll() returns RebuildReport[] (AC-3), isCaughtUp(projectionName) reports lag. Truncates read-model tables and checkpoints before replay (AC-4 idempotent). Never writes to EventStore (AC-6).'
+      metadata {
+        introducedIn 'hu-0004'
+        changedIn 'hu-0008'
+      }
+    }
+
     // Relaciones del query bus
     admin.ledger.shared.queryBus -> admin.ledger.shared.query 'rutea queries por queryType'
     admin.ledger.shared.queryBus -> admin.ledger.shared.queryHandler 'invoca handler'
@@ -42,10 +85,45 @@ model {
     admin.ledger.shared.postgresEventStore -> admin.ledger.shared.eventStore 'implements'
     admin.ledger.shared.postgresReadModelStore -> admin.ledger.shared.readModel 'implements'
     admin.ledger.shared.postgresReadModelStoreSpec -> admin.ledger.shared.readModel 'verifies contract (AC-8)'
+
+    // Relaciones de tooling de rebuild/verification (hu-0008)
+    admin.ledger.shared.projectionRebuilder -> admin.ledger.shared.projectionRegistry 'looks up projectors+tables by name'
+    admin.ledger.shared.projectionRebuilder -> admin.ledger.shared.eventStore 'reads events via readAll() (AC-6)'
+    admin.ledger.shared.projectionRebuilder -> admin.ledger.shared.readModel 'truncates tables via truncate()'
+    admin.ledger.shared.projectionRebuilder -> admin.ledger.shared.rebuildReport 'returns RebuildReport[] (rebuildAll)'
+
+    admin.ledger.shared.consistencyVerifier -> admin.ledger.shared.eventStore 'reads events via readAll() (AC-6)'
+    admin.ledger.shared.consistencyVerifier -> admin.ledger.shared.readModel 'queries proj_balances for comparison'
+    admin.ledger.shared.consistencyVerifier -> admin.ledger.shared.balanceVerificationReport 'returns BalanceVerificationReport'
+
+    // --- hu-0010: policy de contexto autenticado ---
+
+    authenticatedContextPolicy = component 'AuthenticatedContextPolicy' {
+      technology 'Application · CommandPolicy'
+      description 'Valida AuthContext.userId y AuthContext.clientId no vacíos antes de delegar al handler. Lanza MissingAuthContextException si falta cualquiera (RF-26).'
+      metadata {
+        introducedIn 'hu-0010'
+      }
+    }
+
+    missingAuthContextException = component 'MissingAuthContextException' {
+      technology 'Domain · Exception'
+      description 'Extiende DomainUnprocessableException, code MISSING_AUTH_CONTEXT. Lanzada por AuthenticatedContextPolicy cuando el contexto de escritura carece de userId o clientId.'
+      metadata {
+        introducedIn 'hu-0010'
+      }
+    }
+
+    admin.ledger.shared.authenticatedContextPolicy -> admin.ledger.shared.commandBus 'policy registrada en PolicyCommandBus'
   }
 }
 
-views {
+views 'Shared Kernel' {
+  view shared_kernel_components of admin.ledger.shared {
+    title 'Componentes'
+    include admin.ledger.shared, admin.ledger.shared.*
+  }
+
   // --- Dynamic views de adaptadores Postgres (hu-0007) ---
 
   dynamic view shared_kernel_read_model_upsert {
@@ -63,6 +141,47 @@ views {
   dynamic view shared_kernel_contract_test {
     title 'PostgresReadModelStore contract test (AC-8) · trigger: cli'
     admin.ledger.shared.postgresReadModelStoreSpec -> admin.ledger.shared.readModel 'contract test verify upsert/delete/query/truncate semantics'
+    autoLayout TopBottom
+  }
+
+  // --- Dynamic views de tooling de rebuild/verification (hu-0008) ---
+
+  dynamic view shared_kernel_rebuild_projection {
+    title 'Rebuild projection by name · trigger: cli'
+    description 'AC-1: ProjectionRebuilder.rebuild(projectionName) trunca el read model y checkpoint de la proyección, luego reproduce el stream completo desde posición 0 vía PollingProjectionDispatcher.catchUp().'
+    admin.ledger.shared.projectionRebuilder -> admin.ledger.shared.projectionRegistry 'resolve projectors + tables'
+    admin.ledger.shared.projectionRebuilder -> admin.ledger.shared.eventStore 'readAll(0n, MAX)'
+    admin.ledger.shared.projectionRebuilder -> admin.ledger.shared.readModel 'truncate(tables)'
+    autoLayout LeftRight
+  }
+
+  dynamic view shared_kernel_rebuild_all {
+    title 'Rebuild all projections · trigger: cli'
+    description 'AC-3: ProjectionRebuilder.rebuildAll() itera todas las proyecciones registradas en ProjectionRegistry y devuelve un RebuildReport por cada una. Cada checkpoint queda en la ultima posicion del stream.'
+    admin.ledger.shared.projectionRebuilder -> admin.ledger.shared.projectionRegistry 'names() → iterate'
+    admin.ledger.shared.projectionRebuilder -> admin.ledger.shared.rebuildReport 'returns RebuildReport[]'
+    autoLayout LeftRight
+    style admin.ledger.shared.projectionRebuilder {
+      shape storage
+    }
+  }
+
+  dynamic view shared_kernel_verify_balances {
+    title 'Verify balances stream vs proj_balances · trigger: cli'
+    description 'AC-5: ConsistencyVerifier.verifyBalances(userId) lee el stream, deserializa eventos, recalcula saldos con Money exacto, y compara contra proj_balances. Reporta drift exacto (cuenta+moneda) si hay corrupcion.'
+    admin.ledger.shared.consistencyVerifier -> admin.ledger.shared.eventStore 'readAll events'
+    admin.ledger.shared.consistencyVerifier -> admin.ledger.shared.readModel 'query proj_balances'
+    admin.ledger.shared.consistencyVerifier -> admin.ledger.shared.balanceVerificationReport 'returns report'
+    autoLayout LeftRight
+  }
+
+  dynamic view shared_kernel_auth_context_policy {
+    title 'AuthenticatedContextPolicy validation · trigger: sync-call'
+    description 'AC-1, AC-2: PolicyCommandBus ejecuta AuthenticatedContextPolicy. Si userId o clientId están ausentes/vacíos, lanza MissingAuthContextException. Si el contexto es válido, delega al handler vía next().'
+
+    admin.ledger.shared.commandBus -> admin.ledger.shared.authenticatedContextPolicy 'validate AuthContext'
+    admin.ledger.shared.authenticatedContextPolicy -> admin.ledger.shared.missingAuthContextException 'throws if missing'
+
     autoLayout TopBottom
   }
 }
