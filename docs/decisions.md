@@ -8,6 +8,27 @@
 > entrada nueva que la referencia. Orden cronológico inverso (más reciente
 > primero).
 
+## HU-0011 — Códigos de error de dominio estables (RF-14) (2026-07-25)
+
+- **Status de `ACCOUNT_CLOSED`:** **422** (se mantiene el código implementado) —
+  posting a cuenta cerrada (INV-3) es una violación semántica del payload que el
+  cliente corrige eligiendo otra cuenta, misma categoría que `CURRENCY_NOT_ALLOWED`;
+  el mapping-spec ya lo congeló así con rationale explícito. Se corrige AC-2 de la
+  HU vía `/refine`.
+- **Status de `LEDGER_NOT_INITIALIZED`:** **422** (se mantiene el código
+  implementado) — se agrega la fila faltante al mapping-spec y se corrige AC-2 de
+  la HU vía `/refine`.
+- **Ubicación de `LEDGER_ERROR_CODE`:** se mantiene en
+  `apps/ledger/src/shared/domain/errors/ledger-error-code.ts` — los códigos son
+  contrato de dominio (Art. 1: el dominio no importa desde `infrastructure/`) y no
+  existe ningún adapter `http/` bajo shared-kernel. Se corrige la HU vía `/refine`.
+- **Alcance de la tabla RF-14:** se suman **settings y Money** — las excepciones de
+  settings (`InvalidCurrencyCodeException`, `InvalidTimeZoneException`) se
+  reclasifican dentro de `DomainException` y las de Money reciben `code` propio;
+  los 6 códigos entran a `LEDGER_ERROR_CODE` y al mapping-spec (aditivo).
+
+---
+
 ## HU-0009 — Andamiaje del adaptador HTTP — OpenAPI/versionado + patrón controller→bus (2026-07-24)
 
 - **AC-2 — Ruta de Swagger:** `/api/docs`, no `/api/v1/docs`. `SwaggerModule.setup` respeta `setGlobalPrefix('api')` pero no `enableVersioning` — Swagger no registra rutas por versión.

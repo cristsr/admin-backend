@@ -63,6 +63,24 @@ model {
       }
     }
 
+    // --- Contrato de errores de dominio (hu-0011, RF-14) ---
+
+    exceptionFilter = component 'ExceptionFilter' {
+      technology 'Infrastructure · @Catch() ExceptionFilter (@shared)'
+      description 'Filter global registrado en main.ts: DomainException → ErrorResponseBody { statusCode, error, message, code, path, timestamp } con exception.status y exception.code verbatim; HttpException pasa tal cual; error no tipado → 500 sin code.'
+      metadata {
+        introducedIn 'hu-0011'
+      }
+    }
+
+    ledgerErrorCode = component 'LEDGER_ERROR_CODE' {
+      technology 'Domain · const (fuente única RF-14)'
+      description 'apps/ledger/src/shared/domain/errors/ledger-error-code.ts: única fuente de los strings de code que el API expone. Agregar un code es aditivo; cambiar el status de un code existente es breaking (nueva versión).'
+      metadata {
+        introducedIn 'hu-0011'
+      }
+    }
+
     // --- Relaciones del kernel HTTP ---
 
     admin.ledger.shared.sharedHttpModule -> admin.ledger.shared.commandResultInterceptor 'provides'
@@ -73,6 +91,12 @@ model {
 
     admin.ledger.shared.commandResultInterceptor -> admin.ledger.shared.commandAcceptedDto 'maps CommandResult to'
     admin.ledger.shared.commandResultInterceptor -> admin.ledger.shared.commandBus 'intercepts response of dispatched commands'
+
+    // --- Relaciones del contrato de errores (hu-0011) ---
+
+    admin.ledger.shared.commandBus -> admin.ledger.shared.exceptionFilter 'DomainException burbujea desde handlers/policies'
+    admin.ledger.shared.queryBus -> admin.ledger.shared.exceptionFilter 'DomainException burbujea desde queries'
+    admin.ledger.shared.exceptionFilter -> admin.ledger.shared.ledgerErrorCode 'expone exception.code verbatim (RF-14)'
   }
 }
 
@@ -115,6 +139,18 @@ views 'Shared · HTTP adapter' {
 
     admin.ledger.shared.swaggerBuilder -> admin.ledger.shared.commandBus 'documents bus contract'
     admin.ledger.shared.swaggerBuilder -> admin.ledger.shared.queryBus 'documents bus contract'
+
+    autoLayout TopBottom
+  }
+
+  // Mapeo de errores de dominio/puerto al cuerpo de error uniforme (RF-14)
+  dynamic view shared_http_map_domain_error {
+    title 'Fallo de dominio/puerto → ErrorResponseBody con code estable · trigger: rest'
+    description 'RF-14: cualquier DomainException (agregado, puerto EventStore, VO, settings, Money) lanzada durante el dispatch burbujea hasta el ExceptionFilter global, que responde { statusCode, error, message, code, path, timestamp } con el status de la familia (404/409/422) y el code estable de LEDGER_ERROR_CODE. Un error no tipado → 500 sin code ni detalles internos.'
+
+    admin.ledger.shared.commandBus -> admin.ledger.shared.exceptionFilter 'throw DomainException (code, status)'
+    admin.ledger.shared.queryBus -> admin.ledger.shared.exceptionFilter 'throw DomainException (code, status)'
+    admin.ledger.shared.exceptionFilter -> admin.ledger.shared.ledgerErrorCode 'code estable (fuente única)'
 
     autoLayout TopBottom
   }

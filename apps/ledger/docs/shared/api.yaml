@@ -54,3 +54,70 @@ components:
       example:
         id: "550e8400-e29b-41d4-a716-446655440000"
         streamPosition: "42"
+
+    LedgerErrorCode:
+      description: |
+        Código de error de dominio estable (RF-14). Fuente única:
+        `apps/ledger/src/shared/domain/errors/ledger-error-code.ts`.
+        El consumidor hace branching sobre este valor, nunca sobre `message`.
+        Comentario de status por código (el status de un código es contrato):
+        422 → UNBALANCED_TRANSACTION, CURRENCY_NOT_ALLOWED, ACCOUNT_CLOSED,
+        LEDGER_NOT_INITIALIZED, INVALID_CURRENCY_CODE, INVALID_TIME_ZONE,
+        INVALID_MONEY, CURRENCY_MISMATCH, MONEY_SCALE, INVALID_CURRENCY ·
+        409 → IMMUTABLE_TRANSACTION, NAME_COLLISION, SYSTEM_ACCOUNT_PROTECTED,
+        CONCURRENCY_CONFLICT, DUPLICATE_EXTERNAL_REF ·
+        404 → TRANSACTION_NOT_FOUND, ACCOUNT_NOT_FOUND.
+      enum:
+        - UNBALANCED_TRANSACTION
+        - CURRENCY_NOT_ALLOWED
+        - ACCOUNT_CLOSED
+        - IMMUTABLE_TRANSACTION
+        - NAME_COLLISION
+        - SYSTEM_ACCOUNT_PROTECTED
+        - CONCURRENCY_CONFLICT
+        - DUPLICATE_EXTERNAL_REF
+        - TRANSACTION_NOT_FOUND
+        - ACCOUNT_NOT_FOUND
+        - LEDGER_NOT_INITIALIZED
+        - INVALID_CURRENCY_CODE
+        - INVALID_TIME_ZONE
+        - INVALID_MONEY
+        - CURRENCY_MISMATCH
+        - MONEY_SCALE
+        - INVALID_CURRENCY
+
+    ErrorResponseBody:
+      type: object
+      description: |
+        Cuerpo uniforme de toda respuesta de error del ledger, producido por el
+        `ExceptionFilter` global de `@shared`. `code` solo está presente cuando
+        la causa es una `DomainException`; un error no tipado (500) nunca lo
+        expone (la clave se omite del cuerpo). `message` es legible para humanos
+        pero **no** es contrato estable — los consumidores usan `code`.
+      required: [statusCode, error, message, path, timestamp]
+      properties:
+        statusCode:
+          type: integer
+          description: HTTP status del fallo (404, 409, 422 o 500).
+        error:
+          type: string
+          description: Nombre de la clase de excepción (p.ej. `UnbalancedTransactionException`).
+        message:
+          type: string
+          description: Mensaje legible para humanos; no es contrato estable — usar `code`.
+        code:
+          $ref: '#/components/schemas/LedgerErrorCode'
+        path:
+          type: string
+          description: URL del request que falló.
+        timestamp:
+          type: string
+          format: date-time
+          description: Instante del fallo (ISO 8601).
+      example:
+        statusCode: 422
+        error: UnbalancedTransactionException
+        message: Postings do not balance to zero per currency
+        code: UNBALANCED_TRANSACTION
+        path: /api/v1/transactions
+        timestamp: "2026-07-25T06:30:00.000Z"
