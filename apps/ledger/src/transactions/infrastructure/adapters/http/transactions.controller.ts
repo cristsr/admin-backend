@@ -112,11 +112,7 @@ export class TransactionsController {
     @Param('id') id: string,
     @Body() dto: AmendTransactionRequestDto,
   ): Promise<CommandResult> {
-    const command = new AmendPendingTransactionCommand(
-      id,
-      dto.date ?? '',
-      dto.postings ? this.toPostings(dto.postings) : [],
-    );
+    const command = new AmendPendingTransactionCommand(id, dto.date, this.toPostings(dto.postings));
 
     return this.dispatch(command, context, externalRef);
   }

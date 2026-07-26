@@ -63,12 +63,19 @@ describe('TransactionsController', () => {
     expect(command).toMatchObject({ transactionId: 'tx-9' });
   });
 
-  it('dispatches AmendPendingTransactionCommand', async () => {
-    await controller.amend(context, null, 'tx-3', { date: '2026-07-21' });
+  it('dispatches AmendPendingTransactionCommand with the replacement postings and date', async () => {
+    await controller.amend(context, null, 'tx-3', {
+      date: '2026-07-21',
+      postings: [
+        { accountId: 'acc-1', amount: '-4500', currency: 'COP' },
+        { accountId: 'acc-2', amount: '4500', currency: 'COP' },
+      ],
+    });
 
     const [command] = commandBus.dispatch.mock.calls[0];
     expect(command).toBeInstanceOf(AmendPendingTransactionCommand);
-    expect(command).toMatchObject({ transactionId: 'tx-3', date: '2026-07-21', postings: [] });
+    expect(command).toMatchObject({ transactionId: 'tx-3', date: '2026-07-21' });
+    expect(command).toMatchObject({ postings: [expect.anything(), expect.anything()] });
   });
 
   it('dispatches AnnotateTransactionCommand', async () => {
