@@ -8,6 +8,26 @@
 > entrada nueva que la referencia. Orden cronológico inverso (más reciente
 > primero).
 
+## HU-0016 — Re-evaluación de aserciones ante anulaciones (2026-07-26)
+
+- **Solo `TransactionVoided` lleva disparador:** verificado contra `AssertionPostingReader`
+  (devuelve `CONFIRMED`+`PENDING`, excluye `VOIDED`) y `AssertionEvaluator` (suma sin
+  discriminar por estado). `Confirmed` no cambia el monto evaluado y `Reversed` ya se cubre
+  por el `TransactionRecorded` de la reversa. AC-2 se reescribió con esa evidencia y la
+  historia deja dos tests que la documentan.
+- **El reactor lee `proj_postings` por `transaction_id`:** sin cambio de esquema de eventos
+  y sin lag, porque esa proyección es síncrona (§8.1) y el pump proyecta antes de reaccionar
+  (hu-0015). Se descartó enriquecer el payload de los eventos, que habría exigido
+  `schema_version` 2 + upcasting (RNF-6) sin resolver los eventos ya escritos.
+- **Se extiende `AssertionPostingReader`** con `touchedByTransaction` en vez de crear un
+  puerto nuevo: mantiene un único punto de acceso del módulo a `proj_postings` (DRY).
+- **La atomicidad cross-stream sale a hu-0023:** es integridad transaccional, no
+  re-evaluación, y alcanza también a `MergePendingTransfers`.
+
+> Alternativas evaluadas y descartadas: [`docs/research.md`](./docs/research.md).
+
+---
+
 ## HU-0015 — Persistencia Postgres de las proyecciones de conciliación (2026-07-26)
 
 `/scan` no dejó marcadores `[NEEDS CLARIFICATION]`, pero sí destapó dos hechos que

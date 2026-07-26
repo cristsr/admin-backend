@@ -1,0 +1,49 @@
+// Delta LikeC4 — hu-0016: re-evaluacion de aserciones ante anulaciones.
+// Modifica el reactor del modulo reconciliation (introducido en hu-0015) y suma
+// el puerto de lectura de postings que necesita para resolver las cuentas
+// tocadas. Se fusiona en apps/ledger/docs/reconciliation/reconciliation.c4.
+
+model {
+  extend admin.ledger.reconciliation {
+    assertionPostingReader = component 'AssertionPostingReader' {
+      #delta-new
+      technology 'Domain · Port (solo lectura)'
+      description 'Postings de una cuenta hasta un corte, y cuentas tocadas por una transaccion.'
+      metadata {
+        introducedIn 'hu-0016'
+      }
+    }
+    postingReaderAdapter = component 'ReadModelAssertionPostingReader' {
+      #delta-new
+      technology 'Infrastructure · Adapter'
+      description 'Implementa AssertionPostingReader sobre proj_postings via ReadModelStore.'
+      metadata {
+        introducedIn 'hu-0016'
+      }
+    }
+  }
+
+  extend admin.ledger.reconciliation.reevaluateReactor {
+    #delta-changed
+    metadata {
+      changedIn 'hu-0016'
+    }
+  }
+
+  admin.ledger.reconciliation.reevaluateReactor -> admin.ledger.reconciliation.assertionPostingReader 'cuentas tocadas por la transaccion anulada'
+  admin.ledger.reconciliation.postingReaderAdapter -> admin.ledger.reconciliation.assertionPostingReader 'implementa'
+  admin.ledger.reconciliation.postingReaderAdapter -> admin.ledger.shared.readModel 'query proj_postings'
+}
+
+views 'Reconciliation' {
+  dynamic view reevaluateAssertions {
+    title '[NEW] Re-evaluar aserciones tras una anulacion · trigger domain-event'
+
+    admin.ledger.reconciliation.reconciliationPump -> admin.ledger.reconciliation.reevaluateReactor 'on(TransactionVoided)'
+    admin.ledger.reconciliation.reevaluateReactor -> admin.ledger.reconciliation.assertionPostingReader 'touchedByTransaction(txnId)'
+    admin.ledger.reconciliation.assertionPostingReader -> admin.ledger.shared.readModel 'query proj_postings por transaction_id'
+    admin.ledger.reconciliation.reevaluateReactor -> admin.ledger.reconciliation.assertionStatusStore 'nonRevokedOnAccountFrom(cuenta, fecha)'
+    admin.ledger.reconciliation.reevaluateReactor -> admin.ledger.shared.commandBus 'dispatch(EvaluateAssertion) por asercion'
+    admin.ledger.shared.commandBus -> admin.ledger.reconciliation.balanceAssertion 'evaluate() — silencioso si el veredicto no cambia'
+  }
+}

@@ -26,6 +26,7 @@ como directiva de primera clase por la misma razón.
 | **Proyectar assertion_status** | **domain-event** | `BalanceAsserted`/`Evaluated`/`Revoked`/`DiscrepancyResolved` | [project-assertion-status](./flows/project-assertion-status.md) |
 | **Proyectar adjustment_audit** | **domain-event** | `DiscrepancyResolved` | [project-adjustment-audit](./flows/project-adjustment-audit.md) |
 | **Bombear el stream** | **cron** | `ReconciliationPump.pump()` | [run-reconciliation-pump](./flows/run-reconciliation-pump.md) |
+| **Re-evaluar aserciones afectadas** | **domain-event** | `TransactionRecorded`/`Amended`/`Voided` | [reevaluate-assertions](./flows/reevaluate-assertions.md) |
 
 > Los cinco endpoints REST del módulo (`POST /v1/balance-assertions`, `.../{id}/revoke`,
 > `.../{id}/resolve`, `GET .../{id}`, `GET /v1/balance-assertions`) todavía no tienen su
@@ -39,7 +40,9 @@ como directiva de primera clase por la misma razón.
   `MISMATCHED`.
 - **Re-evaluación automática (RF-18):** un evento que altera postings anteriores a la fecha
   de corte de una aserción la vuelve a evaluar. Una aserción `MATCHED` puede pasar a
-  `MISMATCHED` si después se revierte una transacción anterior a ella.
+  `MISMATCHED` si después se anula una transacción anterior a ella. Disparan
+  `TransactionRecorded`, `TransactionAmended` y `TransactionVoided`; **no** `Confirmed`
+  (no altera el monto evaluado) ni `Reversed` (la reversa emite su propio `Recorded`).
 - **Las aserciones revocadas son terminales:** no se re-evalúan ni vuelven a estado activo,
   ni siquiera tras un rebuild completo.
 - **La resolución es contable, no un parche:** `ResolveDiscrepancy` registra una transacción

@@ -42,6 +42,7 @@ model {
         description 'Despacha EvaluateAssertion sobre las aserciones afectadas (RF-18). Nunca escribe.'
         metadata {
           introducedIn 'hu-0015'
+          changedIn 'hu-0016'
         }
       }
 
@@ -65,6 +66,20 @@ model {
         description 'Lee el stream desde el checkpoint; proyecta y luego alimenta al reactor.'
         metadata {
           introducedIn 'hu-0015'
+        }
+      }
+      assertionPostingReader = component 'AssertionPostingReader' {
+        technology 'Domain · Port (solo lectura)'
+        description 'Postings de una cuenta hasta un corte, y cuentas tocadas por una transaccion.'
+        metadata {
+          introducedIn 'hu-0016'
+        }
+      }
+      postingReaderAdapter = component 'ReadModelAssertionPostingReader' {
+        technology 'Infrastructure · Adapter'
+        description 'Implementa AssertionPostingReader sobre proj_postings via ReadModelStore.'
+        metadata {
+          introducedIn 'hu-0016'
         }
       }
       assertionStatusReader = component 'ReadModelAssertionStatusReader' {
@@ -109,6 +124,9 @@ model {
   admin.ledger.reconciliation.reconciliationPump -> admin.ledger.shared.postgresCheckpointRepository 'advance(globalPosition)'
   admin.ledger.reconciliation.assertionStatusProjector -> admin.ledger.shared.readModel 'upsert proj_assertions'
   admin.ledger.reconciliation.adjustmentAuditProjector -> admin.ledger.shared.readModel 'query + upsert proj_adjustment_audit(_entries)'
+  admin.ledger.reconciliation.reevaluateReactor -> admin.ledger.reconciliation.assertionPostingReader 'cuentas tocadas por la transaccion anulada'
+  admin.ledger.reconciliation.postingReaderAdapter -> admin.ledger.reconciliation.assertionPostingReader 'implementa'
+  admin.ledger.reconciliation.postingReaderAdapter -> admin.ledger.shared.readModel 'query proj_postings'
   admin.ledger.reconciliation.assertionStatusReader -> admin.ledger.shared.readModel 'query proj_assertions'
   admin.ledger.reconciliation.adjustmentAuditReader -> admin.ledger.shared.readModel 'query proj_adjustment_audit'
   admin.ledger.reconciliation.reevaluateReactor -> admin.ledger.reconciliation.assertionStatusStore 'aserciones afectadas'
@@ -141,6 +159,17 @@ views 'Reconciliation' {
     admin.ledger.reconciliation.adjustmentAuditProjector -> admin.ledger.shared.readModel 'query proj_assertions (difference, cuenta)'
     admin.ledger.reconciliation.adjustmentAuditProjector -> admin.ledger.shared.readModel 'upsert proj_adjustment_audit_entries'
     admin.ledger.reconciliation.adjustmentAuditProjector -> admin.ledger.shared.readModel 'upsert proj_adjustment_audit (recalculado)'
+  }
+
+  dynamic view reevaluateAssertions {
+    title 'Re-evaluar aserciones tras una anulacion · trigger domain-event'
+
+    admin.ledger.reconciliation.reconciliationPump -> admin.ledger.reconciliation.reevaluateReactor 'on(TransactionVoided)'
+    admin.ledger.reconciliation.reevaluateReactor -> admin.ledger.reconciliation.assertionPostingReader 'touchedByTransaction(txnId)'
+    admin.ledger.reconciliation.assertionPostingReader -> admin.ledger.shared.readModel 'query proj_postings por transaction_id'
+    admin.ledger.reconciliation.reevaluateReactor -> admin.ledger.reconciliation.assertionStatusStore 'nonRevokedOnAccountFrom(cuenta, fecha)'
+    admin.ledger.reconciliation.reevaluateReactor -> admin.ledger.shared.commandBus 'dispatch(EvaluateAssertion) por asercion'
+    admin.ledger.shared.commandBus -> admin.ledger.reconciliation.balanceAssertion 'evaluate() — silencioso si el veredicto no cambia'
   }
 
   dynamic view runReconciliationPump {
