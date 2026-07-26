@@ -11,6 +11,16 @@ vacían en cada arranque
 
 ## Criterios de Aceptación
 
+### AC-0: Los projectors de conciliación implementan el contrato `Projector`
+
+`AssertionStatusProjector` y `AdjustmentAuditProjector` extienden la clase base `Projector`
+del `shared-kernel`, declarando `name` y `consumes` e implementando
+`project(event: StoredEvent, store: ReadModelStore)`. Hoy son **clases sueltas** que no
+extienden nada, a diferencia de `AccountTreeProjector`, `TransactionListProjector` y
+`AccountBalancesProjector`. Esa es la causa raíz de que el rebuild no las alcance: sin el
+contrato no se pueden registrar en el `ProjectionRegistry` ni en el `ProjectionDispatcher`,
+así que RNF-5 hoy no se cumple para la conciliación por diseño, no por olvido.
+
 ### AC-1: Los stores de conciliación se sirven desde el `ReadModelStore` real
 
 `AssertionStatusStore` y `AdjustmentAuditStore` tienen adaptadores que escriben y leen a

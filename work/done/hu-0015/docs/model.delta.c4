@@ -1,0 +1,170 @@
+// Delta LikeC4 — hu-0015: persistencia Postgres de las proyecciones de conciliacion.
+// Introduce el modulo `reconciliation` en el modelo (C4 Nivel 3) y el store de
+// checkpoints en el shared kernel. Se fusiona en
+// apps/ledger/docs/reconciliation/reconciliation.c4 al correr /sync.
+//
+// admin.ledger.shared.readModel y .projectionDispatcher ya existen en
+// shared-kernel.c4: se referencian, no se redefinen.
+
+model {
+  extend admin.ledger {
+    reconciliation = module 'Reconciliation' {
+      #delta-new
+      description 'Afirmaciones de saldo, evaluacion, revocacion y resolucion de discrepancias.'
+      metadata {
+        introducedIn 'hu-0015'
+      }
+
+      // --- Domain ---
+      balanceAssertion = component 'BalanceAssertion' {
+        #delta-new
+        technology 'Domain · Aggregate'
+        description 'assert / evaluate / revoke / resolve. Event-sourced.'
+        metadata {
+          introducedIn 'hu-0015'
+        }
+      }
+      assertionStatusStore = component 'AssertionStatusStore' {
+        #delta-new
+        technology 'Domain · Port (solo lectura)'
+        description 'byId, listByAccount, nonRevokedOnAccountFrom sobre proj_assertions.'
+        metadata {
+          introducedIn 'hu-0015'
+        }
+      }
+      adjustmentAuditStore = component 'AdjustmentAuditStore' {
+        #delta-new
+        technology 'Domain · Port (solo lectura)'
+        description 'byAccount sobre proj_adjustment_audit.'
+        metadata {
+          introducedIn 'hu-0015'
+        }
+      }
+
+      // --- Application ---
+      reevaluateReactor = component 'ReevaluateAssertionsReactor' {
+        #delta-new
+        technology 'Application · Reactor'
+        description 'Despacha EvaluateAssertion sobre las aserciones afectadas (RF-18). Nunca escribe.'
+        metadata {
+          introducedIn 'hu-0015'
+        }
+      }
+
+      // --- Infrastructure ---
+      assertionStatusProjector = component 'AssertionStatusProjector' {
+        #delta-new
+        technology 'Infrastructure · Projector'
+        description 'Materializa proj_assertions. Extiende Projector; escribe por ReadModelStore.'
+        metadata {
+          introducedIn 'hu-0015'
+        }
+      }
+      adjustmentAuditProjector = component 'AdjustmentAuditProjector' {
+        #delta-new
+        technology 'Infrastructure · Projector'
+        description 'Materializa proj_adjustment_audit(_entries) desde DiscrepancyResolved.'
+        metadata {
+          introducedIn 'hu-0015'
+        }
+      }
+      reconciliationPump = component 'ReconciliationPump' {
+        #delta-new
+        technology 'Infrastructure · Scheduled poller'
+        description 'Lee el stream desde el checkpoint; proyecta y luego alimenta al reactor.'
+        metadata {
+          introducedIn 'hu-0015'
+        }
+      }
+      assertionStatusReader = component 'ReadModelAssertionStatusReader' {
+        #delta-new
+        technology 'Infrastructure · Adapter'
+        description 'Implementa AssertionStatusStore sobre ReadModelStore.query(proj_assertions).'
+        metadata {
+          introducedIn 'hu-0015'
+        }
+      }
+      adjustmentAuditReader = component 'ReadModelAdjustmentAuditReader' {
+        #delta-new
+        technology 'Infrastructure · Adapter'
+        description 'Implementa AdjustmentAuditStore sobre ReadModelStore.query(proj_adjustment_audit).'
+        metadata {
+          introducedIn 'hu-0015'
+        }
+      }
+    }
+  }
+
+  extend admin.ledger.shared {
+    projectionCheckpoints = store 'ProjectionCheckpoints' {
+      #delta-new
+      technology 'PostgreSQL'
+      description 'Posicion global por proyeccion; habilita reanudar y medir lag (RNF-12).'
+      metadata {
+        introducedIn 'hu-0015'
+      }
+    }
+    postgresCheckpointRepository = component 'PostgresProjectionCheckpointRepository' {
+      #delta-new
+      technology 'Infrastructure · PostgreSQL'
+      description 'Primer adaptador real de ProjectionCheckpointRepository; usa projection_checkpoints.'
+      metadata {
+        introducedIn 'hu-0015'
+      }
+    }
+  }
+
+  // Relaciones estructurales (fuera del extend, como en transactions.c4)
+  admin.ledger.reconciliation.reconciliationPump -> admin.ledger.shared.eventStore 'readAll(checkpoint, 100)'
+  admin.ledger.reconciliation.reconciliationPump -> admin.ledger.reconciliation.assertionStatusProjector 'project(event, store)'
+  admin.ledger.reconciliation.reconciliationPump -> admin.ledger.reconciliation.adjustmentAuditProjector 'project(event, store)'
+  admin.ledger.reconciliation.reconciliationPump -> admin.ledger.reconciliation.reevaluateReactor 'on(event) tras proyectar'
+  admin.ledger.reconciliation.reconciliationPump -> admin.ledger.shared.postgresCheckpointRepository 'advance(globalPosition)'
+  admin.ledger.reconciliation.assertionStatusProjector -> admin.ledger.shared.readModel 'upsert proj_assertions'
+  admin.ledger.reconciliation.adjustmentAuditProjector -> admin.ledger.shared.readModel 'query + upsert proj_adjustment_audit(_entries)'
+  admin.ledger.reconciliation.assertionStatusReader -> admin.ledger.shared.readModel 'query proj_assertions'
+  admin.ledger.reconciliation.adjustmentAuditReader -> admin.ledger.shared.readModel 'query proj_adjustment_audit'
+  admin.ledger.reconciliation.reevaluateReactor -> admin.ledger.reconciliation.assertionStatusStore 'aserciones afectadas'
+  admin.ledger.reconciliation.reevaluateReactor -> admin.ledger.shared.commandBus 'dispatch(EvaluateAssertion)'
+  admin.ledger.shared.postgresCheckpointRepository -> admin.ledger.shared.projectionCheckpoints 'lee / avanza'
+  admin.ledger.reconciliation.assertionStatusReader -> admin.ledger.reconciliation.assertionStatusStore 'implementa'
+  admin.ledger.reconciliation.adjustmentAuditReader -> admin.ledger.reconciliation.adjustmentAuditStore 'implementa'
+}
+
+views 'Reconciliation' {
+  view reconciliationComponents of admin.ledger.reconciliation {
+    title 'Componentes'
+    include admin.ledger.reconciliation, admin.ledger.reconciliation.*
+    include admin.ledger.shared.readModel, admin.ledger.shared.eventStore, admin.ledger.shared.commandBus
+  }
+
+  dynamic view projectAssertionStatus {
+    title '[NEW] Proyectar assertion_status · trigger domain-event'
+
+    admin.ledger.reconciliation.reconciliationPump -> admin.ledger.shared.eventStore 'readAll(checkpoint, 100)'
+    admin.ledger.reconciliation.reconciliationPump -> admin.ledger.reconciliation.assertionStatusProjector 'project(event, store)'
+    admin.ledger.reconciliation.assertionStatusProjector -> admin.ledger.shared.readModel 'upsert proj_assertions'
+    admin.ledger.reconciliation.reconciliationPump -> admin.ledger.shared.postgresCheckpointRepository 'advance(globalPosition)'
+  }
+
+  dynamic view projectAdjustmentAudit {
+    title '[NEW] Proyectar adjustment_audit · trigger domain-event'
+
+    admin.ledger.reconciliation.reconciliationPump -> admin.ledger.reconciliation.adjustmentAuditProjector 'project(DiscrepancyResolved, store)'
+    admin.ledger.reconciliation.adjustmentAuditProjector -> admin.ledger.shared.readModel 'query proj_assertions (difference, cuenta)'
+    admin.ledger.reconciliation.adjustmentAuditProjector -> admin.ledger.shared.readModel 'upsert proj_adjustment_audit_entries'
+    admin.ledger.reconciliation.adjustmentAuditProjector -> admin.ledger.shared.readModel 'upsert proj_adjustment_audit (recalculado)'
+  }
+
+  dynamic view runReconciliationPump {
+    title '[NEW] Bombear el stream de conciliacion · trigger cron'
+
+    admin.ledger.reconciliation.reconciliationPump -> admin.ledger.shared.postgresCheckpointRepository 'lastPosition(reconciliation)'
+    admin.ledger.reconciliation.reconciliationPump -> admin.ledger.shared.eventStore 'readAll(from, 100)'
+    admin.ledger.reconciliation.reconciliationPump -> admin.ledger.reconciliation.assertionStatusProjector 'project'
+    admin.ledger.reconciliation.reconciliationPump -> admin.ledger.reconciliation.adjustmentAuditProjector 'project'
+    admin.ledger.reconciliation.reconciliationPump -> admin.ledger.reconciliation.reevaluateReactor 'on(event)'
+    admin.ledger.reconciliation.reevaluateReactor -> admin.ledger.shared.commandBus 'dispatch(EvaluateAssertion)'
+    admin.ledger.reconciliation.reconciliationPump -> admin.ledger.shared.postgresCheckpointRepository 'advance(globalPosition)'
+  }
+}

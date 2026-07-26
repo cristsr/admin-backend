@@ -8,6 +8,35 @@
 > entrada nueva que la referencia. Orden cronológico inverso (más reciente
 > primero).
 
+## HU-0015 — Persistencia Postgres de las proyecciones de conciliación (2026-07-26)
+
+`/scan` no dejó marcadores `[NEEDS CLARIFICATION]`, pero sí destapó dos hechos que
+obligaron a decidir sin poder preguntar (la ejecución fue pedida como automática). Ambas
+decisiones están razonadas en [`docs/research.md`](./docs/research.md) con sus alternativas:
+
+- **Escritura por el `ReadModelStore` genérico:** los projectors escriben con
+  `store.upsert(table, key, row)` y los puertos `AssertionStatusStore`/`AdjustmentAuditStore`
+  pierden sus métodos de escritura, quedando como puertos de **lectura** — es la única
+  forma de cumplir el contrato `Projector` y que `ProjectionRebuilder` pueda truncar.
+- **Una sola proyección `reconciliation` con dos projectors:** `AdjustmentAuditProjector`
+  lee `proj_assertions`, así que ambas comparten checkpoint y orden. Registrarlas por
+  separado permitiría un `rebuild adjustment_audit` aislado que produce un audit incorrecto
+  en silencio.
+- **Projectors movidos a `infrastructure/projections/`:** el Artículo 1 prohíbe `@nestjs/*`
+  en `application/`, y ambos están hoy en `application/projectors/` con `@Injectable()`.
+- **`PostgresProjectionCheckpointRepository` nuevo:** la tabla `projection_checkpoints`
+  existe desde `1790000000002` pero nunca se usó; sin ella el pump reprocesa el stream
+  entero en cada arranque.
+- **El pump se dispara periódicamente (`@nestjs/schedule`):** `pump()` no lo llamaba nadie
+  en producción. Sin disparador, la historia entrega tablas Postgres que nadie llena y el
+  *Para* de la historia no se puede cumplir. **Excede el texto literal de los AC** — ver
+  «Excepciones» al final.
+- **El pump conserva el orden proyectar → reaccionar:** un único bucle con un único
+  checkpoint, en vez de dos pollers independientes que permitirían al reactor adelantarse a
+  las proyecciones.
+
+---
+
 ## Alcance del ledger acotado a su núcleo contable (2026-07-25)
 
 Supersede el alcance de §4.1 de `ledger-spec.md` y las épicas EP-4/EP-5 del roadmap.
