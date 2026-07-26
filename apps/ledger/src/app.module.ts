@@ -9,7 +9,6 @@ import { ReconciliationModule } from '@ledger/reconciliation/reconciliation.modu
 import { SharedHttpModule } from '@ledger/shared/infrastructure/adapters/http';
 import { TransactionsHttpModule } from '@ledger/transactions/infrastructure/adapters/http';
 import { TransactionsModule } from '@ledger/transactions/transactions.module';
-import { SettingsModule } from '@ledger/settings/settings.module';
 import { buildPinoModuleOptions } from './config/logger/logger.config';
 import { DatabaseModule } from './database/database.module';
 
@@ -29,11 +28,9 @@ import { DatabaseModule } from './database/database.module';
     // EP-1 write/read buses wired into DI (in-memory adapters for now; see the
     // module's TODO on swapping in the Postgres persistence adapters).
     LedgerCoreModule,
-    // EP-4.1: LedgerSettings (presentation currency + timezone management)
-    SettingsModule,
-    // EP-4.2/4.3/4.4/4.5/4.6 (Reference, Product, Reporting): pending
-    // migration to current shared-kernel APIs — imported via @nestjs/cqrs +
-    // SharedKernelModule that no longer exist.
+    // EP-4 (settings, reference, product, reporting): not implemented yet. The
+    // first attempt was removed because it targeted shared-kernel APIs that no
+    // longer exist; it will be rebuilt story by story on the current core.
     AccountsHttpModule,
     TransactionsHttpModule,
     // EP-3: reconciliation and the transfer feature, mounted on the real core.
