@@ -2,33 +2,38 @@ import { Nullable } from '@shared';
 import {
   AssertablePosting,
   AssertionPostingReader,
+  TouchedAccount,
 } from '@ledger/reconciliation/domain/ports/assertion-posting-reader.port';
 import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 
-/** A stored posting row keyed by owner and account, for the in-memory reader. */
+/** A stored posting row keyed by owner, account and transaction. */
 interface StoredPosting extends AssertablePosting {
   readonly userId: string;
   readonly accountId: string;
+  readonly transactionId: Nullable<string>;
 }
 
 /**
  * In-memory double of {@link AssertionPostingReader}: mirrors the real adapter's
- * contract (exact account, `date <= cutoff`, `VOIDED` excluded) so the evaluator
- * can be driven without a database.
+ * contract so the evaluator and the reactor can be driven without a database.
+ *
+ * `VOIDED` rows are kept and filtered **on read**, the way `proj_postings`
+ * behaves: `byAccountUpToDate` excludes them, but `touchedByTransaction` must
+ * still see them — its whole job is finding the accounts a just-voided
+ * transaction touched.
  */
 export class InMemoryAssertionPostingReader extends AssertionPostingReader {
   private readonly rows: StoredPosting[] = [];
 
-  /** Seeds a posting; `VOIDED` rows are dropped, matching `proj_postings` reads. */
+  /** Seeds a posting, optionally attributing it to a transaction. */
   add(
     userId: string,
     accountId: string,
     posting: AssertablePosting,
+    transactionId: Nullable<string> = null,
   ): InMemoryAssertionPostingReader {
-    if (posting.status === TransactionStatus.VOIDED) return this;
-
-    this.rows.push({ ...posting, userId, accountId });
+    this.rows.push({ ...posting, userId, accountId, transactionId });
 
     return this;
   }
@@ -39,10 +44,30 @@ export class InMemoryAssertionPostingReader extends AssertionPostingReader {
     date: LedgerDate,
   ): Promise<readonly AssertablePosting[]> {
     const matches = this.rows.filter(
-      (row) => row.userId === userId && row.accountId === accountId && row.date.isSameOrBefore(date),
+      (row) =>
+        row.userId === userId &&
+        row.accountId === accountId &&
+        row.status !== TransactionStatus.VOIDED &&
+        row.date.isSameOrBefore(date),
     );
 
     return Promise.resolve(matches.map((row) => this.strip(row)));
+  }
+
+  touchedByTransaction(
+    userId: string,
+    transactionId: string,
+  ): Promise<readonly TouchedAccount[]> {
+    const byAccount = new Map<string, TouchedAccount>();
+
+    for (const row of this.rows) {
+      if (row.userId !== userId || row.transactionId !== transactionId) continue;
+      if (byAccount.has(row.accountId)) continue; // guard: one entry per account
+
+      byAccount.set(row.accountId, { accountId: row.accountId, date: row.date });
+    }
+
+    return Promise.resolve([...byAccount.values()]);
   }
 
   private strip(row: StoredPosting): AssertablePosting {

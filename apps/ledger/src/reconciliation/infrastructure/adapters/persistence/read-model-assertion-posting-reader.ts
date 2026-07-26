@@ -3,6 +3,7 @@ import { Criteria } from '@shared';
 import {
   AssertablePosting,
   AssertionPostingReader,
+  TouchedAccount,
 } from '@ledger/reconciliation/domain/ports/assertion-posting-reader.port';
 import { Money } from '@ledger/shared/domain/money';
 import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
@@ -11,6 +12,7 @@ import { TransactionStatus } from '@ledger/transactions/domain/transaction/trans
 import { PROJ_POSTINGS } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
 
 type PostingRow = {
+  readonly transaction_id: string;
   readonly account_id: string;
   readonly amount: string;
   readonly currency_code: string;
@@ -47,6 +49,29 @@ export class ReadModelAssertionPostingReader extends AssertionPostingReader {
       .filter((row) => row.status !== TransactionStatus.VOIDED)
       .map((row) => this.toPosting(row))
       .filter((posting) => posting.date.isSameOrBefore(date));
+  }
+
+  async touchedByTransaction(
+    userId: string,
+    transactionId: string,
+  ): Promise<readonly TouchedAccount[]> {
+    const rows = await this.readModel.query<PostingRow>(
+      PROJ_POSTINGS,
+      Criteria.none().equals('user_id', userId).equals('transaction_id', transactionId),
+    );
+
+    const byAccount = new Map<string, TouchedAccount>();
+
+    for (const row of rows) {
+      if (byAccount.has(row.account_id)) continue; // guard: one entry per account
+
+      byAccount.set(row.account_id, {
+        accountId: row.account_id,
+        date: LedgerDate.of(row.date),
+      });
+    }
+
+    return [...byAccount.values()];
   }
 
   private toPosting(row: PostingRow): AssertablePosting {

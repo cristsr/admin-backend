@@ -11,6 +11,12 @@ export interface AssertablePosting {
   readonly status: TransactionStatus;
 }
 
+/** An account a transaction posted to, with that transaction's accounting date. */
+export interface TouchedAccount {
+  readonly accountId: string;
+  readonly date: LedgerDate;
+}
+
 /**
  * Reads the `CONFIRMED`+`PENDING` postings of exactly one account (no
  * subaccounts, §2.4) up to a temporal cutoff. `VOIDED` postings are never
@@ -23,4 +29,18 @@ export abstract class AssertionPostingReader {
     accountId: string,
     date: LedgerDate,
   ): Promise<readonly AssertablePosting[]>;
+
+  /**
+   * Accounts a single transaction posted to, with its accounting date. Serves
+   * the reactor when the triggering event carries no postings in its payload
+   * (`TransactionVoided` only ships a reason).
+   *
+   * Unlike {@link byAccountUpToDate}, this one **includes** `VOIDED` rows on
+   * purpose: the whole point is finding which accounts a just-voided
+   * transaction used to touch.
+   */
+  abstract touchedByTransaction(
+    userId: string,
+    transactionId: string,
+  ): Promise<readonly TouchedAccount[]>;
 }
