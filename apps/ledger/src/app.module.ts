@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { LoggerModule } from 'nestjs-pino';
 import { AccountsHttpModule } from '@ledger/accounts/infrastructure/adapters/http';
 import { appConfig, databaseConfig } from '@ledger/config/environment';
@@ -22,6 +23,8 @@ import { DatabaseModule } from './database/database.module';
       validate: () => loadEnvironment(),
     }),
     LoggerModule.forRoot(buildPinoModuleOptions()),
+    // Drives ReconciliationPump's @Interval: the async projections of §8.1.
+    ScheduleModule.forRoot(),
     DatabaseModule,
     // Global context guard + resolver binding (RF-26) and the write-result interceptor.
     SharedHttpModule,

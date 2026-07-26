@@ -9,6 +9,7 @@ import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelop
 import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
 import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
+import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { AssertBalanceCommand } from './application/commands/assert-balance.command';
@@ -16,8 +17,6 @@ import { AssertBalanceHandler } from './application/commands/assert-balance.hand
 import { EvaluateAssertionHandler } from './application/commands/evaluate-assertion.handler';
 import { ResolveDiscrepancyCommand } from './application/commands/resolve-discrepancy.command';
 import { ResolveDiscrepancyHandler } from './application/commands/resolve-discrepancy.handler';
-import { AdjustmentAuditProjector } from './application/projectors/adjustment-audit.projector';
-import { AssertionStatusProjector } from './application/projectors/assertion-status.projector';
 import { ReevaluateAssertionsReactor } from './application/reactors/reevaluate-assertions.reactor';
 import { createReconciliationEventRegistry } from './application/reconciliation-event-registry.factory';
 import { BalanceAssertionRepository } from './domain/balance-assertion/balance-assertion.repository';
@@ -25,10 +24,12 @@ import { AssertionStatus } from './domain/balance-assertion/enums/assertion-stat
 import { AdjustmentFactory } from './domain/services/adjustment.factory';
 import { AssertionEvaluator } from './domain/services/assertion-evaluator.service';
 import { IntlDayBoundaryResolver } from './domain/services/day-boundary.resolver';
-import { InMemoryAdjustmentAuditStore } from './infrastructure/adapters/persistence/in-memory/in-memory-adjustment-audit-store';
 import { InMemoryAssertionPostingReader } from './infrastructure/adapters/persistence/in-memory/in-memory-assertion-posting-reader';
-import { InMemoryAssertionStatusStore } from './infrastructure/adapters/persistence/in-memory/in-memory-assertion-status-store';
+import { ReadModelAdjustmentAuditReader } from './infrastructure/adapters/persistence/read-model-adjustment-audit-reader';
+import { ReadModelAssertionStatusReader } from './infrastructure/adapters/persistence/read-model-assertion-status-reader';
 import { StoreBackedAssertionLookup } from './infrastructure/adapters/persistence/store-backed-assertion-lookup';
+import { AdjustmentAuditProjector } from './infrastructure/projections/adjustment-audit.projector';
+import { AssertionStatusProjector } from './infrastructure/projections/assertion-status.projector';
 
 /**
  * Test double for the write side of `transactions`: appends a `TransactionRecorded`
@@ -114,8 +115,9 @@ describe('Reconciliation discrepancy flow (e2e)', () => {
 
   let eventStore: InMemoryEventStore;
   let reader: InMemoryAssertionPostingReader;
-  let statusStore: InMemoryAssertionStatusStore;
-  let auditStore: InMemoryAdjustmentAuditStore;
+  let readModel: InMemoryReadModelStore;
+  let statusStore: ReadModelAssertionStatusReader;
+  let auditStore: ReadModelAdjustmentAuditReader;
   let statusProjector: AssertionStatusProjector;
   let auditProjector: AdjustmentAuditProjector;
   let reactor: ReevaluateAssertionsReactor;
@@ -130,8 +132,8 @@ describe('Reconciliation discrepancy flow (e2e)', () => {
 
     while (batch.length) {
       for (const event of batch) {
-        await statusProjector.project(event);
-        await auditProjector.project(event);
+        await statusProjector.project(event, readModel);
+        await auditProjector.project(event, readModel);
         await reactor.on(event);
         checkpoint = event.globalPosition;
       }
@@ -143,10 +145,11 @@ describe('Reconciliation discrepancy flow (e2e)', () => {
   beforeEach(() => {
     eventStore = new InMemoryEventStore();
     reader = new InMemoryAssertionPostingReader();
-    statusStore = new InMemoryAssertionStatusStore();
-    auditStore = new InMemoryAdjustmentAuditStore(catalog);
-    statusProjector = new AssertionStatusProjector(statusStore);
-    auditProjector = new AdjustmentAuditProjector(auditStore, statusStore);
+    readModel = new InMemoryReadModelStore();
+    statusStore = new ReadModelAssertionStatusReader(readModel);
+    auditStore = new ReadModelAdjustmentAuditReader(readModel);
+    statusProjector = new AssertionStatusProjector();
+    auditProjector = new AdjustmentAuditProjector(catalog);
     checkpoint = 0n;
 
     const repository = new BalanceAssertionRepository(
