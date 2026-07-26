@@ -9,13 +9,82 @@ info:
 tags:
   - name: accounts
     description: Endpoints del agregado Account expuestos por apps/ledger.
+  - name: ledger
+    description: >
+      Ciclo de vida a nivel ledger (LedgerController): inicialización y lectura de
+      settings. Documentado aquí por cercanía — el efecto observable de inicializar es
+      la aparición de las cuentas técnicas de sistema.
+
+# NOTA DE CONTRATO (hu-0013). Las cuatro lecturas de este documento devuelven la fila
+# de la proyección tal cual, en snake_case (account_id, currency_code, confirmed_amount,
+# pending_amount, presentation_currency). Los schemas Account / AccountTree /
+# AccountBalance / LedgerSettings describen la forma *pretendida* y decoran Swagger vía
+# @ApiOkResponse, pero no se construyen en runtime: el controller hace
+# queryBus.ask<AccountDto>(...), un genérico sin verificación que no transforma nada.
+# Unificarlos (mapper explícito o proyecciones en camelCase) es trabajo de otra HU.
 
 paths:
+  /ledger/initialize:
+    post:
+      tags: [ledger]
+      operationId: initializeLedger
+      summary: Initialize the ledger (creates the technical system accounts).
+      parameters:
+        - $ref: '../shared/api.yaml#/components/parameters/ExternalRefHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InitializeLedgerRequest'
+      responses:
+        '201':
+          description: Ledger initialized; system accounts created.
+          headers:
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandAccepted'
+        '200':
+          description: Replay idempotente del mismo external_ref.
+        '401':
+          description: Sin contexto autenticado (RF-26).
+        '409':
+          description: LEDGER_ALREADY_INITIALIZED.
+        '422':
+          description: INVALID_CURRENCY_CODE o INVALID_TIME_ZONE.
+
+  /ledger/settings:
+    get:
+      tags: [ledger]
+      operationId: getLedgerSettings
+      summary: Read the ledger settings projection.
+      responses:
+        '200':
+          description: >
+            Fila cruda de la proyección de settings (snake_case), o `null` si el ledger
+            no fue inicializado. No emite 422 LEDGER_NOT_INITIALIZED.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LedgerSettings'
+        '401':
+          description: Sin contexto autenticado (RF-26).
+
   /accounts:
     post:
       tags: [accounts]
       operationId: openAccount
       summary: Open an account.
+      description: >
+        `type` y `parentId` se validan como forma pero NO se transportan al command: el
+        agregado los deriva del nombre jerárquico (`Assets:Bancolombia:Savings` → tipo
+        ASSETS, padre `Assets:Bancolombia`). Un `type` que contradiga el prefijo del
+        nombre se ignora en silencio (hu-0013, AC-3).
+      parameters:
+        - $ref: '../shared/api.yaml#/components/parameters/ExternalRefHeader'
       requestBody:
         required: true
         content:
@@ -25,29 +94,48 @@ paths:
       responses:
         '201':
           description: Account opened successfully.
+          headers:
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommandAccepted'
+        '200':
+          description: Replay idempotente del mismo external_ref.
+        '401':
+          description: Sin contexto autenticado (RF-26).
+        '409':
+          description: NAME_COLLISION — el nombre jerárquico ya existe para el usuario.
         '422':
-          description: Real account with more than one currency rejected (AC-2).
+          description: >
+            REAL_ACCOUNT_SINGLE_CURRENCY (cuenta real con ≠1 moneda, AC-2),
+            INVALID_ACCOUNT_NAME, INVALID_LEDGER_DATE o UNKNOWN_CURRENCY.
     get:
       tags: [accounts]
       operationId: listAccounts
-      summary: List the account tree.
+      summary: List the accounts (flat list).
+      description: >
+        `?view=tree|flat` se valida pero SE IGNORA: la respuesta es siempre la lista plana
+        ordenada por nombre. El shaping jerárquico está pendiente (TODO(read-shape) en
+        account-tree-view.ts). El cliente puede reconstruir el árbol desde el nombre, que
+        codifica la ruta completa (hu-0013, AC-4).
       parameters:
         - name: view
           in: query
           required: false
+          description: Aceptado por compatibilidad de contrato; sin efecto hoy.
           schema:
             $ref: '#/components/schemas/AccountTreeView'
       responses:
         '200':
-          description: Account tree returned.
+          description: Lista plana de filas crudas de proyección, ordenadas por name ASC.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AccountTree'
+        '401':
+          description: Sin contexto autenticado (RF-26).
 
   /accounts/{id}:
     get:
@@ -63,13 +151,19 @@ paths:
             format: uuid
       responses:
         '200':
-          description: Account found.
+          description: >
+            Fila cruda de proyección, o `null` cuando la cuenta no existe o pertenece a
+            otro usuario. Esta ruta NO emite 404 ACCOUNT_NOT_FOUND: el handler hace
+            `row ?? null` y ninguna capa lo traduce a excepción. El cliente debe chequear
+            cuerpo nulo, no status (hu-0013, AC-4).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Account'
-        '404':
-          description: Account not found.
+                oneOf:
+                  - $ref: '#/components/schemas/Account'
+                  - type: 'null'
+        '401':
+          description: Sin contexto autenticado (RF-26).
 
   /accounts/{id}/balance:
     get:
@@ -89,16 +183,24 @@ paths:
           schema:
             type: string
             example: COP
-          description: Restrict to a single currency; omit for all.
+          description: >
+            SE IGNORA. Aceptado y validado por AccountBalanceQueryDto, pero el controller
+            no lo transporta al query bus: la respuesta siempre trae todas las monedas de
+            la cuenta. Filtrar queda del lado del cliente (hu-0013, AC-5).
       responses:
         '200':
-          description: Balances returned.
+          description: >
+            Filas crudas de proyección (snake_case). Array vacío si la cuenta no existe o
+            pertenece a otro usuario — es filtro, no error. El balance nunca se escribe
+            (INV-5).
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/AccountBalance'
+        '401':
+          description: Sin contexto autenticado (RF-26).
 
   /accounts/{id}/rename:
     post:
@@ -267,16 +369,52 @@ components:
 
     AccountBalance:
       type: object
-      required: [currency, confirmed, pending]
+      description: >
+        Fila cruda de `proj_balances` tal como la devuelve el handler (hu-0013, AC-10).
+        Los nombres son los de la proyección, en snake_case.
+      required: [account_id, currency_code, confirmed_amount, pending_amount]
       properties:
-        currency:
+        account_id:
+          type: string
+          format: uuid
+        currency_code:
           type: string
           example: COP
-        confirmed:
+        confirmed_amount:
           type: string
           example: "125000"
-          description: Balance from confirmed transactions.
-        pending:
+          description: Balance from confirmed transactions, as a decimal string (INV-8).
+        pending_amount:
           type: string
           example: "-31900"
-          description: Delta from still-pending transactions.
+          description: Delta from still-pending transactions, as a decimal string (INV-8).
+
+    InitializeLedgerRequest:
+      type: object
+      description: Body de `POST /ledger/initialize`. Valida solo forma.
+      required: [presentationCurrency, timezone]
+      properties:
+        presentationCurrency:
+          type: string
+          example: COP
+          description: Moneda de presentación del ledger (ISO 4217).
+        timezone:
+          type: string
+          example: America/Bogota
+          description: Timezone IANA usada para derivar límites de día (RNF-7).
+
+    LedgerSettings:
+      type: object
+      description: >
+        Fila cruda de la proyección de settings (hu-0013, AC-10). La respuesta es `null`
+        cuando el ledger no fue inicializado.
+      required: [user_id, presentation_currency, timezone]
+      properties:
+        user_id:
+          type: string
+        presentation_currency:
+          type: string
+          example: COP
+        timezone:
+          type: string
+          example: America/Bogota

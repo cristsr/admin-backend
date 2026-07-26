@@ -44,6 +44,13 @@ model {
         technology 'Infrastructure · REST'
         description 'POST /accounts · GET /accounts · GET /accounts/{id} · GET /accounts/{id}/balance · POST /accounts/{id}/rename · POST /accounts/{id}/close'
       }
+      ledgerController = component 'LedgerController' {
+        technology 'Infrastructure · REST'
+        description 'POST /ledger/initialize · GET /ledger/settings. Ciclo de vida a nivel ledger: inicializacion (crea las cuentas tecnicas de sistema) y lectura de settings. Las mutaciones de settings pertenecen a EP-4.'
+        metadata {
+          introducedIn 'hu-0013'
+        }
+      }
       treeProjector = component 'AccountTreeProjector' {
         technology 'Infrastructure · Projector'
         description 'Construye la proyeccion proj_accounts (arbol de cuentas).'
@@ -61,12 +68,14 @@ model {
   admin.ledger.accounts.accountValidation -> admin.ledger.accounts.account 'valida'
   admin.ledger.accounts.controller -> admin.ledger.shared.commandBus 'despacha commands'
   admin.ledger.accounts.controller -> admin.ledger.shared.queryBus 'lecturas'
+  admin.ledger.accounts.ledgerController -> admin.ledger.shared.commandBus 'dispatch(InitializeLedgerCommand)'
+  admin.ledger.accounts.ledgerController -> admin.ledger.shared.queryBus 'ask(GetLedgerSettingsQuery)'
   admin.ledger.accounts.treeProjector -> admin.ledger.shared.eventStore 'consume eventos'
 }
 
-views {
-  view accountsComponents {
-    title 'Accounts — componentes (C4 L3)'
+views 'Accounts' {
+  view accountsComponents of admin.ledger.accounts {
+    title 'Componentes'
     include admin.ledger.accounts, admin.ledger.accounts.*
     include admin.ledger.shared.commandBus, admin.ledger.shared.queryBus, admin.ledger.shared.eventStore
   }
@@ -111,17 +120,44 @@ views {
   // --- Dynamic views: queries (trigger REST) ---
 
   dynamic view listAccounts {
-    title 'Listar cuentas (arbol) · trigger REST'
-    user -> admin.ledger.accounts.controller 'GET /accounts'
+    title 'Listar cuentas (lista plana) · trigger REST'
+    description 'El parametro ?view=tree|flat se valida pero se ignora: la respuesta es siempre la lista plana ordenada por nombre (hu-0013, AC-4).'
+    user -> admin.ledger.accounts.controller 'GET /accounts (?view se ignora)'
     admin.ledger.accounts.controller -> admin.ledger.shared.queryBus 'ask(GetAccountTreeQuery, ctx)'
     admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'query proj_accounts por userId, order name ASC'
   }
 
   dynamic view getAccountBalances {
     title 'Consultar saldos · trigger REST'
-    user -> admin.ledger.accounts.controller 'GET /accounts/{id}/balance'
+    user -> admin.ledger.accounts.controller 'GET /accounts/{id}/balance (?currency se ignora)'
     admin.ledger.accounts.controller -> admin.ledger.shared.queryBus 'ask(GetAccountBalancesQuery, ctx)'
     admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'query proj_accounts para owned IDs'
     admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'query proj_balances filtrado por owned'
+  }
+
+  dynamic view getAccountById {
+    title 'Consultar una cuenta · trigger REST'
+    description 'Una cuenta inexistente devuelve 200 con cuerpo null, no 404: el handler retorna row ?? null y ninguna capa lo traduce a excepcion (hu-0013, AC-4).'
+    user -> admin.ledger.accounts.controller 'GET /accounts/{id}'
+    admin.ledger.accounts.controller -> admin.ledger.shared.queryBus 'ask(GetAccountByIdQuery, ctx)'
+    admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'query proj_accounts por userId + accountId'
+  }
+
+  // --- Dynamic views: ciclo de vida del ledger (hu-0013) ---
+
+  dynamic view initializeLedger {
+    title 'Inicializar ledger · trigger REST'
+    description 'Crea las cuentas tecnicas del sistema y fija la moneda de presentacion y la timezone.'
+    user -> admin.ledger.accounts.ledgerController 'POST /ledger/initialize (InitializeLedgerRequestDto)'
+    admin.ledger.accounts.ledgerController -> admin.ledger.shared.commandBus 'dispatch(InitializeLedgerCommand)'
+    admin.ledger.shared.commandBus -> admin.ledger.shared.eventStore 'append(LedgerInitialized)'
+  }
+
+  dynamic view getLedgerSettings {
+    title 'Leer settings del ledger · trigger REST'
+    description 'Lectura pura de la proyeccion de settings. Devuelve la fila cruda (snake_case), no un LedgerSettingsDto (hu-0013, AC-10).'
+    user -> admin.ledger.accounts.ledgerController 'GET /ledger/settings'
+    admin.ledger.accounts.ledgerController -> admin.ledger.shared.queryBus 'ask(GetLedgerSettingsQuery, ctx)'
+    admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'query proj_ledger_settings por userId'
   }
 }

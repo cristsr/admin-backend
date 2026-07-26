@@ -7,7 +7,7 @@ command: GetAccountBalancesQuery
 view: getAccountBalances
 invariants: [AC-7, AC-8, RNF-10, INV-9]
 introduced_by: hu-0003
-last_modified_by: hu-0006
+last_modified_by: hu-0013
 status: active
 ---
 
@@ -17,6 +17,12 @@ status: active
 cuenta (o de todas las cuentas del usuario si no se especifica `accountId`). Lee de
 `proj_balances` y cruza con `proj_accounts` para garantizar aislamiento por usuario (INV-9).
 
+El balance **nunca se escribe** (INV-5): es exclusivamente proyección.
+
+**`?currency` se acepta y se ignora.** `AccountBalanceQueryDto` valida el parámetro, pero el
+controller lo recibe como `_query` y no lo transporta: la respuesta siempre trae todas las
+monedas de la cuenta. Filtrar por moneda queda del lado del cliente (hu-0013, AC-5).
+
 **Diagrama:** dynamic view `getAccountBalances` en [`../accounts.c4`](../accounts.c4).
 
 ## Reglas
@@ -24,6 +30,9 @@ cuenta (o de todas las cuentas del usuario si no se especifica `accountId`). Lee
 - **AC-7:** Devuelve `confirmed_amount` y `pending_amount` por moneda. Cuando se
   especifica `accountId`, filtra a esa única cuenta; sin `accountId`, devuelve todas
   las cuentas del usuario.
+- **AC-10:** devuelve `BalanceRow[]` cruda en `snake_case`, no `AccountBalanceDto[]` — el
+  `@ApiOkResponse({ type: [AccountBalanceDto] })` documenta una forma que el runtime no
+  construye.
 - **AC-8 (INV-9):** `proj_balances` no tiene `user_id`. El handler primero obtiene los
   `account_id` del usuario desde `proj_accounts`, luego filtra los balances que
   pertenecen a esas cuentas. Ningún dato de otro usuario se filtra.

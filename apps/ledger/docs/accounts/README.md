@@ -10,6 +10,10 @@ Gestiona el ciclo de vida de las cuentas contables del ledger: apertura, renombr
 cierre y las lecturas del árbol de cuentas y sus saldos. Es un módulo event-sourced:
 cada transición de estado emite un evento de dominio persistido en el `EventStore`.
 
+Aloja además el **ciclo de vida a nivel ledger** (`LedgerController`): inicialización y
+lectura de settings. Vive acá por cercanía — el efecto observable de inicializar es la
+aparición de las cuentas técnicas de sistema.
+
 ## Diagramas
 
 - **Componentes (C4 L3):** vista `accountsComponents` en `accounts.c4`.
@@ -21,13 +25,21 @@ Para previsualizar localmente: extensión LikeC4 de VS Code, o `npx likec4 start
 ## Casos de uso (flujos)
 
 | Caso de uso | Trigger | Entrypoint | Doc |
-|---|---|---|---|---|
+|---|---|---|---|
+| Inicializar ledger | rest | `POST /ledger/initialize` | [initialize-ledger](./flows/initialize-ledger.md) |
+| Leer settings del ledger | rest | `GET /ledger/settings` | [get-ledger-settings](./flows/get-ledger-settings.md) |
 | Abrir cuenta | rest | `POST /accounts` | [open-account](./flows/open-account.md) |
 | Renombrar cuenta | rest | `POST /accounts/{id}/rename` | [rename-account](./flows/rename-account.md) |
 | Cerrar cuenta | rest | `POST /accounts/{id}/close` | [close-account](./flows/close-account.md) |
-| Listar árbol de cuentas | rest | `GET /accounts` | [list-accounts](./flows/list-accounts.md) |
-| Consultar cuenta | rest | `GET /accounts/{id}` | *(read-side)* |
+| Listar cuentas (lista plana) | rest | `GET /accounts` | [list-accounts](./flows/list-accounts.md) |
+| Consultar cuenta | rest | `GET /accounts/{id}` | [get-account-by-id](./flows/get-account-by-id.md) |
 | Consultar saldos | rest | `GET /accounts/{id}/balance` | [get-account-balances](./flows/get-account-balances.md) |
+
+> **Nota de contrato (hu-0013).** Las cuatro lecturas devuelven la fila de proyección tal
+> cual, en `snake_case`; los DTO de respuesta decoran Swagger pero no se construyen. Los
+> parámetros `?view` (lista) y `?currency` (saldos) se aceptan y se ignoran, y un recurso
+> inexistente responde `200 null` en vez de `404`. Detalle en cada flujo y en
+> [`api.yaml`](./api.yaml).
 
 ## Invariantes de dominio
 
