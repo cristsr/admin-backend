@@ -8,6 +8,52 @@
 > entrada nueva que la referencia. Orden cronológico inverso (más reciente
 > primero).
 
+## Alcance del ledger acotado a su núcleo contable (2026-07-25)
+
+Supersede el alcance de §4.1 de `ledger-spec.md` y las épicas EP-4/EP-5 del roadmap.
+
+**Decisión.** `apps/ledger` es un ledger de partida doble y nada más: cuentas,
+transacciones, conciliación, fusión de transferencias, settings y catálogo de monedas.
+Todo lo que no genera ni valida un asiento sale del alcance.
+
+**Motivación.** La propia spec ya lo señalaba y se resolvió al revés:
+
+- Principio de diseño **#7**: *"agrupaciones, vistas consolidadas y conversiones de moneda
+  para reportes viven en proyecciones y capa de producto, **fuera del núcleo contable**"*.
+  EP-4.5 (`net_worth`) y EP-4.6 (`/reports/*`) lo contradicen frontalmente.
+- §4.3 admite *"un solo bounded context (Ledger) **con producto embebido** — evita
+  sobre-ingeniería en v1; **extraíble por eventos si crece**"*, con reversibilidad *Media*.
+  Se ejerce esa salida ahora, antes de construirlo, en vez de después.
+
+**Dentro del alcance:** EP-1, EP-2, EP-3.1–3.6 (conciliación completa: es el principio #6 y
+RF-17..RF-20, contabilidad pura), `MergePendingTransfers` (RF-16), `LedgerSettings` (el
+`timezone` es el parámetro del que RNF-7 deriva el cierre de día de las aserciones, y EP-3 ya
+lo consume), y el catálogo de monedas con `minor_units` (lo exige `Money` por INV-8/RNF-2).
+
+**Fuera del alcance:** `Budget` (RF-24) y `Goal` (RF-25) — no emiten postings ni alteran
+saldos; valoración `net_worth` (RF-23) y reportes consolidados; el feed de tasas de cambio
+(RF-22), que es dato de referencia externo y cuyo único consumidor era la valoración; y la
+proyección `transfer_candidates` (RF-15), que es una sugerencia heurística con ventana
+calibrable (`TRANSFER_WINDOW_DAYS`) — la spec §8.2 la tenía como pregunta abierta #4 sin
+resolver. Un ledger valida un merge que le nombran; no adivina cuál proponer.
+
+**EP-5 se disuelve como épica.** No existe en la spec (§11 define 4 fases) y mezclaba tres
+cosas sin relación: retirar módulos de `finances` (trabajo sobre otra app), backups y runbook
+(operabilidad de plataforma), y OTel (RNF-12, transversal). Se replanifican como tareas de
+infraestructura, no como fase de construcción del ledger.
+
+**Consecuencia inmediata.** `transfer_candidates`, su store, su proyector, el endpoint
+`GET /transfers/candidates` y el `TransferDetector` con ventana temporal se removieron. La
+regla de pareo sobrevive como `TransferPairRule` (montos opuestos que netean a cero, misma
+moneda, cuentas reales distintas), ahora sin ventana ni tolerancia, usada por
+`MergePendingTransfersHandler` para validar el par que el cliente nombra.
+
+De paso se corrigió una violación de RNF-10 que venía con ese diseño: el handler decidía un
+invariante leyendo una proyección (`TransferCandidateStore`). Ahora carga ambos agregados
+desde el event store vía `LedgerTransactionRepository` y valida contra ellos.
+
+---
+
 ## Deuda conocida — `nx build ledger` falla con 115 errores (2026-07-25)
 
 Registrado al cerrar HU-0012/0013/0014. **La app no compila**, así que tampoco arranca.

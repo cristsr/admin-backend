@@ -1,1 +1,1 @@
-export * from './transfer-detector.service';
+export * from './transfer-pair.rule';

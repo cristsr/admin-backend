@@ -1,36 +1,51 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { createLedgerEventRegistry } from '@ledger/ledger/application/ledger-event-registry.factory';
+import { Clock, IdGenerator } from '@ledger/shared/domain/ports';
+import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
+import { EventRegistry } from '@ledger/shared-kernel/application/event/event-registry';
+import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
+import { CurrencyCatalog } from '@ledger/shared-kernel/domain/value-objects';
 import { MergePendingTransfersHandler } from './application/commands/merge-pending-transfers.handler';
-import { TransferCandidatesProjector } from './application/projectors/transfer-candidates.projector';
-import { ListTransferCandidatesHandler } from './application/queries/list-transfer-candidates.query';
-import { transferDetectionConfig } from './config/transfer-detection.config';
+import { LedgerTransactionRepository } from './application/ledger-transaction.repository';
 import { AccountLookup } from './domain/ports/account-lookup.port';
-import { TransferCandidateStore } from './domain/ports/transfer-candidate-store.port';
-import {
-  TRANSFER_DETECTION_CONFIG,
-  TransferDetector,
-} from './domain/services/transfer-detector.service';
+import { TransferPairRule } from './domain/services/transfer-pair.rule';
 import { TransferController } from './infrastructure/adapters/http/transfer.controller';
-import { InMemoryTransferCandidateStore } from './infrastructure/adapters/persistence/in-memory/in-memory-transfer-candidate-store';
 import { ReadModelAccountLookup } from './infrastructure/adapters/persistence/read-model-account-lookup';
 
 /**
- * EP-3.7 transfer feature mounted on the real EP-1 core: transfer-detection
- * projection and the merge command, which reuses the real `RecordTransaction`/
- * `VoidPendingTransaction` through the {@link CommandBus}. The candidate store is
- * a bespoke in-memory double driven by the async pump (TODO(persistence)).
+ * Transfer merging (RF-16) mounted on the real EP-1 core: the merge command
+ * reuses `RecordTransaction`/`VoidPendingTransaction` through the CommandBus
+ * (DRY) and validates the pair against the aggregates it loads from the event
+ * store. Proposing which pendings *look* mergeable is deliberately out of scope
+ * — that heuristic belongs to the client, not to this ledger.
  */
 @Module({
-  imports: [ConfigModule.forFeature(transferDetectionConfig)],
   controllers: [TransferController],
   providers: [
-    TransferDetector,
-    { provide: TRANSFER_DETECTION_CONFIG, useFactory: () => transferDetectionConfig() },
-    { provide: TransferCandidateStore, useClass: InMemoryTransferCandidateStore },
+    TransferPairRule,
     { provide: AccountLookup, useClass: ReadModelAccountLookup },
-    TransferCandidatesProjector,
+    {
+      provide: EventRegistry,
+      inject: [CurrencyCatalog],
+      useFactory: (catalog: CurrencyCatalog): EventRegistry => createLedgerEventRegistry(catalog),
+    },
+    {
+      provide: EnvelopeFactory,
+      inject: [Clock, IdGenerator],
+      useFactory: (clock: Clock, ids: IdGenerator): EnvelopeFactory =>
+        new EnvelopeFactory(clock, ids),
+    },
+    {
+      provide: LedgerTransactionRepository,
+      inject: [EventStore, EventRegistry, EnvelopeFactory],
+      useFactory: (
+        eventStore: EventStore,
+        registry: EventRegistry,
+        envelopes: EnvelopeFactory,
+      ): LedgerTransactionRepository =>
+        new LedgerTransactionRepository(eventStore, registry, envelopes),
+    },
     MergePendingTransfersHandler,
-    ListTransferCandidatesHandler,
   ],
 })
 export class TransactionsModule {}

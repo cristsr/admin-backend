@@ -1,6 +1,7 @@
 import { RecordingCommandBus } from '@ledger/shared/testing';
+import { aMoney } from '@ledger/shared/testing';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';
@@ -8,45 +9,66 @@ import {
   NotATransferPairException,
   PendingLegNotFoundException,
 } from '@ledger/transactions/domain/exceptions/transfer.exception';
-import { PendingLegRow } from '@ledger/transactions/domain/ports/transfer-candidate-store.port';
-import { TransferDetector } from '@ledger/transactions/domain/services/transfer-detector.service';
-import { InMemoryTransferCandidateStore } from '@ledger/transactions/infrastructure/adapters/persistence/in-memory/in-memory-transfer-candidate-store';
+import { AccountFacts, AccountLookup } from '@ledger/transactions/domain/ports/account-lookup.port';
+import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
+import { TransferPairRule } from '@ledger/transactions/domain/services/transfer-pair.rule';
+import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { LedgerTransactionRepository } from '../ledger-transaction.repository';
 import { MergePendingTransfersCommand } from './merge-pending-transfers.command';
 import { MergePendingTransfersHandler } from './merge-pending-transfers.handler';
 
+const ctx: AuthContext = { userId: 'user-1', clientId: 'client-1', externalRef: 'merge-ref' };
+
+/** A stand-in aggregate exposing only what the handler reads. */
+function aPendingTransaction(accountId: string, amount: string, status = TransactionStatus.PENDING) {
+  return {
+    status,
+    date: LedgerDate.of('2026-07-20'),
+    postings: [
+      PostingLine.of({ accountId, amount: aMoney().of(amount).inUsd(), metadata: {} }),
+      PostingLine.of({
+        accountId: 'acc-expenses',
+        amount: aMoney().of(amount).inUsd().negate(),
+        metadata: {},
+      }),
+    ],
+  };
+}
+
+function setup(accountTypes: Record<string, string> = { 'acc-out': 'ASSETS', 'acc-in': 'ASSETS' }) {
+  const transactions = { load: jest.fn(), save: jest.fn() } as unknown as jest.Mocked<
+    LedgerTransactionRepository
+  >;
+
+  const accounts: jest.Mocked<AccountLookup> = {
+    factsOf: jest.fn(async (_userId: string, accountId: string) => {
+      const type = accountTypes[accountId];
+
+      return type
+        ? ({ accountId, type, currency: 'USD', isBankMirror: false } as AccountFacts)
+        : null;
+    }),
+  };
+
+  const bus = new RecordingCommandBus('transfer-txn-1');
+  const handler = new MergePendingTransfersHandler(
+    transactions,
+    accounts,
+    new TransferPairRule(),
+    bus,
+  );
+
+  return { handler, transactions, bus };
+}
+
 describe('MergePendingTransfersHandler', () => {
-  const ctx: AuthContext = { userId: 'user-1', clientId: 'client-1', externalRef: 'merge-ref' };
+  it('voids both legs and records a single confirmed transfer', async () => {
+    const { handler, transactions, bus } = setup();
+    transactions.load
+      .mockResolvedValueOnce(aPendingTransaction('acc-out', '-500') as never)
+      .mockResolvedValueOnce(aPendingTransaction('acc-in', '500') as never);
 
-  let store: InMemoryTransferCandidateStore;
-  let bus: RecordingCommandBus;
-  let handler: MergePendingTransfersHandler;
-
-  beforeEach(() => {
-    store = new InMemoryTransferCandidateStore();
-    bus = new RecordingCommandBus('transfer-txn-1');
-    handler = new MergePendingTransfersHandler(
-      store,
-      new TransferDetector({ windowDays: 3, amountTolerance: '0' }),
-      bus,
-      new SeedCurrencyCatalog(),
-    );
-  });
-
-  const pendingLeg = (overrides: Partial<PendingLegRow> & { transactionId: string; amount: string }): PendingLegRow => ({
-    userId: 'user-1',
-    accountId: 'acc-out',
-    currencyCode: 'USD',
-    date: '2026-07-20',
-    isRealAccount: true,
-    externalRef: `ref-${overrides.transactionId}`,
-    ...overrides,
-  });
-
-  it('voids both legs and records a single confirmed transfer preserving external refs', async () => {
-    await store.upsertPendingLeg(pendingLeg({ transactionId: 't1', accountId: 'acc-out', amount: '-500' }));
-    await store.upsertPendingLeg(pendingLeg({ transactionId: 't2', accountId: 'acc-in', amount: '500' }));
-
-    await handler.execute(new MergePendingTransfersCommand(['t1', 't2']), ctx);
+    const result = await handler.execute(new MergePendingTransfersCommand(['t1', 't2']), ctx);
 
     expect(bus.dispatchedOf(VoidPendingTransactionCommand)).toHaveLength(2);
 
@@ -56,14 +78,33 @@ describe('MergePendingTransfersHandler', () => {
       expect.objectContaining({ accountId: 'acc-out', amount: '-500' }),
       expect.objectContaining({ accountId: 'acc-in', amount: '500' }),
     ]);
-    expect(records[0].metadata).toMatchObject({ merged_external_refs: 'ref-t1,ref-t2' });
+    expect(records[0].date).toBe('2026-07-20');
+    expect(records[0].metadata).toMatchObject({ merged_from: 't1,t2' });
+    expect(result.transferTransactionId).toBe('transfer-txn-1');
+    expect(result.voidedTransactionIds).toEqual(['t1', 't2']);
 
     // The transfer is recorded directly CONFIRMED; no separate confirm dispatch.
     expect(bus.dispatchedOf(ConfirmTransactionCommand)).toHaveLength(0);
   });
 
-  it('rejects when a referenced leg is not pending', async () => {
-    await store.upsertPendingLeg(pendingLeg({ transactionId: 't1', accountId: 'acc-out', amount: '-500' }));
+  it('rejects when a referenced transaction does not exist', async () => {
+    const { handler, transactions } = setup();
+    transactions.load
+      .mockResolvedValueOnce(aPendingTransaction('acc-out', '-500') as never)
+      .mockResolvedValueOnce(null as never);
+
+    await expect(
+      handler.execute(new MergePendingTransfersCommand(['t1', 't2']), ctx),
+    ).rejects.toBeInstanceOf(PendingLegNotFoundException);
+  });
+
+  it('rejects when a referenced transaction is no longer pending', async () => {
+    const { handler, transactions } = setup();
+    transactions.load
+      .mockResolvedValueOnce(aPendingTransaction('acc-out', '-500') as never)
+      .mockResolvedValueOnce(
+        aPendingTransaction('acc-in', '500', TransactionStatus.CONFIRMED) as never,
+      );
 
     await expect(
       handler.execute(new MergePendingTransfersCommand(['t1', 't2']), ctx),
@@ -71,8 +112,36 @@ describe('MergePendingTransfersHandler', () => {
   });
 
   it('rejects two legs that are not a transfer pair (same sign)', async () => {
-    await store.upsertPendingLeg(pendingLeg({ transactionId: 't1', accountId: 'acc-out', amount: '-500' }));
-    await store.upsertPendingLeg(pendingLeg({ transactionId: 't2', accountId: 'acc-in', amount: '-500' }));
+    const { handler, transactions } = setup();
+    transactions.load
+      .mockResolvedValueOnce(aPendingTransaction('acc-out', '-500') as never)
+      .mockResolvedValueOnce(aPendingTransaction('acc-in', '-500') as never);
+
+    await expect(
+      handler.execute(new MergePendingTransfersCommand(['t1', 't2']), ctx),
+    ).rejects.toBeInstanceOf(NotATransferPairException);
+  });
+
+  it('rejects a leg with no real-account posting', async () => {
+    const { handler, transactions } = setup({ 'acc-in': 'ASSETS' });
+    transactions.load
+      .mockResolvedValueOnce(aPendingTransaction('acc-out', '-500') as never)
+      .mockResolvedValueOnce(aPendingTransaction('acc-in', '500') as never);
+
+    await expect(
+      handler.execute(new MergePendingTransfersCommand(['t1', 't2']), ctx),
+    ).rejects.toBeInstanceOf(NotATransferPairException);
+  });
+
+  it('rejects a leg whose postings both hit real accounts', async () => {
+    const { handler, transactions } = setup({
+      'acc-out': 'ASSETS',
+      'acc-in': 'ASSETS',
+      'acc-expenses': 'LIABILITIES',
+    });
+    transactions.load
+      .mockResolvedValueOnce(aPendingTransaction('acc-out', '-500') as never)
+      .mockResolvedValueOnce(aPendingTransaction('acc-in', '500') as never);
 
     await expect(
       handler.execute(new MergePendingTransfersCommand(['t1', 't2']), ctx),

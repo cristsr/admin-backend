@@ -156,58 +156,81 @@ Primeros reactors y la conciliación bancaria — el motor del caso de uso.
       ajuste contra `Equity:Adjustments` + `DiscrepancyResolved`; endpoint
       `/balance-assertions/{id}/resolve`.
 - [ ] **EP-3.6** Proyecciones `assertion_status` y `adjustment_audit`.
-- [ ] **EP-3.7** Detección de transferencias: proyección `transfer_candidates`
-      (RF-15) + command `MergePendingTransfers` (RF-16) + endpoints
-      `/transfers/candidates`, `/transfers/merge`.
+- [x] **EP-3.7** Fusión de transferencias: command `MergePendingTransfers`
+      (RF-16) + endpoint `/transfers/merge`. **RF-15 (`transfer_candidates`) se
+      retiró del alcance** — ver *Recorte de alcance* abajo.
 
 **Hecho cuando:** se registran aserciones, se evalúan/re-evalúan solas ante
-cambios previos, se resuelven discrepancias con ajuste auditado, y se detectan y
-fusionan pares de transferencia.
+cambios previos, se resuelven discrepancias con ajuste auditado, y se pueden
+fusionar dos pendientes que el cliente señale como una transferencia.
 
 ---
 
-## EP-4 — Producto: presupuestos, metas, valoración y reportes (Fase 4)
+## Recorte de alcance (2026-07-25)
 
-Capa de producto sobre el núcleo ya reforzado.
+`apps/ledger` queda acotado a su **núcleo contable**: cuentas, transacciones,
+conciliación, fusión de transferencias, settings y catálogo de monedas. Todo lo
+que no genera ni valida un asiento sale. Fundamento completo en
+[`decisions.md`](./decisions.md#alcance-del-ledger-acotado-a-su-núcleo-contable-2026-07-25);
+en resumen, el principio de diseño **#7** de la spec ya ubica reportes y
+conversión de moneda *"fuera del núcleo contable"*, y §4.3 dejó previsto extraer
+el producto embebido. Se ejerce esa salida antes de construirlo.
+
+**Fuera del alcance de este servicio** (pasan a un módulo o servicio de producto
+que consuma este API):
+
+- `Budget` (RF-24) y `Goal` (RF-25) — no emiten postings ni alteran saldos.
+- Valoración `net_worth` (RF-23) y reportes consolidados `/reports/*`.
+- Feed de tasas de cambio (RF-22): dato de referencia externo cuyo único
+  consumidor era la valoración.
+- Proyección `transfer_candidates` (RF-15): sugerencia heurística con ventana
+  calibrable; la spec §8.2 la tenía como pregunta abierta #4 sin resolver.
+
+---
+
+## EP-4 — Settings y catálogo de monedas (Fase 4, reducida)
+
+Lo que sobrevive del recorte: ambos son parámetros que el núcleo necesita para
+operar, no capa de producto.
 
 - [ ] **EP-4.1** `LedgerSettings`: `presentation_currency`, `timezone`
-      (`ChangePresentationCurrency`, `ChangeTimezone`) + `/ledger/settings`.
-- [ ] **EP-4.2** Datos de referencia: `CurrencyRegistered` (`/currencies`) y
-      `PriceRecorded` con corrección por superposición (§2.6, `/prices`).
-- [ ] **EP-4.3** Agregado `Budget` (`Defined`/`Amended`/`Removed`) + proyección
-      `budget_consumption` distinguiendo confirmados de pendientes (RF-24) +
-      `/budgets`.
-- [ ] **EP-4.4** Agregado `Goal` (`Defined`/`Amended`/`Achieved`/`Archived`) con
-      progreso desde balances y reactor de detección de logro (RF-25) + `/goals`.
-- [ ] **EP-4.5** Valoración: proyección `net_worth` + conversión **half-even solo
-      en lectura** a moneda de presentación (§2.7.1, RF-23).
-- [ ] **EP-4.6** Reportes: gastos por categoría/período/payee, patrimonio,
-      auditoría de ajustes (`/reports/*`).
+      (`ChangePresentationCurrency`, `ChangeTimezone`) + `/ledger/settings`. El
+      `timezone` es el parámetro del que RNF-7 deriva el cierre de día de las
+      aserciones; EP-3 ya lo consume vía `LedgerSettingsReader`.
+- [ ] **EP-4.2** Catálogo de monedas: `CurrencyRegistered` + `/currencies`, con
+      `minor_units` — lo exige `Money` para INV-8/RNF-2. **Sin** `PriceRecorded`.
 
-**Hecho cuando:** presupuestos y metas con ciclo de vida completo, reportes
-consolidados valorados en moneda de presentación, todo desde proyecciones.
+**Hecho cuando:** el usuario puede cambiar moneda de presentación y zona horaria,
+y el catálogo de monedas se administra vía API en vez de estar sembrado en código.
 
 ---
 
-## EP-5 — Cierre: deprecación de `finances` y operabilidad
+## Operabilidad (ex-EP-5, ya no es una épica)
 
-Se hace en paralelo/al final; asegura operar con datos reales.
+EP-5 se disolvió: no existe en la spec (§11 define 4 fases) y mezclaba tres cosas
+sin relación. Se replanifican como tareas de infraestructura sueltas, sin orden
+entre sí ni dependencia con las fases de construcción.
 
-- [ ] **EP-5.1** Retirar módulos de `finances` (`movement`, `transfer`,
-      `category`, `summary`, `budget` viejo) una vez cubiertos por `ledger`.
-- [ ] **EP-5.2** Backups automatizados del event store + prueba de restauración
+- [ ] **Backups** automatizados del event store + prueba de restauración
       (pregunta abierta #8; **obligatorio antes de datos reales**).
-- [ ] **EP-5.3** Runbook de rebuild de proyecciones y verificación de consistencia.
-- [ ] **EP-5.4** Métricas OTel del diseño (RNF-12): lag de proyecciones asíncronas,
-      tasa de conflictos de concurrencia optimista, errores de projectors/reactors.
+- [ ] **Runbook** de rebuild de proyecciones y verificación de consistencia — el
+      tooling ya existe (`nx run ledger:rebuild`, `:rebuildAll`,
+      `:verify-balances`); falta el documento operativo.
+- [ ] **Métricas OTel** (RNF-12): lag de proyecciones asíncronas, tasa de
+      conflictos de concurrencia optimista, errores de projectors/reactors. En
+      decoradores de los buses, nunca dentro del dominio (RNF-11).
+- [ ] **Retiro de `finances`** (`movement`, `transfer`, `category`, `summary`,
+      `budget` viejo) una vez cubiertos por `ledger`. Es trabajo sobre **otra
+      app**, no sobre el ledger.
 
 ---
 
 ## Secuencia y dependencias
 
 ```
-EP-0 ─► EP-1 ─► EP-2 ─► EP-3 ─► EP-4
-                          └────► EP-5 (parcial, en paralelo desde EP-2)
+EP-0 ─► EP-1 ─► EP-2 ─► EP-3 ─► EP-4 (settings + monedas)
+
+Operabilidad: sin dependencia de fase; en paralelo desde EP-2.
 ```
 
 - EP-0 y EP-1 son secuenciales y bloqueantes; el resto puede solaparse una vez
