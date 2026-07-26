@@ -1,14 +1,26 @@
 # Especificación Técnica — Ledger Service de Finanzas Personales (Partida Doble)
 
-**Versión:** 0.7
-**Fecha:** 2026-07-22
+**Versión:** 0.8
+**Fecha:** 2026-07-25
 **Estado:** Propuesta
+
+> **Cambio de alcance en 0.8 — el servicio se acota a su núcleo contable.** La capa de
+> producto (presupuestos, metas, valoración, reportes consolidados), el feed de tasas de
+> cambio y la detección heurística de transferencias salen del alcance de este servicio y
+> pasan a un módulo o servicio de producto que consuma este API. La versión 0.7 los incluía
+> por conveniencia de v1, contradiciendo su propio principio de diseño #7 y ejerciendo la
+> concesión que §4.3 ya declaraba «extraíble por eventos si crece».
+>
+> Los conceptos recortados **no se borran de este documento**: quedan marcados como fuera
+> de alcance y conservan su numeración de RF, para que el diseño siga disponible cuando ese
+> módulo de producto se construya y para no romper las referencias del código.
+> Fundamento completo en [`decisions.md`](./decisions.md), entrada del 2026-07-25.
 
 ---
 
 ## 1. Propósito y visión
 
-Servicio de ledger de partida doble para finanzas personales, inspirado en los conceptos de Beancount. Constituye el núcleo contable del ecosistema: mantiene cuentas, transacciones, conciliación, presupuestos y metas, y expone un API para que clientes externos (frontend, sistema de análisis de correos, u otros automatizadores) registren y consulten información financiera.
+Servicio de ledger de partida doble para finanzas personales, inspirado en los conceptos de Beancount. Constituye el núcleo contable del ecosistema: mantiene cuentas, transacciones y conciliación, y expone un API para que clientes externos (frontend, sistema de análisis de correos, u otros automatizadores) registren y consulten información financiera. Lo que no genera ni valida un asiento —presupuestos, metas, valoración, reportes consolidados— vive fuera de este servicio, sobre su API (§4.2).
 
 El sistema **no conoce** correos electrónicos, bancos ni mecanismos de captura: recibe transacciones ya estructuradas a través de su API. Tampoco gestiona la identidad de los clientes que lo consumen: la autenticación y autorización residen en un servicio externo, y el ledger recibe en cada operación un `client_id` ya validado, que registra como metadata de procedencia. La calidad del núcleo se define por la rigurosidad de sus invariantes contables, no por sus integraciones.
 
@@ -96,7 +108,10 @@ Resolución de una discrepancia confirmada como real (equivalente funcional del 
 
 Unidad de valor, registrada como evento fechado (`CurrencyRegistered`, equivalente a la directiva `commodity` de Beancount) con su precisión (`minor_units`). El sistema es multi-moneda por diseño: `COP`, `USD`, extensible a otras monedas y, a futuro, otros commodities (§9.2). Los montos se representan con aritmética exacta, nunca punto flotante.
 
-### 2.6 Price (Tasa de cambio)
+### 2.6 Price (Tasa de cambio) — **fuera de alcance (§4.2)**
+
+> Sale junto con la valoración, su único consumidor: una tasa nunca altera un asiento. Se
+> conserva como insumo de diseño del módulo de producto.
 
 Registro fechado del valor de una moneda expresado en otra (equivalente a la directiva `price`). Se usa exclusivamente para **valoración en proyecciones y reportes**, nunca para alterar los montos registrados. Una tasa mal cargada se corrige registrando una nueva para la misma fecha y fuente: la vigente es la de mayor posición en el stream (last-write-wins auditado).
 
@@ -104,7 +119,7 @@ Registro fechado del valor de una moneda expresado en otra (equivalente a la dir
 
 Preferencias contables del usuario que el dominio necesita conocer:
 
-- **Moneda de presentación** (`presentation_currency`, equivalente al `operating_currency` de Beancount): moneda en la que se definen presupuestos y se valoran reportes consolidados. Se establece al inicializar el ledger y puede cambiarse (`PresentationCurrencyChanged`); el cambio afecta valoración futura, jamás datos registrados.
+- **Moneda de presentación** (`presentation_currency`, equivalente al `operating_currency` de Beancount): moneda de referencia del ledger, que los consumidores usan para valorar y consolidar. Se establece al inicializar el ledger y puede cambiarse (`PresentationCurrencyChanged`); el cambio afecta valoración futura, jamás datos registrados. Este servicio la almacena y la expone; no la aplica (§4.2).
 - **Zona horaria** (`timezone`, identificador IANA, ej. `America/Bogota`): todo timestamp del sistema se almacena y procesa **siempre en UTC**; la zona horaria del usuario es el único mecanismo para derivar interpretaciones locales — la fecha contable de una operación capturada por timestamp, y el límite de "cierre del día" en la evaluación de aserciones (§2.4). Cambiarla (`TimezoneChanged`) afecta interpretaciones futuras, jamás eventos registrados.
 
 #### 2.7.1 Precisión y redondeo (adaptación de Beancount)
@@ -115,11 +130,17 @@ Beancount acepta montos de precisión arbitraria y compensa con **tolerancias in
 - **Redondeo solo en valoración**: la conversión a moneda de presentación (saldo USD × tasa → COP en reportes) redondea **half-even** a los `minor_units` de la moneda de presentación, exclusivamente en la capa de lectura; ningún valor redondeado se persiste jamás.
 - La cuenta de residuos de redondeo (equivalente al `account_rounding` de Beancount) se difiere hasta la adopción de costos/lotes (§9.2), que es cuando las multiplicaciones cantidad × precio generan residuos dentro de transacciones (§10).
 
-### 2.8 Budget (Presupuesto)
+### 2.8 Budget (Presupuesto) — **fuera de alcance (§4.2)**
+
+> Concepto de la capa de producto, no del núcleo contable: un presupuesto no emite postings
+> ni altera ningún saldo. Se conserva aquí como insumo de diseño para el módulo que lo
+> implemente sobre este API.
 
 Límite de gasto por período (mensual) asociado a una cuenta de tipo `EXPENSES` (y opcionalmente su subárbol), definido en la moneda de presentación. El consumo se calcula desde la proyección de postings del período. Redefinir el presupuesto de un período existente es una modificación explícita (`BudgetAmended`), no un upsert silencioso.
 
-### 2.9 Goal (Meta)
+### 2.9 Goal (Meta) — **fuera de alcance (§4.2)**
+
+> Concepto de la capa de producto, por la misma razón que §2.8.
 
 Objetivo de saldo sobre una cuenta de tipo `ASSETS`, con monto objetivo, moneda y fecha límite opcional. El progreso se deriva del saldo proyectado. Ciclo de vida completo: modificable (`GoalAmended`), alcanzada (`GoalAchieved`, marcada por el sistema al detectar el saldo objetivo) y archivable (`GoalArchived`).
 
@@ -137,7 +158,7 @@ Identificador provisto por el cliente al ejecutar un comando de escritura, únic
 
 ### 3.1 Bounded context
 
-Un único bounded context en este servicio: **Ledger**. La identidad/autorización de usuarios y clientes, el análisis de correos y el frontend son contexts externos que se integran exclusivamente a través del API (commands y queries). Presupuestos y metas se modelan como un módulo de producto dentro del mismo context en v1, con la opción documentada de extraerlos si crecen en complejidad.
+Un único bounded context en este servicio: **Ledger**, acotado a la contabilidad. La identidad/autorización de usuarios y clientes, el análisis de correos, el frontend y la **capa de producto** (presupuestos, metas, valoración, reportes — §4.2) son contexts externos que se integran exclusivamente a través del API (commands y queries).
 
 ### 3.2 Patrón CQRS: lados de escritura y lectura
 
@@ -174,7 +195,7 @@ CQRS estructura el servicio en dos lados con responsabilidades, modelos y rutas 
 **Reglas de orquestación:**
 
 - Los eventos son el único puente entre lados: no hay llamadas directas del query side al write side ni viceversa.
-- Procesos de reacción (las re-evaluaciones de aserciones de §3.6, la detección de logro de metas) se modelan como **reactors/process managers**: escuchan eventos y, si corresponde, despachan nuevos commands por el bus — nunca escriben eventos ni proyecciones directamente. Esto mantiene un único camino de escritura auditado.
+- Procesos de reacción (las re-evaluaciones de aserciones de §3.6) se modelan como **reactors/process managers**: escuchan eventos y, si corresponde, despachan nuevos commands por el bus — nunca escriben eventos ni proyecciones directamente. Esto mantiene un único camino de escritura auditado.
 - El modo de despacho de los projectors (síncrono en la transacción del command para vistas críticas vs. asíncrono con checkpoint) es una decisión de infraestructura por proyección (pregunta abierta #4); el contrato lógico entre lados no cambia.
 
 ### 3.3 Agregados
@@ -185,14 +206,15 @@ CQRS estructura el servicio en dos lados con responsabilidades, modelos y rutas 
 | `LedgerTransaction` | TransactionId | Registro, enmienda, anotación, confirmación, anulación y reversa de una transacción con sus postings | INV-1, INV-2, INV-6 |
 | `BalanceAssertion` | AssertionId | Declaración, evaluación y revocación de un checkpoint de conciliación | — |
 | `LedgerSettings` | UserId | Moneda de presentación y preferencias contables | — |
-| `Budget` | BudgetId | Definición y modificación del límite por período | — |
-| `Goal` | GoalId | Definición, modificación, logro y archivo del objetivo | — |
+
+`Budget` y `Goal` eran agregados de v1 en la versión 0.7; salieron del alcance (§4.2) y se
+modelarán en el módulo de producto.
 
 Notas de diseño:
 
 - **La transacción es el agregado, no el posting**: los postings solo existen dentro de su transacción, lo que hace del balance a cero (INV-1) un invariante *interno* del agregado, verificable de forma síncrona y transaccional al procesar cada comando. Esta es la razón principal por la que event sourcing y partida doble encajan naturalmente: la unidad de consistencia contable y la unidad de persistencia de eventos coinciden.
 - **Los saldos no son agregados**: son proyecciones. Ningún comando "escribe un saldo" (INV-5). La validación cruzada que requiere estado fuera del agregado (ej. que la cuenta exista, esté abierta y acepte la moneda) se resuelve consultando el modelo de cuentas al procesar el comando, con las consideraciones de consistencia de §3.5.
-- **`Price` y `Currency`** se modelan como datos de referencia event-sourced de forma simple (`PriceRecorded`, `CurrencyRegistered`), no como agregados ricos: no protegen invariantes de negocio complejos.
+- **`Currency`** se modela como dato de referencia event-sourced de forma simple (`CurrencyRegistered`), no como agregado rico: no protege invariantes de negocio complejos. Es parte del núcleo porque `Money` necesita los `minor_units` de cada moneda para la exactitud decimal (INV-8). `Price` (tasas de cambio) seguía el mismo patrón pero salió del alcance junto con la valoración, su único consumidor (§4.2).
 - **El ajuste de conciliación no es un agregado**: es una `LedgerTransaction` ordinaria de origen sistema, creada por el command `ResolveDiscrepancy`, vinculada por metadata a su aserción.
 
 ### 3.4 Catálogo de eventos de dominio
@@ -236,20 +258,18 @@ Todos los eventos portan como sobre (envelope): `event_id`, `aggregate_id`, `agg
 | `PresentationCurrencyChanged` | new_currency |
 | `TimezoneChanged` | new_timezone (IANA) |
 | `CurrencyRegistered` | code, minor_units, name |
-| `PriceRecorded` | base, quote, date, rate, source |
 
-**Producto**
-
-| Evento | Contenido esencial |
-|---|---|
-| `BudgetDefined` / `BudgetAmended` / `BudgetRemoved` | account_id, period, amount, currency, include_children |
-| `GoalDefined` / `GoalAmended` / `GoalAchieved` / `GoalArchived` | account_id, target, currency, due_date |
+**Fuera de alcance (§4.2)** — se conservan como insumo de diseño del módulo de producto:
+`PriceRecorded` (base, quote, date, rate, source), `BudgetDefined`/`BudgetAmended`/`BudgetRemoved`
+y `GoalDefined`/`GoalAmended`/`GoalAchieved`/`GoalArchived`.
 
 La corrección de una confirmada se materializa como: `TransactionReversed` sobre la original + `TransactionRecorded` de la transacción de reversa (creada por el sistema, vinculada por metadata `reverses_id`). La resolución de una discrepancia se materializa como: `TransactionRecorded` del ajuste contra `Equity:Adjustments` + `DiscrepancyResolved` sobre la aserción.
 
 ### 3.5 Commands (superficie de escritura del dominio)
 
-`InitializeLedger`, `OpenAccount`, `RenameAccount`, `CloseAccount`, `RecordTransaction`, `AmendPendingTransaction`, `AnnotateTransaction`, `ConfirmTransaction`, `VoidPendingTransaction`, `ReverseConfirmedTransaction`, `MergePendingTransfers`, `AssertBalance`, `RevokeAssertion`, `ResolveDiscrepancy`, `ChangePresentationCurrency`, `ChangeTimezone`, `RegisterCurrency`, `RecordPrice`, `DefineBudget`, `AmendBudget`, `RemoveBudget`, `DefineGoal`, `AmendGoal`, `ArchiveGoal`.
+`InitializeLedger`, `OpenAccount`, `RenameAccount`, `CloseAccount`, `RecordTransaction`, `AmendPendingTransaction`, `AnnotateTransaction`, `ConfirmTransaction`, `VoidPendingTransaction`, `ReverseConfirmedTransaction`, `MergePendingTransfers`, `AssertBalance`, `RevokeAssertion`, `ResolveDiscrepancy`, `ChangePresentationCurrency`, `ChangeTimezone`, `RegisterCurrency`.
+
+Fuera de alcance (§4.2): `RecordPrice`, `DefineBudget`, `AmendBudget`, `RemoveBudget`, `DefineGoal`, `AmendGoal`, `ArchiveGoal`.
 
 Cada command: valida contra el estado actual del agregado (reconstruido desde sus eventos), verifica los invariantes, y emite cero o más eventos de forma atómica con control de concurrencia optimista (`sequence` esperado).
 
@@ -261,13 +281,15 @@ Las proyecciones se construyen consumiendo el event stream y son **totalmente re
 |---|---|---|
 | `account_tree` | AccountOpened/Renamed/Closed | Listados, validación de jerarquía y nombres |
 | `transaction_list` | Transaction* / TransfersMerged | Consultas con filtros (incl. payee) y paginación |
-| `account_balances` | TransactionConfirmed/Reversed (y pendientes por separado) | Saldos por cuenta+moneda, metas |
+| `account_balances` | TransactionConfirmed/Reversed (y pendientes por separado) | Saldos por cuenta+moneda |
 | `pending_review` | TransactionRecorded/Amended/Voided/Confirmed | Bandeja de pendientes del frontend |
-| `transfer_candidates` | TransactionRecorded (pendientes) | Detección de pares transferencia (RF-14) |
 | `assertion_status` | BalanceAsserted/Evaluated/Revoked + balances | Conciliación, discrepancias y su resolución |
 | `adjustment_audit` | DiscrepancyResolved + ajustes | Indicador de "dinero sin explicación" por cuenta |
-| `budget_consumption` | postings de EXPENSES por período | Consumo de presupuesto (RF-21) |
-| `net_worth` | balances + PriceRecorded + settings | Patrimonio valorado en moneda de presentación |
+| `ledger_settings` | LedgerInitialized/PresentationCurrencyChanged/TimezoneChanged | Moneda de presentación, zona horaria y cuentas técnicas |
+| `currencies` | CurrencyRegistered | Catálogo de monedas con sus `minor_units` (INV-8) |
+
+Fuera de alcance (§4.2): `transfer_candidates` (propuestas de transferencia, RF-15),
+`budget_consumption` (RF-24) y `net_worth` (RF-23).
 
 Consideraciones de consistencia:
 
@@ -314,26 +336,43 @@ Los contratos se especifican con semántica completa (excepciones, orden, idempo
 
 ### 4.1 Dentro del alcance (v1)
 
+**Criterio de inclusión:** entra al servicio lo que **genera o valida un asiento contable**,
+más los parámetros que el núcleo necesita para operar (zona horaria, monedas). Todo lo demás
+es capa de producto y vive fuera (§4.2).
+
 - Ledger de partida doble multi-moneda con los cinco tipos de cuenta, jerarquía por nombre y reorganización (renombre) de cuentas, implementado con event sourcing según §3.
 - API REST para todos los commands y queries del dominio.
 - Ciclo de vida completo de transacción: `PENDING → CONFIRMED`, enmienda económica solo en pendiente, anotación en cualquier estado, anulación de pendientes, reversa de confirmadas.
 - Idempotencia genérica por referencia externa en todos los commands.
-- Detección de transacciones pendientes candidatas a transferencia y command de fusión.
+- Command de fusión de dos pendientes en una transferencia confirmada (RF-16), con validación de que el par es contablemente legítimo. **Sin** detección heurística: proponer qué fusionar es del cliente (§4.2).
 - Conciliación completa: afirmaciones de saldo con semántica temporal definida (§2.4), evaluación y re-evaluación, revocación de aserciones erróneas y resolución de discrepancias mediante ajustes contra `Equity:Adjustments`.
 - Inicialización del ledger con cuentas técnicas y moneda de presentación; saldos iniciales contra `Equity:OpeningBalances`.
+- Configuración del ledger: moneda de presentación y zona horaria (la zona horaria es el parámetro del que RNF-7 deriva el cierre del día para las aserciones).
+- Catálogo de monedas con sus `minor_units`: lo exige `Money` para la exactitud decimal (INV-8, RNF-2).
 - Payee como campo de primera clase en transacciones.
-- Presupuestos mensuales por categoría y metas de ahorro, con ciclos de vida completos (modificación, logro, archivo).
 - Registro de `client_id` como metadata de procedencia en todos los eventos.
-- Proyecciones y reportes básicos: saldo por cuenta y jerarquía, gastos/ingresos por categoría, período y payee, patrimonio neto valorado en moneda de presentación, auditoría de ajustes.
+- Proyecciones de lectura del núcleo: árbol de cuentas, saldo por cuenta y moneda, listado de transacciones con filtros y paginación, estado de conciliación y auditoría de ajustes.
 
 ### 4.2 Fuera del alcance (v1)
+
+**Capa de producto — sale del servicio en la versión 0.8** (ver `decisions.md`, 2026-07-25).
+No es funcionalidad descartada: es funcionalidad que pertenece a otro componente, construido
+sobre este API. El diseño de cada concepto se conserva en este documento.
+
+- **Presupuestos** (§2.8, RF-24) y **metas** (§2.9, RF-25): no emiten postings ni alteran saldos; son planificación sobre proyecciones.
+- **Valoración y patrimonio neto** (RF-23): el principio de diseño **#7** ya ubica las conversiones de moneda para reportes «fuera del núcleo contable».
+- **Reportes consolidados** (`/reports/*`): gastos por categoría, período y payee; patrimonio. Mismo fundamento que el punto anterior. La *auditoría de ajustes* sí se queda: es trazabilidad contable, no reporte de producto.
+- **Registro de tasas de cambio** (§2.6, RF-22): dato de referencia externo cuyo único consumidor era la valoración.
+- **Detección de candidatos a transferencia** (RF-15): heurística con ventana temporal calibrable, no regla contable. El ledger expone las pendientes vía `GET /transactions?status=PENDING`; proponer pares es del cliente. La *fusión* (RF-16) sí se queda: anular dos pendientes y registrar una transferencia son operaciones contables.
+
+**Fuera del alcance desde la versión 0.7:**
 
 - **Análisis y sincronización de correos electrónicos**: responsabilidad de un sistema independiente que consume el API de este servicio.
 - **Gestión de identidad, autenticación y autorización** de usuarios y clientes: responsabilidad de un servicio externo. El ledger asume que toda petición llega autenticada, con `user_id` y `client_id` resueltos y validados; se limita a exigir su presencia y registrarlos.
 - **Sugerencia automática de categorías**: responsabilidad de los clientes (frontend o automatizadores) o de un servicio futuro. El ledger aporta los datos que la hacen posible (payee, historial consultable) pero no implementa el motor de reglas ni aprendizaje.
 - Inversiones con lotes y costo de adquisición (mecanismo `{cost}` de Beancount). Diferido; ver ruta de evolución en §9.2.
 - Conexión a APIs bancarias / Open Finance (Belvo, Prometeo).
-- Presupuestos multi-moneda nativos (operan en la moneda de presentación con conversión al reportar).
+- Presupuestos multi-moneda nativos (redundante desde 0.8: los presupuestos completos salieron del alcance).
 - Parsing del contenido de facturas (solo se almacena la URL).
 - Compartir ledgers entre usuarios, cuentas conjuntas.
 - Importación de formatos externos (OFX, CSV, camt.053) como funcionalidad propia; un cliente externo puede implementarla consumiendo el API.
@@ -349,8 +388,8 @@ Las exclusiones de conceptos específicos de Beancount/hledger evaluados y desca
 | Transacciones con N postings (no limitado a 2) | Costo bajo y habilita compras divididas en categorías | — |
 | Sin mecanismo de costo/lotes en v1 | Complejidad alta sin caso de uso actual; diseño preparado (§9.2) | Alta por diseño |
 | Pagos internacionales desde cuentas COP registrados 100% en COP | La conciliación contra extracto exige registrar lo que realmente salió; el monto original es metadato | — |
-| Detección de transferencias en el ledger (no en el cliente) | El ledger tiene la visión completa de pendientes, incluidas las manuales | — |
-| Un solo bounded context (Ledger) con producto embebido | Evita sobre-ingeniería en v1; extraíble por eventos si crece | Media |
+| ~~Detección de transferencias en el ledger (no en el cliente)~~ **Revertida en 0.8**: la detección es del cliente; el ledger solo valida la fusión | La ventana temporal era una heurística calibrable (pregunta abierta #4, nunca resuelta), no una regla contable | Ejercida |
+| ~~Un solo bounded context (Ledger) con producto embebido~~ **Revertida en 0.8**: el producto sale a su propio componente | La concesión de v1 contradecía el principio #7; se ejerció la salida antes de construirlo, no después | Ejercida |
 | Validación inter-agregado con consistencia relajada (§3.5) | Frecuencia de cambio de cuentas mínima; el fallo degrada a discrepancia detectable, nunca a corrupción | — |
 | Aserción sobre cuenta exacta, sin subcuentas | Regla de Beancount; correcta para conciliación bancaria con espejo 1:1 | Media: variante con subárbol como feature nueva |
 | Estado por transacción, no por posting | Simplifica el ciclo de vida; los flags por posting de Beancount no aportan al caso de uso | Baja necesidad |
@@ -403,8 +442,8 @@ Las exclusiones de conceptos específicos de Beancount/hledger evaluados y desca
 
 **Transferencias**
 
-- **RF-15**: Detección de pares de pendientes candidatas a transferencia (montos opuestos, misma moneda, cuentas reales distintas, ventana temporal configurable), expuesta como proyección de propuestas.
-- **RF-16**: Command de fusión: anula las dos pendientes y registra una única transferencia confirmada, conservando las referencias externas de ambas en metadata.
+- **RF-15** — **fuera de alcance (§4.2)**: Detección de pares de pendientes candidatas a transferencia (montos opuestos, misma moneda, cuentas reales distintas, ventana temporal configurable), expuesta como proyección de propuestas.
+- **RF-16**: Command de fusión: anula las dos pendientes y registra una única transferencia confirmada, conservando las referencias externas de ambas en metadata. El servicio **valida** que el par sea legítimo (montos opuestos que netean a cero, misma moneda, cuentas reales distintas) sobre las dos transacciones que el cliente nombra; no las descubre por su cuenta.
 
 **Conciliación**
 
@@ -416,13 +455,13 @@ Las exclusiones de conceptos específicos de Beancount/hledger evaluados y desca
 **Multi-moneda y valoración**
 
 - **RF-21**: Todo monto porta su moneda. Las cuentas reales operan en su única moneda declarada. El registro de monedas es un evento fechado.
-- **RF-22**: Registro de tasas de cambio fechadas vía API, con corrección por superposición auditada (§2.6).
-- **RF-23**: Los reportes consolidados valoran saldos en la moneda de presentación usando la tasa vigente a la fecha del reporte, sin modificar eventos.
+- **RF-22** — **fuera de alcance (§4.2)**: Registro de tasas de cambio fechadas vía API, con corrección por superposición auditada (§2.6).
+- **RF-23** — **fuera de alcance (§4.2)**: Los reportes consolidados valoran saldos en la moneda de presentación usando la tasa vigente a la fecha del reporte, sin modificar eventos.
 
-**Presupuestos y metas**
+**Presupuestos y metas** — **fuera de alcance (§4.2)**
 
-- **RF-24**: Presupuestos mensuales por cuenta de gasto (con agregación jerárquica opcional), con consumo proyectado distinguiendo confirmados de pendientes; modificación explícita del presupuesto de un período existente.
-- **RF-25**: Metas de saldo sobre cuentas de activos con progreso derivado, modificación, detección de logro y archivo.
+- **RF-24** — **fuera de alcance**: Presupuestos mensuales por cuenta de gasto (con agregación jerárquica opcional), con consumo proyectado distinguiendo confirmados de pendientes; modificación explícita del presupuesto de un período existente.
+- **RF-25** — **fuera de alcance**: Metas de saldo sobre cuentas de activos con progreso derivado, modificación, detección de logro y archivo.
 
 **Plataforma**
 
@@ -596,17 +635,20 @@ CREATE TABLE proj_assertions (
     checked_at       TIMESTAMPTZ
 );
 
--- Ledger settings
+-- Ledger settings (one row per user; also holds the technical account ids)
 CREATE TABLE proj_ledger_settings (
-    user_id               UUID PRIMARY KEY,
-    presentation_currency TEXT NOT NULL,
-    timezone              TEXT NOT NULL,        -- IANA identifier, e.g. 'America/Bogota'
-    initialized_at        TIMESTAMPTZ NOT NULL
+    user_id                     UUID PRIMARY KEY,
+    presentation_currency       TEXT NOT NULL,
+    timezone                    TEXT NOT NULL,   -- IANA identifier, e.g. 'America/Bogota'
+    opening_balances_account_id UUID NOT NULL,
+    adjustments_account_id      UUID NOT NULL,
+    is_initialized              BOOLEAN NOT NULL DEFAULT FALSE
 );
 
--- Reference data projections: proj_currencies, proj_prices,
--- proj_budgets (+ consumption), proj_goals, adjustment_audit
--- follow the same pattern and are omitted for brevity.
+-- proj_currencies (catálogo con minor_units) y adjustment_audit siguen el mismo
+-- patrón y se omiten por brevedad.
+-- Fuera de alcance (§4.2): proj_prices, proj_budgets (+ consumption), proj_goals,
+-- proj_transfer_candidates.
 ```
 
 ### 6.3 Notas de modelado
@@ -614,8 +656,8 @@ CREATE TABLE proj_ledger_settings (
 - **Constraints en proyecciones**: deliberadamente mínimos. La integridad de negocio se garantiza en los agregados antes de emitir eventos; las proyecciones solo reflejan. Un bug de proyección se corrige con rebuild, nunca editando datos.
 - **Derivación del tipo (`derived_kind`)**: calculada por el proyector a partir de los tipos de cuenta de los postings; combinaciones desconocidas → `COMPOUND` (preparación para §9.2).
 - **Renombre de cuentas**: `AccountRenamed` actualiza `proj_accounts.name` de la cuenta y el prefijo de sus descendientes; ninguna otra proyección cambia porque todas referencian `account_id`.
-- **Compra internacional**: el posting registra el monto COP realmente debitado; el monto original va en metadata del posting. La tasa implícita del banco es derivable y comparable contra `proj_prices` para analítica de spread. El ajuste del monto provisional es un `AmendPendingTransaction`; adjuntar la factura después de confirmar es un `AnnotateTransaction`.
-- **Fusión de transferencias**: el command `MergePendingTransfers` emite `TransactionVoided` × 2 y `TransactionRecorded` (+`TransactionConfirmed`) de la transferencia, en una única operación atómica sobre el stream.
+- **Compra internacional**: el posting registra el monto COP realmente debitado; el monto original va en metadata del posting. La tasa implícita del banco queda derivable desde esa metadata para analítica externa. El ajuste del monto provisional es un `AmendPendingTransaction`; adjuntar la factura después de confirmar es un `AnnotateTransaction`.
+- **Fusión de transferencias**: el command `MergePendingTransfers` emite `TransactionVoided` × 2 y `TransactionRecorded` (+`TransactionConfirmed`) de la transferencia, en una única operación atómica sobre el stream. Antes de emitir nada valida el par contra los dos agregados que carga desde el stream —nunca contra una proyección (RNF-10)—: montos opuestos que netean a cero, misma moneda, cuentas reales distintas, ambas todavía `PENDING`.
 - **Ajuste de conciliación**: `ResolveDiscrepancy` emite `TransactionRecorded`+`Confirmed` (origen sistema, contra `Equity:Adjustments`) y `DiscrepancyResolved` sobre la aserción; `proj_assertions.resolved_by_txn` los vincula.
 - **Snapshots de agregados**: no se implementan en v1 (los agregados tienen pocos eventos cada uno). Se documenta como optimización futura si aparecieran agregados de larga vida.
 
@@ -636,16 +678,14 @@ El API traduce recursos REST a commands y queries del dominio. El detalle de pay
 | `/transactions/{id}/confirm` | confirmar | ConfirmTransaction |
 | `/transactions/{id}/void` | anular pendiente | VoidPendingTransaction |
 | `/transactions/{id}/reverse` | revertir confirmada | ReverseConfirmedTransaction |
-| `/transfers/candidates` | listar propuestas | transfer_candidates |
-| `/transfers/merge` | fusionar dos pendientes | MergePendingTransfers |
+| `/transfers/merge` | fusionar dos pendientes que el cliente nombra | MergePendingTransfers |
 | `/balance-assertions` | crear, listar, consultar estado | AssertBalance / assertion_status |
 | `/balance-assertions/{id}/revoke` | revocar aserción errónea | RevokeAssertion |
 | `/balance-assertions/{id}/resolve` | resolver discrepancia con ajuste | ResolveDiscrepancy |
 | `/currencies` | registrar, listar | RegisterCurrency / proj_currencies |
-| `/prices` | crear, listar | RecordPrice / proj_prices |
-| `/budgets` | definir, modificar, quitar, consultar consumo | DefineBudget, AmendBudget, RemoveBudget / budget_consumption |
-| `/goals` | definir, modificar, archivar, consultar progreso | DefineGoal, AmendGoal, ArchiveGoal / balances |
-| `/reports/*` | patrimonio, gastos por categoría/período/payee, auditoría de ajustes | proyecciones de reporte |
+
+Fuera de alcance (§4.2), a implementar por el módulo de producto sobre este API:
+`/transfers/candidates`, `/prices`, `/budgets`, `/goals`, `/reports/*`.
 
 Consideraciones transversales:
 
@@ -676,9 +716,12 @@ Usuario (frontend)
 
 ```
 Dos POST /transactions independientes (salida en A, entrada en B) → PENDING
-   → proyección transfer_candidates detecta el par
+   → el cliente identifica el par (GET /transactions?status=PENDING).
+     Proponer candidatos es del cliente, no del ledger (§4.2, RF-15)
    → POST /transfers/merge { pending_ids: [t1, t2] }
-     → MergePendingTransfers
+     → MergePendingTransfers carga ambos agregados desde el stream y valida:
+       ambos PENDING, montos opuestos que netean a cero, misma moneda,
+       cuentas reales distintas
      → TransactionVoided(t1), TransactionVoided(t2),
        TransactionRecorded+Confirmed(transferencia [A: -X, B: +X])
 ```
@@ -724,7 +767,7 @@ Aserción evaluada → MISMATCHED (diferencia: -12.500 COP)
 | Decisión | Resolución | Justificación |
 |---|---|---|
 | Framework de event sourcing vs. implementación propia | **Implementación propia sobre PostgreSQL** (detrás del puerto `EventStore`, §3.8) | El dominio tiene políticas opinadas (idempotencia por `external_ref` en el stream, `INDETERMINATE`, reactors solo-commands) que chocarían con las convenciones de cualquier framework; la infraestructura requerida está completamente especificada y es acotada; una sola tecnología operativa (PostgreSQL) da transacción ACID entre eventos y proyecciones síncronas. Regla de disciplina: implementar solo la infraestructura que los requerimientos nombran, nada especulativo |
-| Estrategia de proyección | **Híbrida con sesgo síncrono**: `transaction_list`, `proj_postings`, `account_balances`, `pending_review` en la transacción del command; `assertion_status`, `transfer_candidates`, `adjustment_audit`, `budget_consumption`, `net_worth` asíncronas (poller propio con checkpoint / reactors) | El event store y las proyecciones en el mismo PostgreSQL hacen el modo síncrono gratis y correcto (ACID conjunto, RNF-9 trivial); las proyecciones derivadas y de reacción no tienen expectativa de inmediatez. El código del projector es idéntico en ambos modos (§3.8): mover una proyección de modo es configuración del adaptador, no reescritura |
+| Estrategia de proyección | **Híbrida con sesgo síncrono**: `transaction_list`, `proj_postings`, `account_balances`, `pending_review`, `ledger_settings` en la transacción del command; `assertion_status` y `adjustment_audit` asíncronas (poller propio con checkpoint / reactors) | El event store y las proyecciones en el mismo PostgreSQL hacen el modo síncrono gratis y correcto (ACID conjunto, RNF-9 trivial); las proyecciones derivadas y de reacción no tienen expectativa de inmediatez. El código del projector es idéntico en ambos modos (§3.8): mover una proyección de modo es configuración del adaptador, no reescritura |
 | Malla de eventos / CDC (Debezium) | **Diferida a la aparición del primer consumidor externo real** (§9.3) | Debezium resuelve transporte/integración, no sourcing; su peso operativo (broker, conector, replication slots) no se justifica para projectors internos, que se sirven con el poller propio. El `event_store` ya es CDC-friendly por construcción (append-only, posición global, payload autocontenido): adoptarlo después no requiere ningún cambio del núcleo |
 | Stack tecnológico | **NestJS (TypeScript) + PostgreSQL**, arquitectura hexagonal orientada a módulos: cada área del dominio (accounts, transactions, reconciliation, product, shared-kernel) como módulo NestJS con su hexágono interno (domain/application libres de NestJS; adaptadores en los providers del módulo) | El sistema de módulos e inyección de dependencias de NestJS materializa los puertos (§3.8) como tokens de inyección de forma natural. **Advertencia crítica del stack**: `number` de TypeScript es punto flotante y viola INV-8 — los montos viajan como strings decimales en DTOs, payloads de eventos y columnas `NUMERIC`, y se operan exclusivamente con una librería decimal dentro del value object `Money`, cuya construcción desde `number` está prohibida |
 
@@ -734,8 +777,8 @@ Aserción evaluada → MISMATCHED (diferencia: -12.500 COP)
 |---|---|---|
 | 1 | Estrategia de migración de la base actual: generar el stream inicial (¿evento de importación por movimiento histórico vs. snapshot génesis?) | Pendiente de diseño; requiere inventario del esquema existente |
 | 2 | Contrato OpenAPI detallado y su versionado inicial | Pendiente; insumo para el sistema de correos y el frontend |
-| 3 | ¿Presupuesto consume transacciones `PENDING` o solo `CONFIRMED`? | Propuesta: ambas, diferenciadas (RF-24) |
-| 4 | Ventana temporal y tolerancia del detector de transferencias | Calibrar con datos reales |
+| 3 | ¿Presupuesto consume transacciones `PENDING` o solo `CONFIRMED`? | **Ya no aplica a este servicio** (RF-24 fuera de alcance, §4.2). Se traslada al módulo de producto; `account_balances` ya distingue confirmados de pendientes, así que la información está disponible |
+| 4 | Ventana temporal y tolerancia del detector de transferencias | **Cerrada por retiro (2026-07-25)**: RF-15 sale del alcance (§4.2). La fusión (RF-16) no usa ventana ni tolerancia — exige montos que neteen a **cero exacto**. Que la pregunta llevara meses sin resolverse fue parte del argumento para sacar la heurística del ledger |
 | 5 | Contrato con el servicio de identidad: formato del contexto autenticado (headers firmados, JWT, mTLS interno) | Definir con ese servicio |
 | 6 | Orden intradía cuando conviven transacciones con y sin `occurred_at` frente a aserciones intradía (regla `INDETERMINATE`, §2.4) | Validar contra datos reales de notificaciones |
 | 7 | ¿El renombre de cuenta propaga a descendientes en el mismo command o como eventos individuales por cuenta? | Decisión de diseño del agregado; afecta atomicidad del rebuild |
@@ -749,7 +792,7 @@ El diseño garantiza que las capacidades diferidas se agreguen de forma **aditiv
 
 ### 9.1 Multi-moneda: ya presente en el núcleo
 
-Capacidad estructural, no evolución pendiente: cada posting porta `(amount, currency)`, el balanceo es por moneda (INV-1) y existen `CurrencyRegistered`/`PriceRecorded` para registro y valoración. Habilitar una cuenta real en USD (Wise, cuenta en el exterior) no requiere cambios: se abre la cuenta con esa moneda y opera de inmediato. Lo diferido es conveniencia: fuentes automáticas de tasas y reportes consolidados más ricos.
+Capacidad estructural, no evolución pendiente: cada posting porta `(amount, currency)`, el balanceo es por moneda (INV-1) y existe `CurrencyRegistered` para el catálogo de monedas con sus `minor_units`. Habilitar una cuenta real en USD (Wise, cuenta en el exterior) no requiere cambios: se abre la cuenta con esa moneda y opera de inmediato. Lo que vive fuera de este servicio es la **valoración**: convertir saldos de varias monedas a una sola para consolidar requiere tasas (`PriceRecorded`, RF-22) y redondeo half-even de presentación (RF-23), y ambos pertenecen a la capa de producto (§4.2, principio de diseño #7). El ledger entrega los saldos exactos por moneda; consolidarlos es de quien reporta.
 
 ### 9.2 Inversiones con costo y lotes
 
@@ -765,6 +808,7 @@ El derivador de tipo ya está preparado: una compra de acciones (`Assets → Ass
 
 ### 9.3 Otras extensiones previstas
 
+- **Capa de producto** (presupuestos, metas, valoración, reportes consolidados, tasas de cambio, sugerencia de candidatos a transferencia): el consumidor previsto más inmediato de este API. Salió del alcance del servicio en la versión 0.8 (§4.2) y su diseño se conserva en §2.8, §2.9, §3.4 y RF-15/22/23/24/25. Se integra como cualquier otro cliente: contexto autenticado, `client_id` propio, lectura por queries y escritura por commands. Cero cambios en el núcleo.
 - **Open Finance / APIs bancarias e importadores de formatos (OFX, CSV, camt.053)**: nuevos clientes del API con su propio `client_id`; cero cambios en el núcleo.
 - **Transacciones periódicas / recurrentes** (equivalente a las periodic transactions de hledger): motor de plantillas que genera transacciones pendientes según calendario. Se implementa como módulo de producto o cliente automatizado; el payee de primera clase facilita la detección de recurrencias existentes.
 - **Motor de sugerencia de categorías**: servicio o cliente que aprende de payee + historial y sugiere la contraparte al registrar pendientes. El ledger ya expone los datos necesarios.
@@ -812,7 +856,15 @@ Conceptos evaluados contra la referencia y descartados o diferidos deliberadamen
 
 1. **Fase 1 — Núcleo de dominio, puertos y adaptadores base**: value objects (`Money`, `AccountName`, `Payee`), agregados `Account` y `LedgerTransaction` con sus invariantes (incl. anotación vs. enmienda), puertos del núcleo (§3.8) con adaptadores in-memory y contract tests, adaptador `PostgresEventStore` (append-only, concurrencia optimista, idempotencia), command bus con sus políticas transversales, projectors con despacho síncrono y poller con checkpoints, tooling de rebuild, inicialización del ledger con cuentas técnicas, proyecciones `account_tree`, `transaction_list`, `account_balances`. Migración de datos existentes como generación del stream inicial.
 2. **Fase 2 — API**: contrato OpenAPI, integración del contexto autenticado externo, endpoints despachando a command bus y query bus, códigos de error de dominio, lectura de escrituras propias.
-3. **Fase 3 — Conciliación y transferencias**: agregado `BalanceAssertion` con evaluación, revocación y resolución de discrepancias; primeros reactors (re-evaluación de aserciones, detección de logro de metas); proyecciones de conciliación y auditoría de ajustes; detector y fusión de transferencias.
-4. **Fase 4 — Producto**: presupuestos y metas con ciclos de vida completos, tasas de cambio, valoración y reportes consolidados (incluyendo reportes por payee).
+3. **Fase 3 — Conciliación y transferencias**: agregado `BalanceAssertion` con evaluación, revocación y resolución de discrepancias; primeros reactors (re-evaluación de aserciones); proyecciones de conciliación y auditoría de ajustes; fusión de transferencias.
+4. **Fase 4 — Configuración y monedas**: `LedgerSettings` (moneda de presentación y zona horaria) y catálogo de monedas administrable. Ambos son parámetros que el núcleo necesita, no capa de producto.
 
-Cada fase deja el sistema en estado consistente y usable por clientes API; las características de producto (fase 4) no se construyen hasta que los invariantes del núcleo estén reforzados, con las proyecciones verificadas contra el stream mediante replay.
+La fase 4 de la versión 0.7 («Producto»: presupuestos, metas, tasas, valoración y reportes)
+salió del alcance de este servicio en la 0.8 (§4.2) y pasa a ser un componente aparte,
+construido sobre este API. Cada fase deja el sistema en estado consistente y usable por
+clientes API.
+
+**Operabilidad** (backups y prueba de restauración, runbook de rebuild, métricas OTel de
+RNF-12) no es una fase: son tareas de infraestructura sin dependencia de orden, que se
+construyen en paralelo desde la fase 2 y deben estar completas antes de operar con datos
+reales.
