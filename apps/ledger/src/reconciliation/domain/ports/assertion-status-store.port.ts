@@ -21,33 +21,22 @@ export interface AssertionStatusRow {
 }
 
 /**
- * Read/write port for the `assertion_status` projection. Writes come only from
- * the projector (RNF-10); reads serve the query handlers and the reactor lookup.
+ * Read port over the `assertion_status` projection, serving the query handlers
+ * and the reactor lookup.
+ *
+ * Writes are deliberately absent: `AssertionStatusProjector` is the only writer
+ * of the read model and it goes through the shared `ReadModelStore` (RNF-10,
+ * Artículo 10). Truncation is not here either — a rebuild truncates by table
+ * through that same store.
  */
 export abstract class AssertionStatusStore {
-  abstract upsertAsserted(row: AssertionStatusRow): Promise<void>;
-
-  abstract applyEvaluation(
-    assertionId: string,
-    status: AssertionStatus,
-    difference: string,
-    checkedAt: Date,
-  ): Promise<void>;
-
-  abstract markRevoked(assertionId: string, reason: string): Promise<void>;
-
-  abstract linkResolution(assertionId: string, adjustmentTxnId: string): Promise<void>;
-
-  /** Drops every row, for a projection rebuild by replay (RNF-5). */
-  abstract truncate(): Promise<void>;
-
   abstract byId(userId: string, assertionId: string): Promise<Nullable<AssertionStatusRow>>;
 
   abstract listByAccount(userId: string, accountId: string): Promise<readonly AssertionStatusRow[]>;
 
   /**
    * Non-revoked assertions on an account whose cutoff date is at or after
-   * `from`. Serves the reactor lookup (EP-3.4): an assertion earlier than an
+   * `from`. Serves the reactor lookup (RF-18): an assertion earlier than an
    * altered posting is not affected by it.
    */
   abstract nonRevokedOnAccountFrom(

@@ -20,14 +20,11 @@ export interface AdjustmentAuditRow {
 }
 
 /**
- * Read/write port for the `adjustment_audit` projection. The projector is the
- * only writer; `record` both appends a detail entry and accumulates the summary.
+ * Read port over the `adjustment_audit` projection.
+ *
+ * Writes are deliberately absent: `AdjustmentAuditProjector` is the only writer
+ * and it goes through the shared `ReadModelStore` (RNF-10, Artículo 10).
  */
 export abstract class AdjustmentAuditStore {
-  /** Idempotent by `adjustmentTxnId`: replaying the same resolution is a no-op. */
-  abstract record(entry: AdjustmentAuditEntry): Promise<void>;
-
-  abstract truncate(): Promise<void>;
-
   abstract byAccount(userId: string, accountId: string): Promise<readonly AdjustmentAuditRow[]>;
 }
