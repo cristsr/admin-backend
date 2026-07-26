@@ -27,10 +27,6 @@ model {
         technology 'Domain · Service'
         description 'Clasifica DerivedKind (EXPENSE/INCOME/TRANSFER/COMPOUND) — RF-4.'
       }
-      transferDetector = component 'TransferDetector' {
-        technology 'Domain · Service'
-        description 'Empareja postings candidatos como transferencia entre cuentas.'
-      }
       transactionException = component 'TransactionException' {
         technology 'Domain · Exceptions'
       }
@@ -64,15 +60,15 @@ model {
       mergeTransfersHandler = component 'MergePendingTransfersHandler' {
         technology 'Application · CommandHandler'
       }
-      transferCandidatesProjector = component 'TransferCandidatesProjector' {
-        technology 'Application · Projector'
-        description 'Mantiene proj de candidatos a transferencia consumiendo TransactionRecorded.'
-      }
 
       // --- Infrastructure ---
       controller = component 'TransactionsController' {
         technology 'Infrastructure · REST'
         description 'POST /transactions · GET /transactions · GET /transactions/{id} · amend · annotate · confirm · void · reverse'
+      }
+      transferPairRule = component 'TransferPairRule' {
+        technology 'Domain · Policy'
+        description 'Valida que dos pendientes sean un par de transferencia: montos opuestos que netean a cero, misma moneda, cuentas reales distintas.'
       }
       transferController = component 'TransferController' {
         technology 'Infrastructure · REST'
@@ -105,12 +101,11 @@ model {
   admin.ledger.shared.projectionDispatcher -> admin.ledger.transactions.listProjector 'invoca project()'
   admin.ledger.shared.projectionDispatcher -> admin.ledger.transactions.balancesProjector 'invoca project()'
   admin.ledger.transactions.transferController -> admin.ledger.shared.commandBus 'despacha merge'
+  admin.ledger.transactions.mergeTransfersHandler -> admin.ledger.transactions.transferPairRule 'valida el par antes de fusionar'
   admin.ledger.transactions.listProjector -> admin.ledger.shared.eventStore 'consume eventos'
   admin.ledger.transactions.listProjector -> admin.ledger.shared.readModel 'upsert proj_transactions / proj_postings'
   admin.ledger.transactions.balancesProjector -> admin.ledger.shared.eventStore 'consume eventos'
   admin.ledger.transactions.balancesProjector -> admin.ledger.shared.readModel 'upsert proj_balances'
-  admin.ledger.transactions.transferCandidatesProjector -> admin.ledger.shared.eventStore 'consume TransactionRecorded'
-  admin.ledger.transactions.transferCandidatesProjector -> admin.ledger.transactions.transferDetector 'empareja'
   admin.ledger.transactions.kindDeriver -> admin.ledger.transactions.posting 'clasifica'
 }
 
@@ -194,14 +189,6 @@ views 'Transactions' {
 
   // --- Dynamic view: trigger NO-REST (domain-event) ---
 
-  dynamic view detectTransfer {
-    title 'Detectar transferencia · trigger domain-event'
-    admin.ledger.shared.eventStore -> admin.ledger.transactions.transferCandidatesProjector 'TransactionRecorded'
-    admin.ledger.transactions.transferCandidatesProjector -> admin.ledger.transactions.transferDetector 'match(candidatos)'
-    admin.ledger.transactions.transferDetector -> admin.ledger.transactions.transferCandidatesProjector 'candidatos emparejados'
-    admin.ledger.transactions.transferCandidatesProjector -> admin.ledger.shared.commandBus 'dispatch(MergePendingTransfersCommand)'
-    admin.ledger.shared.commandBus -> admin.ledger.transactions.mergeTransfersHandler 'handle'
-  }
 
   // --- Dynamic views: proyectores (trigger domain-event) ---
 

@@ -6,9 +6,12 @@
 ## Propósito
 
 Registra y gobierna el ciclo de vida de los asientos contables por partida doble
-(`LedgerTransaction`) y detecta transferencias entre cuentas. Event-sourced: cada
-transición emite un evento; las proyecciones construyen listados, saldos y candidatos
-a transferencia.
+(`LedgerTransaction`), incluida la fusión de dos pendientes en una transferencia.
+Event-sourced: cada transición emite un evento y las proyecciones construyen listados y
+saldos.
+
+Detectar *qué* pendientes fusionar es del cliente, no del ledger: RF-15 salió del alcance
+en la versión 0.8 de la spec (§4.2). Este módulo valida el par que el cliente le nombra.
 
 ## Diagramas
 
@@ -29,9 +32,8 @@ a transferencia.
 | Consultar transacción | rest | `GET /transactions/{id}` | [get-transaction](./flows/get-transaction.md) |
 | **Proyectar transaction_list** | **domain-event** | `SynchronousProjectionDispatcher` → `TransactionListProjector` | [project-transaction-list](./flows/project-transaction-list.md) |
 | **Proyectar account_balances** | **domain-event** | `SynchronousProjectionDispatcher` → `AccountBalancesProjector` | [project-account-balances](./flows/project-account-balances.md) |
-| **Detectar transferencia** | **domain-event** | `TransactionRecorded` → `MergePendingTransfersCommand` | [detect-transfer](./flows/detect-transfer.md) |
 
-> Los flujos *detectar transferencia*, *proyectar transaction_list* y *proyectar account_balances* no los inicia un usuario por REST sino eventos de dominio consumidos por proyectores. Son el ejemplo de por qué `trigger` es la clave que organiza `flows/`: un mismo módulo tiene entrypoints heterogéneos.
+> Los flujos *proyectar transaction_list* y *proyectar account_balances* no los inicia un usuario por REST sino eventos de dominio consumidos por proyectores. Son el ejemplo de por qué `trigger` es la clave que organiza `flows/`: un mismo módulo tiene entrypoints heterogéneos.
 
 ## Invariantes de dominio
 
@@ -47,7 +49,9 @@ a transferencia.
 ## Lenguaje ubicuo
 
 - **Posting:** línea de un asiento (cuenta, monto con signo, moneda).
-- **Transfer:** par de postings que se emparejan como movimiento entre cuentas propias.
+- **Transfer:** transacción entre dos cuentas propias. Puede registrarse directamente o
+  resultar de fusionar dos pendientes que el cliente identifica como las dos patas del mismo
+  movimiento (RF-16).
 - **Reversal:** transacción nueva con los postings invertidos de una confirmada.
 - **Derived kind:** clasificación calculada por proyección, no capturada por el usuario.
 
