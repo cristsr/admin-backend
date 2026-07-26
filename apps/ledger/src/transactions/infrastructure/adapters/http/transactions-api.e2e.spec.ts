@@ -7,7 +7,9 @@ import { STREAM_POSITION_HEADER, SharedHttpModule } from '@ledger/shared/infrast
 import { GATEWAY_CONTEXT_HEADER } from '@ledger/shared/infrastructure/adapters/http/resolvers/gateway-header-context.resolver';
 import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
 import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
+import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
 import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
+import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 import { UnbalancedTransactionException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { TransactionsHttpModule } from './transactions-http.module';
@@ -42,6 +44,10 @@ describe('Transactions API (e2e, buses mocked)', () => {
     const moduleRef = await Test.createTestingModule({
       imports: [LedgerCoreModule, SharedHttpModule, TransactionsHttpModule],
     })
+      .overrideProvider(EventStore)
+      .useValue({})
+      .overrideProvider(ReadModelStore)
+      .useValue({})
       .overrideProvider(CommandBus)
       .useValue({ dispatch })
       .overrideProvider(QueryBus)
