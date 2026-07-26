@@ -50,6 +50,24 @@
         "jestConfig": "apps/ledger/jest.config.ts",
         "passWithNoTests": true
       }
+    },
+    "rebuild": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx ts-node -r tsconfig-paths/register apps/ledger/src/tooling/rebuild.command.ts rebuild"
+      }
+    },
+    "rebuildAll": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx ts-node -r tsconfig-paths/register apps/ledger/src/tooling/rebuild.command.ts rebuildAll"
+      }
+    },
+    "verify-balances": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx ts-node -r tsconfig-paths/register apps/ledger/src/tooling/rebuild.command.ts verify-balances"
+      }
     }
   }
 }
