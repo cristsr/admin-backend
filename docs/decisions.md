@@ -8,6 +8,28 @@
 > entrada nueva que la referencia. Orden cronológico inverso (más reciente
 > primero).
 
+## HU-0017 — Documentacion viva del modulo reconciliation (2026-07-26)
+
+- **Pipeline colapsado para una historia docs-only:** no se corrio `/design` ni `/plan`. En
+  una historia sin codigo, el "diseno" y la "implementacion" son el mismo artefacto —
+  generar un delta de documentacion para reconciliarlo despues contra la documentacion
+  habria sido ceremonia sin contenido. Se hizo el scan (que si aporto: inventariar los
+  endpoints y DTOs reales) y se produjeron los docs directamente.
+- **Mas de la mitad de los AC ya estaban cumplidos al empezar:** hu-0015 y hu-0016 dejaron
+  el modelo LikeC4, el README y 4 de los 9 flujos como efecto colateral de documentar su
+  propio trabajo. La historia se redujo a los 5 flujos REST, el `api.yaml` y la limpieza de
+  los docs de `transactions`. Es senal de que documentar dentro de cada historia funciona:
+  la historia de "documentar el modulo" llega casi vacia.
+- **`$ref` a `shared/api.yaml` verificados uno por uno:** dos de los cuatro no existian
+  (`Unauthorized` y `DomainError`); el schema real es `ErrorResponseBody` y `shared` no
+  expone `responses`. Se definieron localmente en el modulo.
+- **AC-5 cerro deuda propia:** los docs de `transactions` seguian describiendo la deteccion
+  de transferencias removida en `934c3fa` — README, 3 componentes del `.c4`, una dynamic
+  view y el flujo `detect-transfer.md`. Lo dejo esta misma sesion al recortar el alcance;
+  se limpio aca.
+
+---
+
 ## HU-0016 — Re-evaluación de aserciones ante anulaciones (2026-07-26)
 
 - **Solo `TransactionVoided` lleva disparador:** verificado contra `AssertionPostingReader`

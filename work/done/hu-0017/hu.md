@@ -9,6 +9,16 @@ OpenAPI y un doc por caso de uso)
 **Para** entender la conciliación sin leer los 70 archivos del módulo, y que los docs de
 `transactions` dejen de describir una funcionalidad que ya no existe
 
+## Estado al cerrar (2026-07-26)
+
+AC-1, AC-2 y AC-6 ya estaban cumplidos al empezar: hu-0015 y hu-0016 dejaron el modelo
+LikeC4 y el README del módulo como parte de documentar su propio trabajo. AC-7 se resolvió
+verificando que el landscape no declara módulos individuales — su vista `ledgerContainers`
+usa `include admin.ledger.*`, así que el módulo aparece desde su propio `.c4` sin editarlo.
+
+Esta historia cerró lo que faltaba: los 5 flujos REST (AC-3), el `api.yaml` (AC-4) y la
+limpieza de los docs de `transactions` (AC-5).
+
 ## Criterios de Aceptación
 
 ### AC-1: Modelo LikeC4 del módulo
