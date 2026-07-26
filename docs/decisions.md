@@ -8,6 +8,170 @@
 > entrada nueva que la referencia. Orden cronológico inverso (más reciente
 > primero).
 
+## Deuda conocida — `nx build ledger` falla con 115 errores (2026-07-25)
+
+Registrado al cerrar HU-0012/0013/0014. **La app no compila**, así que tampoco arranca.
+
+- Los 115 errores están confinados a `settings`, `reference`, `reporting` y `product`:
+  andamiajes de EP-3/EP-4 escritos contra un layout de imports viejo (59 de 115 son `TS2307`,
+  módulo no encontrado — p.ej. `shared-kernel/application/command/command-bus`, que hoy es
+  `command-bus/command-bus`). Cuatro suites de test del módulo `settings` ni siquiera
+  compilan por la misma causa.
+- **Cero errores** en `accounts`, `transactions`, `shared`, `shared-kernel` y `ledger` — el
+  código de las tres HU de EP-2 está limpio y sus 387 tests pasan.
+- `app.module.ts` importa `SettingsModule`, así que el fallo alcanza al arranque. Los otros
+  tres módulos rotos no están cableados (hay un comentario en `app.module.ts` que lo declara
+  pendiente de migración), pero TypeScript los compila igual por estar en el proyecto.
+- **Decisión:** no se reparan en estas HU — pertenecen a épicas no iniciadas y las tres
+  historias los listan explícitamente como *Fuera de Alcance*. Se registran como deuda. Las
+  opciones evaluadas fueron repararlos (trabajo grande, fuera de alcance) o desconectarlos de
+  `app.module.ts` para recuperar el arranque (cambio chico); se difiere la elección a la
+  historia que retome EP-3/EP-4.
+
+---
+
+## HU-0014 — Endpoints de transacciones — ciclo de vida completo (2026-07-25)
+
+Historia de sincronización documental: el código manda sobre la especificación, **salvo en
+tres defectos** que no eran divergencias de spec sino fallas, y que sí se corrigieron.
+
+### Correcciones de código aplicadas
+
+- **Suite e2e desbloqueada:** `accounts-api.e2e.spec.ts` y `transactions-api.e2e.spec.ts`
+  fallaban 13 tests porque `LedgerCoreModule` declara `PostgresEventStore` y
+  `PostgresReadModelStore` como providers y Nest los instanciaba aunque el test
+  sobrescribiera los buses, exigiendo un `DataSource` inexistente. Se agregó el override de
+  ambos puertos **en los tests**; producción no se tocó. 13 rojos → 0.
+- **`/amend` con campos opcionales:** el DTO declaraba `postings?` y `date?` y el controller
+  rellenaba con `[]` y `''`, produciendo un `422` desconcertante (`"" is not a YYYY-MM-DD
+  date`) al omitirlos. Como `LedgerTransaction.amend` hace **reemplazo total**, una enmienda
+  parcial no tiene representación en el dominio: se alineó el DTO haciendo ambos campos
+  requeridos, así un campo faltante da un `400` de validación claro. El test que congelaba
+  el bug (`controller.spec.ts`, que afirmaba `postings: []`) dejó de compilar y se reescribió
+  para ejercitar un amend real.
+- **Filtro `account` aplicado después de paginar:** `GET /transactions?account=X&limit=N`
+  extraía una página de **todas** las cuentas y recién después la filtraba, ocultando
+  coincidencias más allá de la primera página. Se reordenó: los `transaction_id` de la
+  cuenta se resuelven primero y entran al criteria como `oneOf` antes de paginar. Trampa
+  encontrada al hacerlo: `Criteria.oneOf` con array vacío devuelve `this` **sin filtro**, así
+  que una cuenta sin postings habría devuelto todas las transacciones — se cortocircuita
+  explícitamente. Además se aplicó el `limit` por defecto de 50 que el DTO anunciaba en
+  Swagger pero nunca se usaba, dejando las lecturas acotadas. Se agregó
+  `list-transactions.handler.spec.ts` con 4 casos.
+
+### Divergencias documentadas (el código se mantiene)
+
+- **AC-3 — el listado devuelve un array crudo, no una página:** no hay envoltorio con
+  `total`/`limit`/`offset`; el `TransactionListDto` decora Swagger pero no se construye. Sin
+  `total`, el cliente detecta el fin cuando recibe menos filas que el `limit`. Se corrige el
+  AC y el `api.yaml`.
+- **AC-3 — `GET /transactions/{id}` devuelve la fila cruda sin postings, o `null`:** las
+  líneas viven en `proj_postings` y la ruta no las cruza; una transacción inexistente da
+  `200 null`, no `404`. Mismo patrón que `GET /accounts/{id}` en HU-0013. Se elimina el `404`
+  del `api.yaml`.
+- **AC-3 — el rango de fechas es `from`/`to`, no `period`:** se corrige el AC.
+- **AC-4 — un solo posting da `400`, no `422`:** el `ArrayMinSize(2)` del DTO rechaza en el
+  `ValidationPipe` antes de llegar al agregado, dejando `INSUFFICIENT_POSTINGS` (INV-2)
+  inalcanzable por HTTP. La autoridad conceptual del invariante sigue siendo el dominio, pero
+  **por HTTP gana la malla de forma**; se documenta el `400` como contrato observable en vez
+  de mover la validación.
+- **AC-2 — `/confirm` ignora el body y `/reverse` ignora el `reason`:** ambos controllers
+  declaran `_dto` y despachan solo con el `id`. Se decide **conservar los campos** en el
+  contrato (evita un breaking change si se implementan) pero documentarlos explícitamente
+  como sin efecto. Confirmar con postings distintos no está soportado: la vía es `amend` y
+  después `confirm`.
+- **AC-2 — `/annotate` tiene semántica de reemplazo total, no de parche:** los campos
+  omitidos se envían vacíos (`description ?? ''`, `tags ?? []`) y **borran** el valor previo.
+  Se mantiene y se documenta de forma prominente: el opcional del DTO expresa "podés no
+  mandarlo", no "se preserva". Para conservar un campo hay que reenviarlo.
+- **AC-6 — `ACCOUNT_CLOSED` es 422, no 409:** manda la decisión de HU-0011. Las transiciones
+  de estado inválidas emiten `INVALID_TRANSACTION_STATE` (409), código que no figura en el
+  const `LEDGER_ERROR_CODE` — ver la entrada de HU-0013.
+
+---
+
+## HU-0013 — Endpoints de cuentas — `/ledger/initialize`, `/accounts` (2026-07-25)
+
+Historia de sincronización documental: el código manda sobre la especificación.
+
+- **AC-10 (nuevo) — el read-side devuelve filas de proyección, no DTOs:** se mantiene lo
+  implementado. Las cuatro lecturas (`GET /accounts`, `/accounts/{id}`,
+  `/accounts/{id}/balance`, `/ledger/settings`) responden con la fila cruda en `snake_case`
+  (`account_id`, `currency_code`, `confirmed_amount`, `presentation_currency`). Los
+  `AccountDto`/`AccountTreeDto`/`AccountBalanceDto`/`LedgerSettingsDto` existen y decoran
+  Swagger, pero **no se construyen**: `queryBus.ask<AccountDto>(...)` es un genérico sin
+  verificación. Se corrigen los schemas del `api.yaml` para describir la fila real y se
+  agrega una nota de contrato al documento. Unificar (mapper explícito o proyecciones en
+  `camelCase`) es trabajo de otra HU.
+- **AC-3 — `type` y `parentId` no se transportan:** se mantiene la derivación desde el
+  nombre jerárquico. `Account.open` obtiene el tipo de `name.rootType` y el padre de
+  `name.parentName()`; el command solo lleva `(name, currencies, openedOn, isBankMirror)`.
+  Los dos campos siguen en el DTO como malla de forma, pero **el nombre es la autoridad** y
+  un `type` contradictorio se ignora en silencio. Se documenta en el `api.yaml` y en
+  `open-account.md` en vez de extender el command.
+- **AC-4 — `?view=tree|flat` se acepta y se ignora:** se decide **no** retirar el parámetro
+  del contrato (evita un breaking change cuando se implemente el shaping) pero se documenta
+  explícitamente como sin efecto, con el `TODO(read-shape)` de `account-tree-view.ts` como
+  referencia. La respuesta es siempre plana; el cliente puede reconstruir el árbol desde el
+  nombre jerárquico.
+- **AC-4 — `GET /accounts/{id}` inexistente devuelve `200 null`, no `404`:** se mantiene. El
+  handler hace `row ?? null` y ninguna capa lo traduce. Se elimina el `404` del `api.yaml`,
+  que prometía un comportamiento inexistente. Nota: una cuenta de otro usuario es
+  indistinguible de una inexistente, lo cual es deseable (no filtra existencia entre
+  usuarios).
+- **AC-5 — `?currency` se acepta y se ignora:** mismo criterio que `view`. Documentado, no
+  retirado.
+- **AC-7 — `ACCOUNT_CLOSED` y `CURRENCY_NOT_ALLOWED` son 422, no 409:** manda la decisión de
+  HU-0011 y el catálogo RF-14. Además, **ninguno de los dos es alcanzable desde los
+  endpoints de cuentas**: se emiten al postear contra una cuenta cerrada o con moneda no
+  permitida, que es ruta de `/transactions` (HU-0014). Se corrige el AC.
+- **`LEDGER_ERROR_CODE` no es exhaustivo:** hallazgo transversal. El const declara 17
+  códigos pero el API emite **39** — cada excepción declara su `code` por su cuenta y el
+  `ExceptionFilter` lo expone verbatim, así que los 22 faltantes son igual de públicos y
+  estables. Se documentan los 39 en el enum `LedgerErrorCode` del `api.yaml` compartido y en
+  la tabla de `map-domain-error.md`, agrupados por origen. Sumarlos al const es aditivo y
+  queda como trabajo de seguimiento. (Corrección sobre una lectura intermedia: no hay
+  códigos catalogados que el API no emita.)
+
+---
+
+## HU-0012 — Read-your-writes + idempotencia por `external_ref` (2026-07-25)
+
+Historia de sincronización documental: el código ya existía (construido como efecto
+colateral de `hu-0005` y `hu-0009`) y **manda sobre la especificación**. Los AC se
+corrigieron para describir el runtime, siguiendo el precedente de HU-0011.
+
+- **AC-3 — `external_ref` es clave de reintento, no detector de colisiones:** se mantiene
+  el comportamiento implementado. `IdempotencyPolicy` recibe el command como `_command` y
+  nunca lo compara: cualquier reenvío del mismo `(user_id, external_ref)` replaya el
+  `CommandResult` original con `200`. La `DuplicateExternalRefException` del índice único
+  también se atrapa y se replaya. **Consecuencia:** `DUPLICATE_EXTERNAL_REF` queda
+  inalcanzable vía HTTP; se documenta como tal en `map-domain-error.md` y en el enum
+  `LedgerErrorCode` del `api.yaml`, y el código permanece porque sigue siendo contrato del
+  puerto `EventStore`. Se corrige el AC de la HU en vez del código.
+- **AC-5 — Read-your-writes inline pero no atómico:** se mantiene lo implementado. Los 10
+  handlers hacen `repository.save(...)` y luego `dispatcher.dispatch(result.events)` como
+  operaciones **secuenciales sin transacción compartida**; no existe `UnitOfWork` ni
+  `queryRunner` fuera de las migraciones. El AC afirmaba "misma transacción del command
+  (ACID conjunto)", lo cual es falso. Se corrige el AC. Hacerlo atómico exige un
+  `UnitOfWork` compartido entre `EventStore` y `ReadModelStore` y queda para EP-3.
+- **AC-6 — El gancho `min_position` no se construye:** cero ocurrencias de `min_position` /
+  `X-Ledger-Min-Position` en `apps/ledger/src`. Se decide **no** agregarlo como no-op: un
+  parámetro aceptado-e-ignorado es una promesa de contrato que el servidor no cumple. Se
+  difiere entero a EP-3, junto con la espera activa por checkpoint. La mitad publicada del
+  mecanismo (`streamPosition` en toda escritura) sí queda lista.
+- **AC-4 — `CommandResultInterceptor` es opt-in, no global:** se mantiene el
+  `@UseInterceptors` por controller en vez de migrar a `APP_INTERCEPTOR`. Lo declaran
+  `AccountsController`, `LedgerController` y `TransactionsController`; los controllers de
+  EP-3 ya montados (`BalanceAssertionController`, `TransferController`) no, así que sus
+  escrituras no exponen `X-Ledger-Stream-Position`. Alinearlos pertenece a EP-3. Mover el
+  interceptor a `APP_INTERCEPTOR` lo resolvería de raíz y queda registrado como opción.
+- **Ubicación de los artefactos:** viven en `shared/infrastructure/adapters/http/`, no en
+  `shared-kernel/`, según la decisión de RNF-11 de HU-0009. La HU no crea artefactos: el
+  `@ExternalRef()` y el `CommandResultInterceptor` ya existían.
+
+---
+
 ## HU-0011 — Códigos de error de dominio estables (RF-14) (2026-07-25)
 
 - **Status de `ACCOUNT_CLOSED`:** **422** (se mantiene el código implementado) —
