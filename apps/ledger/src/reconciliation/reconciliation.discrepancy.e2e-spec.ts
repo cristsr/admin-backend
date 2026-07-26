@@ -162,7 +162,11 @@ describe('Reconciliation discrepancy flow (e2e)', () => {
     const evaluateHandler = new EvaluateAssertionHandler(repository, evaluator, settings, clock);
 
     bus = new TransactionRecordingBus(eventStore, reader, catalog, ids, clock);
-    reactor = new ReevaluateAssertionsReactor(new StoreBackedAssertionLookup(statusStore), evaluateHandler);
+    reactor = new ReevaluateAssertionsReactor(
+      new StoreBackedAssertionLookup(statusStore),
+      evaluateHandler,
+      reader,
+    );
     assertHandler = new AssertBalanceHandler(repository, evaluateHandler, catalog, ids);
     resolveHandler = new ResolveDiscrepancyHandler(
       repository,
