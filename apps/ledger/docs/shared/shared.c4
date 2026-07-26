@@ -63,6 +63,24 @@ model {
       }
     }
 
+    // --- Idempotencia y read-your-writes (hu-0012, RF-11 / RNF-9) ---
+
+    externalRefDecorator = component 'ExternalRef' {
+      technology 'Infrastructure · Nest param decorator'
+      description 'Extrae el idempotency key: header X-External-Ref preferido, fallback a external_ref del body, null si ninguno es string no vacío. El controller solo lo transporta; la semántica vive en el EventStore (INV-10).'
+      metadata {
+        introducedIn 'hu-0012'
+      }
+    }
+
+    idempotencyPolicy = component 'IdempotencyPolicy' {
+      technology 'Application · CommandPolicy (chain)'
+      description 'Segunda política del command bus. Con externalRef presente busca el evento ancla por (user_id, external_ref); si existe replaya el CommandResult original sin ejecutar el handler. NO compara el command: el external_ref es clave de reintento, no detector de colisiones.'
+      metadata {
+        introducedIn 'hu-0012'
+      }
+    }
+
     // --- Contrato de errores de dominio (hu-0011, RF-14) ---
 
     exceptionFilter = component 'ExceptionFilter' {
@@ -91,6 +109,12 @@ model {
 
     admin.ledger.shared.commandResultInterceptor -> admin.ledger.shared.commandAcceptedDto 'maps CommandResult to'
     admin.ledger.shared.commandResultInterceptor -> admin.ledger.shared.commandBus 'intercepts response of dispatched commands'
+
+    // --- Relaciones de idempotencia (hu-0012) ---
+
+    admin.ledger.shared.externalRefDecorator -> admin.ledger.shared.commandBus 'aporta externalRef al AuthContext'
+    admin.ledger.shared.commandBus -> admin.ledger.shared.idempotencyPolicy 'delega el chain de políticas'
+    admin.ledger.shared.idempotencyPolicy -> admin.ledger.shared.commandResultInterceptor 'CommandResult (idempotentReplay) → 200 + header'
 
     // --- Relaciones del contrato de errores (hu-0011) ---
 
@@ -141,6 +165,19 @@ views 'Shared · HTTP adapter' {
     admin.ledger.shared.swaggerBuilder -> admin.ledger.shared.queryBus 'documents bus contract'
 
     autoLayout TopBottom
+  }
+
+  // Escritura idempotente por external_ref + read-your-writes (hu-0012)
+  dynamic view shared_http_idempotent_write {
+    title 'POST /api/v1/* con X-External-Ref → replay idempotente · trigger: rest'
+    description 'RF-11 / INV-10 / RNF-9: @ExternalRef extrae el idempotency key (header preferido, fallback al body) y lo transporta en el AuthContext. IdempotencyPolicy busca el evento ancla por (user_id, external_ref) y, si existe, replaya el CommandResult original sin emitir eventos nuevos — sin comparar el command. CommandResultInterceptor estampa X-Ledger-Stream-Position y degrada el replay a 200.'
+
+    admin.ledger.shared.externalRefDecorator -> admin.ledger.shared.commandBus 'externalRef en AuthContext'
+    admin.ledger.shared.commandBus -> admin.ledger.shared.idempotencyPolicy 'dispatch atraviesa el chain'
+    admin.ledger.shared.idempotencyPolicy -> admin.ledger.shared.commandResultInterceptor 'CommandResult (replay o nuevo)'
+    admin.ledger.shared.commandResultInterceptor -> admin.ledger.shared.commandAcceptedDto 'maps to { id, streamPosition } + header'
+
+    autoLayout LeftRight
   }
 
   // Mapeo de errores de dominio/puerto al cuerpo de error uniforme (RF-14)

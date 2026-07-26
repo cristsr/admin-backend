@@ -33,6 +33,37 @@ paths:
           description: Entorno producción — la ruta no se registra y el router devuelve 404.
 
 components:
+  parameters:
+    ExternalRefHeader:
+      name: X-External-Ref
+      in: header
+      required: false
+      description: |
+        Clave de idempotencia del cliente (RF-11 / INV-10). Fuente preferida; si
+        el header falta, `@ExternalRef()` cae al campo `external_ref` del body.
+        Ambos se recortan con `trim()` y un header repetido (array) se ignora.
+
+        Reenviar el mismo valor **replaya** el resultado original con `200` y sin
+        emitir eventos nuevos, incluso si el command es distinto: es una clave de
+        reintento, no un detector de colisiones. Opcional hoy — sin registro de
+        clientes (§2.10) no se exige por `client_id`.
+      schema:
+        type: string
+        minLength: 1
+      example: "order-4711-retry-2"
+
+  headers:
+    LedgerStreamPosition:
+      description: |
+        Posición global en el stream alcanzada por la escritura (RNF-9), como
+        string decimal (`bigint` serializado). Igual al `streamPosition` del
+        cuerpo; se expone también como header para clientes que no parsean el
+        body. Lo estampa `CommandResultInterceptor`, declarado por controller con
+        `@UseInterceptors` — los controllers de EP-3 aún no lo aplican.
+      schema:
+        type: string
+      example: "42"
+
   schemas:
     CommandAcceptedDto:
       type: object
@@ -57,9 +88,16 @@ components:
 
     LedgerErrorCode:
       description: |
-        Código de error de dominio estable (RF-14). Fuente única:
-        `apps/ledger/src/shared/domain/errors/ledger-error-code.ts`.
-        El consumidor hace branching sobre este valor, nunca sobre `message`.
+        Código de error de dominio estable (RF-14). El consumidor hace branching
+        sobre este valor, nunca sobre `message`.
+
+        **`LEDGER_ERROR_CODE` no es exhaustivo (hu-0013).** El const de
+        `apps/ledger/src/shared/domain/errors/ledger-error-code.ts` declara 17
+        códigos, pero cada excepción declara su `code` de forma independiente y
+        el `ExceptionFilter` lo expone verbatim: el API puede emitir **39**. Los
+        22 que faltan en el const están listados abajo bajo "no catalogados" y
+        son igual de estables y de públicos que el resto. Sumarlos al const es
+        aditivo y queda como trabajo de seguimiento.
         Comentario de status por código (el status de un código es contrato):
         422 → UNBALANCED_TRANSACTION, CURRENCY_NOT_ALLOWED, ACCOUNT_CLOSED,
         LEDGER_NOT_INITIALIZED, INVALID_CURRENCY_CODE, INVALID_TIME_ZONE,
@@ -67,6 +105,12 @@ components:
         409 → IMMUTABLE_TRANSACTION, NAME_COLLISION, SYSTEM_ACCOUNT_PROTECTED,
         CONCURRENCY_CONFLICT, DUPLICATE_EXTERNAL_REF ·
         404 → TRANSACTION_NOT_FOUND, ACCOUNT_NOT_FOUND.
+
+        Nota (hu-0012): `DUPLICATE_EXTERNAL_REF` **no es alcanzable por el API
+        HTTP**. `IdempotencyPolicy` replaya en vez de rechazar, y atrapa la
+        `DuplicateExternalRefException` del índice único. El código permanece
+        porque es contrato del puerto `EventStore` para callers que lo usen sin
+        la política.
       enum:
         - UNBALANCED_TRANSACTION
         - CURRENCY_NOT_ALLOWED
@@ -85,6 +129,35 @@ components:
         - CURRENCY_MISMATCH
         - MONEY_SCALE
         - INVALID_CURRENCY
+        # --- No catalogados en LEDGER_ERROR_CODE, pero emitidos por el API ---
+        # accounts (hu-0013)
+        - ACCOUNT_ALREADY_CLOSED         # 409
+        - INVALID_CLOSE_DATE             # 422
+        - REAL_ACCOUNT_SINGLE_CURRENCY   # 422
+        # ledger (hu-0013)
+        - LEDGER_ALREADY_INITIALIZED     # 409
+        # transactions (hu-0014)
+        - INSUFFICIENT_POSTINGS          # 422
+        - INVALID_TRANSACTION_STATE      # 409
+        # value objects del shared-kernel
+        - INVALID_ACCOUNT_NAME           # 422
+        - INVALID_LEDGER_DATE            # 422
+        - INVALID_PAYEE                  # 422
+        - ROOT_TYPE_IMMUTABLE            # 422
+        - UNKNOWN_CURRENCY               # 422
+        # plomería de buses y event registry
+        - MISSING_AUTH_CONTEXT           # 422
+        - UNKNOWN_EVENT_TYPE             # 422
+        - UNREGISTERED_COMMAND           # 422
+        - UNREGISTERED_QUERY             # 422
+        # EP-3 — reconciliation y transfers (montados, fuera de EP-2)
+        - ASSERTION_ALREADY_REVOKED      # 409
+        - ASSERTION_CURRENCY_MISMATCH    # 422
+        - ASSERTION_NOT_EVALUABLE        # 422
+        - ASSERTION_NOT_FOUND            # 404
+        - DISCREPANCY_NOT_RESOLVABLE     # 409
+        - NOT_A_TRANSFER_PAIR            # 422
+        - PENDING_LEG_NOT_FOUND          # 404
 
     ErrorResponseBody:
       type: object
