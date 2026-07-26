@@ -25,6 +25,18 @@ specification {
   tag queue
   tag domain-event
   tag cli
+
+  // Marcadores efimeros de revision de delta. /design los aplica a los elementos
+  // nuevos/cambiados de una HU (model.delta.c4) para resaltarlos en naranja
+  // mientras el delta vive en work/active/. /sync los remueve al reconciliar el
+  // delta en el .c4 vivo del modulo (la procedencia permanente vive en
+  // metadata.introducedIn / metadata.changedIn, no en estos tags).
+  tag delta-new {
+    color #F97316
+  }
+  tag delta-changed {
+    color #F97316
+  }
 }
 
 model {
@@ -65,12 +77,12 @@ model {
 
 views {
   view index {
-    title 'admin-back — panorama'
-    include *
+    title 'admin-back · Panorama (click un módulo para entrar)'
+    include user, admin.ledger, admin.ledger.*
   }
 
   view ledgerContainers {
-    title 'Ledger — contenedores y módulos'
+    title 'Ledger · Contenedores y módulos'
     include admin.ledger, admin.ledger.*
   }
 }

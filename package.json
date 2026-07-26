@@ -13,7 +13,7 @@
     "migration:generate:ledger": "typeorm-ts-node-commonjs migration:generate -d apps/ledger/src/database/data-source.ts",
     "migration:run:ledger": "typeorm-ts-node-commonjs migration:run -d apps/ledger/src/database/data-source.ts",
     "migration:revert:ledger": "typeorm-ts-node-commonjs migration:revert -d apps/ledger/src/database/data-source.ts",
-    "docs:validate": "likec4 validate",
+    "docs:validate": "likec4 validate --no-layout",
     "docs:preview": "likec4 start",
     "docs:export": "likec4 export png -o docs/.likec4-export"
   },

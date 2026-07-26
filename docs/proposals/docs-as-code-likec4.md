@@ -100,6 +100,12 @@ status: active             # active | deprecated | removed
 - **Diagramas y componentes:** archivo canónico único + **historia de git** = las
   versiones. **No** se crean `-v2.md`. Trazabilidad vía `last_modified_by` en el
   frontmatter y `git log/blame`. La «versión 2» del flujo se reconstruye desde git.
+- **Procedencia embebida en el modelo (LikeC4):** cada elemento del `.c4` lleva un
+  bloque `metadata { introducedIn 'hu-XXXX' }` cuando nace, y `/sync` le anexa
+  `changedIn 'hu-YYYY, hu-ZZZZ'` cada vez que una historia lo modifica. Queda
+  visible en el panel de detalles de LikeC4 y es queryable, sin depender de git.
+  Las `dynamic view` no admiten `metadata`: su procedencia vive en el frontmatter
+  del `flows/<slug>.md` (`introduced_by` / `last_modified_by`).
 - **Contratos API:** se versiona el path (`/v1`, `/v2`) **sólo cuando ambas versiones
   coexisten en producción**. Quién decide: `oasdiff`. Si el delta es *breaking* frente
   al canónico → amerita nueva versión de path; si no, evolución in-place.

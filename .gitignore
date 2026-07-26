@@ -48,3 +48,10 @@ Thumbs.db
 CLAUDE.md
 AGENTS.md
 .mcp.json
+
+# LikeC4 local layout snapshots (UI authoring state, not shared)
+.likec4/
+docs/.likec4-export/
+
+# Ledger epic plans (personal working notes, not shared)
+work/ledger/
