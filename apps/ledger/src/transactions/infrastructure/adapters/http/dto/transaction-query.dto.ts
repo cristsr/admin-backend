@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsDateString, IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
+import { DEFAULT_TRANSACTION_PAGE_SIZE } from '@ledger/read-side/list-transactions/list-transactions.query';
 import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 
@@ -48,7 +49,11 @@ export class TransactionQueryDto {
   @IsString()
   readonly clientId?: string;
 
-  @ApiPropertyOptional({ minimum: 1, maximum: MAX_TRANSACTION_PAGE_SIZE, default: 50 })
+  @ApiPropertyOptional({
+    minimum: 1,
+    maximum: MAX_TRANSACTION_PAGE_SIZE,
+    default: DEFAULT_TRANSACTION_PAGE_SIZE,
+  })
   @IsOptional()
   @Type(() => Number)
   @IsInt()

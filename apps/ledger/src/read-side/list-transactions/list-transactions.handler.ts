@@ -8,7 +8,7 @@ import {
   PROJ_POSTINGS,
   PROJ_TRANSACTIONS,
 } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
-import { ListTransactionsQuery } from './list-transactions.query';
+import { DEFAULT_TRANSACTION_PAGE_SIZE, ListTransactionsQuery } from './list-transactions.query';
 
 type TransactionRow = { readonly transaction_id: string };
 
@@ -38,17 +38,22 @@ export class ListTransactionsHandler extends QueryHandler<
       .between('date', query.fromDate, query.toDate)
       .orderBy('date', OrderType.DESC);
 
-    if (query.limit) {
-      criteria = criteria.paginate({ offset: query.offset ?? 0, limit: query.limit });
+    // The account filter must narrow the set *before* pagination, otherwise a
+    // page is drawn from every account and then thinned down, hiding matches.
+    if (query.accountId) {
+      const accountTxIds = await this.transactionIdsForAccount(query.accountId);
+
+      if (accountTxIds.size === 0) return [];
+
+      criteria = criteria.oneOf('transaction_id', [...accountTxIds]);
     }
 
-    const rows = await this.readModel.query<TransactionRow>(PROJ_TRANSACTIONS, criteria);
+    criteria = criteria.paginate({
+      offset: query.offset ?? 0,
+      limit: query.limit ?? DEFAULT_TRANSACTION_PAGE_SIZE,
+    });
 
-    if (!query.accountId) return rows;
-
-    const accountTxIds = await this.transactionIdsForAccount(query.accountId);
-
-    return rows.filter((row) => accountTxIds.has(row.transaction_id));
+    return this.readModel.query<TransactionRow>(PROJ_TRANSACTIONS, criteria);
   }
 
   private async transactionIdsForAccount(accountId: string): Promise<Set<string>> {

@@ -1,6 +1,9 @@
 import { Nullable } from '@shared';
 import { Query } from '@ledger/shared-kernel/application/query-bus/query';
 
+/** Page size applied when the caller does not ask for one, so reads stay bounded. */
+export const DEFAULT_TRANSACTION_PAGE_SIZE = 50;
+
 /** Filters for the transaction list (RF-13); absent fields are not applied. */
 export class ListTransactionsQuery extends Query {
   readonly queryType = 'ListTransactions';
