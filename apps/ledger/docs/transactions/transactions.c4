@@ -114,9 +114,9 @@ model {
   admin.ledger.transactions.kindDeriver -> admin.ledger.transactions.posting 'clasifica'
 }
 
-views {
-  view transactionsComponents {
-    title 'Transactions — componentes (C4 L3)'
+views 'Transactions' {
+  view transactionsComponents of admin.ledger.transactions {
+    title 'Componentes'
     include admin.ledger.transactions, admin.ledger.transactions.*
     include admin.ledger.shared.commandBus, admin.ledger.shared.queryBus, admin.ledger.shared.eventStore
   }
@@ -225,9 +225,18 @@ views {
 
   dynamic view listTransactions {
     title 'Listar transacciones · trigger REST'
+    description 'El filtro por cuenta resuelve primero los transaction_id desde proj_postings y los aplica dentro del criteria (oneOf) ANTES de paginar; aplicarlo despues ocultaba coincidencias mas alla de la primera pagina (hu-0014). La respuesta es un array crudo de filas, no una pagina con total.'
     user -> admin.ledger.transactions.controller 'GET /transactions'
     admin.ledger.transactions.controller -> admin.ledger.shared.queryBus 'ask(ListTransactionsQuery, ctx)'
-    admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'query proj_transactions con Criteria + userId'
-    admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'postfiltro accountId via proj_postings'
+    admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'resuelve transaction_id por cuenta via proj_postings'
+    admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'query proj_transactions con Criteria + userId + oneOf + paginate'
+  }
+
+  dynamic view getTransaction {
+    title 'Consultar una transaccion · trigger REST'
+    description 'Devuelve la fila cruda de proj_transactions SIN los postings (viven en proj_postings y esta ruta no los cruza). Una transaccion inexistente responde 200 con cuerpo null, no 404 (hu-0014, AC-3).'
+    user -> admin.ledger.transactions.controller 'GET /transactions/{id}'
+    admin.ledger.transactions.controller -> admin.ledger.shared.queryBus 'ask(GetTransactionByIdQuery, ctx)'
+    admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'query proj_transactions por userId + transactionId'
   }
 }

@@ -18,14 +18,15 @@ a transferencia.
 ## Casos de uso (flujos)
 
 | Caso de uso | Trigger | Entrypoint | Doc |
-|---|---|---|---|---|
+|---|---|---|---|
 | Registrar transacción | rest | `POST /transactions` | [record-transaction](./flows/record-transaction.md) |
-| Enmendar (pendiente) | rest | `POST /transactions/{id}/amend` | *(view `amendTransaction`)* |
-| Anotar | rest | `POST /transactions/{id}/annotate` | *(view `annotateTransaction`)* |
-| Confirmar | rest | `POST /transactions/{id}/confirm` | *(view `confirmTransaction`)* |
-| Anular (pendiente) | rest | `POST /transactions/{id}/void` | *(view `voidTransaction`)* |
-| Reversar (confirmada) | rest | `POST /transactions/{id}/reverse` | *(view `reverseTransaction`)* |
+| Enmendar (pendiente) | rest | `POST /transactions/{id}/amend` | [amend-transaction](./flows/amend-transaction.md) |
+| Anotar | rest | `POST /transactions/{id}/annotate` | [annotate-transaction](./flows/annotate-transaction.md) |
+| Confirmar | rest | `POST /transactions/{id}/confirm` | [confirm-transaction](./flows/confirm-transaction.md) |
+| Anular (pendiente) | rest | `POST /transactions/{id}/void` | [void-transaction](./flows/void-transaction.md) |
+| Reversar (confirmada) | rest | `POST /transactions/{id}/reverse` | [reverse-transaction](./flows/reverse-transaction.md) |
 | Listar transacciones | rest | `GET /transactions` | [list-transactions](./flows/list-transactions.md) |
+| Consultar transacción | rest | `GET /transactions/{id}` | [get-transaction](./flows/get-transaction.md) |
 | **Proyectar transaction_list** | **domain-event** | `SynchronousProjectionDispatcher` → `TransactionListProjector` | [project-transaction-list](./flows/project-transaction-list.md) |
 | **Proyectar account_balances** | **domain-event** | `SynchronousProjectionDispatcher` → `AccountBalancesProjector` | [project-account-balances](./flows/project-account-balances.md) |
 | **Detectar transferencia** | **domain-event** | `TransactionRecorded` → `MergePendingTransfersCommand` | [detect-transfer](./flows/detect-transfer.md) |

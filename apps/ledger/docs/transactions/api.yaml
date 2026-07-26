@@ -16,6 +16,8 @@ paths:
       tags: [transactions]
       operationId: recordTransaction
       summary: Record a transaction (pending or confirmed).
+      parameters:
+        - $ref: '../shared/api.yaml#/components/parameters/ExternalRefHeader'
       requestBody:
         required: true
         content:
@@ -25,12 +27,28 @@ paths:
       responses:
         '201':
           description: Transaction recorded.
+          headers:
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommandAccepted'
+        '200':
+          description: Replay idempotente del mismo external_ref.
+        '400':
+          description: >
+            Menos de 2 postings — lo rechaza el ArrayMinSize(2) del DTO en el
+            ValidationPipe, ANTES de llegar al agregado. El 422 INSUFFICIENT_POSTINGS
+            (INV-2) que el dominio sabe emitir queda inalcanzable por esta ruta: por HTTP
+            gana la malla de forma (hu-0014, AC-4).
+        '401':
+          description: Sin contexto autenticado (RF-26).
         '422':
-          description: Fewer than 2 postings (INV-2) or unbalanced (INV-1).
+          description: >
+            UNBALANCED_TRANSACTION (INV-1, lo verifica el agregado), ACCOUNT_CLOSED
+            (posting sobre cuenta cerrada — 422, no 409, por decisión de hu-0011),
+            CURRENCY_NOT_ALLOWED, INVALID_MONEY o INVALID_LEDGER_DATE.
     get:
       tags: [transactions]
       operationId: listTransactions
@@ -95,17 +113,28 @@ paths:
             default: 0
       responses:
         '200':
-          description: Transaction list returned.
+          description: >
+            Array crudo de filas de proyección, NO una página: no hay envoltorio con
+            total/limit/offset. Sin `total`, el cliente detecta el fin cuando recibe menos
+            filas que el `limit` pedido. El filtro `account` se aplica antes de paginar
+            (hu-0014, AC-3).
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionList'
+                type: array
+                items:
+                  $ref: '#/components/schemas/Transaction'
+        '401':
+          description: Sin contexto autenticado (RF-26).
 
   /transactions/{id}:
     get:
       tags: [transactions]
       operationId: getTransaction
       summary: Get a single transaction.
+      description: >
+        Devuelve la cabecera de la transacción SIN sus postings — las líneas viven en
+        proj_postings y esta ruta no las cruza (hu-0014, AC-3).
       parameters:
         - name: id
           in: path
@@ -115,19 +144,28 @@ paths:
             format: uuid
       responses:
         '200':
-          description: Transaction found.
+          description: >
+            Fila cruda de proyección sin postings, o `null` cuando la transacción no existe
+            o pertenece a otro usuario. Esta ruta NO emite 404 TRANSACTION_NOT_FOUND: el
+            handler devuelve `row ?? null`. El cliente debe chequear cuerpo nulo, no status.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Transaction'
-        '404':
-          description: Transaction not found.
+                oneOf:
+                  - $ref: '#/components/schemas/Transaction'
+                  - type: 'null'
+        '401':
+          description: Sin contexto autenticado (RF-26).
 
   /transactions/{id}/amend:
     post:
       tags: [transactions]
       operationId: amendTransaction
       summary: Amend a pending transaction (economic change, INV-6).
+      description: >
+        Reemplazo total: `postings` y `date` son REQUERIDOS. El agregado sustituye ambos
+        wholesale (`amend(postings, date, balance)`), así que una enmienda parcial no tiene
+        representación en el dominio y omitir cualquiera devuelve 400 (hu-0014, AC-2).
       parameters:
         - name: id
           in: path
@@ -135,6 +173,7 @@ paths:
           schema:
             type: string
             format: uuid
+        - $ref: '../shared/api.yaml#/components/parameters/ExternalRefHeader'
       requestBody:
         required: true
         content:
@@ -144,12 +183,23 @@ paths:
       responses:
         '200':
           description: Transaction amended.
+          headers:
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommandAccepted'
+        '400':
+          description: Falta `postings` o `date`, o menos de 2 postings.
+        '401':
+          description: Sin contexto autenticado (RF-26).
+        '404':
+          description: TRANSACTION_NOT_FOUND.
         '409':
-          description: Transaction not in PENDING state (INV-6).
+          description: IMMUTABLE_TRANSACTION — la transacción ya está CONFIRMED (INV-6).
+        '422':
+          description: UNBALANCED_TRANSACTION, ACCOUNT_CLOSED, CURRENCY_NOT_ALLOWED o INVALID_LEDGER_DATE.
 
   /transactions/{id}/annotate:
     post:
@@ -184,6 +234,11 @@ paths:
       tags: [transactions]
       operationId: confirmTransaction
       summary: Confirm a pending transaction.
+      description: >
+        EL BODY SE IGNORA POR COMPLETO. El controller declara `_dto` y despacha
+        `new ConfirmTransactionCommand(id)`: el `postings?` del schema no se transporta.
+        Confirmar con postings distintos a los registrados no está soportado — la vía es
+        `amend` mientras sigue PENDING, y después `confirm` (hu-0014, AC-2).
       parameters:
         - name: id
           in: path
@@ -191,6 +246,7 @@ paths:
           schema:
             type: string
             format: uuid
+        - $ref: '../shared/api.yaml#/components/parameters/ExternalRefHeader'
       requestBody:
         required: true
         content:
@@ -200,12 +256,19 @@ paths:
       responses:
         '200':
           description: Transaction confirmed.
+          headers:
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommandAccepted'
+        '401':
+          description: Sin contexto autenticado (RF-26).
+        '404':
+          description: TRANSACTION_NOT_FOUND.
         '409':
-          description: Transaction not in PENDING state (AC-7).
+          description: INVALID_TRANSACTION_STATE — la transacción no está PENDING.
 
   /transactions/{id}/void:
     post:
@@ -240,6 +303,13 @@ paths:
       tags: [transactions]
       operationId: reverseTransaction
       summary: Reverse a confirmed transaction; returns the reversal id (§7.3).
+      description: >
+        Crea una transacción de reversa (T2) con los postings invertidos y
+        `metadata.reverses_id = {id}`; la original NO se muta. EL `reason?` DEL BODY SE
+        IGNORA: el controller declara `_dto` y despacha
+        `new ReverseConfirmedTransactionCommand(id)`, así que a diferencia de `void` el
+        motivo no se persiste. El campo se conserva en el contrato para no romper clientes
+        (hu-0014, AC-2).
       parameters:
         - name: id
           in: path
@@ -247,6 +317,7 @@ paths:
           schema:
             type: string
             format: uuid
+        - $ref: '../shared/api.yaml#/components/parameters/ExternalRefHeader'
       requestBody:
         required: true
         content:
@@ -255,13 +326,22 @@ paths:
               $ref: '#/components/schemas/ReverseTransactionRequest'
       responses:
         '201':
-          description: Reversal issued.
+          description: >
+            Reversa emitida. El `id` del cuerpo es el de la TRANSACCIÓN DE REVERSA (T2),
+            no el de la original.
+          headers:
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommandAccepted'
+        '401':
+          description: Sin contexto autenticado (RF-26).
+        '404':
+          description: TRANSACTION_NOT_FOUND.
         '409':
-          description: Transaction not in CONFIRMED state (AC-7).
+          description: INVALID_TRANSACTION_STATE — la transacción no está CONFIRMED.
 
 components:
   schemas:
