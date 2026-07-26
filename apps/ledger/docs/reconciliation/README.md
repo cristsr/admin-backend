@@ -18,19 +18,23 @@ como directiva de primera clase por la misma razón.
 
 - **Componentes (C4 L3):** vista `reconciliationComponents` en `reconciliation.c4`.
 - **Flujos (dynamic views):** ver [`flows/`](./flows/).
+- **Contrato REST:** [`api.yaml`](./api.yaml) (OpenAPI 3.1, documento vivo).
 
 ## Casos de uso (flujos)
 
 | Caso de uso | Trigger | Entrypoint | Doc |
 |---|---|---|---|
+| Afirmar un saldo | rest | `POST /v1/balance-assertions` | [assert-balance](./flows/assert-balance.md) |
+| Revocar una aserción | rest | `POST /v1/balance-assertions/{id}/revoke` | [revoke-assertion](./flows/revoke-assertion.md) |
+| Resolver una discrepancia | rest | `POST /v1/balance-assertions/{id}/resolve` | [resolve-discrepancy](./flows/resolve-discrepancy.md) |
+| Consultar una aserción | rest | `GET /v1/balance-assertions/{id}` | [get-assertion-status](./flows/get-assertion-status.md) |
+| Listar aserciones de una cuenta | rest | `GET /v1/balance-assertions` | [list-assertions](./flows/list-assertions.md) |
 | **Proyectar assertion_status** | **domain-event** | `BalanceAsserted`/`Evaluated`/`Revoked`/`DiscrepancyResolved` | [project-assertion-status](./flows/project-assertion-status.md) |
 | **Proyectar adjustment_audit** | **domain-event** | `DiscrepancyResolved` | [project-adjustment-audit](./flows/project-adjustment-audit.md) |
 | **Bombear el stream** | **cron** | `ReconciliationPump.pump()` | [run-reconciliation-pump](./flows/run-reconciliation-pump.md) |
 | **Re-evaluar aserciones afectadas** | **domain-event** | `TransactionRecorded`/`Amended`/`Voided` | [reevaluate-assertions](./flows/reevaluate-assertions.md) |
 
-> Los cinco endpoints REST del módulo (`POST /v1/balance-assertions`, `.../{id}/revoke`,
-> `.../{id}/resolve`, `GET .../{id}`, `GET /v1/balance-assertions`) todavía no tienen su
-> flujo documentado ni su `api.yaml` — es el alcance de hu-0017.
+> Contrato REST completo (schemas, códigos de error, respuestas): [`api.yaml`](./api.yaml).
 
 ## Invariantes y reglas
 

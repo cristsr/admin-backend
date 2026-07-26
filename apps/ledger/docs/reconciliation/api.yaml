@@ -1,0 +1,313 @@
+openapi: 3.1.0
+info:
+  title: Ledger — Reconciliation API
+  version: "1.0.0"
+  description: >
+    Contrato canónico del módulo reconciliation (apps/ledger). Documento vivo: /sync
+    reconcilia aquí el api.delta.yaml de cada historia (merge de paths/schemas +
+    oasdiff). Introducido por hu-0017, documentando la superficie que EP-3 ya había
+    construido.
+tags:
+  - name: reconciliation
+    description: >
+      Afirmaciones de saldo contra el extracto bancario: declaración, revocación y
+      resolución de discrepancias mediante ajuste contra `Equity:Adjustments`.
+
+paths:
+  /balance-assertions:
+    post:
+      tags: [reconciliation]
+      operationId: assertBalance
+      summary: Declare what an account's balance should be at a date.
+      description: >
+        Registra una afirmación de saldo (RF-17). La evaluación es asíncrona: la
+        respuesta confirma que la aserción quedó registrada, no su veredicto. El
+        estado se consulta con `getAssertionStatus`.
+      parameters:
+        - $ref: '../shared/api.yaml#/components/parameters/ExternalRefHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssertBalanceRequest'
+      responses:
+        '201':
+          description: Assertion recorded.
+          headers:
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssertBalanceResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/AssertionUnprocessable'
+
+    get:
+      tags: [reconciliation]
+      operationId: listAssertions
+      summary: List the assertions of an account.
+      parameters:
+        - name: accountId
+          in: query
+          required: true
+          description: Account whose assertions are listed.
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Assertions of the account.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AssertionStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /balance-assertions/{id}:
+    get:
+      tags: [reconciliation]
+      operationId: getAssertionStatus
+      summary: Read one assertion with its current verdict.
+      parameters:
+        - $ref: '#/components/parameters/AssertionId'
+      responses:
+        '200':
+          description: Assertion status.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssertionStatus'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/AssertionNotFound'
+
+  /balance-assertions/{id}/revoke:
+    post:
+      tags: [reconciliation]
+      operationId: revokeAssertion
+      summary: Revoke a mistaken assertion, with an audited reason.
+      description: >
+        La revocación es terminal (RF-19): una aserción revocada no vuelve a
+        evaluarse, ni siquiera tras un rebuild de proyecciones.
+      parameters:
+        - $ref: '#/components/parameters/AssertionId'
+        - $ref: '../shared/api.yaml#/components/parameters/ExternalRefHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RevokeAssertionRequest'
+      responses:
+        '200':
+          description: Assertion revoked.
+          headers:
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RevokeAssertionResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/AssertionNotFound'
+        '422':
+          $ref: '#/components/responses/AssertionUnprocessable'
+
+  /balance-assertions/{id}/resolve:
+    post:
+      tags: [reconciliation]
+      operationId: resolveDiscrepancy
+      summary: Close a discrepancy with an adjustment against Equity:Adjustments.
+      description: >
+        Registra una transacción de sistema por el monto de la diferencia (RF-20) y
+        vincula la aserción con ese ajuste. Solo aplica a una aserción cuyo veredicto
+        sea `MISMATCHED` con diferencia conocida.
+      parameters:
+        - $ref: '#/components/parameters/AssertionId'
+        - $ref: '../shared/api.yaml#/components/parameters/ExternalRefHeader'
+      responses:
+        '200':
+          description: Discrepancy resolved; the adjustment transaction was recorded.
+          headers:
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResolveDiscrepancyResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/AssertionNotFound'
+        '422':
+          $ref: '#/components/responses/AssertionUnprocessable'
+
+components:
+  parameters:
+    AssertionId:
+      name: id
+      in: path
+      required: true
+      description: Assertion identifier.
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Unauthorized:
+      description: >
+        Missing or invalid authenticated context (`user_id`, `client_id`) — RF-26.
+      content:
+        application/json:
+          schema:
+            $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
+
+    AssertionNotFound:
+      description: >
+        The assertion does not exist for this user (`ASSERTION_NOT_FOUND`).
+      content:
+        application/json:
+          schema:
+            $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
+
+    AssertionUnprocessable:
+      description: >
+        A domain rule rejected the operation (RF-14). Possible codes:
+        `ASSERTION_ALREADY_REVOKED`, `ASSERTION_CURRENCY_MISMATCH`,
+        `ASSERTION_NOT_EVALUABLE`, `DISCREPANCY_NOT_RESOLVABLE`,
+        `LEDGER_NOT_INITIALIZED`.
+      content:
+        application/json:
+          schema:
+            $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
+
+  schemas:
+    AssertBalanceRequest:
+      type: object
+      required: [accountId, date, expectedAmount, currency]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account being asserted. Exactly this account, never its subtree (§2.4).
+        date:
+          type: string
+          format: date
+          description: Accounting cutoff date of the assertion.
+        occurredAt:
+          type: [string, 'null']
+          format: date-time
+          description: >
+            Intraday instant of the cutoff, in UTC. When absent, the assertion is
+            evaluated against the close of day in the ledger's timezone (§2.4).
+        expectedAmount:
+          type: string
+          description: Exact decimal string. Never a float (INV-8, RNF-2).
+          examples: ['1250000', '-340.75']
+        currency:
+          type: string
+          description: ISO-4217 code. Must match the account's currency.
+          examples: ['COP', 'USD']
+        tolerance:
+          type: string
+          description: >
+            Margin within which a difference is not a discrepancy. Defaults to `0`
+            — exact match.
+          default: '0'
+
+    AssertBalanceResponse:
+      type: object
+      required: [assertionId, streamPosition]
+      properties:
+        assertionId:
+          type: string
+          format: uuid
+        streamPosition:
+          type: string
+          description: >
+            Global stream position, serialized as a string: it is a 64-bit integer
+            and would lose precision as a JSON number. Lets a client read its own
+            write (RNF-9).
+
+    RevokeAssertionRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          description: Audited motive for the revocation (RF-19).
+
+    RevokeAssertionResponse:
+      type: object
+      required: [assertionId, streamPosition]
+      properties:
+        assertionId:
+          type: string
+          format: uuid
+        streamPosition:
+          type: string
+
+    ResolveDiscrepancyResponse:
+      type: object
+      required: [assertionId, adjustmentTransactionId, streamPosition]
+      properties:
+        assertionId:
+          type: string
+          format: uuid
+        adjustmentTransactionId:
+          type: string
+          format: uuid
+          description: The system transaction recorded against `Equity:Adjustments`.
+        streamPosition:
+          type: string
+
+    AssertionStatus:
+      type: object
+      required:
+        [assertionId, accountId, date, expectedAmount, currencyCode, tolerance, status]
+      properties:
+        assertionId:
+          type: string
+          format: uuid
+        accountId:
+          type: string
+          format: uuid
+        date:
+          type: string
+          format: date
+        occurredAt:
+          type: [string, 'null']
+          format: date-time
+        expectedAmount:
+          type: string
+        currencyCode:
+          type: string
+        tolerance:
+          type: string
+        status:
+          enum: [UNCHECKED, MATCHED, MISMATCHED, INDETERMINATE, REVOKED]
+          description: >
+            `UNCHECKED` until first evaluated; `INDETERMINATE` when intraday ordering
+            cannot be decided (§2.4); `REVOKED` is terminal.
+        difference:
+          type: [string, 'null']
+          description: Expected minus actual. Null until evaluated.
+        resolvedByTxn:
+          type: [string, 'null']
+          format: uuid
+          description: Adjustment transaction that closed the discrepancy, if any.
+        revokeReason:
+          type: [string, 'null']
+        checkedAt:
+          type: [string, 'null']
+          format: date-time

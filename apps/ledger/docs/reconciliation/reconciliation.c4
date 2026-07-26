@@ -13,6 +13,50 @@ model {
         introducedIn 'hu-0015'
       }
 
+      // --- Driving adapter + application handlers ---
+      controller = component 'BalanceAssertionController' {
+        technology 'Infrastructure · REST'
+        description 'POST / · POST /{id}/revoke · POST /{id}/resolve · GET /{id} · GET /'
+        metadata {
+          introducedIn 'hu-0017'
+        }
+      }
+      assertHandler = component 'AssertBalanceHandler' {
+        technology 'Application · CommandHandler'
+        description 'Registra la asercion (RF-17). No evalua: eso es asincrono.'
+        metadata {
+          introducedIn 'hu-0017'
+        }
+      }
+      revokeHandler = component 'RevokeAssertionHandler' {
+        technology 'Application · CommandHandler'
+        description 'Revoca con motivo auditado (RF-19). Terminal.'
+        metadata {
+          introducedIn 'hu-0017'
+        }
+      }
+      resolveHandler = component 'ResolveDiscrepancyHandler' {
+        technology 'Application · CommandHandler'
+        description 'Ajuste contra Equity:Adjustments via RecordTransaction (RF-20).'
+        metadata {
+          introducedIn 'hu-0017'
+        }
+      }
+      statusQuery = component 'GetAssertionStatusHandler' {
+        technology 'Application · QueryHandler'
+        description 'Lee una asercion de proj_assertions.'
+        metadata {
+          introducedIn 'hu-0017'
+        }
+      }
+      listQuery = component 'ListAssertionsHandler' {
+        technology 'Application · QueryHandler'
+        description 'Lista las aserciones de una cuenta, revocadas incluidas.'
+        metadata {
+          introducedIn 'hu-0017'
+        }
+      }
+
       // --- Domain ---
       balanceAssertion = component 'BalanceAssertion' {
         technology 'Domain · Aggregate'
@@ -124,6 +168,18 @@ model {
   admin.ledger.reconciliation.reconciliationPump -> admin.ledger.shared.postgresCheckpointRepository 'advance(globalPosition)'
   admin.ledger.reconciliation.assertionStatusProjector -> admin.ledger.shared.readModel 'upsert proj_assertions'
   admin.ledger.reconciliation.adjustmentAuditProjector -> admin.ledger.shared.readModel 'query + upsert proj_adjustment_audit(_entries)'
+  user -> admin.ledger.reconciliation.controller 'concilia via HTTP/REST'
+  admin.ledger.reconciliation.controller -> admin.ledger.reconciliation.assertHandler 'POST /balance-assertions'
+  admin.ledger.reconciliation.controller -> admin.ledger.reconciliation.revokeHandler 'POST /{id}/revoke'
+  admin.ledger.reconciliation.controller -> admin.ledger.reconciliation.resolveHandler 'POST /{id}/resolve'
+  admin.ledger.reconciliation.controller -> admin.ledger.reconciliation.statusQuery 'GET /{id}'
+  admin.ledger.reconciliation.controller -> admin.ledger.reconciliation.listQuery 'GET /'
+  admin.ledger.reconciliation.assertHandler -> admin.ledger.reconciliation.balanceAssertion 'assert()'
+  admin.ledger.reconciliation.revokeHandler -> admin.ledger.reconciliation.balanceAssertion 'revoke(reason)'
+  admin.ledger.reconciliation.resolveHandler -> admin.ledger.shared.commandBus 'dispatch(RecordTransaction) del ajuste'
+  admin.ledger.reconciliation.resolveHandler -> admin.ledger.reconciliation.balanceAssertion 'resolve(adjustmentTxnId)'
+  admin.ledger.reconciliation.statusQuery -> admin.ledger.reconciliation.assertionStatusStore 'byId'
+  admin.ledger.reconciliation.listQuery -> admin.ledger.reconciliation.assertionStatusStore 'listByAccount'
   admin.ledger.reconciliation.reevaluateReactor -> admin.ledger.reconciliation.assertionPostingReader 'cuentas tocadas por la transaccion anulada'
   admin.ledger.reconciliation.postingReaderAdapter -> admin.ledger.reconciliation.assertionPostingReader 'implementa'
   admin.ledger.reconciliation.postingReaderAdapter -> admin.ledger.shared.readModel 'query proj_postings'
@@ -141,6 +197,52 @@ views 'Reconciliation' {
     title 'Componentes'
     include admin.ledger.reconciliation, admin.ledger.reconciliation.*
     include admin.ledger.shared.readModel, admin.ledger.shared.eventStore, admin.ledger.shared.commandBus
+  }
+
+  dynamic view assertBalance {
+    title 'Afirmar un saldo · trigger REST'
+
+    user -> admin.ledger.reconciliation.controller 'POST /v1/balance-assertions (AssertBalanceRequest)'
+    admin.ledger.reconciliation.controller -> admin.ledger.reconciliation.assertHandler 'AssertBalanceCommand + AuthContext'
+    admin.ledger.reconciliation.assertHandler -> admin.ledger.reconciliation.balanceAssertion 'assert() — moneda vs cuenta'
+    admin.ledger.reconciliation.assertHandler -> admin.ledger.shared.eventStore 'append(BalanceAsserted)'
+  }
+
+  dynamic view revokeAssertion {
+    title 'Revocar una asercion erronea · trigger REST'
+
+    user -> admin.ledger.reconciliation.controller 'POST /v1/balance-assertions/{id}/revoke'
+    admin.ledger.reconciliation.controller -> admin.ledger.reconciliation.revokeHandler 'RevokeAssertionCommand + AuthContext'
+    admin.ledger.reconciliation.revokeHandler -> admin.ledger.reconciliation.balanceAssertion 'revoke(reason) — terminal'
+    admin.ledger.reconciliation.revokeHandler -> admin.ledger.shared.eventStore 'append(AssertionRevoked)'
+  }
+
+  dynamic view resolveDiscrepancy {
+    title 'Resolver una discrepancia con un ajuste · trigger REST'
+
+    user -> admin.ledger.reconciliation.controller 'POST /v1/balance-assertions/{id}/resolve'
+    admin.ledger.reconciliation.controller -> admin.ledger.reconciliation.resolveHandler 'ResolveDiscrepancyCommand + AuthContext'
+    admin.ledger.reconciliation.resolveHandler -> admin.ledger.shared.commandBus 'dispatch(RecordTransaction) contra Equity:Adjustments'
+    admin.ledger.reconciliation.resolveHandler -> admin.ledger.reconciliation.balanceAssertion 'resolve(adjustmentTxnId)'
+    admin.ledger.reconciliation.resolveHandler -> admin.ledger.shared.eventStore 'append(DiscrepancyResolved)'
+  }
+
+  dynamic view getAssertionStatus {
+    title 'Consultar el estado de una asercion · trigger REST'
+
+    user -> admin.ledger.reconciliation.controller 'GET /v1/balance-assertions/{id}'
+    admin.ledger.reconciliation.controller -> admin.ledger.reconciliation.statusQuery 'GetAssertionStatusQuery'
+    admin.ledger.reconciliation.statusQuery -> admin.ledger.reconciliation.assertionStatusStore 'byId(userId, id)'
+    admin.ledger.reconciliation.assertionStatusReader -> admin.ledger.shared.readModel 'query proj_assertions'
+  }
+
+  dynamic view listAssertions {
+    title 'Listar las aserciones de una cuenta · trigger REST'
+
+    user -> admin.ledger.reconciliation.controller 'GET /v1/balance-assertions?accountId='
+    admin.ledger.reconciliation.controller -> admin.ledger.reconciliation.listQuery 'ListAssertionsQuery'
+    admin.ledger.reconciliation.listQuery -> admin.ledger.reconciliation.assertionStatusStore 'listByAccount(userId, accountId)'
+    admin.ledger.reconciliation.assertionStatusReader -> admin.ledger.shared.readModel 'query proj_assertions'
   }
 
   dynamic view projectAssertionStatus {
