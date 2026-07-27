@@ -2,6 +2,7 @@ import { FixedClock, SequentialIdGenerator, aMoney } from '@ledger/shared/testin
 import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 import { ZeroSumBalanceRule } from '@ledger/transactions/domain/balance/zero-sum-balance-rule';
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
+import { TransfersMerged } from './events';
 import {
   ImmutableTransactionException,
   InsufficientPostingsException,
@@ -153,6 +154,45 @@ describe('LedgerTransaction', () => {
     const tx = LedgerTransaction.record(recordArgs(), balance, idGen);
 
     expect(() => tx.reverse('rev-1')).toThrow(InvalidTransactionStateException);
+  });
+
+  it('records the merge fact on the resulting confirmed transfer (RF-16, §3.4)', () => {
+    const tx = LedgerTransaction.record(
+      recordArgs({ initialStatus: TransactionStatus.CONFIRMED }),
+      balance,
+      idGen,
+    );
+    tx.pullChanges();
+
+    tx.mergedFrom(['leg-1', 'leg-2']);
+    const [event] = tx.pullChanges();
+
+    expect(event).toBeInstanceOf(TransfersMerged);
+    expect((event as TransfersMerged).props.mergedTransactionIds).toEqual(['leg-1', 'leg-2']);
+    expect((event as TransfersMerged).props.postings).toEqual(tx.postings);
+    // The merge fact adds no lifecycle state of its own.
+    expect(tx.status).toBe(TransactionStatus.CONFIRMED);
+  });
+
+  it('refuses to record a merge on a transfer that is not CONFIRMED (RF-16)', () => {
+    const tx = LedgerTransaction.record(recordArgs(), balance, idGen);
+
+    expect(() => tx.mergedFrom(['leg-1', 'leg-2'])).toThrow(InvalidTransactionStateException);
+  });
+
+  it('rehydrates a merged transfer without losing its state', () => {
+    const tx = LedgerTransaction.record(
+      recordArgs({ initialStatus: TransactionStatus.CONFIRMED }),
+      balance,
+      idGen,
+    );
+    tx.mergedFrom(['leg-1', 'leg-2']);
+    const events = tx.pullChanges();
+
+    const rebuilt = LedgerTransaction.rehydrate(tx.id, [...events]);
+
+    expect(rebuilt.status).toBe(TransactionStatus.CONFIRMED);
+    expect(rebuilt.version).toBe(2);
   });
 
   it('rehydrates the full lifecycle from history', () => {

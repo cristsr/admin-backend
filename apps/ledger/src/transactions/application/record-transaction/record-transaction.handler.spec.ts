@@ -1,4 +1,5 @@
 import { AccountValidationService } from '../../../accounts/application/account-validation.service';
+import { PostingOrigin } from '../../../accounts/application/posting-origin';
 import { IdGenerator } from '../../../shared/domain/ports';
 import { AuthContext } from '../../../shared-kernel/application/command-bus/auth-context.type';
 import { ProjectionDispatcher } from '../../../shared-kernel/application/projection/projection-dispatcher';
@@ -90,7 +91,38 @@ describe('RecordTransactionHandler', () => {
     );
 
     expect(validation.validate).toHaveBeenCalledTimes(1);
-    expect(validation.validate).toHaveBeenCalledWith('user-1', expect.anything(), expect.any(Array));
+    expect(validation.validate).toHaveBeenCalledWith(
+      'user-1',
+      expect.anything(),
+      expect.any(Array),
+      PostingOrigin.CLIENT,
+    );
+  });
+
+  it('validates with the origin the command states, never a client-supplied one (INV-13)', async () => {
+    const { handler, validation, transactions } = setup();
+    transactions.save.mockResolvedValue({ events: [], version: 1, lastPosition: 1n });
+
+    await handler.execute(
+      new RecordTransactionCommand(
+        '2026-07-20', null, 'System adjustment',
+        [{ accountId: 'acc-1', amount: '100', currency: 'COP' }, { accountId: 'acc-2', amount: '-100', currency: 'COP' }],
+        TransactionStatus.CONFIRMED,
+        null,
+        [],
+        {},
+        null,
+        PostingOrigin.SYSTEM,
+      ),
+      ctx,
+    );
+
+    expect(validation.validate).toHaveBeenCalledWith(
+      'user-1',
+      expect.anything(),
+      expect.any(Array),
+      PostingOrigin.SYSTEM,
+    );
   });
 
   it('should record a CONFIRMED transaction', async () => {

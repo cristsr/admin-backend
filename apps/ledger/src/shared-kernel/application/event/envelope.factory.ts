@@ -36,7 +36,9 @@ export class EnvelopeFactory {
       clientId: ctx.clientId,
       externalRef: index === 0 ? ctx.externalRef : null,
       payload: event.toPayload(),
-      occurredAt: recordedAt,
+      // The fact's own instant when it carries one (a bank notification is not
+      // simultaneous with the request that reports it); otherwise both coincide.
+      occurredAt: event.occurredAt() ?? recordedAt,
       recordedAt,
     }));
   }

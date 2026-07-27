@@ -17,6 +17,7 @@ describe('ReadModelAssertionPostingReader', () => {
     status: TransactionStatus,
     date = '2026-07-10',
     userId = 'user-1',
+    occurredAt: string | null = null,
   ): Promise<void> =>
     store.upsert(
       PROJ_POSTINGS,
@@ -30,6 +31,7 @@ describe('ReadModelAssertionPostingReader', () => {
         currency_code: 'USD',
         status,
         date,
+        occurred_at: occurredAt,
       },
     );
 
@@ -39,6 +41,22 @@ describe('ReadModelAssertionPostingReader', () => {
   });
 
   describe('byAccountUpToDate', () => {
+    it('carries the business instant through, so intraday ordering is possible (§2.4)', async () => {
+      await seed('p-1', 'txn-1', 'acc-1', TransactionStatus.CONFIRMED, '2026-07-10', 'user-1', '2026-07-10T14:03:11.000Z');
+
+      const [posting] = await reader.byAccountUpToDate('user-1', 'acc-1', LedgerDate.of('2026-07-31'));
+
+      expect(posting.occurredAt).toEqual(new Date('2026-07-10T14:03:11.000Z'));
+    });
+
+    it('leaves the instant null when the source never declared one', async () => {
+      await seed('p-1', 'txn-1', 'acc-1', TransactionStatus.CONFIRMED);
+
+      const [posting] = await reader.byAccountUpToDate('user-1', 'acc-1', LedgerDate.of('2026-07-31'));
+
+      expect(posting.occurredAt).toBeNull();
+    });
+
     it('excludes VOIDED postings', async () => {
       await seed('p-1', 'txn-1', 'acc-1', TransactionStatus.CONFIRMED);
       await seed('p-2', 'txn-2', 'acc-1', TransactionStatus.VOIDED);

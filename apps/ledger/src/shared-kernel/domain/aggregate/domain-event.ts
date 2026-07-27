@@ -1,3 +1,4 @@
+import { Nullable } from '@shared';
 import { EventPayload } from '@ledger/shared-kernel/domain/event/event-payload.type';
 
 /**
@@ -16,4 +17,18 @@ export abstract class DomainEvent {
 
   /** Serializes the event body to a JSON-safe payload. */
   abstract toPayload(): EventPayload;
+
+  /**
+   * When the fact happened in the real world, when that differs from when the
+   * ledger heard about it — a bank notification timestamp, say. The envelope's
+   * `occurred_at` takes this; `recorded_at` always stays the append instant
+   * (§3.4). Null means the two coincide, which is the common case: a fact the
+   * ledger itself produces happens as it is recorded.
+   *
+   * This is what makes intraday assertions evaluable (§2.4): without it every
+   * posting looks like it happened the moment its command ran.
+   */
+  occurredAt(): Nullable<Date> {
+    return null;
+  }
 }

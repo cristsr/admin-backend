@@ -15,6 +15,7 @@ type TransactionRow = {
   readonly status: string;
   readonly reverses_id: Nullable<string>;
   readonly derived_kind: string;
+  readonly metadata: Readonly<Record<string, string>>;
 };
 
 type PostingRow = {
@@ -91,6 +92,48 @@ describe('TransactionListProjector', () => {
     expect(row.reverses_id).toBe('reversal-tx-1');
   });
 
+  it('links both voided legs to the transfer when TransfersMerged is projected (§3.6)', async () => {
+    await projector.project(storedEvent({ aggregateId: 'leg-1' }), store);
+    await projector.project(storedEvent({ aggregateId: 'leg-2' }), store);
+    await projector.project(storedEvent({ aggregateId: 'transfer-1' }), store);
+
+    await projector.project(
+      storedEvent({
+        aggregateId: 'transfer-1',
+        eventType: 'TransfersMerged',
+        payload: {
+          mergedTransactionIds: ['leg-1', 'leg-2'],
+          postings: [
+            { accountId: 'acc-asset', amount: '-5000', currency: 'COP' },
+            { accountId: 'acc-asset', amount: '5000', currency: 'COP' },
+          ],
+        },
+      }),
+      store,
+    );
+
+    const rows = await store.query<TransactionRow>(PROJ_TRANSACTIONS, Criteria.none());
+    const byId = new Map(rows.map((row) => [row.transaction_id, row]));
+
+    expect(byId.get('leg-1')?.metadata.merged_into).toBe('transfer-1');
+    expect(byId.get('leg-2')?.metadata.merged_into).toBe('transfer-1');
+    expect(byId.get('transfer-1')?.metadata.merged_into).toBeUndefined();
+  });
+
+  it('ignores TransfersMerged legs that are not projected yet', async () => {
+    await projector.project(
+      storedEvent({
+        aggregateId: 'transfer-1',
+        eventType: 'TransfersMerged',
+        payload: { mergedTransactionIds: ['leg-1'], postings: [] },
+      }),
+      store,
+    );
+
+    const rows = await store.query<TransactionRow>(PROJ_TRANSACTIONS, Criteria.none());
+    expect(rows).toHaveLength(0);
+  });
+
   it('derives derived_kind from account types', async () => {
     await projector.project(storedEvent({ eventType: 'TransactionRecorded' }), store);
 
@@ -102,6 +145,32 @@ describe('TransactionListProjector', () => {
     expect(row.derived_kind).toBe('EXPENSE');
   });
 
+  it('falls back to COMPOUND when an account is not in account_tree yet (§9.4.4)', async () => {
+    await projector.project(
+      storedEvent({
+        aggregateId: 'tx-unresolved',
+        payload: {
+          date: '2026-07-20',
+          payee: null,
+          description: 'Bread',
+          status: 'PENDING',
+          postings: [
+            { accountId: 'acc-asset', amount: '-5000', currency: 'COP' },
+            { accountId: 'acc-not-projected-yet', amount: '5000', currency: 'COP' },
+          ],
+        },
+      }),
+      store,
+    );
+
+    const [row] = await store.query<TransactionRow>(
+      PROJ_TRANSACTIONS,
+      Criteria.none().equals('transaction_id', 'tx-unresolved'),
+    );
+
+    expect(row.derived_kind).toBe('COMPOUND');
+  });
+
   it('writes one posting row per posting', async () => {
     await projector.project(storedEvent({ eventType: 'TransactionRecorded' }), store);
 
@@ -111,5 +180,50 @@ describe('TransactionListProjector', () => {
     );
 
     expect(postings).toHaveLength(2);
+  });
+
+  /**
+   * The envelope's `occurred_at` always holds a value (it falls back to the
+   * append instant), so projecting it would make every posting look precisely
+   * timed. Only the payload distinguishes a declared instant from an unknown
+   * one, and an intraday assertion's verdict hangs on that difference (§2.4).
+   */
+  describe('business instant (§2.4)', () => {
+    const instantOf = async (payloadInstant: Nullable<string>) => {
+      const base = storedEvent();
+      await projector.project(
+        {
+          ...base,
+          payload: { ...(base.payload as object), occurredAt: payloadInstant },
+          // Deliberately different from the payload, to prove which one wins.
+          occurredAt: new Date('2026-07-25T09:00:00.000Z'),
+        },
+        store,
+      );
+
+      const [transaction] = await store.query<{ occurred_at: Nullable<string> }>(
+        PROJ_TRANSACTIONS,
+        Criteria.none(),
+      );
+      const [posting] = await store.query<{ occurred_at: Nullable<string> }>(
+        PROJ_POSTINGS,
+        Criteria.none(),
+      );
+
+      return { transaction: transaction.occurred_at, posting: posting.occurred_at };
+    };
+
+    it('projects the declared instant onto the transaction and every posting', async () => {
+      const instant = '2026-07-20T14:03:11.000Z';
+
+      await expect(instantOf(instant)).resolves.toEqual({
+        transaction: instant,
+        posting: instant,
+      });
+    });
+
+    it('leaves it null when undeclared, instead of borrowing the envelope', async () => {
+      await expect(instantOf(null)).resolves.toEqual({ transaction: null, posting: null });
+    });
   });
 });

@@ -32,7 +32,7 @@ export class RecordTransactionHandler extends CommandHandler<RecordTransactionCo
     const date = LedgerDate.of(command.date);
     const postings = toPostingLines(command.postings, this.catalog);
 
-    await this.validation.validate(ctx.userId, date, postings);
+    await this.validation.validate(ctx.userId, date, postings, command.origin);
 
     const transaction = LedgerTransaction.record(
       {
@@ -44,6 +44,7 @@ export class RecordTransactionHandler extends CommandHandler<RecordTransactionCo
         invoiceUrl: command.invoiceUrl,
         tags: command.tags,
         metadata: command.metadata,
+        occurredAt: command.occurredAt ? new Date(command.occurredAt) : null,
       },
       this.balance,
       this.idGenerator,

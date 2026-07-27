@@ -2,8 +2,9 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
  * Core read-model tables (§6.2): the account tree, the denormalized transaction
- * list with its postings, and balances. Deliberately free of business
- * constraints — the stream is the source of truth and these are rebuildable.
+ * list with its postings, and balances. Constraints stay minimal (§6.3) — the
+ * stream is the source of truth and these tables are rebuildable — with the one
+ * exception RNF-1 calls for: account names are unique per user.
  */
 export class CreateCoreProjections1790000000003 implements MigrationInterface {
   name = 'CreateCoreProjections1790000000003';
@@ -23,7 +24,22 @@ export class CreateCoreProjections1790000000003 implements MigrationInterface {
         "is_system"      BOOLEAN NOT NULL DEFAULT FALSE
       )
     `);
-    await queryRunner.query(`CREATE INDEX "idx_proj_accounts_user" ON "proj_accounts" ("user_id", "name")`);
+    // Unique, not a plain index: RNF-1 asks that invariants be reinforced in
+    // storage "wherever possible", and "one hierarchical name per user" (§2.1.1)
+    // is one of those. It is defense in depth exactly like the append-only
+    // trigger of §3.7 — the authority stays in the aggregate plus
+    // `AccountNameRegistry`; this only refuses to persist a state they already
+    // forbid, so §6.3's "deliberately minimal constraints" is not weakened.
+    //
+    // Verified against the two writers that can produce duplicates: a rename
+    // propagating to descendants (`AccountTreeProjector` orders its rewrites so
+    // no name is transiently duplicated) and a rebuild (which replays the exact
+    // same state sequence the live run produced, and therefore cannot violate
+    // what the live run did not). DEFERRABLE INITIALLY DEFERRED was considered
+    // and rejected: `PostgresReadModelStore` issues every upsert on its own
+    // connection outside any transaction, so deferring the check would defer it
+    // to the end of that single statement — no help at all.
+    await queryRunner.query(`CREATE UNIQUE INDEX "idx_proj_accounts_user" ON "proj_accounts" ("user_id", "name")`);
 
     await queryRunner.query(`
       CREATE TABLE "proj_transactions" (
@@ -56,6 +72,10 @@ export class CreateCoreProjections1790000000003 implements MigrationInterface {
         "currency_code"  TEXT NOT NULL,
         "status"         TEXT NOT NULL,
         "date"           DATE NOT NULL,
+        -- Denormalized from the transaction so an intraday assertion can order
+        -- postings without joining (§2.4). Null when the movement's instant is
+        -- unknown, which is what makes a verdict INDETERMINATE rather than wrong.
+        "occurred_at"    TIMESTAMPTZ,
         "metadata"       JSONB NOT NULL DEFAULT '{}'
       )
     `);

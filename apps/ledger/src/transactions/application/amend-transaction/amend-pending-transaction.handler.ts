@@ -1,4 +1,5 @@
 import { AccountValidationService } from '@ledger/accounts/application/account-validation.service';
+import { PostingOrigin } from '@ledger/accounts/application/posting-origin';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
 import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
 import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
@@ -34,7 +35,7 @@ export class AmendPendingTransactionHandler extends CommandHandler<AmendPendingT
 
     const date = LedgerDate.of(command.date);
     const postings = toPostingLines(command.postings, this.catalog);
-    await this.validation.validate(ctx.userId, date, postings);
+    await this.validation.validate(ctx.userId, date, postings, PostingOrigin.CLIENT);
 
     transaction.amend(postings, date, this.balance);
     const result = await this.transactions.save(transaction, ctx);

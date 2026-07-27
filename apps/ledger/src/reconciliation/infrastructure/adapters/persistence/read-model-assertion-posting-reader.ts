@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Criteria } from '@shared';
+import { Criteria, Nullable } from '@shared';
 import {
   AssertablePosting,
   AssertionPostingReader,
@@ -18,13 +18,18 @@ type PostingRow = {
   readonly currency_code: string;
   readonly status: string;
   readonly date: string;
+  readonly occurred_at: Nullable<string>;
 };
 
 /**
  * Reads an account's `CONFIRMED`+`PENDING` postings up to a cutoff from
- * `proj_postings` (§2.4). `VOIDED` rows are excluded. The projection has no
- * per-posting instant, so `occurredAt` is null — intraday ordering is a
- * TODO(intraday) that a future join onto `proj_transactions.occurred_at` covers.
+ * `proj_postings` (§2.4). `VOIDED` rows are excluded.
+ *
+ * `occurred_at` is denormalized onto each posting by the transaction projector,
+ * so intraday ordering needs no join. It stays null when the client never
+ * declared an instant — the evaluator treats those as ambiguous rather than
+ * assuming an order, which is what produces `INDETERMINATE` instead of a wrong
+ * verdict.
  */
 @Injectable()
 export class ReadModelAssertionPostingReader extends AssertionPostingReader {
@@ -80,7 +85,7 @@ export class ReadModelAssertionPostingReader extends AssertionPostingReader {
     return {
       amount: Money.of(row.amount, currency),
       date: LedgerDate.of(row.date),
-      occurredAt: null,
+      occurredAt: row.occurred_at ? new Date(row.occurred_at) : null,
       status: row.status as TransactionStatus,
     };
   }

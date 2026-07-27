@@ -28,6 +28,18 @@ export class RecordTransactionRequestDto {
   @IsDateString()
   readonly date: string;
 
+  @ApiPropertyOptional({
+    example: '2026-07-20T14:03:11.000Z',
+    description:
+      'UTC instant the movement actually happened, when the source knows it (a bank ' +
+      'notification does; a manually entered expense does not). Omit when unknown — ' +
+      'an intraday balance assertion then reports INDETERMINATE instead of guessing ' +
+      'the order (§2.4).',
+  })
+  @IsOptional()
+  @IsDateString()
+  readonly occurredAt?: string;
+
   @ApiPropertyOptional({ example: 'Netflix' })
   @IsOptional()
   @IsString()

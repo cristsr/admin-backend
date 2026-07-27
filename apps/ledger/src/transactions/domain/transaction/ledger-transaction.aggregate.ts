@@ -12,6 +12,7 @@ import {
   TransactionRecorded,
   TransactionReversed,
   TransactionVoided,
+  TransfersMerged,
 } from './events';
 import {
   ImmutableTransactionException,
@@ -31,6 +32,12 @@ export type RecordTransactionArgs = {
   readonly invoiceUrl: Nullable<string>;
   readonly tags: readonly string[];
   readonly metadata: Readonly<Record<string, string>>;
+  /**
+   * Instant the movement actually happened, when known (§2.4). Optional because
+   * not knowing it is the ordinary case — only a source that timestamps the
+   * movement itself, like a bank notification, can supply one.
+   */
+  readonly occurredAt?: Nullable<Date>;
 };
 
 /**
@@ -82,6 +89,7 @@ export class LedgerTransaction extends AggregateRoot<string> {
         tags: args.tags,
         postings: args.postings,
         metadata: args.metadata,
+        occurredAt: args.occurredAt ?? null,
       }),
     );
 
@@ -178,6 +186,29 @@ export class LedgerTransaction extends AggregateRoot<string> {
     };
   }
 
+  /**
+   * Records that this confirmed transfer is the result of merging two pending
+   * transactions (RF-16, §3.4), emitting {@link TransfersMerged} with the ids of
+   * the voided pendings and this transfer's postings.
+   *
+   * The fact belongs to the **resulting transfer's** stream, not to the two
+   * legs': the merge is what brought this aggregate into being, while each leg's
+   * own history already tells the whole truth about it with `TransactionVoided`.
+   * Emitting it twice — once per leg — would duplicate a single fact across
+   * streams with no aggregate owning it.
+   */
+  mergedFrom(mergedTransactionIds: readonly string[]): void {
+    if (this.txStatus !== TransactionStatus.CONFIRMED) {
+      throw new InvalidTransactionStateException(
+        `Only a CONFIRMED transfer can result from a merge; this one is ${this.txStatus}`,
+      );
+    }
+
+    this.raise(
+      new TransfersMerged({ mergedTransactionIds, postings: this.txPostings }),
+    );
+  }
+
   protected apply(event: DomainEvent): void {
     if (event instanceof TransactionRecorded) {
       this.txStatus = event.props.status;
@@ -222,6 +253,9 @@ export class LedgerTransaction extends AggregateRoot<string> {
     if (event instanceof TransactionReversed) {
       this.reversed = true;
     }
+
+    // TransfersMerged carries no state: it is provenance, and the transfer's
+    // own lifecycle events already describe what it is.
   }
 
   private static ensureRecordable(status: TransactionStatus): void {

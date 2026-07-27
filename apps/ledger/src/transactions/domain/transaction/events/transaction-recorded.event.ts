@@ -20,6 +20,8 @@ export type TransactionRecordedProps = {
   readonly tags: readonly string[];
   readonly postings: readonly PostingLine[];
   readonly metadata: Readonly<Record<string, string>>;
+  /** Instant the movement actually happened, when the client knows it (§2.4). */
+  readonly occurredAt?: Nullable<Date>;
 };
 
 /** A transaction was recorded in PENDING or CONFIRMED state (§3.4, RF-3). */
@@ -44,6 +46,7 @@ export class TransactionRecorded extends DomainEvent {
         PostingSerializer.fromPayload(raw, catalog),
       ),
       metadata: (payload.metadata as Record<string, string>) ?? {},
+      occurredAt: payload.occurredAt ? new Date(payload.occurredAt as string) : null,
     });
   }
 
@@ -58,6 +61,12 @@ export class TransactionRecorded extends DomainEvent {
       tags: [...this.props.tags],
       postings: this.props.postings.map((posting) => PostingSerializer.toPayload(posting)),
       metadata: this.props.metadata,
+      // UTC exclusively, like every timestamp in the system (RNF-7).
+      occurredAt: this.props.occurredAt?.toISOString() ?? null,
     };
+  }
+
+  override occurredAt(): Nullable<Date> {
+    return this.props.occurredAt ?? null;
   }
 }

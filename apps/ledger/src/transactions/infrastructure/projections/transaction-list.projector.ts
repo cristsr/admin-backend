@@ -4,6 +4,7 @@ import { Projector } from '@ledger/shared-kernel/application/projection/projecto
 import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
 import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
 import { AccountType } from '@ledger/shared-kernel/domain/value-objects';
+import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
 import { TransactionKindDeriver } from '@ledger/transactions/domain/derivation/transaction-kind.deriver';
 import { PostingPayload } from '@ledger/transactions/domain/posting/posting.serializer';
 
@@ -15,7 +16,7 @@ type TransactionRow = {
   readonly transaction_id: string;
   readonly user_id: string;
   readonly date: string;
-  readonly occurred_at: string;
+  readonly occurred_at: Nullable<string>;
   readonly payee: Nullable<string>;
   readonly description: string;
   readonly status: string;
@@ -37,6 +38,7 @@ type PostingRow = {
   readonly currency_code: string;
   readonly status: string;
   readonly date: string;
+  readonly occurred_at: Nullable<string>;
   readonly metadata: Readonly<Record<string, string>>;
 };
 
@@ -54,6 +56,7 @@ export class TransactionListProjector extends Projector {
     'TransactionConfirmed',
     'TransactionVoided',
     'TransactionReversed',
+    'TransfersMerged',
   ];
 
   constructor(private readonly deriver: TransactionKindDeriver = new TransactionKindDeriver()) {
@@ -69,6 +72,7 @@ export class TransactionListProjector extends Projector {
     if (event.eventType === 'TransactionConfirmed') return this.onStatus(event, 'CONFIRMED', store);
     if (event.eventType === 'TransactionVoided') return this.onStatus(event, 'VOIDED', store);
     if (event.eventType === 'TransactionReversed') return this.onReversed(event, payload, store);
+    if (event.eventType === 'TransfersMerged') return this.onMerged(event, payload, store);
   }
 
   private async onRecorded(
@@ -85,7 +89,11 @@ export class TransactionListProjector extends Projector {
       transaction_id: event.aggregateId,
       user_id: event.userId,
       date: payload.date as string,
-      occurred_at: event.occurredAt.toISOString(),
+      // The declared business instant, not the envelope's: the envelope always
+      // has one (it falls back to the append time), and that would erase the
+      // difference between "happened at 14:03" and "instant unknown" — which is
+      // exactly what an intraday assertion needs to tell apart (§2.4).
+      occurred_at: (payload.occurredAt as Nullable<string>) ?? null,
       payee: (payload.payee as Nullable<string>) ?? null,
       description: payload.description as string,
       status,
@@ -99,7 +107,7 @@ export class TransactionListProjector extends Projector {
     };
 
     await store.upsert(PROJ_TRANSACTIONS, { transaction_id: event.aggregateId }, row);
-    await this.writePostings(event, payload.date as string, status, postings, store);
+    await this.writePostings(event, payload.date as string, status, row.occurred_at, postings, store);
   }
 
   private async onAmended(
@@ -121,8 +129,10 @@ export class TransactionListProjector extends Projector {
       { ...existing, date, derived_kind: derivedKind },
     );
 
+    // An amendment revises what was posted, not when it happened: the instant
+    // stays whatever the recording declared.
     await this.clearPostings(event.aggregateId, store);
-    await this.writePostings(event, date, existing.status, postings, store);
+    await this.writePostings(event, date, existing.status, existing.occurred_at, postings, store);
   }
 
   private async onAnnotated(
@@ -174,6 +184,7 @@ export class TransactionListProjector extends Projector {
     event: StoredEvent,
     date: string,
     status: string,
+    occurredAt: Nullable<string>,
     postings: readonly PostingPayload[],
     store: ReadModelStore,
   ): Promise<void> {
@@ -188,6 +199,7 @@ export class TransactionListProjector extends Projector {
           currency_code: posting.currency,
           status,
           date,
+          occurred_at: occurredAt,
           metadata: posting.metadata ?? {},
         };
 
@@ -215,6 +227,36 @@ export class TransactionListProjector extends Projector {
     );
   }
 
+  /**
+   * Points each voided leg at the transfer that replaced it (§3.6). The
+   * transfer's own row already carries `merged_from`; this closes the other
+   * direction so a client reading a voided pending can follow it forward
+   * without scanning every transfer's metadata.
+   *
+   * The transfer's postings travel in the event but are not re-projected:
+   * its `TransactionRecorded` already wrote them, and writing them twice would
+   * duplicate the `proj_postings` rows the balances recompute from.
+   */
+  private async onMerged(
+    event: StoredEvent,
+    payload: Record<string, unknown>,
+    store: ReadModelStore,
+  ): Promise<void> {
+    const mergedIds = (payload.mergedTransactionIds as string[]) ?? [];
+
+    for (const mergedId of mergedIds) {
+      const existing = await this.transaction(mergedId, store);
+
+      if (!existing) continue;
+
+      await store.upsert(
+        PROJ_TRANSACTIONS,
+        { transaction_id: mergedId },
+        { ...existing, metadata: { ...existing.metadata, merged_into: event.aggregateId } },
+      );
+    }
+  }
+
   private async clearPostings(transactionId: string, store: ReadModelStore): Promise<void> {
     const postings = await this.postings(transactionId, store);
 
@@ -233,13 +275,15 @@ export class TransactionListProjector extends Projector {
       Criteria.none().equals('user_id', userId),
     );
     const typeById = new Map(accounts.map((account) => [account.account_id, account.type]));
+    const types = postings.map((posting) => typeById.get(posting.accountId));
 
-    const types = postings
-      .map((posting) => typeById.get(posting.accountId))
-      .filter((type): type is string => !!type)
-      .map((type) => type as AccountType);
+    // An account still missing from `account_tree` (projections catch up
+    // independently) makes the whole classification unreliable: deriving from
+    // the subset that did resolve would publish a concrete kind from partial
+    // evidence. §9.4.4 — what cannot be classified is COMPOUND.
+    if (types.some((type) => !type)) return DerivedKind.COMPOUND;
 
-    return this.deriver.derive(types);
+    return this.deriver.derive(types as AccountType[]);
   }
 
   private async transaction(
