@@ -1,11 +1,11 @@
 import { IdGenerator } from '../../../shared/domain/ports';
-import { ProjectionDispatcher } from '../../../shared-kernel/application/projection/projection-dispatcher';
-import { LedgerTransactionRepository } from '../ledger-transaction.repository';
-import { BalanceRule } from '../../domain/balance/balance-rule';
-import { TransactionNotFoundException, ImmutableTransactionException } from '../../domain/transaction/exceptions/transaction.exception';
 import { AuthContext } from '../../../shared-kernel/application/command-bus/auth-context.type';
-import { ReverseConfirmedTransactionHandler } from './reverse-confirmed-transaction.handler';
+import { ProjectionDispatcher } from '../../../shared-kernel/application/projection/projection-dispatcher';
+import { BalanceRule } from '../../domain/balance/balance-rule';
+import { ImmutableTransactionException, TransactionNotFoundException } from '../../domain/transaction/exceptions/transaction.exception';
+import { LedgerTransactionRepository } from '../ledger-transaction.repository';
 import { ReverseConfirmedTransactionCommand } from './reverse-confirmed-transaction.command';
+import { ReverseConfirmedTransactionHandler } from './reverse-confirmed-transaction.handler';
 
 const ctx: AuthContext = { userId: 'user-1', clientId: 'client-x', externalRef: 'rev-ref' };
 

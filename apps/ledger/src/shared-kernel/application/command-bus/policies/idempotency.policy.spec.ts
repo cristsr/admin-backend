@@ -1,6 +1,6 @@
-import { InMemoryEventStore } from '../../../infrastructure/adapters/event-store/in-memory/in-memory-event-store';
-import { DuplicateExternalRefException } from '../../../domain/exceptions/event-store.exception';
 import { StoredEvent } from '../../../domain/event/stored-event.type';
+import { DuplicateExternalRefException } from '../../../domain/exceptions/event-store.exception';
+import { InMemoryEventStore } from '../../../infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { AuthContext } from '../auth-context.type';
 import { Command } from '../command';
 import { CommandResult } from '../command-result.type';

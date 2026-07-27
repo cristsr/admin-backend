@@ -1,10 +1,10 @@
 import { Clock } from '../../../shared/domain/ports';
-import { ProjectionDispatcher } from '../../../shared-kernel/application/projection/projection-dispatcher';
-import { LedgerTransactionRepository } from '../ledger-transaction.repository';
-import { TransactionNotFoundException, ImmutableTransactionException } from '../../domain/transaction/exceptions/transaction.exception';
 import { AuthContext } from '../../../shared-kernel/application/command-bus/auth-context.type';
-import { ConfirmTransactionHandler } from './confirm-transaction.handler';
+import { ProjectionDispatcher } from '../../../shared-kernel/application/projection/projection-dispatcher';
+import { ImmutableTransactionException, TransactionNotFoundException } from '../../domain/transaction/exceptions/transaction.exception';
+import { LedgerTransactionRepository } from '../ledger-transaction.repository';
 import { ConfirmTransactionCommand } from './confirm-transaction.command';
+import { ConfirmTransactionHandler } from './confirm-transaction.handler';
 
 const ctx: AuthContext = { userId: 'user-1', clientId: 'client-x', externalRef: null };
 

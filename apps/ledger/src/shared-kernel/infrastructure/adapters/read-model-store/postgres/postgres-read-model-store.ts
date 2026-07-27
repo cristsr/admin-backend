@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { DataSource } from 'typeorm';
 import { Criteria, Filter, FilterOperator } from '@shared';
+import { DataSource } from 'typeorm';
 import {
   ReadModelKey,
   ReadModelRow,

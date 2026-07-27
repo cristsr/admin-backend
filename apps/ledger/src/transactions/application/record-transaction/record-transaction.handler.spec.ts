@@ -1,14 +1,14 @@
 import { AccountValidationService } from '../../../accounts/application/account-validation.service';
 import { IdGenerator } from '../../../shared/domain/ports';
+import { AuthContext } from '../../../shared-kernel/application/command-bus/auth-context.type';
 import { ProjectionDispatcher } from '../../../shared-kernel/application/projection/projection-dispatcher';
 import { CurrencyCatalog } from '../../../shared-kernel/domain/value-objects';
-import { LedgerTransactionRepository } from '../ledger-transaction.repository';
 import { BalanceRule } from '../../domain/balance/balance-rule';
 import { UnbalancedTransactionException } from '../../domain/transaction/exceptions/transaction.exception';
 import { TransactionStatus } from '../../domain/transaction/transaction-status';
-import { AuthContext } from '../../../shared-kernel/application/command-bus/auth-context.type';
-import { RecordTransactionHandler } from './record-transaction.handler';
+import { LedgerTransactionRepository } from '../ledger-transaction.repository';
 import { RecordTransactionCommand } from './record-transaction.command';
+import { RecordTransactionHandler } from './record-transaction.handler';
 
 const ctx: AuthContext = { userId: 'user-1', clientId: 'client-x', externalRef: null };
 

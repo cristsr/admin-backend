@@ -1,9 +1,9 @@
 import { AuthContext } from './auth-context.type';
 import { Command } from './command';
+import { CommandBus, PolicyCommandBus, UnregisteredCommandException } from './command-bus';
 import { CommandHandler } from './command-handler';
 import { CommandNext, CommandPolicy } from './command-policy';
 import { CommandResult } from './command-result.type';
-import { CommandBus, PolicyCommandBus, UnregisteredCommandException } from './command-bus';
 
 class HelloCommand extends Command {
   readonly commandType = 'Hello';
