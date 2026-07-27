@@ -1,4 +1,5 @@
 import { Criteria } from '@shared';
+import { CurrencyCatalogCache } from '@ledger/reference/application/currency-catalog.cache';
 import { PROJ_CURRENCIES } from '@ledger/reference/infrastructure/projections/currencies.projector';
 import { Currency } from '@ledger/shared/domain/money';
 import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
@@ -32,7 +33,7 @@ const BASE_CURRENCIES: Readonly<Record<string, number>> = { COP: 0, USD: 2 };
  * read into an in-memory cache and served from there; `refresh()` reloads it
  * after a registration.
  */
-export class ReadModelCurrencyCatalog extends CurrencyCatalog {
+export class ReadModelCurrencyCatalog extends CurrencyCatalog implements CurrencyCatalogCache {
   private readonly cache = new Map<string, number>();
 
   constructor(private readonly store: ReadModelStore) {

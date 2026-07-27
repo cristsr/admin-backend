@@ -2,11 +2,11 @@ import {
   CURRENCY_CATALOG_ID,
   CurrencyCatalogAggregate,
 } from '@ledger/reference/domain/currency/currency-catalog.aggregate';
-import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
 import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
 import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projection/projection-dispatcher';
+import { CurrencyCatalogCache } from './currency-catalog.cache';
 import { CurrencyCatalogRepository, SYSTEM_USER_ID } from './currency-catalog.repository';
 import { RegisterCurrencyCommand } from './register-currency.command';
 
@@ -22,7 +22,7 @@ export class RegisterCurrencyHandler extends CommandHandler<RegisterCurrencyComm
   constructor(
     private readonly catalog: CurrencyCatalogRepository,
     private readonly dispatcher: ProjectionDispatcher,
-    private readonly readModelCatalog: ReadModelCurrencyCatalog,
+    private readonly catalogCache: CurrencyCatalogCache,
   ) {
     super();
   }
@@ -38,7 +38,7 @@ export class RegisterCurrencyHandler extends CommandHandler<RegisterCurrencyComm
     const result = await this.catalog.save(aggregate, systemCtx);
 
     await this.dispatcher.dispatch(result.events);
-    await this.readModelCatalog.refresh();
+    await this.catalogCache.refresh();
 
     return {
       aggregateId: CURRENCY_CATALOG_ID,

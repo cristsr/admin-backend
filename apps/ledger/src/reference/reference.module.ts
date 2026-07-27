@@ -1,19 +1,15 @@
 import { Logger, Module, OnModuleInit } from '@nestjs/common';
-import { createLedgerEventRegistry } from '@ledger/ledger/application/ledger-event-registry.factory';
-import { CurrencyCatalogRepository } from '@ledger/reference/application/currency-catalog.repository';
-import { ListCurrenciesHandler } from '@ledger/reference/application/list-currencies.query';
-import { RegisterCurrencyHandler } from '@ledger/reference/application/register-currency.handler';
 import { CurrenciesController } from '@ledger/reference/infrastructure/adapters/http/currencies.controller';
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
-import { Clock, IdGenerator } from '@ledger/shared/domain/ports';
-import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
-import { EventRegistry } from '@ledger/shared-kernel/application/event/event-registry';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
-import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
-import { CurrencyCatalog } from '@ledger/shared-kernel/domain/value-objects/currency-catalog';
 
 /**
  * Reference data: the global currency catalog (RF-21).
+ *
+ * Neither side of the catalog is composed here: `RegisterCurrencyHandler` is
+ * registered on the `CommandBus` by `createLedgerApplication` and
+ * `ListCurrenciesHandler` on the `QueryBus` by `createQueryBus`, which are the
+ * two buses {@link CurrenciesController} dispatches into. This module only owns
+ * the HTTP surface and the boot hydration.
  *
  * `ReadModelCurrencyCatalog` is hydrated on boot because `CurrencyCatalog.resolve`
  * is synchronous and is called during stream rehydration — by the time an
@@ -21,36 +17,6 @@ import { CurrencyCatalog } from '@ledger/shared-kernel/domain/value-objects/curr
  */
 @Module({
   controllers: [CurrenciesController],
-  providers: [
-    {
-      provide: EventRegistry,
-      inject: [CurrencyCatalog],
-      useFactory: (catalog: CurrencyCatalog): EventRegistry => createLedgerEventRegistry(catalog),
-    },
-    {
-      provide: CurrencyCatalogRepository,
-      inject: [EventStore, EventRegistry, EnvelopeFactory],
-      useFactory: (
-        eventStore: EventStore,
-        registry: EventRegistry,
-        envelopes: EnvelopeFactory,
-      ): CurrencyCatalogRepository =>
-        new CurrencyCatalogRepository(eventStore, registry, envelopes),
-    },
-    {
-      provide: EnvelopeFactory,
-      inject: [Clock, IdGenerator],
-      useFactory: (clock: Clock, ids: IdGenerator): EnvelopeFactory =>
-        new EnvelopeFactory(clock, ids),
-    },
-    {
-      provide: ListCurrenciesHandler,
-      inject: [ReadModelStore],
-      useFactory: (store: ReadModelStore): ListCurrenciesHandler =>
-        new ListCurrenciesHandler(store),
-    },
-    RegisterCurrencyHandler,
-  ],
 })
 export class ReferenceModule implements OnModuleInit {
   private readonly logger = new Logger(ReferenceModule.name);

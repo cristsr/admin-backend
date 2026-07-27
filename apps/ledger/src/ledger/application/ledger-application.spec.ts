@@ -4,10 +4,14 @@ import { NameCollisionException } from '@ledger/accounts/domain/account/exceptio
 import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { InitializeLedgerCommand } from '@ledger/ledger/application/initialize-ledger/initialize-ledger.command';
 import { LedgerAlreadyInitializedException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
+import { RegisterCurrencyCommand } from '@ledger/reference/application/register-currency.command';
+import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
+import { PROJ_CURRENCIES } from '@ledger/reference/infrastructure/projections/currencies.projector';
 import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
 import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
 import { MissingAuthContextException } from '@ledger/shared-kernel/application/command-bus/policies/missing-auth-context.exception';
+import { CurrencyCode } from '@ledger/shared-kernel/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
 import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
@@ -202,6 +206,37 @@ describe('Ledger application (write side)', () => {
     expect(second.idempotentReplay).toBe(true);
     expect(second.aggregateId).toBe(first.aggregateId);
     expect(after).toBe(before);
+  });
+
+  it('registers a currency, projects it, and makes it resolvable without a restart (RF-21)', async () => {
+    const eventStore = new InMemoryEventStore();
+    const readModel = new InMemoryReadModelStore();
+    // The production catalog: served from `proj_currencies` through a cache,
+    // and its own reload hook.
+    const catalog = new ReadModelCurrencyCatalog(readModel);
+    const { commandBus } = createLedgerApplication({
+      eventStore,
+      readModel,
+      clock: new FixedClock(new Date('2026-07-22T12:00:00.000Z')),
+      idGenerator: new SequentialIdGenerator(),
+      catalog,
+      catalogCache: catalog,
+    });
+
+    const result = await commandBus.dispatch(
+      new RegisterCurrencyCommand('CLF', 4, 'Unidad de Fomento'),
+      ctx(),
+    );
+
+    const [row] = await readModel.query<{ code: string; minor_units: number; name: string }>(
+      PROJ_CURRENCIES,
+      Criteria.none().equals('code', 'CLF'),
+    );
+
+    expect(result.aggregateId).toBeTruthy();
+    expect(row).toEqual(expect.objectContaining({ code: 'CLF', minor_units: 4 }));
+    // The whole point: the currency is usable in this process, not after a boot.
+    expect(catalog.resolve(CurrencyCode.of('CLF')).minorUnits).toBe(4);
   });
 
   it('reverses a confirmed transaction with a linked reversing transaction (RF-7)', async () => {

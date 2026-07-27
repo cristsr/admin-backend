@@ -4,7 +4,7 @@ import { createQueryBus } from '@ledger/read-side/query-bus.factory';
 import { Clock, IdGenerator } from '@ledger/shared/domain/ports';
 import { SystemClock } from '@ledger/shared/infrastructure/system-clock';
 import { UuidIdGenerator } from '@ledger/shared/infrastructure/uuid-id-generator';
-import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
+import { CommandBus, PolicyCommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
 import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
 import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
 import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
@@ -38,18 +38,30 @@ import { PostgresReadModelStore } from '@ledger/shared-kernel/infrastructure/ada
     { provide: CurrencyCatalog, useExisting: ReadModelCurrencyCatalog },
     { provide: EventStore, useClass: PostgresEventStore },
     { provide: ReadModelStore, useClass: PostgresReadModelStore },
+    // The concrete bus is the provider; `CommandBus` aliases it. Feature modules
+    // composed outside this root (EP-3) inject `PolicyCommandBus` to register
+    // their own handlers on the very same policy chain (INV-10, RF-11).
     {
-      provide: CommandBus,
-      inject: [EventStore, ReadModelStore, Clock, IdGenerator, CurrencyCatalog],
+      provide: PolicyCommandBus,
+      inject: [EventStore, ReadModelStore, Clock, IdGenerator, CurrencyCatalog, ReadModelCurrencyCatalog],
       useFactory: (
         eventStore: EventStore,
         readModel: ReadModelStore,
         clock: Clock,
         idGenerator: IdGenerator,
         catalog: CurrencyCatalog,
-      ): CommandBus =>
-        createLedgerApplication({ eventStore, readModel, clock, idGenerator, catalog }).commandBus,
+        catalogCache: ReadModelCurrencyCatalog,
+      ): PolicyCommandBus =>
+        createLedgerApplication({
+          eventStore,
+          readModel,
+          clock,
+          idGenerator,
+          catalog,
+          catalogCache,
+        }).commandBus,
     },
+    { provide: CommandBus, useExisting: PolicyCommandBus },
     {
       provide: QueryBus,
       inject: [ReadModelStore],
@@ -58,6 +70,7 @@ import { PostgresReadModelStore } from '@ledger/shared-kernel/infrastructure/ada
   ],
   exports: [
     CommandBus,
+    PolicyCommandBus,
     QueryBus,
     EventStore,
     ReadModelStore,
