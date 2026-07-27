@@ -3,6 +3,7 @@ import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestj
 import { Nullable } from '@shared';
 import { CloseAccountCommand } from '@ledger/accounts/application/close-account/close-account.command';
 import { OpenAccountCommand } from '@ledger/accounts/application/open-account/open-account.command';
+import { RecordOpeningBalanceCommand } from '@ledger/accounts/application/record-opening-balance/record-opening-balance.command';
 import { RenameAccountCommand } from '@ledger/accounts/application/rename-account/rename-account.command';
 import { GetAccountBalancesQuery } from '@ledger/read-side/get-account-balances/get-account-balances.query';
 import { GetAccountByIdQuery } from '@ledger/read-side/get-account-by-id/get-account-by-id.query';
@@ -26,6 +27,7 @@ import { AccountTreeDto } from './dto/account-tree.dto';
 import { AccountDto } from './dto/account.dto';
 import { CloseAccountRequestDto } from './dto/close-account-request.dto';
 import { OpenAccountRequestDto } from './dto/open-account-request.dto';
+import { RecordOpeningBalanceRequestDto } from './dto/record-opening-balance-request.dto';
 import { RenameAccountRequestDto } from './dto/rename-account-request.dto';
 
 /**
@@ -96,6 +98,26 @@ export class AccountsController {
     @Body() dto: RenameAccountRequestDto,
   ): Promise<CommandResult> {
     const command = new RenameAccountCommand(id, dto.newName);
+
+    return this.commandBus.dispatch(command, this.authContext(context, externalRef));
+  }
+
+  @Post(':id/opening-balance')
+  @ApiOperation({
+    summary: 'Record the balance a pre-existing account already had (RF-27).',
+    description:
+      'Books a confirmed opening entry between the account and the user\'s ' +
+      '`Equity:OpeningBalances`. The counterparty and the system origin are ' +
+      'resolved server-side and cannot be influenced by the request (INV-13).',
+  })
+  @ApiCreatedResponse({ type: CommandAcceptedDto })
+  openingBalance(
+    @Context() context: LedgerContext,
+    @ExternalRef() externalRef: Nullable<string>,
+    @Param('id') id: string,
+    @Body() dto: RecordOpeningBalanceRequestDto,
+  ): Promise<CommandResult> {
+    const command = new RecordOpeningBalanceCommand(id, dto.amount, dto.currency, dto.date);
 
     return this.commandBus.dispatch(command, this.authContext(context, externalRef));
   }

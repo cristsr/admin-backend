@@ -1,5 +1,6 @@
 import { CloseAccountCommand } from '@ledger/accounts/application/close-account/close-account.command';
 import { OpenAccountCommand } from '@ledger/accounts/application/open-account/open-account.command';
+import { RecordOpeningBalanceCommand } from '@ledger/accounts/application/record-opening-balance/record-opening-balance.command';
 import { RenameAccountCommand } from '@ledger/accounts/application/rename-account/rename-account.command';
 import { GetAccountBalancesQuery } from '@ledger/read-side/get-account-balances/get-account-balances.query';
 import { GetAccountByIdQuery } from '@ledger/read-side/get-account-by-id/get-account-by-id.query';
@@ -72,6 +73,33 @@ describe('AccountsController', () => {
     const [command] = commandBus.dispatch.mock.calls[0];
     expect(command).toBeInstanceOf(CloseAccountCommand);
     expect(command).toMatchObject({ accountId: 'acc-7', closedOn: '2026-07-20' });
+  });
+
+  it('dispatches RecordOpeningBalanceCommand without letting the body name a counterparty (RF-27)', async () => {
+    await controller.openingBalance(context, 'ref-9', 'acc-42', {
+      amount: '1500000',
+      currency: 'COP',
+      date: '2026-01-01',
+    });
+
+    const [command, ctx] = commandBus.dispatch.mock.calls[0];
+    expect(command).toBeInstanceOf(RecordOpeningBalanceCommand);
+    expect(command).toMatchObject({
+      accountId: 'acc-42',
+      amount: '1500000',
+      currency: 'COP',
+      date: '2026-01-01',
+    });
+    // Nothing in the command names Equity:OpeningBalances or an origin: both are
+    // resolved server-side, which is what keeps INV-13 unforgeable.
+    expect(Object.keys(command).sort()).toEqual([
+      'accountId',
+      'amount',
+      'commandType',
+      'currency',
+      'date',
+    ]);
+    expect(ctx).toEqual({ userId: 'user-1', clientId: 'frontend', externalRef: 'ref-9' });
   });
 
   it('asks GetAccountTreeQuery scoped to the context user and returns the projection unchanged', async () => {

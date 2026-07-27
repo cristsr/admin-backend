@@ -106,6 +106,42 @@ describe('Accounts API (e2e, buses mocked)', () => {
     expect(response.body).toMatchObject({ statusCode: 409, code: 'NAME_COLLISION' });
   });
 
+  it('records an opening balance and ignores anything the body invents (RF-27, INV-13)', async () => {
+    dispatch.mockResolvedValue({ ...accepted, aggregateId: 'txn-1' });
+
+    const response = await withContext(
+      request(app.getHttpServer())
+        .post('/api/v1/accounts/acc-1/opening-balance')
+        .send({
+          amount: '1500000',
+          currency: 'COP',
+          date: '2026-01-01',
+          // A caller trying to claim system origin or pick the counterparty.
+          origin: 'SYSTEM',
+          counterpartyAccountId: 'sys-adjustments',
+        }),
+    ).expect(201);
+
+    expect(response.body).toEqual({ id: 'txn-1', streamPosition: '7' });
+
+    const [command] = dispatch.mock.calls[0];
+    expect(Object.keys(command).sort()).toEqual([
+      'accountId',
+      'amount',
+      'commandType',
+      'currency',
+      'date',
+    ]);
+  });
+
+  it('rejects an opening balance whose amount is not a decimal string with 400', async () => {
+    await withContext(
+      request(app.getHttpServer())
+        .post('/api/v1/accounts/acc-1/opening-balance')
+        .send({ amount: 'a lot', currency: 'COP', date: '2026-01-01' }),
+    ).expect(400);
+  });
+
   it('maps closing a system account to 409 SYSTEM_ACCOUNT_PROTECTED', async () => {
     dispatch.mockRejectedValue(new SystemAccountProtectedException('cannot close a system account'));
 
