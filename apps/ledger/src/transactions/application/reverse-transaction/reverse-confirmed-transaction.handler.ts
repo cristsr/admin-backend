@@ -1,9 +1,9 @@
-import { IdGenerator } from '@ledger/shared/domain/ports';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
-import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projection/projection-dispatcher';
-import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
+import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
+import { IdGenerator } from '@cqrs/domain/ports';
+import { EventStore } from '@cqrs/domain/ports/event-store';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
 import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';
 import { TransactionNotFoundException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';

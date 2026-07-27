@@ -1,9 +1,9 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
+import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
+import { IdGenerator } from '@cqrs/domain/ports';
 import { AccountValidationService } from '@ledger/accounts/application/account-validation.service';
-import { IdGenerator } from '@ledger/shared/domain/ports';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
-import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projection/projection-dispatcher';
 import { CurrencyCatalog, LedgerDate, Payee } from '@ledger/shared/domain/value-objects';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
 import { toPostingLines } from '@ledger/transactions/application/posting.factory';

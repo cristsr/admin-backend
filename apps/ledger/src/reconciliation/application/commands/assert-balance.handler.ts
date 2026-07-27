@@ -1,10 +1,10 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
+import { IdGenerator } from '@cqrs/domain/ports';
 import { BalanceAssertion } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.aggregate';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.repository';
 import { Money } from '@ledger/shared/domain/money';
-import { IdGenerator } from '@ledger/shared/domain/ports';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared/domain/value-objects';
 import { AssertBalanceCommand } from './assert-balance.command';
 import { EvaluateAssertionCommand } from './evaluate-assertion.command';

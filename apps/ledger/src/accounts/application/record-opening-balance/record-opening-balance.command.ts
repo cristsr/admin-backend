@@ -1,4 +1,4 @@
-import { Command } from '@ledger/shared-kernel/application/command-bus/command';
+import { Command } from '@cqrs/application/command-bus/command';
 
 /**
  * Seeds the balance a pre-existing account already had when the user started

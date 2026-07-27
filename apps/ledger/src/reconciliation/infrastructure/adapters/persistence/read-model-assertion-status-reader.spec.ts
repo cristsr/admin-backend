@@ -1,11 +1,11 @@
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
+import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import {
   AssertionStatusFixture,
   runAssertionStatusStoreContract,
 } from '@ledger/reconciliation/domain/ports/assertion-status-store.contract';
 import { AssertionStatusRow } from '@ledger/reconciliation/domain/ports/assertion-status-store.port';
 import { PROJ_ASSERTIONS } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
-import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { ReadModelAssertionStatusReader } from './read-model-assertion-status-reader';
 
 /** Writes a row the way `AssertionStatusProjector` does, in snake_case. */

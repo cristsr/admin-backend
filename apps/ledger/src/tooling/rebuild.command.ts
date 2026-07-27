@@ -1,12 +1,32 @@
 import 'reflect-metadata';
+import { ProjectionRegistry } from '@cqrs/application/tooling/projection-registry';
+import { PostgresEventStore } from '@cqrs/infrastructure/adapters/event-store/postgres/postgres-event-store';
+import { InMemoryProjectionCheckpointRepository } from '@cqrs/infrastructure/adapters/projection/in-memory-projection-checkpoint.repository';
+import { ProjectionRebuilder } from '@cqrs/infrastructure/adapters/projection/projection-rebuilder';
+import { PostgresReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';
 import { DataSource } from 'typeorm';
-import { PostgresEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/postgres/postgres-event-store';
-import { PostgresReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';
-import { InMemoryProjectionCheckpointRepository } from '@ledger/shared-kernel/infrastructure/adapters/projection/in-memory-projection-checkpoint.repository';
-import { ProjectionRegistry } from '@ledger/shared-kernel/application/tooling/projection-registry';
-import { ProjectionRebuilder } from '@ledger/shared-kernel/infrastructure/adapters/projection/projection-rebuilder';
-import { ConsistencyVerifier } from '@ledger/tooling/consistency-verifier';
 import { AccountTreeProjector, PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
+import { createLedgerEventRegistry } from '@ledger/ledger/application/ledger-event-registry.factory';
+import {
+  LedgerSettingsProjector,
+  PROJ_LEDGER_SETTINGS,
+} from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
+import { RECONCILIATION_PROJECTION } from '@ledger/reconciliation/infrastructure/adapters/events/reconciliation.pump';
+import {
+  AdjustmentAuditProjector,
+  PROJ_ADJUSTMENT_AUDIT,
+  PROJ_ADJUSTMENT_AUDIT_ENTRIES,
+} from '@ledger/reconciliation/infrastructure/projections/adjustment-audit.projector';
+import {
+  AssertionStatusProjector,
+  PROJ_ASSERTIONS,
+} from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
+import {
+  CurrenciesProjector,
+  PROJ_CURRENCIES,
+} from '@ledger/reference/infrastructure/projections/currencies.projector';
+import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
+import { ConsistencyVerifier } from '@ledger/tooling/consistency-verifier';
 import {
   AccountBalancesProjector,
   PROJ_BALANCES,
@@ -20,26 +40,6 @@ import {
   PROJ_TRANSACTIONS,
   TransactionListProjector,
 } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
-import {
-  LedgerSettingsProjector,
-  PROJ_LEDGER_SETTINGS,
-} from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
-import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
-import { createLedgerEventRegistry } from '@ledger/ledger/application/ledger-event-registry.factory';
-import {
-  AdjustmentAuditProjector,
-  PROJ_ADJUSTMENT_AUDIT,
-  PROJ_ADJUSTMENT_AUDIT_ENTRIES,
-} from '@ledger/reconciliation/infrastructure/projections/adjustment-audit.projector';
-import {
-  AssertionStatusProjector,
-  PROJ_ASSERTIONS,
-} from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
-import { RECONCILIATION_PROJECTION } from '@ledger/reconciliation/infrastructure/adapters/events/reconciliation.pump';
-import {
-  CurrenciesProjector,
-  PROJ_CURRENCIES,
-} from '@ledger/reference/infrastructure/projections/currencies.projector';
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);

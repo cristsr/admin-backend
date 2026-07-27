@@ -1,5 +1,9 @@
 import { Body, Controller, Get, HttpCode, HttpStatus, Post, UseInterceptors } from '@nestjs/common';
 import { ApiOkResponse, ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger';
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { CommandBus } from '@cqrs/application/command-bus/command-bus';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
+import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { Nullable } from '@shared';
 import { IsInt, IsNotEmpty, IsString, Matches, Max, Min } from 'class-validator';
 import {
@@ -14,10 +18,6 @@ import {
   Context,
   ExternalRef,
 } from '@ledger/shared/infrastructure/adapters/http';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
-import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
 
 /** Body of a currency registration. */
 export class RegisterCurrencyRequestDto {

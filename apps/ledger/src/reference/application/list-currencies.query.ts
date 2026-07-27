@@ -1,8 +1,8 @@
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
+import { Query } from '@cqrs/application/query-bus/query';
+import { QueryHandler } from '@cqrs/application/query-bus/query-handler';
 import { Criteria } from '@shared';
 import { PROJ_CURRENCIES } from '@ledger/reference/infrastructure/projections/currencies.projector';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
-import { Query } from '@ledger/shared-kernel/application/query-bus/query';
-import { QueryHandler } from '@ledger/shared-kernel/application/query-bus/query-handler';
 // The catalog is global, so QueryContext is accepted and deliberately unused.
 
 /** One currency as the API exposes it. */

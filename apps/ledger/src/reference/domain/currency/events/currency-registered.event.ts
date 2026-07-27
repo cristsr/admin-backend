@@ -1,5 +1,5 @@
-import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
-import { EventPayload } from '@ledger/shared-kernel/domain/event/event-payload.type';
+import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
+import { EventPayload } from '@cqrs/domain/event/event-payload.type';
 
 /** Event type name, exported so registry and projector never drift on a literal. */
 export const CURRENCY_REGISTERED = 'CurrencyRegistered';

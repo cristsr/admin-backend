@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { Criteria } from '@shared';
 import {
   LedgerSettingsRow,
@@ -6,7 +7,6 @@ import {
 } from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
 import { LedgerNotInitializedException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { SystemAccountLookup } from '@ledger/reconciliation/domain/ports/system-account-lookup.port';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
 
 /** Resolves `Equity:Adjustments` from the `proj_ledger_settings` read model. */
 @Injectable()

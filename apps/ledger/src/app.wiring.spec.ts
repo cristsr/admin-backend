@@ -2,7 +2,7 @@
 import { Global, Module } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getDataSourceToken, getEntityManagerToken } from '@nestjs/typeorm';
-import { PolicyCommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
+import { PolicyCommandBus } from '@cqrs/application/command-bus/command-bus';
 
 /** Every value the config validator demands; must be set before the modules load. */
 const environment: Record<string, string> = {

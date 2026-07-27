@@ -1,12 +1,12 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
+import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { AccountValidationService } from '@ledger/accounts/application/account-validation.service';
 import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { LedgerNotInitializedException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
 import { PROJ_LEDGER_SETTINGS } from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
-import { SequentialIdGenerator } from '@ledger/shared/testing';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projection/projection-dispatcher';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
-import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
+import { SequentialIdGenerator } from '@ledger/shared/testing';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
 import { ZeroSumBalanceRule } from '@ledger/transactions/domain/balance/zero-sum-balance-rule';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';

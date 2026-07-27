@@ -1,5 +1,5 @@
-import { AggregateRoot } from '@ledger/shared-kernel/domain/aggregate/aggregate-root';
-import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
+import { AggregateRoot } from '@cqrs/domain/aggregate/aggregate-root';
+import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
 import { CURRENCY_REGISTERED, CurrencyRegistered } from './events/currency-registered.event';
 import {
   CurrencyPrecisionConflictException,

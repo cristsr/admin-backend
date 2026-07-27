@@ -14,7 +14,8 @@
     "paths": {
       "@shared": ["libs/shared/src/index.ts"],
       "@shared/*": ["libs/shared/src/*"],
-      "@ledger/*": ["apps/ledger/src/*"]
+      "@ledger/*": ["apps/ledger/src/*"],
+      "@cqrs/*": ["libs/cqrs/src/*"]
     },
     // The event store models `global_position` as `bigint` (never `number`),
     // so BigInt literals and the global must be available. Node 22 supports

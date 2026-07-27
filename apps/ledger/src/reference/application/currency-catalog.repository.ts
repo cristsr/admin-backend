@@ -1,12 +1,12 @@
+import { EnvelopeFactory } from '@cqrs/application/event/envelope.factory';
+import { EventRegistry } from '@cqrs/application/event/event-registry';
+import { EventSourcedRepository } from '@cqrs/application/event-sourced.repository';
+import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
+import { EventStore } from '@cqrs/domain/ports/event-store';
 import {
   CURRENCY_CATALOG_ID,
   CurrencyCatalogAggregate,
 } from '@ledger/reference/domain/currency/currency-catalog.aggregate';
-import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
-import { EventRegistry } from '@ledger/shared-kernel/application/event/event-registry';
-import { EventSourcedRepository } from '@ledger/shared-kernel/application/event-sourced.repository';
-import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
-import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 
 /**
  * Reserved owner of the reference catalog stream.

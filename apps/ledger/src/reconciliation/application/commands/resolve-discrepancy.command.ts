@@ -1,4 +1,4 @@
-import { Command } from '@ledger/shared-kernel/application/command-bus/command';
+import { Command } from '@cqrs/application/command-bus/command';
 
 /**
  * Resolves a confirmed discrepancy with a system adjustment (RF-20). Idempotent

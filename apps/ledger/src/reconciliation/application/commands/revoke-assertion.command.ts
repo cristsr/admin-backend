@@ -1,4 +1,4 @@
-import { Command } from '@ledger/shared-kernel/application/command-bus/command';
+import { Command } from '@cqrs/application/command-bus/command';
 
 /** Revokes an erroneous assertion with an audited reason (RF-19). */
 export class RevokeAssertionCommand extends Command {

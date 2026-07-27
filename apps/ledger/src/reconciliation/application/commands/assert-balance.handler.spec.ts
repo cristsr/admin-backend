@@ -1,11 +1,11 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { EnvelopeFactory } from '@cqrs/application/event/envelope.factory';
+import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { createReconciliationEventRegistry } from '@ledger/reconciliation/application/reconciliation-event-registry.factory';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.repository';
 import { BALANCE_ASSERTED } from '@ledger/reconciliation/domain/balance-assertion/events';
-import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
-import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
+import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
 import { AssertBalanceCommand } from './assert-balance.command';
 import { AssertBalanceHandler } from './assert-balance.handler';
 import { EvaluateAssertionCommand } from './evaluate-assertion.command';

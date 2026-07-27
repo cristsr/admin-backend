@@ -1,5 +1,5 @@
-import { CurrencyCode } from './currency-code.vo';
 import { InvalidCurrencyCodeException } from '../exceptions';
+import { CurrencyCode } from './currency-code.vo';
 
 describe('CurrencyCode (Value Object)', () => {
   describe('of()', () => {

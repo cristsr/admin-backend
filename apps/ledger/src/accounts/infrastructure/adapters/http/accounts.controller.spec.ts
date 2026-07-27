@@ -1,3 +1,6 @@
+import { CommandBus } from '@cqrs/application/command-bus/command-bus';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
+import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { CloseAccountCommand } from '@ledger/accounts/application/close-account/close-account.command';
 import { OpenAccountCommand } from '@ledger/accounts/application/open-account/open-account.command';
 import { RecordOpeningBalanceCommand } from '@ledger/accounts/application/record-opening-balance/record-opening-balance.command';
@@ -6,9 +9,6 @@ import { GetAccountBalancesQuery } from '@ledger/read-side/get-account-balances/
 import { GetAccountByIdQuery } from '@ledger/read-side/get-account-by-id/get-account-by-id.query';
 import { GetAccountTreeQuery } from '@ledger/read-side/get-account-tree/get-account-tree.query';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
-import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
-import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
 import { AccountType } from '@ledger/shared/domain/value-objects';
 import { AccountsController } from './accounts.controller';
 import { AccountTreeView } from './dto/account-tree-view';

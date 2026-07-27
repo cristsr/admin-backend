@@ -1,12 +1,12 @@
-import { Criteria } from '@shared';
-import { DISCREPANCY_RESOLVED } from '@ledger/reconciliation/domain/balance-assertion/events';
-import { Money } from '@ledger/shared/domain/money';
-import { Projector } from '@ledger/shared-kernel/application/projection/projector';
+import { Projector } from '@cqrs/application/projection/projector';
 import {
   ReadModelRow,
   ReadModelStore,
-} from '@ledger/shared-kernel/application/projection/read-model-store';
-import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
+} from '@cqrs/application/projection/read-model-store';
+import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
+import { Criteria } from '@shared';
+import { DISCREPANCY_RESOLVED } from '@ledger/reconciliation/domain/balance-assertion/events';
+import { Money } from '@ledger/shared/domain/money';
 import { CurrencyCatalog, CurrencyCode } from '@ledger/shared/domain/value-objects';
 import { PROJ_ASSERTIONS } from './assertion-status.projector';
 

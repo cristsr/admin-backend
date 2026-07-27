@@ -1,8 +1,8 @@
+import { Projector } from '@cqrs/application/projection/projector';
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
+import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { Criteria, Nullable } from '@shared';
 import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
-import { Projector } from '@ledger/shared-kernel/application/projection/projector';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
-import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
 import { AccountType } from '@ledger/shared/domain/value-objects';
 import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
 import { TransactionKindDeriver } from '@ledger/transactions/domain/derivation/transaction-kind.deriver';

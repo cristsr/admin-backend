@@ -1,4 +1,8 @@
 import {
+  DomainEventRegistry,
+  EventRegistry,
+} from '@cqrs/application/event/event-registry';
+import {
   AccountClosed,
   AccountOpened,
   AccountRenamed,
@@ -9,10 +13,6 @@ import {
   PresentationCurrencyChanged,
   TimezoneChanged,
 } from '@ledger/settings/domain/ledger-settings/events';
-import {
-  DomainEventRegistry,
-  EventRegistry,
-} from '@ledger/shared-kernel/application/event/event-registry';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import {
   TransactionAmended,

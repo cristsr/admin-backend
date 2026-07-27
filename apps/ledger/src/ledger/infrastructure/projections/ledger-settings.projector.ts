@@ -1,7 +1,7 @@
+import { Projector } from '@cqrs/application/projection/projector';
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
+import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { Criteria } from '@shared';
-import { Projector } from '@ledger/shared-kernel/application/projection/projector';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
-import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
 
 /** Read-model table name for the per-user ledger settings. */
 export const PROJ_LEDGER_SETTINGS = 'proj_ledger_settings';

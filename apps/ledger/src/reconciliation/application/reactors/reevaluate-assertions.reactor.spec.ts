@@ -1,9 +1,9 @@
+import { EventPayload } from '@cqrs/domain/event/event-payload.type';
+import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { AssertionLookupPort } from '@ledger/reconciliation/domain/ports/assertion-lookup.port';
 import { AssertionPostingReader } from '@ledger/reconciliation/domain/ports/assertion-posting-reader.port';
 import { InMemoryAssertionPostingReader } from '@ledger/reconciliation/infrastructure/adapters/persistence/in-memory/in-memory-assertion-posting-reader';
 import { Currency, Money } from '@ledger/shared/domain/money';
-import { EventPayload } from '@ledger/shared-kernel/domain/event/event-payload.type';
-import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { EvaluateAssertionCommand } from '../commands/evaluate-assertion.command';

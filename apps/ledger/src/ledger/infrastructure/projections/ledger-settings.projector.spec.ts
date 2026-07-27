@@ -1,6 +1,6 @@
+import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
+import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria } from '@shared';
-import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
-import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { LedgerSettingsProjector, PROJ_LEDGER_SETTINGS } from './ledger-settings.projector';
 
 const AT = new Date('2026-07-22T10:00:00.000Z');

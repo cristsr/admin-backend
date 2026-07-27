@@ -1,10 +1,10 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
+import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
 import { AccountNameRegistry } from '@ledger/accounts/application/account-name.registry';
 import { AccountRepository } from '@ledger/accounts/application/account.repository';
 import { AccountNotFoundException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
-import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projection/projection-dispatcher';
 import { AccountName } from '@ledger/shared/domain/value-objects';
 import { RenameAccountCommand } from './rename-account.command';
 

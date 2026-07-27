@@ -1,14 +1,14 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
+import { IdGenerator } from '@cqrs/domain/ports';
 import { Criteria } from '@shared';
-import { AccountNotFoundException } from '../../../ledger/domain/settings/exceptions/ledger.exception';
-import { IdGenerator } from '../../../shared/domain/ports';
-import { AuthContext } from '../../../shared-kernel/application/command-bus/auth-context.type';
-import { ProjectionDispatcher } from '../../../shared-kernel/application/projection/projection-dispatcher';
-import { ReadModelStore } from '../../../shared-kernel/application/projection/read-model-store';
 import {
   AccountName,
   CurrencyCode,
   LedgerDate,
 } from '@ledger/shared/domain/value-objects';
+import { AccountNotFoundException } from '../../../ledger/domain/settings/exceptions/ledger.exception';
 import { Account } from '../../domain/account/account.aggregate';
 import {
   NameCollisionException,

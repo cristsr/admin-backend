@@ -1,3 +1,4 @@
+import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Nullable } from '@shared';
 import {
   AccountClosedException,
@@ -6,9 +7,8 @@ import {
 } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { AccountNotFoundException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
-import { aMoney } from '@ledger/shared/testing';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
-import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
+import { aMoney } from '@ledger/shared/testing';
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
 import { AccountValidationService } from './account-validation.service';
 import { PostingOrigin } from './posting-origin';

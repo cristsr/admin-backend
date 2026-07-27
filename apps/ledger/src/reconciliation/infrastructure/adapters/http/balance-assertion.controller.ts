@@ -9,6 +9,10 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { Command } from '@cqrs/application/command-bus/command';
+import { CommandBus } from '@cqrs/application/command-bus/command-bus';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { Nullable } from '@shared';
 import { AssertBalanceCommand } from '@ledger/reconciliation/application/commands/assert-balance.command';
 import { ResolveDiscrepancyCommand } from '@ledger/reconciliation/application/commands/resolve-discrepancy.command';
@@ -29,10 +33,6 @@ import {
   Context,
   ExternalRef,
 } from '@ledger/shared/infrastructure/adapters/http';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { Command } from '@ledger/shared-kernel/application/command-bus/command';
-import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 
 /**
  * HTTP surface for reconciliation (§7.5): translates REST calls into commands

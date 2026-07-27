@@ -1,7 +1,7 @@
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { Criteria } from '@shared';
 import { NameCollisionException } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
 import { AccountName } from '@ledger/shared/domain/value-objects';
 
 /** The only two columns name uniqueness needs from `account_tree`. */

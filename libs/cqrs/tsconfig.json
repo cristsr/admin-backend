@@ -1,0 +1,27 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "commonjs",
+    "ignoreDeprecations": "6.0",
+    // The event store models `global_position` as `bigint`, never `number`, so
+    // BigInt literals and the global must be available (same reason as the
+    // ledger app raising itself above the es2017 base).
+    "target": "es2021",
+    "lib": ["es2021"],
+    "paths": {
+      "@shared": ["libs/shared/src/index.ts"],
+      "@shared/*": ["libs/shared/src/*"],
+      "@cqrs/*": ["libs/cqrs/src/*"]
+    }
+  },
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.lib.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ]
+}

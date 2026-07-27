@@ -1,13 +1,13 @@
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
+import {
+  QueryContext,
+  QueryHandler,
+} from '@cqrs/application/query-bus/query-handler';
 import { Criteria, Nullable } from '@shared';
 import {
   LedgerSettingsRow,
   PROJ_LEDGER_SETTINGS,
 } from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
-import {
-  QueryContext,
-  QueryHandler,
-} from '@ledger/shared-kernel/application/query-bus/query-handler';
 import { GetLedgerSettingsQuery } from './get-ledger-settings.query';
 
 /** Serves the user's ledger settings from `proj_ledger_settings` (INV-9). */

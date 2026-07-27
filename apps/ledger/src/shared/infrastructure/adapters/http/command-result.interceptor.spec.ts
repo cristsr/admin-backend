@@ -1,6 +1,6 @@
 import { CallHandler, ExecutionContext, HttpStatus } from '@nestjs/common';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { firstValueFrom, of } from 'rxjs';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 import { CommandResultInterceptor, STREAM_POSITION_HEADER } from './command-result.interceptor';
 import { CommandAcceptedDto } from './dto/command-accepted.dto';
 

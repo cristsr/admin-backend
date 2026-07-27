@@ -1,6 +1,6 @@
-import { Clock } from '../../../shared/domain/ports';
-import { AuthContext } from '../../../shared-kernel/application/command-bus/auth-context.type';
-import { ProjectionDispatcher } from '../../../shared-kernel/application/projection/projection-dispatcher';
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
+import { Clock } from '@cqrs/domain/ports';
 import { ImmutableTransactionException, TransactionNotFoundException } from '../../domain/transaction/exceptions/transaction.exception';
 import { LedgerTransactionRepository } from '../ledger-transaction.repository';
 import { ConfirmTransactionCommand } from './confirm-transaction.command';

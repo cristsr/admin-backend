@@ -1,4 +1,3 @@
-import { SequentialIdGenerator } from '@ledger/shared/testing';
 import {
   AccountName,
   AccountType,
@@ -6,6 +5,7 @@ import {
   LedgerDate,
 } from '@ledger/shared/domain/value-objects';
 import { RootTypeImmutableException } from '@ledger/shared/domain/value-objects';
+import { SequentialIdGenerator } from '@ledger/shared/testing';
 import { Account } from './account.aggregate';
 import { AccountOpened, AccountRenamed } from './events';
 import {

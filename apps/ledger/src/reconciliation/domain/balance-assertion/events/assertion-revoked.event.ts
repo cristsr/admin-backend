@@ -1,5 +1,5 @@
-import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
-import { EventPayload } from '@ledger/shared-kernel/domain/event/event-payload.type';
+import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
+import { EventPayload } from '@cqrs/domain/event/event-payload.type';
 
 /** Stable event-type name for a revocation (spec §3.4). */
 export const ASSERTION_REVOKED = 'AssertionRevoked';

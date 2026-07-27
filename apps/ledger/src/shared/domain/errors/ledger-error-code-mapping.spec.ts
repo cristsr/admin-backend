@@ -1,4 +1,8 @@
 import { ArgumentsHost, HttpStatus } from '@nestjs/common';
+import {
+  ConcurrencyConflictException,
+  DuplicateExternalRefException,
+} from '@cqrs/domain/exceptions/event-store.exception';
 import { DomainException, ExceptionFilter } from '@shared';
 import {
   AccountClosedException,
@@ -9,8 +13,8 @@ import {
 import { AccountNotFoundException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
 import { LedgerNotInitializedException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import {
-  InvalidCurrencyCodeException as SettingsInvalidCurrencyCodeException,
   InvalidTimeZoneException,
+  InvalidCurrencyCodeException as SettingsInvalidCurrencyCodeException,
 } from '@ledger/settings/domain/ledger-settings/exceptions/settings.exception';
 import {
   CurrencyMismatchException,
@@ -18,10 +22,6 @@ import {
   InvalidMoneyException,
   MoneyScaleException,
 } from '@ledger/shared/domain/money/money.exception';
-import {
-  ConcurrencyConflictException,
-  DuplicateExternalRefException,
-} from '@ledger/shared-kernel/domain/exceptions/event-store.exception';
 import {
   ImmutableTransactionException,
   TransactionNotFoundException,

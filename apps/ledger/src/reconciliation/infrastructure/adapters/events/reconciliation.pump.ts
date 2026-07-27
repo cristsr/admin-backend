@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Interval } from '@nestjs/schedule';
+import { ProjectionCheckpointRepository } from '@cqrs/application/projection/projection-checkpoint.repository';
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
+import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
+import { EventStore } from '@cqrs/domain/ports/event-store';
 import { ReevaluateAssertionsReactor } from '@ledger/reconciliation/application/reactors/reevaluate-assertions.reactor';
 import { AdjustmentAuditProjector } from '@ledger/reconciliation/infrastructure/projections/adjustment-audit.projector';
 import { AssertionStatusProjector } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
-import { ProjectionCheckpointRepository } from '@ledger/shared-kernel/application/projection/projection-checkpoint.repository';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
-import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
-import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 
 /** How many events a single `readAll` slice pulls from the global stream. */
 const BATCH_SIZE = 100;

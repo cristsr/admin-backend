@@ -1,8 +1,8 @@
 import { CallHandler, ExecutionContext, HttpStatus, Injectable, NestInterceptor } from '@nestjs/common';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { Nullable } from '@shared';
 import { Response } from 'express';
 import { Observable, map } from 'rxjs';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 import { CommandAcceptedDto } from './dto/command-accepted.dto';
 
 /** Response header exposing the stream position a write reached (RNF-9). */

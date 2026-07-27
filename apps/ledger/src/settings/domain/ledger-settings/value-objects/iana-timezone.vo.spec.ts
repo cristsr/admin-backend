@@ -1,5 +1,5 @@
-import { IanaTimeZone } from './iana-timezone.vo';
 import { InvalidTimeZoneException } from '../exceptions';
+import { IanaTimeZone } from './iana-timezone.vo';
 
 describe('IanaTimeZone (Value Object)', () => {
   describe('of()', () => {

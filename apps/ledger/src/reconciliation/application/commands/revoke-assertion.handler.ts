@@ -1,8 +1,8 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.repository';
 import { AssertionNotFoundException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 import { RevokeAssertionCommand } from './revoke-assertion.command';
 
 /** Emits `AssertionRevoked`; the aggregate rejects a double revocation. */

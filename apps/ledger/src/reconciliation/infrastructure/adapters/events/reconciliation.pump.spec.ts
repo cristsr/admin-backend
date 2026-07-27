@@ -1,3 +1,8 @@
+import { EventEnvelope } from '@cqrs/domain/event/event-envelope.type';
+import { StreamId } from '@cqrs/domain/event/stream-id.type';
+import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
+import { InMemoryProjectionCheckpointRepository } from '@cqrs/infrastructure/adapters/projection/in-memory-projection-checkpoint.repository';
+import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria } from '@shared';
 import { ReevaluateAssertionsReactor } from '@ledger/reconciliation/application/reactors/reevaluate-assertions.reactor';
 import { AdjustmentAuditProjector } from '@ledger/reconciliation/infrastructure/projections/adjustment-audit.projector';
@@ -5,12 +10,7 @@ import {
   AssertionStatusProjector,
   PROJ_ASSERTIONS,
 } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
-import { EventEnvelope } from '@ledger/shared-kernel/domain/event/event-envelope.type';
-import { StreamId } from '@ledger/shared-kernel/domain/event/stream-id.type';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
-import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
-import { InMemoryProjectionCheckpointRepository } from '@ledger/shared-kernel/infrastructure/adapters/projection/in-memory-projection-checkpoint.repository';
-import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { RECONCILIATION_PROJECTION, ReconciliationPump } from './reconciliation.pump';
 
 const AT = new Date('2026-07-22T10:00:00.000Z');

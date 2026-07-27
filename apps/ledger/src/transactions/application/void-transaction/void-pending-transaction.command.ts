@@ -1,4 +1,4 @@
-import { Command } from '@ledger/shared-kernel/application/command-bus/command';
+import { Command } from '@cqrs/application/command-bus/command';
 
 /** Voids a PENDING transaction with a reason (RF-8). */
 export class VoidPendingTransactionCommand extends Command {

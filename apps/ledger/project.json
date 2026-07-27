@@ -3,11 +3,16 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/ledger/src",
   "projectType": "application",
-  "tags": [],
+  "tags": [
+    "type:app",
+    "scope:ledger"
+  ],
   "targets": {
     "build": {
       "executor": "@nx/webpack:webpack",
-      "outputs": ["{options.outputPath}"],
+      "outputs": [
+        "{options.outputPath}"
+      ],
       "options": {
         "outputPath": "dist/apps/ledger",
         "main": "apps/ledger/src/main.ts",
@@ -38,14 +43,20 @@
     },
     "lint": {
       "executor": "@nx/eslint:lint",
-      "outputs": ["{options.outputFile}"],
+      "outputs": [
+        "{options.outputFile}"
+      ],
       "options": {
-        "lintFilePatterns": ["apps/ledger/**/*.ts"]
+        "lintFilePatterns": [
+          "apps/ledger/**/*.ts"
+        ]
       }
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/apps/ledger"],
+      "outputs": [
+        "{workspaceRoot}/coverage/apps/ledger"
+      ],
       "options": {
         "jestConfig": "apps/ledger/jest.config.ts",
         "passWithNoTests": true

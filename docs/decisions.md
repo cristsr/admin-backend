@@ -8,6 +8,51 @@
 > entrada nueva que la referencia. Orden cronológico inverso (más reciente
 > primero).
 
+## Extracción de `libs/cqrs` — el event sourcing sale del ledger (2026-07-27)
+
+**Supersede la decisión de EP-0.2 (2026-07-22) de mantener `apps/ledger`
+autocontenido**, que fijaba duplicar en vez de compartir. Esa decisión se tomó
+sobre `DatabaseModule` y la telemetría; el motor de event sourcing es otro caso.
+
+- **`shared-kernel` no era homogéneo, y ese era el hallazgo.** Contenía el motor
+  genérico (event store, buses, proyecciones) **y** dominio contable:
+  `AccountName`, `AccountType`, `Payee`, `CurrencyCode`, `CurrencyCatalog`,
+  `LedgerDate`, el catálogo semilla de monedas y el verificador de balances. Una
+  carpeta llamada «kernel compartido» que sabía de partida doble.
+- **Por eso se hizo en dos pasos.** Primero separar lo contable (commit propio,
+  verificable), después mover lo que quedó. Mover el paquete entero habría
+  arrastrado el negocio adentro de una librería de infraestructura.
+- **Librería propia, no `libs/shared`.** `shared` ya es un cajón (config, auth,
+  `Criteria`, filtros, telemetría) del que depende `finances`; meter el event
+  sourcing ahí lo acopla a una app congelada que va a retirarse y la obliga a
+  arrastrar lo que no usa.
+- **El argumento no es el reuso.** No hay segundo consumidor: `finances` está
+  congelado y la spec §9.3 dice que el módulo de producto se integra **por el
+  API**, no compartiendo código. Lo que sí se gana es que el límite deje de
+  depender de la disciplina: antes de la extracción `@Injectable` ya se había
+  filtrado a once archivos del núcleo sin que nada fallara.
+- **`Clock` e `IdGenerator` viajan con la librería**, junto con sus dobles
+  deterministas y el helper de contract tests. §3.8 los lista como puertos del
+  núcleo a la par de `EventStore`; dejarlos en el ledger habría hecho que la
+  librería importara de la app.
+- **Dos specs de integración se quedaron en el ledger** (`postgres-event-store`,
+  `projection-rebuilder`): ejercitan la migración del esquema y los projectors
+  contables, así que pertenecen a quien los define. Con eso la librería no
+  importa del ledger **ni siquiera en sus tests**.
+- **El guardián efectivo es un test, no Nx.** Se declaró la constraint de tags
+  (`type:infra` → `type:infra`), pero el `allow: ['@ledger/**']` preexistente
+  —necesario para que cada app alcance sus propios archivos por alias— hace
+  bypass de las constraints, así que la regla no muerde. `domain-independence.spec.ts`
+  recorre las fuentes y falla ante cualquier import de una app; se verificó
+  introduciendo una violación a propósito. Queda anotado para no creer que la
+  configuración de Nx protege algo que no protege.
+- **Bug preexistente corregido de paso:** el contract test del `Clock` comparaba
+  `clock.now()` contra `clock.now()` en una sola aserción, y el valor esperado se
+  evalúa último — así que afirmaba lo contrario de lo que decía su nombre y
+  fallaba justamente cuando el reloj avanzaba entre ambas lecturas.
+
+---
+
 ## Instante de negocio en los eventos — aserciones intradía (2026-07-27)
 
 Cierra la deuda que la auditoría de más abajo había dejado abierta. Habilitado por que no

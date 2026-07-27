@@ -1,5 +1,5 @@
-import { AuthContext } from '../../../shared-kernel/application/command-bus/auth-context.type';
-import { ProjectionDispatcher } from '../../../shared-kernel/application/projection/projection-dispatcher';
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
 import { TransactionNotFoundException } from '../../domain/transaction/exceptions/transaction.exception';
 import { LedgerTransactionRepository } from '../ledger-transaction.repository';
 import { AnnotateTransactionCommand } from './annotate-transaction.command';

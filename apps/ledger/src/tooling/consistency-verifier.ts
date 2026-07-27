@@ -1,9 +1,9 @@
+import { EventRegistry } from '@cqrs/application/event/event-registry';
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
+import { EventStore } from '@cqrs/domain/ports/event-store';
 import { Criteria } from '@shared';
 import { Money } from '@ledger/shared/domain/money';
 import { Currency } from '@ledger/shared/domain/money/currency';
-import { EventRegistry } from '@ledger/shared-kernel/application/event/event-registry';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
-import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 import {
   BalanceDiscrepancy,
   BalanceVerificationReport,

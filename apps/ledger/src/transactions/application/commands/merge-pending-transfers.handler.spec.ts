@@ -1,8 +1,8 @@
-import { RecordingCommandBus } from '@ledger/shared/testing';
-import { aMoney } from '@ledger/shared/testing';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { EventStore } from '@cqrs/domain/ports/event-store';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
+import { aMoney } from '@ledger/shared/testing';
+import { RecordingCommandBus } from '@ledger/shared/testing';
 import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';

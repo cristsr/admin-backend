@@ -1,7 +1,7 @@
-import { AccountValidationService } from '../../../accounts/application/account-validation.service';
-import { AuthContext } from '../../../shared-kernel/application/command-bus/auth-context.type';
-import { ProjectionDispatcher } from '../../../shared-kernel/application/projection/projection-dispatcher';
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
+import { AccountValidationService } from '../../../accounts/application/account-validation.service';
 import { BalanceRule } from '../../domain/balance/balance-rule';
 import { ImmutableTransactionException, TransactionNotFoundException } from '../../domain/transaction/exceptions/transaction.exception';
 import { LedgerTransactionRepository } from '../ledger-transaction.repository';

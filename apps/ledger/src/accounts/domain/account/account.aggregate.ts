@@ -1,7 +1,7 @@
+import { AggregateRoot } from '@cqrs/domain/aggregate/aggregate-root';
+import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
+import { IdGenerator } from '@cqrs/domain/ports';
 import { Nullable } from '@shared';
-import { IdGenerator } from '@ledger/shared/domain/ports';
-import { AggregateRoot } from '@ledger/shared-kernel/domain/aggregate/aggregate-root';
-import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
 import {
   AccountName,
   AccountType,

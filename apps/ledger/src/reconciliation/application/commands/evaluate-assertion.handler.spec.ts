@@ -1,3 +1,6 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { EnvelopeFactory } from '@cqrs/application/event/envelope.factory';
+import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { createReconciliationEventRegistry } from '@ledger/reconciliation/application/reconciliation-event-registry.factory';
 import { BalanceAssertion } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.aggregate';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.repository';
@@ -7,12 +10,9 @@ import { AssertionEvaluator } from '@ledger/reconciliation/domain/services/asser
 import { IntlDayBoundaryResolver } from '@ledger/reconciliation/domain/services/day-boundary.resolver';
 import { InMemoryAssertionPostingReader } from '@ledger/reconciliation/infrastructure/adapters/persistence/in-memory/in-memory-assertion-posting-reader';
 import { Money } from '@ledger/shared/domain/money';
-import { FixedClock, FixedSettingsReader, SequentialIdGenerator, aMoney } from '@ledger/shared/testing';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
-import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
+import { FixedClock, FixedSettingsReader, SequentialIdGenerator, aMoney } from '@ledger/shared/testing';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { EvaluateAssertionCommand } from './evaluate-assertion.command';
 import { EvaluateAssertionHandler } from './evaluate-assertion.handler';

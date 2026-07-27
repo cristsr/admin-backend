@@ -1,4 +1,4 @@
-import { Command } from '@ledger/shared-kernel/application/command-bus/command';
+import { Command } from '@cqrs/application/command-bus/command';
 
 /** Renames an account; the root type is immutable and system accounts are protected (RF-1). */
 export class RenameAccountCommand extends Command {

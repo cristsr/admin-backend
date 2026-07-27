@@ -1,9 +1,9 @@
+import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
+import { FixedClock } from '@cqrs/testing';
+import { SequentialIdGenerator } from '@cqrs/testing';
 import { Money } from '@ledger/shared/domain/money';
-import { aMoney } from '@ledger/shared/testing';
-import { FixedClock } from '@ledger/shared/testing/fixed-clock';
-import { SequentialIdGenerator } from '@ledger/shared/testing/sequential-id-generator';
-import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
+import { aMoney } from '@ledger/shared/testing';
 import { AssertBalanceProps, BalanceAssertion } from './balance-assertion.aggregate';
 import { AssertionStatus } from './enums/assertion-status.enum';
 import {

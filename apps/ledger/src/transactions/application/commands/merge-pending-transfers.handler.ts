@@ -1,9 +1,9 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { CommandBus } from '@cqrs/application/command-bus/command-bus';
+import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
+import { EventStore } from '@cqrs/domain/ports/event-store';
 import { Nullable } from '@shared';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
-import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
-import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';

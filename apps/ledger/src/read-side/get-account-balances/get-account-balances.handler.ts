@@ -1,10 +1,10 @@
-import { Criteria } from '@shared';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import {
   QueryContext,
   QueryHandler,
-} from '@ledger/shared-kernel/application/query-bus/query-handler';
+} from '@cqrs/application/query-bus/query-handler';
+import { Criteria } from '@shared';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { PROJ_BALANCES } from '@ledger/transactions/infrastructure/projections/account-balances.projector';
 import { GetAccountBalancesQuery } from './get-account-balances.query';
 

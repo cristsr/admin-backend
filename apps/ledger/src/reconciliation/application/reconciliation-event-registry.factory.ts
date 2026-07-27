@@ -1,13 +1,13 @@
 import {
+  DomainEventRegistry,
+  EventRegistry,
+} from '@cqrs/application/event/event-registry';
+import {
   AssertionRevoked,
   BalanceAsserted,
   BalanceAssertionEvaluated,
   DiscrepancyResolved,
 } from '@ledger/reconciliation/domain/balance-assertion/events';
-import {
-  DomainEventRegistry,
-  EventRegistry,
-} from '@ledger/shared-kernel/application/event/event-registry';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 
 /**

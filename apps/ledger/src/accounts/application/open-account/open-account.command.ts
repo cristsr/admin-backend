@@ -1,4 +1,4 @@
-import { Command } from '@ledger/shared-kernel/application/command-bus/command';
+import { Command } from '@cqrs/application/command-bus/command';
 
 /** Opens an account under one of the five root types (RF-1). */
 export class OpenAccountCommand extends Command {

@@ -1,3 +1,4 @@
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { Criteria, Nullable } from '@shared';
 import { PostingOrigin } from '@ledger/accounts/application/posting-origin';
 import {
@@ -7,7 +8,6 @@ import {
 } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { AccountNotFoundException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
 import {
   AccountType,
   CurrencyCode,

@@ -1,4 +1,4 @@
-import { Command } from '@ledger/shared-kernel/application/command-bus/command';
+import { Command } from '@cqrs/application/command-bus/command';
 import { PostingInput } from '@ledger/transactions/application/posting-input.type';
 
 /** Amends the economic content of a PENDING transaction (RF-6). */

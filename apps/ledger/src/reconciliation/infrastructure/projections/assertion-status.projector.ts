@@ -1,3 +1,9 @@
+import { Projector } from '@cqrs/application/projection/projector';
+import {
+  ReadModelRow,
+  ReadModelStore,
+} from '@cqrs/application/projection/read-model-store';
+import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { Criteria } from '@shared';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
 import {
@@ -6,12 +12,6 @@ import {
   BALANCE_ASSERTION_EVALUATED,
   DISCREPANCY_RESOLVED,
 } from '@ledger/reconciliation/domain/balance-assertion/events';
-import { Projector } from '@ledger/shared-kernel/application/projection/projector';
-import {
-  ReadModelRow,
-  ReadModelStore,
-} from '@ledger/shared-kernel/application/projection/read-model-store';
-import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
 
 /** Read-model table backing the `assertion_status` projection (§6.2). */
 export const PROJ_ASSERTIONS = 'proj_assertions';

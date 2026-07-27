@@ -1,7 +1,7 @@
+import { Projector } from '@cqrs/application/projection/projector';
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
+import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { CURRENCY_REGISTERED } from '@ledger/reference/domain/currency/events/currency-registered.event';
-import { Projector } from '@ledger/shared-kernel/application/projection/projector';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
-import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
 
 /** Read-model table backing the reference currency catalog. */
 export const PROJ_CURRENCIES = 'proj_currencies';

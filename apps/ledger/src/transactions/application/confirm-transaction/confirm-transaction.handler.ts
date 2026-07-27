@@ -1,8 +1,8 @@
-import { Clock } from '@ledger/shared/domain/ports';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
-import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projection/projection-dispatcher';
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
+import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
+import { Clock } from '@cqrs/domain/ports';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
 import { TransactionNotFoundException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
 import { ConfirmTransactionCommand } from './confirm-transaction.command';

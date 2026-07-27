@@ -1,7 +1,7 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
 import { LedgerSettingsRepository } from '@ledger/ledger/application/ledger-settings.repository';
 import { LedgerNotInitializedException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projection/projection-dispatcher';
 import { ReplaceLedgerSettingsCommand } from './replace-ledger-settings.command';
 import { ReplaceLedgerSettingsHandler } from './replace-ledger-settings.handler';
 

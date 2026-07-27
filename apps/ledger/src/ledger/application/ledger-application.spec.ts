@@ -1,3 +1,8 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { CommandBus } from '@cqrs/application/command-bus/command-bus';
+import { MissingAuthContextException } from '@cqrs/application/command-bus/policies/missing-auth-context.exception';
+import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
+import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria } from '@shared';
 import { OpenAccountCommand } from '@ledger/accounts/application/open-account/open-account.command';
 import { NameCollisionException } from '@ledger/accounts/domain/account/exceptions/account.exception';
@@ -7,14 +12,9 @@ import { LedgerAlreadyInitializedException } from '@ledger/ledger/domain/setting
 import { RegisterCurrencyCommand } from '@ledger/reference/application/register-currency.command';
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
 import { PROJ_CURRENCIES } from '@ledger/reference/infrastructure/projections/currencies.projector';
-import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
-import { MissingAuthContextException } from '@ledger/shared-kernel/application/command-bus/policies/missing-auth-context.exception';
 import { CurrencyCode } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
-import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
-import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
+import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
 import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { ReverseConfirmedTransactionCommand } from '@ledger/transactions/application/reverse-transaction/reverse-confirmed-transaction.command';

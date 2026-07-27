@@ -1,17 +1,17 @@
 import { Global, Module } from '@nestjs/common';
+import { CommandBus, PolicyCommandBus } from '@cqrs/application/command-bus/command-bus';
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
+import { QueryBus } from '@cqrs/application/query-bus/query-bus';
+import { Clock, IdGenerator } from '@cqrs/domain/ports';
+import { EventStore } from '@cqrs/domain/ports/event-store';
+import { PostgresEventStore } from '@cqrs/infrastructure/adapters/event-store/postgres/postgres-event-store';
+import { PostgresReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';
 import { createLedgerApplication } from '@ledger/ledger/application/ledger-application.factory';
 import { createQueryBus } from '@ledger/read-side/query-bus.factory';
-import { Clock, IdGenerator } from '@ledger/shared/domain/ports';
+import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
+import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-catalog';
 import { SystemClock } from '@ledger/shared/infrastructure/system-clock';
 import { UuidIdGenerator } from '@ledger/shared/infrastructure/uuid-id-generator';
-import { CommandBus, PolicyCommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
-import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
-import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
-import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-catalog';
-import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
-import { PostgresEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/postgres/postgres-event-store';
-import { PostgresReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';
 
 /**
  * Composition root that mounts EP-1's real write/read buses into Nest DI so the

@@ -1,6 +1,6 @@
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
+import { QueryContext } from '@cqrs/application/query-bus/query-handler';
 import { Criteria, FilterOperator } from '@shared';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
-import { QueryContext } from '@ledger/shared-kernel/application/query-bus/query-handler';
 import {
   PROJ_POSTINGS,
   PROJ_TRANSACTIONS,

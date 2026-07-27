@@ -1,12 +1,12 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { CommandBus } from '@cqrs/application/command-bus/command-bus';
+import { QueryBus } from '@cqrs/application/query-bus/query-bus';
+import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
+import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { OpenAccountCommand } from '@ledger/accounts/application/open-account/open-account.command';
 import { createLedgerApplication } from '@ledger/ledger/application/ledger-application.factory';
-import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
-import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
-import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
-import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
+import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { GetAccountBalancesQuery } from './get-account-balances/get-account-balances.query';

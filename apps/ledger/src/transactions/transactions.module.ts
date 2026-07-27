@@ -1,10 +1,10 @@
 import { Module, OnModuleInit } from '@nestjs/common';
+import { CommandBus, PolicyCommandBus } from '@cqrs/application/command-bus/command-bus';
+import { EnvelopeFactory } from '@cqrs/application/event/envelope.factory';
+import { EventRegistry } from '@cqrs/application/event/event-registry';
+import { Clock, IdGenerator } from '@cqrs/domain/ports';
+import { EventStore } from '@cqrs/domain/ports/event-store';
 import { createLedgerEventRegistry } from '@ledger/ledger/application/ledger-event-registry.factory';
-import { Clock, IdGenerator } from '@ledger/shared/domain/ports';
-import { CommandBus, PolicyCommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
-import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
-import { EventRegistry } from '@ledger/shared-kernel/application/event/event-registry';
-import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import { MergePendingTransfersHandler } from './application/commands/merge-pending-transfers.handler';
 import { LedgerTransactionRepository } from './application/ledger-transaction.repository';

@@ -1,6 +1,6 @@
+import { SequentialIdGenerator } from '@cqrs/testing';
 import { InMemoryAssertionPostingReader } from '@ledger/reconciliation/infrastructure/adapters/persistence/in-memory/in-memory-assertion-posting-reader';
 import { Currency, Money } from '@ledger/shared/domain/money';
-import { SequentialIdGenerator } from '@ledger/shared/testing/sequential-id-generator';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { AssertBalanceProps, BalanceAssertion } from '../balance-assertion/balance-assertion.aggregate';

@@ -1,8 +1,8 @@
+import { AggregateRoot } from '@cqrs/domain/aggregate/aggregate-root';
+import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
+import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { Nullable } from '@shared';
 import { Money } from '@ledger/shared/domain/money';
-import { Clock, IdGenerator } from '@ledger/shared/domain/ports';
-import { AggregateRoot } from '@ledger/shared-kernel/domain/aggregate/aggregate-root';
-import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { AssertionStatus } from './enums/assertion-status.enum';
 import {

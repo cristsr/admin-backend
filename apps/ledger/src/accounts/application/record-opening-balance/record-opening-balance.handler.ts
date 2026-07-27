@@ -1,3 +1,9 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
+import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
+import { IdGenerator } from '@cqrs/domain/ports';
 import { Criteria } from '@shared';
 import { AccountValidationService } from '@ledger/accounts/application/account-validation.service';
 import { PostingOrigin } from '@ledger/accounts/application/posting-origin';
@@ -7,12 +13,6 @@ import {
   PROJ_LEDGER_SETTINGS,
 } from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
 import { Money } from '@ledger/shared/domain/money';
-import { IdGenerator } from '@ledger/shared/domain/ports';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
-import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projection/projection-dispatcher';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
 import {
   CurrencyCatalog,
   CurrencyCode,

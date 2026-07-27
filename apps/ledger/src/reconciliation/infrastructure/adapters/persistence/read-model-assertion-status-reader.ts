@@ -1,4 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import {
+  ReadModelRow,
+  ReadModelStore,
+} from '@cqrs/application/projection/read-model-store';
 import { Criteria, Nullable } from '@shared';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
 import {
@@ -6,10 +10,6 @@ import {
   AssertionStatusStore,
 } from '@ledger/reconciliation/domain/ports/assertion-status-store.port';
 import { PROJ_ASSERTIONS } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
-import {
-  ReadModelRow,
-  ReadModelStore,
-} from '@ledger/shared-kernel/application/projection/read-model-store';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 
 /**

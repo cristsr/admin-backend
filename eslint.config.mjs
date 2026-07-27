@@ -16,8 +16,17 @@ export default [
           // Each app reaches its own files through its alias (@app/*,
           // @ledger/*); Nx would otherwise demand relative paths for anything
           // inside the same project.
-          allow: ['@app/**', '@ledger/**'],
+          allow: ['@app/**', '@ledger/**', '@cqrs/**'],
           depConstraints: [
+            // `cqrs` is event sourcing machinery: an event store, buses,
+            // projections. It must not learn what is being recorded, so it may
+            // only reach other infrastructure. Before the split this was only a
+            // convention, and `AccountName` and a balance verifier had already
+            // drifted in beside the event store.
+            {
+              sourceTag: 'type:infra',
+              onlyDependOnLibsWithTags: ['type:infra'],
+            },
             {
               sourceTag: '*',
               onlyDependOnLibsWithTags: ['*'],

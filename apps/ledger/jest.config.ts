@@ -27,6 +27,7 @@ module.exports = {
     // its .ts source, where decorators load as undefined.
     '^typeorm$': '<rootDir>/../../node_modules/typeorm/index.js',
     '^@ledger/(.*)$': '<rootDir>/src/$1',
+    '^@cqrs/(.*)$': '<rootDir>/../../libs/cqrs/src/$1',
     // Deep imports (e.g. the telemetry bootstrap side-effect module) must win
     // over the barrel mapping below, so this entry comes first.
     '^@shared/(.*)$': '<rootDir>/../../libs/shared/src/$1',

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 
 /**
  * The standard body of every write (RNF-10): the affected aggregate's id and the

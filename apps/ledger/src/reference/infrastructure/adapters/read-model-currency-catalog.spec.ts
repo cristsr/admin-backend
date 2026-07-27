@@ -1,7 +1,7 @@
+import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { PROJ_CURRENCIES } from '@ledger/reference/infrastructure/projections/currencies.projector';
 import { CurrencyCode } from '@ledger/shared/domain/value-objects/currency-code';
 import { UnknownCurrencyException } from '@ledger/shared/domain/value-objects/value-object.exception';
-import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { ReadModelCurrencyCatalog } from './read-model-currency-catalog';
 
 describe('ReadModelCurrencyCatalog', () => {

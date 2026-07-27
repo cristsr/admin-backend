@@ -1,6 +1,6 @@
+import { Command } from '@cqrs/application/command-bus/command';
 import { Nullable } from '@shared';
 import { PostingOrigin } from '@ledger/accounts/application/posting-origin';
-import { Command } from '@ledger/shared-kernel/application/command-bus/command';
 import { PostingInput } from '@ledger/transactions/application/posting-input.type';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 

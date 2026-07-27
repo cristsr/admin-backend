@@ -1,3 +1,7 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { EnvelopeFactory } from '@cqrs/application/event/envelope.factory';
+import { EventStore } from '@cqrs/domain/ports/event-store';
+import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { createReconciliationEventRegistry } from '@ledger/reconciliation/application/reconciliation-event-registry.factory';
 import { BalanceAssertion } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.aggregate';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.repository';
@@ -5,6 +9,8 @@ import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion
 import { DiscrepancyNotResolvableException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { AdjustmentFactory } from '@ledger/reconciliation/domain/services/adjustment.factory';
 import { Money } from '@ledger/shared/domain/money';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
+import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import {
   FixedClock,
   FixedSystemAccountLookup,
@@ -12,12 +18,6 @@ import {
   SequentialIdGenerator,
   aMoney,
 } from '@ledger/shared/testing';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
-import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
-import { LedgerDate } from '@ledger/shared/domain/value-objects';
-import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
-import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { ResolveDiscrepancyCommand } from './resolve-discrepancy.command';

@@ -1,8 +1,8 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
+import { Clock, IdGenerator } from '@cqrs/domain/ports';
+import { EventStore } from '@cqrs/domain/ports/event-store';
 import { AccountRepository } from '../../../accounts/application/account.repository';
-import { Clock, IdGenerator } from '../../../shared/domain/ports';
-import { AuthContext } from '../../../shared-kernel/application/command-bus/auth-context.type';
-import { ProjectionDispatcher } from '../../../shared-kernel/application/projection/projection-dispatcher';
-import { EventStore } from '../../../shared-kernel/domain/ports/event-store';
 import { LedgerAlreadyInitializedException } from '../../domain/settings/exceptions/ledger.exception';
 import { LedgerSettings } from '../../domain/settings/ledger-settings.aggregate';
 import { LedgerSettingsRepository } from '../ledger-settings.repository';

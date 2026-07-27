@@ -1,4 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Post, UseInterceptors } from '@nestjs/common';
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { CommandBus } from '@cqrs/application/command-bus/command-bus';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { Nullable } from '@shared';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import {
@@ -6,9 +9,6 @@ import {
   Context,
   ExternalRef,
 } from '@ledger/shared/infrastructure/adapters/http';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 import { MergePendingTransfersCommand } from '@ledger/transactions/application/commands/merge-pending-transfers.command';
 
 /** Body for the merge endpoint: exactly two pending transaction ids. */

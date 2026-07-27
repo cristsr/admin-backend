@@ -1,4 +1,4 @@
-import { Query } from '@ledger/shared-kernel/application/query-bus/query';
+import { Query } from '@cqrs/application/query-bus/query';
 
 /** Reads a single account node from `proj_accounts` for the owning user (RF-1). */
 export class GetAccountByIdQuery extends Query {

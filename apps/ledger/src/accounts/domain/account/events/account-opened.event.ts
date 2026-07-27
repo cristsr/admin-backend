@@ -1,6 +1,6 @@
+import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
+import { EventPayload } from '@cqrs/domain/event/event-payload.type';
 import { Nullable } from '@shared';
-import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
-import { EventPayload } from '@ledger/shared-kernel/domain/event/event-payload.type';
 import { AccountType } from '@ledger/shared/domain/value-objects';
 
 /** Construction shape for {@link AccountOpened}. */

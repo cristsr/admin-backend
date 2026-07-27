@@ -1,5 +1,10 @@
 import { INestApplication, ValidationPipe, VersioningType } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
+import { CommandBus } from '@cqrs/application/command-bus/command-bus';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
+import { QueryBus } from '@cqrs/application/query-bus/query-bus';
+import { EventStore } from '@cqrs/domain/ports/event-store';
 import { ExceptionFilter } from '@shared';
 import request from 'supertest';
 import {
@@ -7,14 +12,9 @@ import {
   SystemAccountProtectedException,
 } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { LedgerCoreModule } from '@ledger/ledger/ledger-core.module';
+import { AccountType } from '@ledger/shared/domain/value-objects';
 import { STREAM_POSITION_HEADER, SharedHttpModule } from '@ledger/shared/infrastructure/adapters/http';
 import { GATEWAY_CONTEXT_HEADER } from '@ledger/shared/infrastructure/adapters/http/resolvers/gateway-header-context.resolver';
-import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
-import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
-import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
-import { AccountType } from '@ledger/shared/domain/value-objects';
 import { AccountsHttpModule } from './accounts-http.module';
 
 /**

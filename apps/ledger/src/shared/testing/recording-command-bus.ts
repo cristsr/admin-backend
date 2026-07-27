@@ -1,6 +1,6 @@
-import { Command } from '@ledger/shared-kernel/application/command-bus/command';
-import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
+import { Command } from '@cqrs/application/command-bus/command';
+import { CommandBus } from '@cqrs/application/command-bus/command-bus';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 
 /**
  * Test double for {@link CommandBus}: records every dispatched command and

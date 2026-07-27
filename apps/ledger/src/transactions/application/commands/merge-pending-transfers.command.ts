@@ -1,4 +1,4 @@
-import { Command } from '@ledger/shared-kernel/application/command-bus/command';
+import { Command } from '@cqrs/application/command-bus/command';
 
 /**
  * Merges two pending legs into a single confirmed transfer (RF-16). Idempotent

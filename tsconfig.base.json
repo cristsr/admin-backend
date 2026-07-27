@@ -29,7 +29,10 @@
       // (e.g. `@shared/telemetry/instrumentation`, imported first in main.ts).
       "@shared/*": ["libs/shared/src/*"],
       "@app/*": ["apps/finances/src/*"],
-      "@ledger/*": ["apps/ledger/src/*"]
+      "@ledger/*": ["apps/ledger/src/*"],
+      // Event sourcing + CQRS infrastructure: event store, buses, projections.
+      // Knows nothing about any particular domain — see libs/cqrs/README.md.
+      "@cqrs/*": ["libs/cqrs/src/*"]
     },
     "noUncheckedSideEffectImports": false,
     "types": ["*"],

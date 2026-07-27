@@ -1,15 +1,15 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { ProjectionRegistry } from '@cqrs/application/tooling/projection-registry';
+import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
+import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria } from '@shared';
 import { OpenAccountCommand } from '@ledger/accounts/application/open-account/open-account.command';
 import { AccountTreeProjector, PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { createLedgerApplication } from '@ledger/ledger/application/ledger-application.factory';
 import { createLedgerEventRegistry } from '@ledger/ledger/application/ledger-event-registry.factory';
 import { Money } from '@ledger/shared/domain/money';
-import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { ProjectionRegistry } from '@ledger/shared-kernel/application/tooling/projection-registry';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
-import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
-import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
+import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import {

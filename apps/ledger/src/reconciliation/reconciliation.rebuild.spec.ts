@@ -1,13 +1,13 @@
+import { ProjectionRegistry } from '@cqrs/application/tooling/projection-registry';
+import { EventEnvelope } from '@cqrs/domain/event/event-envelope.type';
+import { StreamId } from '@cqrs/domain/event/stream-id.type';
+import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
+import { InMemoryProjectionCheckpointRepository } from '@cqrs/infrastructure/adapters/projection/in-memory-projection-checkpoint.repository';
+import { ProjectionRebuilder } from '@cqrs/infrastructure/adapters/projection/projection-rebuilder';
+import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria } from '@shared';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
-import { ProjectionRegistry } from '@ledger/shared-kernel/application/tooling/projection-registry';
-import { EventEnvelope } from '@ledger/shared-kernel/domain/event/event-envelope.type';
-import { StreamId } from '@ledger/shared-kernel/domain/event/stream-id.type';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
-import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
-import { InMemoryProjectionCheckpointRepository } from '@ledger/shared-kernel/infrastructure/adapters/projection/in-memory-projection-checkpoint.repository';
-import { ProjectionRebuilder } from '@ledger/shared-kernel/infrastructure/adapters/projection/projection-rebuilder';
-import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { RECONCILIATION_PROJECTION } from './infrastructure/adapters/events/reconciliation.pump';
 import {
   AdjustmentAuditProjector,

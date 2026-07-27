@@ -1,6 +1,6 @@
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
+import { QueryBus, RegistryQueryBus } from '@cqrs/application/query-bus/query-bus';
 import { ListCurrenciesHandler } from '@ledger/reference/application/list-currencies.query';
-import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
-import { QueryBus, RegistryQueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
 import { GetAccountBalancesHandler } from './get-account-balances/get-account-balances.handler';
 import { GetAccountByIdHandler } from './get-account-by-id/get-account-by-id.handler';
 import { GetAccountTreeHandler } from './get-account-tree/get-account-tree.handler';

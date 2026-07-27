@@ -1,9 +1,9 @@
+import { EnvelopeFactory } from '@cqrs/application/event/envelope.factory';
+import { EventRegistry } from '@cqrs/application/event/event-registry';
+import { EventSourcedRepository } from '@cqrs/application/event-sourced.repository';
+import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
+import { EventStore } from '@cqrs/domain/ports/event-store';
 import { LedgerSettings } from '@ledger/ledger/domain/settings/ledger-settings.aggregate';
-import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
-import { EventRegistry } from '@ledger/shared-kernel/application/event/event-registry';
-import { EventSourcedRepository } from '@ledger/shared-kernel/application/event-sourced.repository';
-import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
-import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 
 /** Loads and persists the per-user {@link LedgerSettings} aggregate. */
 export class LedgerSettingsRepository extends EventSourcedRepository<LedgerSettings> {

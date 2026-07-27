@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../dist/out-tsc",
+    "declaration": true,
+    "types": [],
+    "target": "es2021"
+  },
+  "include": ["**/*.ts"],
+  // The contract suites and test doubles use jest globals, so they stay out of
+  // the library build — consumers import them from their own spec configs.
+  "exclude": [
+    "jest.config.ts",
+    "**/*.spec.ts",
+    "**/*.test.ts",
+    "**/*.contract.ts",
+    "src/testing"
+  ]
+}

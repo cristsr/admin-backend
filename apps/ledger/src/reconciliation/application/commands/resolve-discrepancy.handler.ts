@@ -1,3 +1,9 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { CommandBus } from '@cqrs/application/command-bus/command-bus';
+import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
+import { Clock } from '@cqrs/domain/ports';
+import { EventStore } from '@cqrs/domain/ports/event-store';
 import { PostingOrigin } from '@ledger/accounts/application/posting-origin';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.repository';
 import {
@@ -6,12 +12,6 @@ import {
 } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { SystemAccountLookup } from '@ledger/reconciliation/domain/ports/system-account-lookup.port';
 import { AdjustmentFactory } from '@ledger/reconciliation/domain/services/adjustment.factory';
-import { Clock } from '@ledger/shared/domain/ports';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
-import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
-import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 import { PostingInput } from '@ledger/transactions/application/posting-input.type';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';

@@ -1,5 +1,5 @@
+import { Command } from '@cqrs/application/command-bus/command';
 import { Nullable } from '@shared';
-import { Command } from '@ledger/shared-kernel/application/command-bus/command';
 
 /**
  * Declares a balance assertion (RF-17). Idempotent by the `externalRef` carried

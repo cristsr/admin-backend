@@ -1,5 +1,5 @@
+import { Command } from '@cqrs/application/command-bus/command';
 import { Nullable } from '@shared';
-import { Command } from '@ledger/shared-kernel/application/command-bus/command';
 
 /** Changes the annotative attributes of a transaction, any non-VOIDED state (RF-6). */
 export class AnnotateTransactionCommand extends Command {

@@ -1,9 +1,9 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
+import { IdGenerator } from '@cqrs/domain/ports';
+import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import { AccountValidationService } from '../../../accounts/application/account-validation.service';
 import { PostingOrigin } from '../../../accounts/application/posting-origin';
-import { IdGenerator } from '../../../shared/domain/ports';
-import { AuthContext } from '../../../shared-kernel/application/command-bus/auth-context.type';
-import { ProjectionDispatcher } from '../../../shared-kernel/application/projection/projection-dispatcher';
-import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import { BalanceRule } from '../../domain/balance/balance-rule';
 import { UnbalancedTransactionException } from '../../domain/transaction/exceptions/transaction.exception';
 import { TransactionStatus } from '../../domain/transaction/transaction-status';

@@ -1,5 +1,5 @@
-import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
-import { EventPayload } from '@ledger/shared-kernel/domain/event/event-payload.type';
+import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
+import { EventPayload } from '@cqrs/domain/event/event-payload.type';
 
 /** A PENDING transaction was confirmed, freezing its postings (§3.4). */
 export class TransactionConfirmed extends DomainEvent {

@@ -1,8 +1,8 @@
-import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
-import { EventRegistry } from '@ledger/shared-kernel/application/event/event-registry';
-import { EventSourcedRepository } from '@ledger/shared-kernel/application/event-sourced.repository';
-import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
-import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
+import { EnvelopeFactory } from '@cqrs/application/event/envelope.factory';
+import { EventRegistry } from '@cqrs/application/event/event-registry';
+import { EventSourcedRepository } from '@cqrs/application/event-sourced.repository';
+import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
+import { EventStore } from '@cqrs/domain/ports/event-store';
 import { BALANCE_ASSERTION, BalanceAssertion } from './balance-assertion.aggregate';
 
 /** Loads and persists {@link BalanceAssertion} aggregates over the event store. */

@@ -1,14 +1,14 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
+import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
+import { Clock, IdGenerator } from '@cqrs/domain/ports';
+import { EventStore } from '@cqrs/domain/ports/event-store';
 import { AccountRepository } from '@ledger/accounts/application/account.repository';
 import { Account } from '@ledger/accounts/domain/account/account.aggregate';
 import { LedgerSettingsRepository } from '@ledger/ledger/application/ledger-settings.repository';
 import { LedgerAlreadyInitializedException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
 import { LedgerSettings } from '@ledger/ledger/domain/settings/ledger-settings.aggregate';
-import { Clock, IdGenerator } from '@ledger/shared/domain/ports';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
-import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projection/projection-dispatcher';
-import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 import { AccountName, LedgerDate } from '@ledger/shared/domain/value-objects';
 import { InitializeLedgerCommand } from './initialize-ledger.command';
 

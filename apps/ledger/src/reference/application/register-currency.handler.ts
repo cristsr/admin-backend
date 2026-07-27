@@ -1,11 +1,11 @@
+import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
+import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
+import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
 import {
   CURRENCY_CATALOG_ID,
   CurrencyCatalogAggregate,
 } from '@ledger/reference/domain/currency/currency-catalog.aggregate';
-import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
-import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projection/projection-dispatcher';
 import { CurrencyCatalogCache } from './currency-catalog.cache';
 import { CurrencyCatalogRepository, SYSTEM_USER_ID } from './currency-catalog.repository';
 import { RegisterCurrencyCommand } from './register-currency.command';

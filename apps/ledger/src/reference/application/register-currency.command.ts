@@ -1,4 +1,4 @@
-import { Command } from '@ledger/shared-kernel/application/command-bus/command';
+import { Command } from '@cqrs/application/command-bus/command';
 
 /** Registers a currency in the global reference catalog (RF-21). */
 export class RegisterCurrencyCommand extends Command {

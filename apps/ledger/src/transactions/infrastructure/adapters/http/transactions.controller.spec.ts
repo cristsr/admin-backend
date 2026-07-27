@@ -1,9 +1,9 @@
+import { CommandBus } from '@cqrs/application/command-bus/command-bus';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
+import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { GetTransactionByIdQuery } from '@ledger/read-side/get-transaction-by-id/get-transaction-by-id.query';
 import { ListTransactionsQuery } from '@ledger/read-side/list-transactions/list-transactions.query';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
-import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
-import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
 import { AmendPendingTransactionCommand } from '@ledger/transactions/application/amend-transaction/amend-pending-transaction.command';
 import { AnnotateTransactionCommand } from '@ledger/transactions/application/annotate-transaction/annotate-transaction.command';
 import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';

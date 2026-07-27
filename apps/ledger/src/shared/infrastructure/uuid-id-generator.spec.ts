@@ -1,4 +1,4 @@
-import { runIdGeneratorContract } from '@ledger/shared/testing/contract/id-generator.contract';
+import { runIdGeneratorContract } from '@cqrs/testing';
 import { UuidIdGenerator } from './uuid-id-generator';
 
 runIdGeneratorContract(() => new UuidIdGenerator());

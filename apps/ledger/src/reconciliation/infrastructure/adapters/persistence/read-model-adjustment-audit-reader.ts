@@ -1,14 +1,14 @@
 import { Injectable } from '@nestjs/common';
+import {
+  ReadModelRow,
+  ReadModelStore,
+} from '@cqrs/application/projection/read-model-store';
 import { Criteria } from '@shared';
 import {
   AdjustmentAuditRow,
   AdjustmentAuditStore,
 } from '@ledger/reconciliation/domain/ports/adjustment-audit-store.port';
 import { PROJ_ADJUSTMENT_AUDIT } from '@ledger/reconciliation/infrastructure/projections/adjustment-audit.projector';
-import {
-  ReadModelRow,
-  ReadModelStore,
-} from '@ledger/shared-kernel/application/projection/read-model-store';
 
 /**
  * Serves {@link AdjustmentAuditStore} from `proj_adjustment_audit` through the

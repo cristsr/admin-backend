@@ -1,9 +1,9 @@
+import { CommandBus } from '@cqrs/application/command-bus/command-bus';
+import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
+import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { InitializeLedgerCommand } from '@ledger/ledger/application/initialize-ledger/initialize-ledger.command';
 import { GetLedgerSettingsQuery } from '@ledger/read-side/get-ledger-settings/get-ledger-settings.query';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
-import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
-import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
-import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
 import { LedgerController } from './ledger.controller';
 
 describe('LedgerController', () => {

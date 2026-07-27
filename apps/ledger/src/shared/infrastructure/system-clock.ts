@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Clock } from '@ledger/shared/domain/ports';
+import { Clock } from '@cqrs/domain/ports';
 
 /** Real adapter: the system wall clock. */
 @Injectable()

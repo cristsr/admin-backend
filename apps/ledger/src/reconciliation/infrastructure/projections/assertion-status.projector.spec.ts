@@ -1,7 +1,7 @@
+import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
+import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria } from '@shared';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
-import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
-import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { AssertionStatusProjector, PROJ_ASSERTIONS } from './assertion-status.projector';
 
 const AT = new Date('2026-07-22T10:00:00.000Z');

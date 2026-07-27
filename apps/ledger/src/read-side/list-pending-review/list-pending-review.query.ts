@@ -1,5 +1,5 @@
+import { Query } from '@cqrs/application/query-bus/query';
 import { Nullable } from '@shared';
-import { Query } from '@ledger/shared-kernel/application/query-bus/query';
 
 /** Page size applied when the caller does not ask for one, so reads stay bounded. */
 export const DEFAULT_PENDING_REVIEW_PAGE_SIZE = 50;
