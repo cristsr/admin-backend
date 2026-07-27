@@ -30,6 +30,15 @@ export class PolicyCommandBus extends CommandBus {
     this.handlers.set(commandType, handler);
   }
 
+  /**
+   * Command types that currently resolve to a handler. Exists so the wiring test
+   * can assert the §3.5 catalogue is complete: a controller dispatching a command
+   * nobody registered only fails once a request reaches it in production.
+   */
+  registeredTypes(): readonly string[] {
+    return [...this.handlers.keys()];
+  }
+
   async dispatch(command: Command, ctx: AuthContext): Promise<CommandResult> {
     const handler = this.handlers.get(command.commandType);
 

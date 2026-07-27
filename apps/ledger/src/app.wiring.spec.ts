@@ -2,6 +2,7 @@
 import { Global, Module } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getDataSourceToken, getEntityManagerToken } from '@nestjs/typeorm';
+import { PolicyCommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
 
 /** Every value the config validator demands; must be set before the modules load. */
 const environment: Record<string, string> = {
@@ -75,6 +76,50 @@ describe('Application wiring', () => {
     await app.init();
 
     expect(app).toBeDefined();
+
+    await app.close();
+  });
+
+  /**
+   * Registration happens in two places — the core factory and each module's
+   * `onModuleInit` — so a command can compile, own an endpoint, and still have
+   * no handler on the bus. That failure only surfaces when a request arrives, so
+   * it is pinned here against the §3.5 catalogue.
+   */
+  it('registers a handler for every command in the §3.5 catalogue', async () => {
+    moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideModule(DatabaseModule)
+      .useModule(StubDatabaseModule)
+      .compile();
+
+    const app = moduleRef.createNestApplication({ logger: false });
+    await app.init();
+
+    const bus = app.get(PolicyCommandBus);
+
+    // ChangePresentationCurrency + ChangeTimezone ship as one command
+    // (ReplaceLedgerSettings); RecordOpeningBalance covers RF-27.
+    expect([...bus.registeredTypes()].sort()).toEqual(
+      [
+        'AmendPendingTransaction',
+        'AnnotateTransaction',
+        'AssertBalance',
+        'CloseAccount',
+        'ConfirmTransaction',
+        'InitializeLedger',
+        'MergePendingTransfers',
+        'OpenAccount',
+        'RecordOpeningBalance',
+        'RecordTransaction',
+        'RegisterCurrency',
+        'RenameAccount',
+        'ReplaceLedgerSettings',
+        'ResolveDiscrepancy',
+        'ReverseConfirmedTransaction',
+        'RevokeAssertion',
+        'VoidPendingTransaction',
+      ].sort(),
+    );
 
     await app.close();
   });
