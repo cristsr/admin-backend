@@ -3,6 +3,7 @@ import { AuthContext } from '../../../shared-kernel/application/command-bus/auth
 import { ProjectionDispatcher } from '../../../shared-kernel/application/projection/projection-dispatcher';
 import { ReadModelStore } from '../../../shared-kernel/application/projection/read-model-store';
 import { NameCollisionException } from '../../domain/account/exceptions/account.exception';
+import { AccountNameRegistry } from '../account-name.registry';
 import { AccountRepository } from '../account.repository';
 import { OpenAccountCommand } from './open-account.command';
 import { OpenAccountHandler } from './open-account.handler';
@@ -21,7 +22,12 @@ function setup() {
   const idGenerator: jest.Mocked<IdGenerator> = { next: jest.fn().mockReturnValue('gen-1') };
   const dispatcher: jest.Mocked<ProjectionDispatcher> = { dispatch: jest.fn().mockResolvedValue(undefined) };
 
-  const handler = new OpenAccountHandler(accounts, readModel, idGenerator, dispatcher);
+  const handler = new OpenAccountHandler(
+    accounts,
+    new AccountNameRegistry(readModel),
+    idGenerator,
+    dispatcher,
+  );
 
   return { handler, accounts, readModel, dispatcher };
 }

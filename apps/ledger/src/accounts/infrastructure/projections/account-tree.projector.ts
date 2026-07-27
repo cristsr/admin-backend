@@ -70,11 +70,11 @@ export class AccountTreeProjector extends Projector {
       Criteria.none().equals('user_id', event.userId),
     );
 
-    for (const row of rows) {
-      const current = AccountName.of(row.name);
+    const affected = rows
+      .map((row) => ({ row, current: AccountName.of(row.name) }))
+      .filter(({ current }) => current.equals(previous) || current.isDescendantOf(previous));
 
-      if (!current.equals(previous) && !current.isDescendantOf(previous)) continue;
-
+    for (const { row, current } of this.inCollisionFreeOrder(affected, previous, next)) {
       const renamed = current.reparentFrom(previous, next);
       await store.upsert(
         PROJ_ACCOUNTS,
@@ -82,6 +82,37 @@ export class AccountTreeProjector extends Projector {
         { ...row, name: renamed.value },
       );
     }
+  }
+
+  /**
+   * Rewrite order that never leaves two rows of a user sharing a name mid-flight
+   * — the unique `(user_id, name)` index (RNF-1) rejects that even when the
+   * final state is sound, and the read-model adapter runs each upsert on its own
+   * connection, so there is no transaction to defer the check to.
+   *
+   * The only names a rewrite can land on are the ones inside the moving subtree
+   * itself (anything outside it is rejected upfront by `AccountNameRegistry`).
+   * When the subtree moves deeper into itself (`Assets:Bank` ->
+   * `Assets:Bank:Main`) a shallow row's new name is a deeper row's current name,
+   * so the deepest rows go first; in every other direction the dependency points
+   * the other way and the shallowest go first.
+   */
+  private inCollisionFreeOrder<TEntry extends { readonly current: AccountName }>(
+    affected: readonly TEntry[],
+    previous: AccountName,
+    next: AccountName,
+  ): TEntry[] {
+    const deepestFirst = next.isDescendantOf(previous);
+
+    return [...affected].sort((left, right) =>
+      deepestFirst
+        ? this.depthOf(right.current) - this.depthOf(left.current)
+        : this.depthOf(left.current) - this.depthOf(right.current),
+    );
+  }
+
+  private depthOf(name: AccountName): number {
+    return name.value.split(':').length;
   }
 
   private async onClosed(event: StoredEvent, store: ReadModelStore): Promise<void> {

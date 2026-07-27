@@ -86,6 +86,88 @@ describe('AccountTreeProjector', () => {
     expect(names.a2).toBe('Assets:Bancolombia:Savings');
   });
 
+  describe('rename rewrite order (unique (user_id, name) index, RNF-1)', () => {
+    /**
+     * Stands in for the unique index: rejects the moment two rows of a user
+     * share a name, so a transiently duplicated name fails the test the same
+     * way PostgreSQL would fail the projection.
+     */
+    class UniqueNameStore extends InMemoryReadModelStore {
+      async upsert(table: string, key: never, row: never): Promise<void> {
+        await super.upsert(table, key, row);
+
+        if (table !== PROJ_ACCOUNTS) return;
+
+        const rows = await this.query<{ name: string }>(PROJ_ACCOUNTS, Criteria.none());
+        const names = rows.map((entry) => entry.name);
+
+        if (new Set(names).size !== names.length) {
+          throw new Error(`duplicate account name while projecting: ${names.join(', ')}`);
+        }
+      }
+    }
+
+    let unique: UniqueNameStore;
+
+    beforeEach(() => {
+      unique = new UniqueNameStore();
+    });
+
+    it('moves a subtree deeper into itself without a transient duplicate', async () => {
+      await projector.project(opened('a1', 'Assets:Bank', null), unique);
+      await projector.project(opened('a2', 'Assets:Bank:Z', 'Assets:Bank'), unique);
+      await projector.project(opened('a3', 'Assets:Bank:Main:Z', null), unique);
+
+      // a2 lands on `Assets:Bank:Main:Z`, the name a3 still holds.
+      await projector.project(
+        storedEvent('a1', 'AccountRenamed', {
+          previousName: 'Assets:Bank',
+          newName: 'Assets:Bank:Main',
+        }),
+        unique,
+      );
+
+      const rows = await unique.query<{ account_id: string; name: string }>(
+        PROJ_ACCOUNTS,
+        Criteria.none(),
+      );
+      const names = Object.fromEntries(rows.map((r) => [r.account_id, r.name]));
+
+      expect(names).toEqual({
+        a1: 'Assets:Bank:Main',
+        a2: 'Assets:Bank:Main:Z',
+        a3: 'Assets:Bank:Main:Main:Z',
+      });
+    });
+
+    it('moves a subtree up without a transient duplicate', async () => {
+      await projector.project(opened('a1', 'Assets:A:B', null), unique);
+      await projector.project(opened('a2', 'Assets:A:B:Z', 'Assets:A:B'), unique);
+      await projector.project(opened('a3', 'Assets:A:B:B:Z', null), unique);
+
+      // a3 lands on `Assets:A:B:Z`, the name a2 still holds.
+      await projector.project(
+        storedEvent('a1', 'AccountRenamed', {
+          previousName: 'Assets:A:B',
+          newName: 'Assets:A',
+        }),
+        unique,
+      );
+
+      const rows = await unique.query<{ account_id: string; name: string }>(
+        PROJ_ACCOUNTS,
+        Criteria.none(),
+      );
+      const names = Object.fromEntries(rows.map((r) => [r.account_id, r.name]));
+
+      expect(names).toEqual({
+        a1: 'Assets:A',
+        a2: 'Assets:A:Z',
+        a3: 'Assets:A:B:Z',
+      });
+    });
+  });
+
   it('marks closed_on on AccountClosed', async () => {
     await projector.project(opened('a1', 'Assets:Bank', null), store);
     await projector.project(

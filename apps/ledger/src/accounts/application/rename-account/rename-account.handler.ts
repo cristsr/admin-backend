@@ -1,3 +1,4 @@
+import { AccountNameRegistry } from '@ledger/accounts/application/account-name.registry';
 import { AccountRepository } from '@ledger/accounts/application/account.repository';
 import { AccountNotFoundException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
@@ -7,10 +8,17 @@ import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projecti
 import { AccountName } from '@ledger/shared-kernel/domain/value-objects';
 import { RenameAccountCommand } from './rename-account.command';
 
-/** Loads the account, applies the rename and republishes the affected projections. */
+/**
+ * Loads the account, applies the rename and republishes the affected
+ * projections. §2.1.1 forbids the new name from colliding with another account
+ * of the user, and the rename drags every descendant with it (§6.3), so the
+ * whole resulting subtree is cleared with {@link AccountNameRegistry} before
+ * anything is emitted.
+ */
 export class RenameAccountHandler extends CommandHandler<RenameAccountCommand> {
   constructor(
     private readonly accounts: AccountRepository,
+    private readonly names: AccountNameRegistry,
     private readonly dispatcher: ProjectionDispatcher,
   ) {
     super();
@@ -23,7 +31,10 @@ export class RenameAccountHandler extends CommandHandler<RenameAccountCommand> {
       throw new AccountNotFoundException(`Account "${command.accountId}" does not exist`);
     }
 
-    account.rename(AccountName.of(command.newName));
+    const newName = AccountName.of(command.newName);
+    await this.names.ensureRenameable(ctx.userId, account.name, newName);
+
+    account.rename(newName);
 
     const result = await this.accounts.save(account, ctx);
     await this.dispatcher.dispatch(result.events);
