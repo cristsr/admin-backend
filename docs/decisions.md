@@ -8,6 +8,31 @@
 > entrada nueva que la referencia. Orden cronológico inverso (más reciente
 > primero).
 
+## HU-0018 — Endpoints de configuración del ledger (2026-07-26)
+
+- **`PUT /v1/ledger/settings` que reemplaza la configuración completa** (elegido por el
+  usuario). El riesgo que se le señaló —dos commands en una petición, con estado intermedio
+  si el segundo falla— **no se materializa**: `LedgerSettings` es un único agregado cuya
+  raíz es el `user_id`, y `EventSourcedRepository.save()` agrupa todos los `pullChanges()`
+  en **un solo `append`**. Un command que invoca ambos cambios emite los dos eventos
+  atómicamente sobre el mismo stream (§3.5). Verificado en
+  `event-sourced.repository.ts:43-56`.
+- **Un command, no dos:** `ReplaceLedgerSettingsCommand`. Despachar dos commands desde el
+  controller sí habría roto la atomicidad; un command que orquesta dos métodos del mismo
+  agregado, no.
+- **Los eventos de cambio se registran en el `EventRegistry`.** No lo pide ningún AC, pero
+  sin eso `LedgerSettingsRepository.load()` no puede rehidratar un agregado que ya tenga un
+  cambio previo — el segundo PUT fallaría — y un rebuild de `ledger_settings` ignoraría los
+  cambios. Es condición necesaria de AC-1.
+- **El projector aplica leer-mezclar-escribir**, siguiendo lo que hu-0015 estableció: el
+  contrato de `upsert` reemplaza la fila entera, así que escribir solo la columna cambiada
+  borraría los ids de las cuentas técnicas.
+- **`LEDGER_NOT_INITIALIZED` se reutiliza**, no se inventa: ya existe como código estable y
+  ya tiene una excepción en `reconciliation`. Se agrega la equivalente en el módulo de
+  settings.
+
+---
+
 ## HU-0017 — Documentacion viva del modulo reconciliation (2026-07-26)
 
 - **Pipeline colapsado para una historia docs-only:** no se corrio `/design` ni `/plan`. En

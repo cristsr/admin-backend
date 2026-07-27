@@ -9,10 +9,12 @@ cierre del día en mi huso horario real, sin depender de los valores fijados al 
 
 ## Criterios de Aceptación
 
-### AC-1: Commands y handlers de cambio de configuración
+### AC-1: Command y handler de reemplazo de configuración
 
-Existen los commands `ChangePresentationCurrencyCommand` y `ChangeTimezoneCommand` con sus
-handlers, despachados por el `CommandBus` real. El agregado `LedgerSettings`
+Existe `ReplaceLedgerSettingsCommand` con su handler, despachado por el `CommandBus` real.
+El handler carga el agregado, invoca `changePresentationCurrency` y `changeTimezone`, y
+persiste **una sola vez**: ambos eventos viajan en el mismo append (ver AC-3). El agregado
+`LedgerSettings`
 (`src/ledger/domain/settings/ledger-settings.aggregate.ts`) **ya expone**
 `changePresentationCurrency()` y `changeTimezone()` con los eventos
 `PresentationCurrencyChanged` y `TimezoneChanged`: esta historia cablea la capa de
@@ -24,16 +26,20 @@ aplicación y el adaptador HTTP que faltan, no reescribe el dominio.
 `proj_ledger_settings`. La query `GetLedgerSettingsQuery` y su handler ya existen en
 `src/read-side/get-ledger-settings/`; falta exponerlos por HTTP.
 
-### AC-3: Endpoints de escritura
+### AC-3: Un PUT que reemplaza la configuración completa
 
-Existen los endpoints que despachan cada command con el contexto autenticado (RF-26) y la
-referencia externa idempotente (RF-11).
+`PUT /v1/ledger/settings` recibe el objeto completo (`presentationCurrency` y `timezone`)
+y deja la configuración en ese estado, con contexto autenticado (RF-26) y referencia
+externa idempotente (RF-11).
 
-[NEEDS CLARIFICATION: ¿la superficie es un único `PATCH /v1/ledger/settings` que acepta
-`presentationCurrency` y/o `timezone` en el mismo body, o dos endpoints separados
-(`POST /v1/ledger/settings/presentation-currency` y `.../timezone`)? Lo primero es más
-REST-idiomático pero despacha dos commands en una petición, lo que rompe la
-correspondencia 1:1 endpoint→command que sigue el resto del API.]
+**La atomicidad no es un problema acá.** `LedgerSettings` es un único agregado cuya raíz es
+el `user_id`, así que un solo command puede invocar `changePresentationCurrency` y
+`changeTimezone` sobre el mismo agregado y persistir **un solo append** con los dos eventos.
+§3.5 lo define así: un command emite cero o más eventos de forma atómica con control de
+concurrencia optimista. No hay estado intermedio posible.
+
+Un único command (`ReplaceLedgerSettingsCommand`) sirve al endpoint; no se despachan dos
+commands en una petición.
 
 ### AC-4: Validación de la moneda de presentación
 
@@ -53,13 +59,10 @@ responde igualmente `2xx` en ese caso, sin agregar un evento al stream.
 
 ### AC-7: El ledger debe estar inicializado
 
-Cambiar la configuración de un ledger no inicializado se rechaza con un código de error de
-dominio estable.
-
-[NEEDS CLARIFICATION: `INTEGRATION.md` registró que `LEDGER_NOT_INITIALIZED` fue
-identificado como código necesario pero **no tiene excepción real** en el código. ¿Se crea
-esa excepción en esta historia, o el caso se cubre con `NOT_FOUND` sobre el agregado
-inexistente?]
+Cambiar la configuración de un ledger no inicializado se rechaza con el código estable
+`LEDGER_NOT_INITIALIZED`, que **ya existe** en `shared/domain/errors/ledger-error-code.ts`
+y ya tiene una excepción que lo usa en `reconciliation`. Falta la excepción equivalente en
+el módulo de settings; el código no se inventa, se reutiliza.
 
 ### AC-8: Read-your-writes
 

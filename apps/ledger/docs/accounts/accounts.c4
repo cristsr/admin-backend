@@ -70,6 +70,7 @@ model {
   admin.ledger.accounts.controller -> admin.ledger.shared.queryBus 'lecturas'
   admin.ledger.accounts.ledgerController -> admin.ledger.shared.commandBus 'dispatch(InitializeLedgerCommand)'
   admin.ledger.accounts.ledgerController -> admin.ledger.shared.queryBus 'ask(GetLedgerSettingsQuery)'
+  admin.ledger.accounts.ledgerController -> admin.ledger.shared.commandBus 'dispatch(ReplaceLedgerSettingsCommand)'
   admin.ledger.accounts.treeProjector -> admin.ledger.shared.eventStore 'consume eventos'
 }
 
@@ -144,6 +145,14 @@ views 'Accounts' {
   }
 
   // --- Dynamic views: ciclo de vida del ledger (hu-0013) ---
+
+  dynamic view replaceLedgerSettings {
+    title 'Reemplazar la configuracion del ledger · trigger REST'
+
+    user -> admin.ledger.accounts.ledgerController 'PUT /ledger/settings (ReplaceLedgerSettingsRequestDto)'
+    admin.ledger.accounts.ledgerController -> admin.ledger.shared.commandBus 'dispatch(ReplaceLedgerSettingsCommand)'
+    admin.ledger.shared.commandBus -> admin.ledger.shared.eventStore 'append(PresentationCurrencyChanged + TimezoneChanged) — un solo append'
+  }
 
   dynamic view initializeLedger {
     title 'Inicializar ledger · trigger REST'

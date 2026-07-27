@@ -28,6 +28,7 @@ Para previsualizar localmente: extensión LikeC4 de VS Code, o `npx likec4 start
 |---|---|---|---|
 | Inicializar ledger | rest | `POST /ledger/initialize` | [initialize-ledger](./flows/initialize-ledger.md) |
 | Leer settings del ledger | rest | `GET /ledger/settings` | [get-ledger-settings](./flows/get-ledger-settings.md) |
+| Reemplazar settings del ledger | rest | `PUT /ledger/settings` | [replace-ledger-settings](./flows/replace-ledger-settings.md) |
 | Abrir cuenta | rest | `POST /accounts` | [open-account](./flows/open-account.md) |
 | Renombrar cuenta | rest | `POST /accounts/{id}/rename` | [rename-account](./flows/rename-account.md) |
 | Cerrar cuenta | rest | `POST /accounts/{id}/close` | [close-account](./flows/close-account.md) |
