@@ -3,7 +3,7 @@ import { aMoney } from '@ledger/shared/testing';
 import { FixedClock } from '@ledger/shared/testing/fixed-clock';
 import { SequentialIdGenerator } from '@ledger/shared/testing/sequential-id-generator';
 import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
-import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { AssertBalanceProps, BalanceAssertion } from './balance-assertion.aggregate';
 import { AssertionStatus } from './enums/assertion-status.enum';
 import {

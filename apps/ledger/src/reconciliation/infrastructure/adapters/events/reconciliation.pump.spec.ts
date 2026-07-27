@@ -7,7 +7,7 @@ import {
 } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
 import { EventEnvelope } from '@ledger/shared-kernel/domain/event/event-envelope.type';
 import { StreamId } from '@ledger/shared-kernel/domain/event/stream-id.type';
-import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { InMemoryProjectionCheckpointRepository } from '@ledger/shared-kernel/infrastructure/adapters/projection/in-memory-projection-checkpoint.repository';
 import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';

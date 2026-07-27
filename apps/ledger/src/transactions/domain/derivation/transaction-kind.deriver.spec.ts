@@ -1,4 +1,4 @@
-import { AccountType } from '@ledger/shared-kernel/domain/value-objects';
+import { AccountType } from '@ledger/shared/domain/value-objects';
 import { DerivedKind } from './derived-kind';
 import { TransactionKindDeriver } from './transaction-kind.deriver';
 

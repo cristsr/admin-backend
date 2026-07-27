@@ -1,6 +1,6 @@
 import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
 import { EventPayload } from '@ledger/shared-kernel/domain/event/event-payload.type';
-import { CurrencyCatalog } from '@ledger/shared-kernel/domain/value-objects';
+import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
 import {
   PostingPayload,

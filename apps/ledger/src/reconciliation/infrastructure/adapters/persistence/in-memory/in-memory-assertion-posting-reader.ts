@@ -4,7 +4,7 @@ import {
   AssertionPostingReader,
   TouchedAccount,
 } from '@ledger/reconciliation/domain/ports/assertion-posting-reader.port';
-import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 
 /** A stored posting row keyed by owner, account and transaction. */

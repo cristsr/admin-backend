@@ -1,7 +1,7 @@
 import { Currency } from '@ledger/shared/domain/money';
-import { CurrencyCatalog } from '@ledger/shared-kernel/domain/value-objects/currency-catalog';
-import { CurrencyCode } from '@ledger/shared-kernel/domain/value-objects/currency-code';
-import { UnknownCurrencyException } from '@ledger/shared-kernel/domain/value-objects/value-object.exception';
+import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-catalog';
+import { CurrencyCode } from '@ledger/shared/domain/value-objects/currency-code';
+import { UnknownCurrencyException } from '@ledger/shared/domain/value-objects/value-object.exception';
 
 /** Minor-unit precision of the seed currencies until EP-4 registers more. */
 const SEED_MINOR_UNITS: Readonly<Record<string, number>> = {

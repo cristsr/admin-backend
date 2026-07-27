@@ -14,7 +14,7 @@ import { CommandResult } from '@ledger/shared-kernel/application/command-bus/com
 import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
 import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
 import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
-import { AccountType } from '@ledger/shared-kernel/domain/value-objects';
+import { AccountType } from '@ledger/shared/domain/value-objects';
 import { AccountsHttpModule } from './accounts-http.module';
 
 /**

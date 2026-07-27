@@ -4,7 +4,7 @@ import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-
 import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
 import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projection/projection-dispatcher';
-import { CurrencyCatalog, LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { CurrencyCatalog, LedgerDate } from '@ledger/shared/domain/value-objects';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
 import { toPostingLines } from '@ledger/transactions/application/posting.factory';
 import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';

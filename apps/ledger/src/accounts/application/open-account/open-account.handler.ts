@@ -10,7 +10,7 @@ import {
   AccountName,
   CurrencyCode,
   LedgerDate,
-} from '@ledger/shared-kernel/domain/value-objects';
+} from '@ledger/shared/domain/value-objects';
 import { OpenAccountCommand } from './open-account.command';
 
 /** Opens an account after checking its name is unique against `account_tree`. */

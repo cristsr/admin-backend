@@ -4,7 +4,7 @@ import { InMemoryAssertionPostingReader } from '@ledger/reconciliation/infrastru
 import { Currency, Money } from '@ledger/shared/domain/money';
 import { EventPayload } from '@ledger/shared-kernel/domain/event/event-payload.type';
 import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
-import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { EvaluateAssertionCommand } from '../commands/evaluate-assertion.command';
 import { EvaluateAssertionHandler } from '../commands/evaluate-assertion.handler';

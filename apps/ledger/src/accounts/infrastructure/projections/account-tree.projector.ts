@@ -2,7 +2,7 @@ import { Criteria, Nullable } from '@shared';
 import { Projector } from '@ledger/shared-kernel/application/projection/projector';
 import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
 import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
-import { AccountName } from '@ledger/shared-kernel/domain/value-objects';
+import { AccountName } from '@ledger/shared/domain/value-objects';
 
 /** Read-model table name for the account tree. */
 export const PROJ_ACCOUNTS = 'proj_accounts';

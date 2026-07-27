@@ -3,7 +3,7 @@ import { Money } from '@ledger/shared/domain/money';
 import { Clock, IdGenerator } from '@ledger/shared/domain/ports';
 import { AggregateRoot } from '@ledger/shared-kernel/domain/aggregate/aggregate-root';
 import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
-import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { AssertionStatus } from './enums/assertion-status.enum';
 import {
   AssertionRevoked,

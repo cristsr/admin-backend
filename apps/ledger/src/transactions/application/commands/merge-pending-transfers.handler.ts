@@ -4,7 +4,7 @@ import { CommandBus } from '@ledger/shared-kernel/application/command-bus/comman
 import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
 import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
-import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';

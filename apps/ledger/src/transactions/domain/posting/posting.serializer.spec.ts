@@ -1,5 +1,5 @@
 import { aMoney } from '@ledger/shared/testing';
-import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { PostingLine } from './posting-line';
 import { PostingSerializer } from './posting.serializer';
 

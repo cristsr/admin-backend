@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AssertionLookupPort } from '@ledger/reconciliation/domain/ports/assertion-lookup.port';
 import { AssertionStatusStore } from '@ledger/reconciliation/domain/ports/assertion-status-store.port';
-import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
 
 /**
  * Implements the reactor's lookup over the `assertion_status` projection, so the

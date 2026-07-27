@@ -4,7 +4,7 @@ import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
 import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
 import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
-import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';

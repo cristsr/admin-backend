@@ -5,7 +5,7 @@ import { IdGenerator } from '@ledger/shared/domain/ports';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
 import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
 import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
-import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared/domain/value-objects';
 import { AssertBalanceCommand } from './assert-balance.command';
 import { EvaluateAssertionCommand } from './evaluate-assertion.command';
 import { EvaluateAssertionHandler } from './evaluate-assertion.handler';

@@ -2,7 +2,7 @@ import { Nullable } from '@shared';
 import { Clock, IdGenerator } from '@ledger/shared/domain/ports';
 import { AggregateRoot } from '@ledger/shared-kernel/domain/aggregate/aggregate-root';
 import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
-import { LedgerDate, Payee } from '@ledger/shared-kernel/domain/value-objects';
+import { LedgerDate, Payee } from '@ledger/shared/domain/value-objects';
 import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
 import {

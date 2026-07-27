@@ -6,8 +6,8 @@ import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.typ
 import {
   CurrencyCatalog,
   CurrencyCode,
-} from '@ledger/shared-kernel/domain/value-objects';
-import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+} from '@ledger/shared/domain/value-objects';
+import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { PROJ_POSTINGS } from './transaction-list.projector';
 
 /** Read-model table for balances per account and currency. */

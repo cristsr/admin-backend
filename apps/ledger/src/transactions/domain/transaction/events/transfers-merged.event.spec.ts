@@ -1,5 +1,5 @@
 import { aMoney } from '@ledger/shared/testing';
-import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
 import { TransfersMerged, TransfersMergedProps } from './transfers-merged.event';
 

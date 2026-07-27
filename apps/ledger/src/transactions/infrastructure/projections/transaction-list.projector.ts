@@ -3,7 +3,7 @@ import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/accou
 import { Projector } from '@ledger/shared-kernel/application/projection/projector';
 import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
 import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
-import { AccountType } from '@ledger/shared-kernel/domain/value-objects';
+import { AccountType } from '@ledger/shared/domain/value-objects';
 import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
 import { TransactionKindDeriver } from '@ledger/transactions/domain/derivation/transaction-kind.deriver';
 import { PostingPayload } from '@ledger/transactions/domain/posting/posting.serializer';

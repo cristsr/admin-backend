@@ -1,7 +1,7 @@
 import { Nullable } from '@shared';
 import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
 import { EventPayload } from '@ledger/shared-kernel/domain/event/event-payload.type';
-import { AccountType } from '@ledger/shared-kernel/domain/value-objects';
+import { AccountType } from '@ledger/shared/domain/value-objects';
 
 /** Construction shape for {@link AccountOpened}. */
 export type AccountOpenedProps = {

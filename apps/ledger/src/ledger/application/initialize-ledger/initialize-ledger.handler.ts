@@ -9,7 +9,7 @@ import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/co
 import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projection/projection-dispatcher';
 import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
-import { AccountName, LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { AccountName, LedgerDate } from '@ledger/shared/domain/value-objects';
 import { InitializeLedgerCommand } from './initialize-ledger.command';
 
 /** Canonical names of the two technical system accounts (INV-13). */

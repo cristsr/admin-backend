@@ -1,5 +1,5 @@
 import { defineContract } from '@ledger/shared/testing';
-import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { AssertionStatus } from '../balance-assertion/enums/assertion-status.enum';
 import { AssertionStatusRow, AssertionStatusStore } from './assertion-status-store.port';
 

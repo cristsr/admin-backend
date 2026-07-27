@@ -8,7 +8,7 @@ import { CommandBus, PolicyCommandBus } from '@ledger/shared-kernel/application/
 import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
 import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
 import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
-import { CurrencyCatalog } from '@ledger/shared-kernel/domain/value-objects/currency-catalog';
+import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-catalog';
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
 import { PostgresEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/postgres/postgres-event-store';
 import { PostgresReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';

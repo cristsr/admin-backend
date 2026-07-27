@@ -10,7 +10,7 @@ import {
   ReadModelRow,
   ReadModelStore,
 } from '@ledger/shared-kernel/application/projection/read-model-store';
-import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
 
 /**
  * Serves {@link AssertionStatusStore} from `proj_assertions` through the shared

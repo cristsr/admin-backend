@@ -1,5 +1,5 @@
-import { CurrencyCode } from '@ledger/shared-kernel/domain/value-objects/currency-code';
-import { UnknownCurrencyException } from '@ledger/shared-kernel/domain/value-objects/value-object.exception';
+import { CurrencyCode } from '@ledger/shared/domain/value-objects/currency-code';
+import { UnknownCurrencyException } from '@ledger/shared/domain/value-objects/value-object.exception';
 import { SeedCurrencyCatalog } from './seed-currency-catalog';
 
 describe('SeedCurrencyCatalog', () => {

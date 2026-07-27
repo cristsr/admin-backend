@@ -9,7 +9,7 @@ import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
 import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
-import { AccountType } from '@ledger/shared-kernel/domain/value-objects';
+import { AccountType } from '@ledger/shared/domain/value-objects';
 import { AccountsController } from './accounts.controller';
 import { AccountTreeView } from './dto/account-tree-view';
 

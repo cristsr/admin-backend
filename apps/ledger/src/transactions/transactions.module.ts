@@ -5,7 +5,7 @@ import { CommandBus, PolicyCommandBus } from '@ledger/shared-kernel/application/
 import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
 import { EventRegistry } from '@ledger/shared-kernel/application/event/event-registry';
 import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
-import { CurrencyCatalog } from '@ledger/shared-kernel/domain/value-objects';
+import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import { MergePendingTransfersHandler } from './application/commands/merge-pending-transfers.handler';
 import { LedgerTransactionRepository } from './application/ledger-transaction.repository';
 import { AccountLookup } from './domain/ports/account-lookup.port';

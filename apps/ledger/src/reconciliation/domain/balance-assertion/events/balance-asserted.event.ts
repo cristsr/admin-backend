@@ -2,7 +2,7 @@ import { Nullable } from '@shared';
 import { Money } from '@ledger/shared/domain/money';
 import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
 import { EventPayload } from '@ledger/shared-kernel/domain/event/event-payload.type';
-import { CurrencyCatalog, CurrencyCode } from '@ledger/shared-kernel/domain/value-objects';
+import { CurrencyCatalog, CurrencyCode } from '@ledger/shared/domain/value-objects';
 
 /** Stable event-type name for the assertion declaration (spec §3.4). */
 export const BALANCE_ASSERTED = 'BalanceAsserted';

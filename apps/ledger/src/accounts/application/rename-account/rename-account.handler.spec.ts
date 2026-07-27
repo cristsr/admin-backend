@@ -8,7 +8,7 @@ import {
   AccountName,
   CurrencyCode,
   LedgerDate,
-} from '../../../shared-kernel/domain/value-objects';
+} from '@ledger/shared/domain/value-objects';
 import { Account } from '../../domain/account/account.aggregate';
 import {
   NameCollisionException,

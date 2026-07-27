@@ -4,8 +4,8 @@ import {
   AccountType,
   CurrencyCode,
   LedgerDate,
-} from '@ledger/shared-kernel/domain/value-objects';
-import { RootTypeImmutableException } from '@ledger/shared-kernel/domain/value-objects';
+} from '@ledger/shared/domain/value-objects';
+import { RootTypeImmutableException } from '@ledger/shared/domain/value-objects';
 import { Account } from './account.aggregate';
 import { AccountOpened, AccountRenamed } from './events';
 import {

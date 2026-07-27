@@ -13,8 +13,8 @@ import { AuthenticatedContextPolicy } from '@ledger/shared-kernel/application/co
 import { IdempotencyPolicy } from '@ledger/shared-kernel/application/command-bus/policies/idempotency.policy';
 import { OptimisticConcurrencyPolicy } from '@ledger/shared-kernel/application/command-bus/policies/optimistic-concurrency.policy';
 import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
-import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
-import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared/domain/value-objects';
+import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { SynchronousProjectionDispatcher } from '@ledger/shared-kernel/infrastructure/adapters/projection/synchronous-dispatcher';
 import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';

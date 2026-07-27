@@ -5,7 +5,7 @@ import { PostgresReadModelStore } from '@ledger/shared-kernel/infrastructure/ada
 import { InMemoryProjectionCheckpointRepository } from '@ledger/shared-kernel/infrastructure/adapters/projection/in-memory-projection-checkpoint.repository';
 import { ProjectionRegistry } from '@ledger/shared-kernel/application/tooling/projection-registry';
 import { ProjectionRebuilder } from '@ledger/shared-kernel/infrastructure/adapters/projection/projection-rebuilder';
-import { ConsistencyVerifier } from '@ledger/shared-kernel/application/tooling/consistency-verifier';
+import { ConsistencyVerifier } from '@ledger/tooling/consistency-verifier';
 import { AccountTreeProjector, PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import {
   AccountBalancesProjector,
@@ -24,7 +24,7 @@ import {
   LedgerSettingsProjector,
   PROJ_LEDGER_SETTINGS,
 } from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
-import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { createLedgerEventRegistry } from '@ledger/ledger/application/ledger-event-registry.factory';
 import {
   AdjustmentAuditProjector,

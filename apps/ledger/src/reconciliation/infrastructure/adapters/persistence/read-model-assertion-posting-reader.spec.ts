@@ -1,6 +1,6 @@
 import { Money } from '@ledger/shared/domain/money';
-import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
-import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
+import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { PROJ_POSTINGS } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';

@@ -2,7 +2,7 @@ import { AssertionLookupPort } from '@ledger/reconciliation/domain/ports/asserti
 import { AssertionPostingReader } from '@ledger/reconciliation/domain/ports/assertion-posting-reader.port';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
 import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
-import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { EvaluateAssertionCommand } from '../commands/evaluate-assertion.command';
 import { EvaluateAssertionHandler } from '../commands/evaluate-assertion.handler';
 

@@ -1,4 +1,4 @@
-import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
 
 /**
  * Read-side port answering "which assertions could be affected by a change on

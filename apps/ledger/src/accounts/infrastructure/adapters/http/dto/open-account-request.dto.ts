@@ -10,7 +10,7 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import { AccountType } from '@ledger/shared-kernel/domain/value-objects';
+import { AccountType } from '@ledger/shared/domain/value-objects';
 
 /**
  * Body of `POST /accounts`. Validates shape only — hierarchy, name collision,

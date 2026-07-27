@@ -17,7 +17,7 @@ import {
   CurrencyCatalog,
   CurrencyCode,
   LedgerDate,
-} from '@ledger/shared-kernel/domain/value-objects';
+} from '@ledger/shared/domain/value-objects';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
 import { toPostingLines } from '@ledger/transactions/application/posting.factory';
 import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';

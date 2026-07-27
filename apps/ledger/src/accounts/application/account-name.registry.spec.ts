@@ -1,6 +1,6 @@
 import { Criteria } from '@shared';
 import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
-import { AccountName } from '@ledger/shared-kernel/domain/value-objects';
+import { AccountName } from '@ledger/shared/domain/value-objects';
 import { NameCollisionException } from '../domain/account/exceptions/account.exception';
 import { AccountNameRegistry } from './account-name.registry';
 

@@ -1,4 +1,4 @@
-import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
 
 /** UTC half-open window `[startUtc, endUtc)` covering one local calendar day. */
 export interface DayWindow {

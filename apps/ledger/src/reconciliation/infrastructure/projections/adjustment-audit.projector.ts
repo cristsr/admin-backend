@@ -7,7 +7,7 @@ import {
   ReadModelStore,
 } from '@ledger/shared-kernel/application/projection/read-model-store';
 import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
-import { CurrencyCatalog, CurrencyCode } from '@ledger/shared-kernel/domain/value-objects';
+import { CurrencyCatalog, CurrencyCode } from '@ledger/shared/domain/value-objects';
 import { PROJ_ASSERTIONS } from './assertion-status.projector';
 
 /** Accumulated "unexplained money" per account and currency (§6.2). */

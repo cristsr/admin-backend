@@ -5,8 +5,8 @@ import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-
 import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
 import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projection/projection-dispatcher';
 import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
-import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
-import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
+import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
 import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';

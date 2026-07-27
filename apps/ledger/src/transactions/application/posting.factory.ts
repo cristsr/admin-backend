@@ -2,7 +2,7 @@ import { Money } from '@ledger/shared/domain/money';
 import {
   CurrencyCatalog,
   CurrencyCode,
-} from '@ledger/shared-kernel/domain/value-objects';
+} from '@ledger/shared/domain/value-objects';
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
 import { PostingInput } from './posting-input.type';
 

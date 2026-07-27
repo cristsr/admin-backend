@@ -1,5 +1,5 @@
 import { Nullable } from '@shared';
-import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { AssertionStatus } from '../balance-assertion/enums/assertion-status.enum';
 
 /** A materialized `assertion_status` row (proj_assertions, §6.2). */

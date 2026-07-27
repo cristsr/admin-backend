@@ -6,7 +6,7 @@ import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelop
 import { EventRegistry } from '@ledger/shared-kernel/application/event/event-registry';
 import { ProjectionCheckpointRepository } from '@ledger/shared-kernel/application/projection/projection-checkpoint.repository';
 import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
-import { CurrencyCatalog } from '@ledger/shared-kernel/domain/value-objects';
+import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import { PostgresProjectionCheckpointRepository } from '@ledger/shared-kernel/infrastructure/adapters/projection/postgres-projection-checkpoint.repository';
 import { AssertBalanceHandler } from './application/commands/assert-balance.handler';
 import { EvaluateAssertionHandler } from './application/commands/evaluate-assertion.handler';

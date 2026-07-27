@@ -5,7 +5,7 @@ import { PROJ_LEDGER_SETTINGS } from '@ledger/ledger/infrastructure/projections/
 import { SequentialIdGenerator } from '@ledger/shared/testing';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
 import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projection/projection-dispatcher';
-import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
 import { ZeroSumBalanceRule } from '@ledger/transactions/domain/balance/zero-sum-balance-rule';

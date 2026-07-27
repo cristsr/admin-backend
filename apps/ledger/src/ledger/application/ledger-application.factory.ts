@@ -27,7 +27,7 @@ import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projecti
 import { Projector } from '@ledger/shared-kernel/application/projection/projector';
 import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
 import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
-import { CurrencyCatalog } from '@ledger/shared-kernel/domain/value-objects';
+import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import { SynchronousProjectionDispatcher } from '@ledger/shared-kernel/infrastructure/adapters/projection/synchronous-dispatcher';
 import { AmendPendingTransactionHandler } from '@ledger/transactions/application/amend-transaction/amend-pending-transaction.handler';
 import { AnnotateTransactionHandler } from '@ledger/transactions/application/annotate-transaction/annotate-transaction.handler';

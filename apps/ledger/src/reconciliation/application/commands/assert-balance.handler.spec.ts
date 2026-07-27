@@ -4,7 +4,7 @@ import { BALANCE_ASSERTED } from '@ledger/reconciliation/domain/balance-assertio
 import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
 import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
-import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { AssertBalanceCommand } from './assert-balance.command';
 import { AssertBalanceHandler } from './assert-balance.handler';

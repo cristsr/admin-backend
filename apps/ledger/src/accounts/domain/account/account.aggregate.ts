@@ -9,7 +9,7 @@ import {
   LedgerDate,
   REAL_ACCOUNT_TYPES,
   RootTypeImmutableException,
-} from '@ledger/shared-kernel/domain/value-objects';
+} from '@ledger/shared/domain/value-objects';
 import { AccountClosed, AccountOpened, AccountRenamed } from './events';
 import {
   AccountAlreadyClosedException,

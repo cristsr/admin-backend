@@ -8,7 +8,7 @@ import {
   DomainEventRegistry,
   EventRegistry,
 } from '@ledger/shared-kernel/application/event/event-registry';
-import { CurrencyCatalog } from '@ledger/shared-kernel/domain/value-objects';
+import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 
 /**
  * Wires the reconciliation domain events' deserializers into an

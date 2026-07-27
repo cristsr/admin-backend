@@ -7,7 +7,7 @@ import {
 } from '@ledger/reconciliation/domain/ports/assertion-posting-reader.port';
 import { Money } from '@ledger/shared/domain/money';
 import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
-import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared/domain/value-objects';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { PROJ_POSTINGS } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
 

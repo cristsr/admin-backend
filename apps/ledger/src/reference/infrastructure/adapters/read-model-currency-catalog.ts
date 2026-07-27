@@ -3,9 +3,9 @@ import { CurrencyCatalogCache } from '@ledger/reference/application/currency-cat
 import { PROJ_CURRENCIES } from '@ledger/reference/infrastructure/projections/currencies.projector';
 import { Currency } from '@ledger/shared/domain/money';
 import { ReadModelStore } from '@ledger/shared-kernel/application/projection/read-model-store';
-import { CurrencyCatalog } from '@ledger/shared-kernel/domain/value-objects/currency-catalog';
-import { CurrencyCode } from '@ledger/shared-kernel/domain/value-objects/currency-code';
-import { UnknownCurrencyException } from '@ledger/shared-kernel/domain/value-objects/value-object.exception';
+import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-catalog';
+import { CurrencyCode } from '@ledger/shared/domain/value-objects/currency-code';
+import { UnknownCurrencyException } from '@ledger/shared/domain/value-objects/value-object.exception';
 
 /** One row of `proj_currencies`. */
 interface CurrencyRow {

@@ -1,6 +1,6 @@
 import { Nullable } from '@shared';
 import { Money } from '@ledger/shared/domain/money';
-import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { BalanceAssertion } from '../balance-assertion/balance-assertion.aggregate';
 import { AssertionStatus } from '../balance-assertion/enums/assertion-status.enum';
 import { AssertionCurrencyMismatchException } from '../balance-assertion/exceptions/balance-assertion.exception';

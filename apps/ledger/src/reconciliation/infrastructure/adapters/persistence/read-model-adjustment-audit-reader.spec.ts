@@ -7,7 +7,7 @@ import { AdjustmentAuditEntry } from '@ledger/reconciliation/domain/ports/adjust
 import { AdjustmentAuditProjector } from '@ledger/reconciliation/infrastructure/projections/adjustment-audit.projector';
 import { PROJ_ASSERTIONS } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
 import { StoredEvent } from '@ledger/shared-kernel/domain/event/stored-event.type';
-import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { ReadModelAdjustmentAuditReader } from './read-model-adjustment-audit-reader';
 

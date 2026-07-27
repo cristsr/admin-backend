@@ -4,7 +4,7 @@ import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-
 import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
 import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projection/projection-dispatcher';
-import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { CloseAccountCommand } from './close-account.command';
 
 /** Loads the account, closes it on the given date and republishes its projections. */

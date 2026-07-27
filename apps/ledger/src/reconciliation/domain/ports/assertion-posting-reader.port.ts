@@ -1,6 +1,6 @@
 import { Nullable } from '@shared';
 import { Money } from '@ledger/shared/domain/money';
-import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 
 /** A posting of the asserted account, as materialized by `proj_postings` (EP-1). */
