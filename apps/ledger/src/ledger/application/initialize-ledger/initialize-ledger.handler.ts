@@ -8,6 +8,7 @@ import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-
 import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
 import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 import { ProjectionDispatcher } from '@ledger/shared-kernel/application/projection/projection-dispatcher';
+import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 import { AccountName, LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 import { InitializeLedgerCommand } from './initialize-ledger.command';
 
@@ -20,6 +21,14 @@ const ADJUSTMENTS = 'Equity:Adjustments';
  * as system accounts and records {@link LedgerInitialized}. The ledger stream is
  * the idempotency anchor; the two account appends carry no external_ref
  * (anchor-only stamping).
+ *
+ * The settings and the two accounts are three different streams, so all three
+ * appends run inside `EventStore.withTransaction` (INV-7). Without it a process
+ * dying mid-command leaves either technical accounts with no `LedgerSettings`
+ * pointing at them, or settings naming accounts that do not exist — and INV-13
+ * states those accounts exist *from initialization*, a claim a half-written
+ * ledger silently breaks. Re-running the command would not repair it either:
+ * the settings stream is the idempotency anchor.
  */
 export class InitializeLedgerHandler extends CommandHandler<InitializeLedgerCommand> {
   constructor(
@@ -28,6 +37,7 @@ export class InitializeLedgerHandler extends CommandHandler<InitializeLedgerComm
     private readonly idGenerator: IdGenerator,
     private readonly clock: Clock,
     private readonly dispatcher: ProjectionDispatcher,
+    private readonly eventStore: EventStore,
   ) {
     super();
   }
@@ -51,20 +61,25 @@ export class InitializeLedgerHandler extends CommandHandler<InitializeLedgerComm
       adjustmentsAccountId: adjustments.id,
     });
 
-    const anchor = await this.settings.save(ledger, ctx);
     const anchorless: AuthContext = { ...ctx, externalRef: null };
-    const openingResult = await this.accounts.save(opening, anchorless);
-    const adjustmentsResult = await this.accounts.save(adjustments, anchorless);
+    const written = await this.eventStore.withTransaction(async () => {
+      const anchor = await this.settings.save(ledger, ctx);
+      const openingResult = await this.accounts.save(opening, anchorless);
+      const adjustmentsResult = await this.accounts.save(adjustments, anchorless);
 
-    await this.dispatcher.dispatch([
-      ...anchor.events,
-      ...openingResult.events,
-      ...adjustmentsResult.events,
-    ]);
+      return {
+        events: [...anchor.events, ...openingResult.events, ...adjustmentsResult.events],
+        lastPosition: adjustmentsResult.lastPosition,
+      };
+    });
+
+    // Outside the scope on purpose: read models are rebuildable, so a projector
+    // failure must not roll back the accounting facts that already committed.
+    await this.dispatcher.dispatch(written.events);
 
     return {
       aggregateId: ctx.userId,
-      streamPosition: adjustmentsResult.lastPosition,
+      streamPosition: written.lastPosition,
       idempotentReplay: false,
     };
   }

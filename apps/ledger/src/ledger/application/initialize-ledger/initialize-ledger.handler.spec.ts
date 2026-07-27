@@ -2,6 +2,7 @@ import { AccountRepository } from '../../../accounts/application/account.reposit
 import { Clock, IdGenerator } from '../../../shared/domain/ports';
 import { AuthContext } from '../../../shared-kernel/application/command-bus/auth-context.type';
 import { ProjectionDispatcher } from '../../../shared-kernel/application/projection/projection-dispatcher';
+import { EventStore } from '../../../shared-kernel/domain/ports/event-store';
 import { LedgerAlreadyInitializedException } from '../../domain/settings/exceptions/ledger.exception';
 import { LedgerSettings } from '../../domain/settings/ledger-settings.aggregate';
 import { LedgerSettingsRepository } from '../ledger-settings.repository';
@@ -10,7 +11,33 @@ import { InitializeLedgerHandler } from './initialize-ledger.handler';
 
 const ctx: AuthContext = { userId: 'user-1', clientId: 'client-x', externalRef: 'init-ref' };
 
+/**
+ * Stands in for the event store's transactional scope: records what each save
+ * appended and undoes it when the scope fails, the way both real adapters do
+ * (their rollback semantics are fixed by the event store contract).
+ */
+class TransactionScope {
+  readonly appended: string[] = [];
+  scopes = 0;
+
+  async withTransaction<T>(work: () => Promise<T>): Promise<T> {
+    this.scopes += 1;
+    const snapshot = [...this.appended];
+
+    try {
+      return await work();
+    } catch (error) {
+      this.appended.length = 0;
+      this.appended.push(...snapshot);
+
+      throw error;
+    }
+  }
+}
+
 function setup() {
+  const scope = new TransactionScope();
+
   const settings = {
     load: jest.fn(),
     save: jest.fn(),
@@ -24,9 +51,25 @@ function setup() {
   const clock: jest.Mocked<Clock> = { now: jest.fn().mockReturnValue(new Date('2026-07-22T12:00:00.000Z')) };
   const dispatcher: jest.Mocked<ProjectionDispatcher> = { dispatch: jest.fn().mockResolvedValue(undefined) };
 
-  const handler = new InitializeLedgerHandler(settings, accounts, idGenerator, clock, dispatcher);
+  const handler = new InitializeLedgerHandler(
+    settings,
+    accounts,
+    idGenerator,
+    clock,
+    dispatcher,
+    scope as unknown as EventStore,
+  );
 
-  return { handler, settings, accounts, dispatcher };
+  return { handler, settings, accounts, dispatcher, scope };
+}
+
+/** Makes a repository double append to the scope, so a rollback is observable. */
+function appending(scope: TransactionScope, label: string) {
+  return async (): Promise<{ events: never[]; version: number; lastPosition: bigint }> => {
+    scope.appended.push(label);
+
+    return { events: [], version: 1, lastPosition: 1n };
+  };
 }
 
 describe('InitializeLedgerHandler', () => {
@@ -74,5 +117,34 @@ describe('InitializeLedgerHandler', () => {
       expect.anything(),
       expect.objectContaining({ externalRef: null }),
     );
+  });
+
+  it('writes the three streams inside a single transactional scope (INV-7)', async () => {
+    const { handler, settings, accounts, scope } = setup();
+    settings.load.mockResolvedValue(null);
+    settings.save.mockImplementation(appending(scope, 'LedgerInitialized'));
+    accounts.save.mockImplementation(appending(scope, 'AccountOpened'));
+
+    await handler.execute(new InitializeLedgerCommand('COP', 'America/Bogota'), ctx);
+
+    expect(scope.scopes).toBe(1);
+    expect(scope.appended).toEqual(['LedgerInitialized', 'AccountOpened', 'AccountOpened']);
+  });
+
+  it('rolls the settings back when a system account fails to append (INV-13)', async () => {
+    const { handler, settings, accounts, scope } = setup();
+    settings.load.mockResolvedValue(null);
+    settings.save.mockImplementation(appending(scope, 'LedgerInitialized'));
+    accounts.save
+      .mockImplementationOnce(appending(scope, 'AccountOpened'))
+      .mockRejectedValueOnce(new Error('append failed'));
+
+    await expect(
+      handler.execute(new InitializeLedgerCommand('COP', 'America/Bogota'), ctx),
+    ).rejects.toThrow('append failed');
+
+    // Nothing survives: no settings without their technical accounts, and no
+    // technical account without the settings that name it.
+    expect(scope.appended).toEqual([]);
   });
 });
