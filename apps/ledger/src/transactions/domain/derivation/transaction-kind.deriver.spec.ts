@@ -21,6 +21,16 @@ describe('TransactionKindDeriver', () => {
 
   it('classifies an unclassifiable mix as COMPOUND, never throwing', () => {
     expect(deriver.derive([AccountType.ASSETS, AccountType.EQUITY])).toBe(DerivedKind.COMPOUND);
-    expect(deriver.derive([])).toBe(DerivedKind.TRANSFER);
+  });
+
+  it('classifies EXPENSES and INCOME together as COMPOUND (§9.4.4)', () => {
+    expect(deriver.derive([AccountType.EXPENSES, AccountType.INCOME])).toBe(DerivedKind.COMPOUND);
+    expect(deriver.derive([AccountType.ASSETS, AccountType.INCOME, AccountType.EXPENSES])).toBe(
+      DerivedKind.COMPOUND,
+    );
+  });
+
+  it('classifies an empty set of account types as COMPOUND (§9.4.4)', () => {
+    expect(deriver.derive([])).toBe(DerivedKind.COMPOUND);
   });
 });

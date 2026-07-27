@@ -12,6 +12,10 @@ import {
   PROJ_BALANCES,
 } from '@ledger/transactions/infrastructure/projections/account-balances.projector';
 import {
+  PROJ_PENDING_REVIEW,
+  PendingReviewProjector,
+} from '@ledger/transactions/infrastructure/projections/pending-review.projector';
+import {
   PROJ_POSTINGS,
   PROJ_TRANSACTIONS,
   TransactionListProjector,
@@ -68,6 +72,7 @@ async function main(): Promise<void> {
     [new TransactionListProjector()],
     [PROJ_TRANSACTIONS, PROJ_POSTINGS],
   );
+  registry.register('pending_review', [new PendingReviewProjector()], [PROJ_PENDING_REVIEW]);
   registry.register(
     'account_balances',
     [new AccountBalancesProjector(catalog)],

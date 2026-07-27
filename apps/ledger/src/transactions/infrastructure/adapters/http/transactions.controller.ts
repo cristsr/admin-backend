@@ -2,6 +2,8 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query, UseInt
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Nullable } from '@shared';
 import { GetTransactionByIdQuery } from '@ledger/read-side/get-transaction-by-id/get-transaction-by-id.query';
+import { PendingReviewRow } from '@ledger/read-side/list-pending-review/list-pending-review.handler';
+import { ListPendingReviewQuery } from '@ledger/read-side/list-pending-review/list-pending-review.query';
 import { ListTransactionsQuery } from '@ledger/read-side/list-transactions/list-transactions.query';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import {
@@ -26,6 +28,7 @@ import { VoidPendingTransactionCommand } from '@ledger/transactions/application/
 import { AmendTransactionRequestDto } from './dto/amend-transaction-request.dto';
 import { AnnotateTransactionRequestDto } from './dto/annotate-transaction-request.dto';
 import { ConfirmTransactionRequestDto } from './dto/confirm-transaction-request.dto';
+import { PendingReviewQueryDto } from './dto/pending-review-query.dto';
 import { PostingDto } from './dto/posting.dto';
 import { RecordTransactionRequestDto } from './dto/record-transaction-request.dto';
 import { ReverseTransactionRequestDto } from './dto/reverse-transaction-request.dto';
@@ -67,6 +70,9 @@ export class TransactionsController {
       dto.invoiceUrl ?? null,
       dto.tags ?? [],
       this.toStringMetadata(dto.metadata),
+      dto.occurredAt ?? null,
+      // `origin` is deliberately left at its CLIENT default: nothing arriving
+      // over HTTP may post against a technical account (INV-13).
     );
 
     return this.dispatch(command, context, externalRef);
@@ -88,6 +94,22 @@ export class TransactionsController {
         query.limit ?? null,
         query.offset ?? null,
       ),
+      this.queryContext(context),
+    );
+  }
+
+  /**
+   * Declared before `:id` on purpose: Nest matches in declaration order, so the
+   * parameterized route would otherwise swallow this path.
+   */
+  @Get('pending-review')
+  @ApiOperation({ summary: "The review inbox: transactions awaiting the user's decision (§3.6)." })
+  pendingReview(
+    @Context() context: LedgerContext,
+    @Query() query: PendingReviewQueryDto,
+  ): Promise<readonly PendingReviewRow[]> {
+    return this.queryBus.ask<readonly PendingReviewRow[]>(
+      new ListPendingReviewQuery(query.limit ?? null, query.offset ?? null),
       this.queryContext(context),
     );
   }
