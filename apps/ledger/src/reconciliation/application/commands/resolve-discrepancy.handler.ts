@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { PostingOrigin } from '@ledger/accounts/application/posting-origin';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.repository';
 import {
   AssertionNotFoundException,
@@ -9,12 +9,13 @@ import { AdjustmentFactory } from '@ledger/reconciliation/domain/services/adjust
 import { Clock } from '@ledger/shared/domain/ports';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
 import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
+import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
+import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 import { PostingInput } from '@ledger/transactions/application/posting-input.type';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
-import { ResolveDiscrepancyOutputDto } from '../dto/resolve-discrepancy-output.dto';
 import { ResolveDiscrepancyCommand } from './resolve-discrepancy.command';
 
 /**
@@ -28,9 +29,13 @@ import { ResolveDiscrepancyCommand } from './resolve-discrepancy.command';
  * The adjustment and the `DiscrepancyResolved` land on different streams, so both
  * appends run inside `EventStore.withTransaction`: an assertion marked resolved
  * without its adjustment would claim the money is explained when it is not.
+ *
+ * The adjustment carries the `external_ref`, so it is also what a retry replays:
+ * the returned `aggregateId` is the adjustment transaction, matching what the
+ * idempotency policy reconstructs from the anchor (INV-10). The assertion id is
+ * the caller's own path parameter and needs no echoing.
  */
-@Injectable()
-export class ResolveDiscrepancyHandler {
+export class ResolveDiscrepancyHandler extends CommandHandler<ResolveDiscrepancyCommand> {
   constructor(
     private readonly assertions: BalanceAssertionRepository,
     private readonly commandBus: CommandBus,
@@ -38,12 +43,11 @@ export class ResolveDiscrepancyHandler {
     private readonly factory: AdjustmentFactory,
     private readonly clock: Clock,
     private readonly eventStore: EventStore,
-  ) {}
+  ) {
+    super();
+  }
 
-  async execute(
-    command: ResolveDiscrepancyCommand,
-    ctx: AuthContext,
-  ): Promise<ResolveDiscrepancyOutputDto> {
+  async execute(command: ResolveDiscrepancyCommand, ctx: AuthContext): Promise<CommandResult> {
     const assertion = await this.assertions.load(ctx.userId, command.assertionId);
 
     if (!assertion) {
@@ -74,6 +78,12 @@ export class ResolveDiscrepancyHandler {
           null,
           [],
           { source: 'system', resolves_assertion: assertion.id },
+          // No business instant: the adjustment happens when it is decided, not
+          // at some earlier moment in the world.
+          null,
+          // The adjustment posts against `Equity:Adjustments`; only a system
+          // origin may reach a technical account (INV-13).
+          PostingOrigin.SYSTEM,
         ),
         ctx,
       );
@@ -83,9 +93,9 @@ export class ResolveDiscrepancyHandler {
       const result = await this.assertions.save(assertion, { ...ctx, externalRef: null });
 
       return {
-        assertionId: assertion.id,
-        adjustmentTransactionId: adjustmentTxnId,
+        aggregateId: adjustmentTxnId,
         streamPosition: result.lastPosition,
+        idempotentReplay: false,
       };
     });
   }

@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import { Nullable } from '@shared';
 import { Money } from '@ledger/shared/domain/money';
 import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
@@ -28,7 +27,6 @@ interface Partition {
  * NestJS transport, no SQL — it reads the population through a port. `difference`
  * is always `expected - actual`.
  */
-@Injectable()
 export class AssertionEvaluator {
   constructor(
     private readonly reader: AssertionPostingReader,

@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import { AssertionLookupPort } from '@ledger/reconciliation/domain/ports/assertion-lookup.port';
 import { AssertionPostingReader } from '@ledger/reconciliation/domain/ports/assertion-posting-reader.port';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
@@ -44,7 +43,6 @@ interface EventPosting {
  * or projections itself (§3.2, RNF-10). Reprocessing is safe: `EvaluateAssertion`
  * is idempotent and the aggregate stays silent on an unchanged verdict.
  */
-@Injectable()
 export class ReevaluateAssertionsReactor {
   constructor(
     private readonly affectedAssertions: AssertionLookupPort,

@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import {
   AssertionStatusRow,
   AssertionStatusStore,
@@ -12,7 +11,6 @@ export class ListAssertionsQuery {
   ) {}
 }
 
-@Injectable()
 export class ListAssertionsHandler {
   constructor(private readonly store: AssertionStatusStore) {}
 

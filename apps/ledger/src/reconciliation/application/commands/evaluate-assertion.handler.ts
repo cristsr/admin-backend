@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.repository';
 import { AssertionNotFoundException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { LedgerSettingsReader } from '@ledger/reconciliation/domain/ports/ledger-settings-reader.port';
@@ -13,7 +12,6 @@ import { EvaluateAssertionCommand } from './evaluate-assertion.command';
  * only when the verdict changed (the aggregate decides). An evaluation never
  * carries an `external_ref` — it is a follow-up, not a client command.
  */
-@Injectable()
 export class EvaluateAssertionHandler {
   constructor(
     private readonly repository: BalanceAssertionRepository,

@@ -1,16 +1,27 @@
+import { AccountValidationService } from '@ledger/accounts/application/account-validation.service';
+import { SystemAccountProtectedException } from '@ledger/accounts/domain/account/exceptions/account.exception';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
+import { createLedgerEventRegistry } from '@ledger/ledger/application/ledger-event-registry.factory';
 import { Money } from '@ledger/shared/domain/money';
 import { Clock, IdGenerator } from '@ledger/shared/domain/ports';
 import { FixedClock, FixedSettingsReader, FixedSystemAccountLookup, SequentialIdGenerator, aMoney } from '@ledger/shared/testing';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
 import { Command } from '@ledger/shared-kernel/application/command-bus/command';
-import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
+import { CommandBus, PolicyCommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
 import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
+import { AuthenticatedContextPolicy } from '@ledger/shared-kernel/application/command-bus/policies/authenticated-context.policy';
+import { IdempotencyPolicy } from '@ledger/shared-kernel/application/command-bus/policies/idempotency.policy';
+import { OptimisticConcurrencyPolicy } from '@ledger/shared-kernel/application/command-bus/policies/optimistic-concurrency.policy';
 import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
 import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
 import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
+import { SynchronousProjectionDispatcher } from '@ledger/shared-kernel/infrastructure/adapters/projection/synchronous-dispatcher';
 import { InMemoryReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
+import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
+import { RecordTransactionHandler } from '@ledger/transactions/application/record-transaction/record-transaction.handler';
+import { ZeroSumBalanceRule } from '@ledger/transactions/domain/balance/zero-sum-balance-rule';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { AssertBalanceCommand } from './application/commands/assert-balance.command';
 import { AssertBalanceHandler } from './application/commands/assert-balance.handler';
@@ -19,6 +30,7 @@ import { ResolveDiscrepancyCommand } from './application/commands/resolve-discre
 import { ResolveDiscrepancyHandler } from './application/commands/resolve-discrepancy.handler';
 import { ReevaluateAssertionsReactor } from './application/reactors/reevaluate-assertions.reactor';
 import { createReconciliationEventRegistry } from './application/reconciliation-event-registry.factory';
+import { BalanceAssertion } from './domain/balance-assertion/balance-assertion.aggregate';
 import { BalanceAssertionRepository } from './domain/balance-assertion/balance-assertion.repository';
 import { AssertionStatus } from './domain/balance-assertion/enums/assertion-status.enum';
 import { AdjustmentFactory } from './domain/services/adjustment.factory';
@@ -193,12 +205,12 @@ describe('Reconciliation discrepancy flow (e2e)', () => {
     );
     await pump();
 
-    const afterDeclare = await statusStore.byId('user-1', declared.assertionId);
+    const afterDeclare = await statusStore.byId('user-1', declared.aggregateId);
     expect(afterDeclare?.status).toBe(AssertionStatus.MISMATCHED);
     expect(afterDeclare?.difference).toBe('400');
 
     const resolved = await resolveHandler.execute(
-      new ResolveDiscrepancyCommand(declared.assertionId),
+      new ResolveDiscrepancyCommand(declared.aggregateId),
       { ...ctx, externalRef: 'ext-resolve' },
     );
     await pump();
@@ -211,13 +223,149 @@ describe('Reconciliation discrepancy flow (e2e)', () => {
     ]);
 
     // (b) the assertion is now MATCHED and linked to the adjustment
-    const afterResolve = await statusStore.byId('user-1', declared.assertionId);
+    const afterResolve = await statusStore.byId('user-1', declared.aggregateId);
     expect(afterResolve?.status).toBe(AssertionStatus.MATCHED);
-    expect(afterResolve?.resolvedByTxn).toBe(resolved.adjustmentTransactionId);
+    expect(afterResolve?.resolvedByTxn).toBe(resolved.aggregateId);
 
     // (c) the per-account audit accumulated the unexplained amount
     const [audit] = await auditStore.byAccount('user-1', 'acc-1');
     expect(audit.totalAdjusted).toBe('400');
     expect(audit.adjustmentCount).toBe(1);
+  });
+});
+
+/**
+ * The same resolution, but over the **real** `RecordTransactionHandler` instead
+ * of a recording double, so the INV-13 origin actually travels: posting against
+ * `Equity:Adjustments` is refused for a client-issued command and only succeeds
+ * because `ResolveDiscrepancy` states a SYSTEM posting origin. The doubles used
+ * above never exercise `AccountValidationService`, so they cannot see this.
+ */
+describe('Discrepancy resolution over the real RecordTransaction path (INV-13)', () => {
+  const ctx: AuthContext = { userId: 'user-1', clientId: 'client-1', externalRef: 'ext-resolve' };
+  const clock = new FixedClock(new Date('2026-07-22T10:00:00.000Z'));
+  const catalog = new SeedCurrencyCatalog();
+  const ADJUSTMENTS_ACCOUNT_ID = 'equity-adjustments';
+
+  let eventStore: InMemoryEventStore;
+  let readModel: InMemoryReadModelStore;
+  let bus: PolicyCommandBus;
+  let assertions: BalanceAssertionRepository;
+  let resolveHandler: ResolveDiscrepancyHandler;
+  let assertionId: string;
+
+  /** One `proj_accounts` row; `is_system` is what INV-13 keys off. */
+  const seedAccount = (accountId: string, type: string, isSystem: boolean) =>
+    readModel.upsert(
+      PROJ_ACCOUNTS,
+      { account_id: accountId },
+      {
+        account_id: accountId,
+        user_id: 'user-1',
+        type,
+        name: accountId,
+        parent_id: null,
+        currency_code: type === 'EQUITY' ? null : 'USD',
+        opened_on: '2026-01-01',
+        closed_on: null,
+        is_bank_mirror: false,
+        is_system: isSystem,
+      },
+    );
+
+  beforeEach(async () => {
+    const ids = new SequentialIdGenerator();
+    eventStore = new InMemoryEventStore();
+    readModel = new InMemoryReadModelStore();
+    const envelopes = new EnvelopeFactory(clock, ids);
+
+    await seedAccount('acc-1', 'ASSETS', false);
+    await seedAccount(ADJUSTMENTS_ACCOUNT_ID, 'EQUITY', true);
+
+    assertions = new BalanceAssertionRepository(
+      eventStore,
+      createReconciliationEventRegistry(catalog),
+      envelopes,
+    );
+
+    bus = new PolicyCommandBus([
+      new AuthenticatedContextPolicy(),
+      new IdempotencyPolicy(eventStore),
+      new OptimisticConcurrencyPolicy(),
+    ]);
+    bus.register(
+      'RecordTransaction',
+      new RecordTransactionHandler(
+        new LedgerTransactionRepository(eventStore, createLedgerEventRegistry(catalog), envelopes),
+        new AccountValidationService(readModel),
+        catalog,
+        new ZeroSumBalanceRule(),
+        ids,
+        new SynchronousProjectionDispatcher([], readModel),
+      ),
+    );
+
+    resolveHandler = new ResolveDiscrepancyHandler(
+      assertions,
+      bus,
+      new FixedSystemAccountLookup(ADJUSTMENTS_ACCOUNT_ID),
+      new AdjustmentFactory(),
+      clock,
+      eventStore,
+    );
+
+    const assertion = BalanceAssertion.assert(
+      {
+        accountId: 'acc-1',
+        date: LedgerDate.of('2026-07-22'),
+        occurredAt: null,
+        expectedAmount: aMoney().of('1000').inUsd(),
+        tolerance: Money.zero(aMoney().of('0').inUsd().currency),
+      },
+      ids,
+    );
+    assertionId = assertion.id;
+    assertion.applyEvaluation(
+      {
+        status: AssertionStatus.MISMATCHED,
+        actualAmount: aMoney().of('600').inUsd(),
+        difference: aMoney().of('400').inUsd(),
+      },
+      clock,
+    );
+    await assertions.save(assertion, { ...ctx, externalRef: null });
+  });
+
+  it('posts the adjustment against the technical account with a SYSTEM origin', async () => {
+    const result = await resolveHandler.execute(new ResolveDiscrepancyCommand(assertionId), ctx);
+
+    const [recorded] = (await eventStore.readAll(0n, 100)).filter(
+      (entry) => entry.eventType === 'TransactionRecorded',
+    );
+
+    expect(recorded).toBeDefined();
+    expect(recorded.aggregateId).toBe(result.aggregateId);
+    expect(recorded.payload.postings).toEqual([
+      expect.objectContaining({ accountId: 'acc-1', amount: '400' }),
+      expect.objectContaining({ accountId: ADJUSTMENTS_ACCOUNT_ID, amount: '-400' }),
+    ]);
+  });
+
+  it('refuses the very same postings when the origin is the API default (INV-13)', async () => {
+    await expect(
+      bus.dispatch(
+        new RecordTransactionCommand(
+          '2026-07-22',
+          null,
+          'Hand-rolled adjustment',
+          [
+            { accountId: 'acc-1', amount: '400', currency: 'USD' },
+            { accountId: ADJUSTMENTS_ACCOUNT_ID, amount: '-400', currency: 'USD' },
+          ],
+          TransactionStatus.CONFIRMED,
+        ),
+        { ...ctx, externalRef: null },
+      ),
+    ).rejects.toBeInstanceOf(SystemAccountProtectedException);
   });
 });

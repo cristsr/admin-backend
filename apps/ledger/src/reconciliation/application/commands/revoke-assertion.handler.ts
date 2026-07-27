@@ -1,16 +1,17 @@
-import { Injectable } from '@nestjs/common';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.repository';
 import { AssertionNotFoundException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
-import { RevokeAssertionOutputDto } from '../dto/revoke-assertion-output.dto';
+import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
+import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 import { RevokeAssertionCommand } from './revoke-assertion.command';
 
 /** Emits `AssertionRevoked`; the aggregate rejects a double revocation. */
-@Injectable()
-export class RevokeAssertionHandler {
-  constructor(private readonly repository: BalanceAssertionRepository) {}
+export class RevokeAssertionHandler extends CommandHandler<RevokeAssertionCommand> {
+  constructor(private readonly repository: BalanceAssertionRepository) {
+    super();
+  }
 
-  async execute(command: RevokeAssertionCommand, ctx: AuthContext): Promise<RevokeAssertionOutputDto> {
+  async execute(command: RevokeAssertionCommand, ctx: AuthContext): Promise<CommandResult> {
     const assertion = await this.repository.load(ctx.userId, command.assertionId);
 
     if (!assertion) {
@@ -20,6 +21,10 @@ export class RevokeAssertionHandler {
     assertion.revoke(command.reason);
     const result = await this.repository.save(assertion, ctx);
 
-    return { assertionId: assertion.id, streamPosition: result.lastPosition };
+    return {
+      aggregateId: assertion.id,
+      streamPosition: result.lastPosition,
+      idempotentReplay: false,
+    };
   }
 }

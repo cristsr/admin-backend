@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import { Money } from '@ledger/shared/domain/money';
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
 import { DiscrepancyNotResolvableException } from '../balance-assertion/exceptions/balance-assertion.exception';
@@ -7,7 +6,6 @@ import { DiscrepancyNotResolvableException } from '../balance-assertion/exceptio
  * Builds the balanced adjustment postings that close a reconciliation gap
  * (§2.4.1). Pure domain service: no persistence, no bus — just the two lines.
  */
-@Injectable()
 export class AdjustmentFactory {
   /**
    * `difference = expected - actual`. To close the gap on `accountId` we post

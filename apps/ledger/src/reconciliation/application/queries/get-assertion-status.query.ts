@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import { Nullable } from '@shared';
 import {
   AssertionStatusRow,
@@ -13,7 +12,6 @@ export class GetAssertionStatusQuery {
   ) {}
 }
 
-@Injectable()
 export class GetAssertionStatusHandler {
   constructor(private readonly store: AssertionStatusStore) {}
 

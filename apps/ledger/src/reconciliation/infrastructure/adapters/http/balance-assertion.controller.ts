@@ -1,11 +1,18 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Query,
+  UseInterceptors,
+} from '@nestjs/common';
 import { Nullable } from '@shared';
 import { AssertBalanceCommand } from '@ledger/reconciliation/application/commands/assert-balance.command';
-import { AssertBalanceHandler } from '@ledger/reconciliation/application/commands/assert-balance.handler';
 import { ResolveDiscrepancyCommand } from '@ledger/reconciliation/application/commands/resolve-discrepancy.command';
-import { ResolveDiscrepancyHandler } from '@ledger/reconciliation/application/commands/resolve-discrepancy.handler';
 import { RevokeAssertionCommand } from '@ledger/reconciliation/application/commands/revoke-assertion.command';
-import { RevokeAssertionHandler } from '@ledger/reconciliation/application/commands/revoke-assertion.handler';
 import { AssertBalanceInputDto } from '@ledger/reconciliation/application/dto/assert-balance-input.dto';
 import { RevokeAssertionInputDto } from '@ledger/reconciliation/application/dto/revoke-assertion-input.dto';
 import {
@@ -17,21 +24,29 @@ import {
   ListAssertionsQuery,
 } from '@ledger/reconciliation/application/queries/list-assertions.query';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
-import { Context, ExternalRef } from '@ledger/shared/infrastructure/adapters/http';
+import {
+  CommandResultInterceptor,
+  Context,
+  ExternalRef,
+} from '@ledger/shared/infrastructure/adapters/http';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
+import { Command } from '@ledger/shared-kernel/application/command-bus/command';
+import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
+import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 
 /**
- * HTTP surface for reconciliation (§7.5): translates REST calls into the
- * reconciliation application handlers, passing the authenticated
- * {@link AuthContext} separately (RNF-10). No domain logic here — the controller
- * only adapts.
+ * HTTP surface for reconciliation (§7.5): translates REST calls into commands
+ * on the {@link CommandBus}, passing the authenticated {@link AuthContext}
+ * separately (RNF-10). Routing the writes through the bus — instead of calling
+ * the handlers as providers — is what gives these endpoints the idempotency by
+ * `External-Ref` that RF-11 requires of *every* command (INV-10). No domain
+ * logic here; the controller only adapts.
  */
 @Controller({ path: 'balance-assertions', version: '1' })
+@UseInterceptors(CommandResultInterceptor)
 export class BalanceAssertionController {
   constructor(
-    private readonly assertBalance: AssertBalanceHandler,
-    private readonly revokeAssertion: RevokeAssertionHandler,
-    private readonly resolveDiscrepancy: ResolveDiscrepancyHandler,
+    private readonly commandBus: CommandBus,
     private readonly getStatus: GetAssertionStatusHandler,
     private readonly listAssertions: ListAssertionsHandler,
   ) {}
@@ -42,8 +57,8 @@ export class BalanceAssertionController {
     @Context() context: LedgerContext,
     @ExternalRef() externalRef: Nullable<string>,
     @Body() body: AssertBalanceInputDto,
-  ) {
-    return this.assertBalance.execute(
+  ): Promise<CommandResult> {
+    return this.dispatch(
       new AssertBalanceCommand(
         body.accountId,
         body.date,
@@ -52,7 +67,8 @@ export class BalanceAssertionController {
         body.currency,
         body.tolerance ?? '0',
       ),
-      this.authContext(context, externalRef),
+      context,
+      externalRef,
     );
   }
 
@@ -63,11 +79,8 @@ export class BalanceAssertionController {
     @ExternalRef() externalRef: Nullable<string>,
     @Param('id') id: string,
     @Body() body: RevokeAssertionInputDto,
-  ) {
-    return this.revokeAssertion.execute(
-      new RevokeAssertionCommand(id, body.reason),
-      this.authContext(context, externalRef),
-    );
+  ): Promise<CommandResult> {
+    return this.dispatch(new RevokeAssertionCommand(id, body.reason), context, externalRef);
   }
 
   @Post(':id/resolve')
@@ -76,11 +89,8 @@ export class BalanceAssertionController {
     @Context() context: LedgerContext,
     @ExternalRef() externalRef: Nullable<string>,
     @Param('id') id: string,
-  ) {
-    return this.resolveDiscrepancy.execute(
-      new ResolveDiscrepancyCommand(id),
-      this.authContext(context, externalRef),
-    );
+  ): Promise<CommandResult> {
+    return this.dispatch(new ResolveDiscrepancyCommand(id), context, externalRef);
   }
 
   @Get(':id')
@@ -93,7 +103,18 @@ export class BalanceAssertionController {
     return this.listAssertions.execute(new ListAssertionsQuery(context.userId, accountId));
   }
 
-  private authContext(context: LedgerContext, externalRef: Nullable<string>): AuthContext {
-    return { userId: context.userId, clientId: context.clientId, externalRef };
+  /** Dispatches a command with the write-side context assembled from the request. */
+  private dispatch(
+    command: Command,
+    context: LedgerContext,
+    externalRef: Nullable<string>,
+  ): Promise<CommandResult> {
+    const ctx: AuthContext = {
+      userId: context.userId,
+      clientId: context.clientId,
+      externalRef,
+    };
+
+    return this.commandBus.dispatch(command, ctx);
   }
 }

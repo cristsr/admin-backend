@@ -1,6 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.repository';
 import { Clock, IdGenerator } from '@ledger/shared/domain/ports';
+import { CommandBus, PolicyCommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
 import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
 import { EventRegistry } from '@ledger/shared-kernel/application/event/event-registry';
 import { ProjectionCheckpointRepository } from '@ledger/shared-kernel/application/projection/projection-checkpoint.repository';
@@ -44,6 +45,12 @@ import { AssertionStatusProjector } from './infrastructure/projections/assertion
  * The read models persist through the shared `ReadModelStore` like the rest of
  * the read side, and {@link ReconciliationPump} drives them from the global
  * stream on a persisted checkpoint (§8.1).
+ *
+ * The write handlers are composed here but registered on the core's
+ * {@link PolicyCommandBus} at init, so every reconciliation command enters
+ * through the same policy chain as the rest (RF-11, INV-10) instead of being
+ * called as a provider. `EvaluateAssertion` stays off the bus on purpose: it is
+ * internal (§3.5 does not catalogue it) and is dispatched by the reactor.
  */
 @Module({
   controllers: [BalanceAssertionController],
@@ -85,18 +92,104 @@ import { AssertionStatusProjector } from './infrastructure/projections/assertion
     { provide: AssertionLookupPort, useClass: StoreBackedAssertionLookup },
     { provide: LedgerSettingsReader, useClass: ReadModelLedgerSettingsReader },
     { provide: SystemAccountLookup, useClass: ReadModelSystemAccountLookup },
-    AssertionEvaluator,
-    AdjustmentFactory,
-    EvaluateAssertionHandler,
-    AssertBalanceHandler,
-    RevokeAssertionHandler,
-    ResolveDiscrepancyHandler,
+    // Domain and application classes carry no Nest decorators (RNF-11, rules
+    // Art. 1), so each one states its dependencies here instead of relying on
+    // `@Injectable` metadata. The wiring is the adapter's job, not the core's.
+    {
+      provide: AssertionEvaluator,
+      inject: [AssertionPostingReader, DayBoundaryResolver],
+      useFactory: (
+        reader: AssertionPostingReader,
+        dayBoundary: DayBoundaryResolver,
+      ): AssertionEvaluator => new AssertionEvaluator(reader, dayBoundary),
+    },
+    { provide: AdjustmentFactory, useFactory: (): AdjustmentFactory => new AdjustmentFactory() },
+    {
+      provide: EvaluateAssertionHandler,
+      inject: [BalanceAssertionRepository, AssertionEvaluator, LedgerSettingsReader, Clock],
+      useFactory: (
+        repository: BalanceAssertionRepository,
+        evaluator: AssertionEvaluator,
+        settings: LedgerSettingsReader,
+        clock: Clock,
+      ): EvaluateAssertionHandler =>
+        new EvaluateAssertionHandler(repository, evaluator, settings, clock),
+    },
+    {
+      provide: AssertBalanceHandler,
+      inject: [BalanceAssertionRepository, EvaluateAssertionHandler, CurrencyCatalog, IdGenerator],
+      useFactory: (
+        repository: BalanceAssertionRepository,
+        evaluate: EvaluateAssertionHandler,
+        catalog: CurrencyCatalog,
+        ids: IdGenerator,
+      ): AssertBalanceHandler =>
+        new AssertBalanceHandler(repository, evaluate, catalog, ids),
+    },
+    {
+      provide: RevokeAssertionHandler,
+      inject: [BalanceAssertionRepository],
+      useFactory: (repository: BalanceAssertionRepository): RevokeAssertionHandler =>
+        new RevokeAssertionHandler(repository),
+    },
+    {
+      provide: ResolveDiscrepancyHandler,
+      inject: [
+        BalanceAssertionRepository,
+        CommandBus,
+        SystemAccountLookup,
+        AdjustmentFactory,
+        Clock,
+        EventStore,
+      ],
+      useFactory: (
+        assertions: BalanceAssertionRepository,
+        commandBus: CommandBus,
+        accounts: SystemAccountLookup,
+        factory: AdjustmentFactory,
+        clock: Clock,
+        eventStore: EventStore,
+      ): ResolveDiscrepancyHandler =>
+        new ResolveDiscrepancyHandler(assertions, commandBus, accounts, factory, clock, eventStore),
+    },
+    {
+      provide: ReevaluateAssertionsReactor,
+      inject: [AssertionLookupPort, EvaluateAssertionHandler, AssertionPostingReader],
+      useFactory: (
+        affectedAssertions: AssertionLookupPort,
+        evaluate: EvaluateAssertionHandler,
+        postings: AssertionPostingReader,
+      ): ReevaluateAssertionsReactor =>
+        new ReevaluateAssertionsReactor(affectedAssertions, evaluate, postings),
+    },
+    {
+      provide: GetAssertionStatusHandler,
+      inject: [AssertionStatusStore],
+      useFactory: (store: AssertionStatusStore): GetAssertionStatusHandler =>
+        new GetAssertionStatusHandler(store),
+    },
+    {
+      provide: ListAssertionsHandler,
+      inject: [AssertionStatusStore],
+      useFactory: (store: AssertionStatusStore): ListAssertionsHandler =>
+        new ListAssertionsHandler(store),
+    },
     AssertionStatusProjector,
     AdjustmentAuditProjector,
-    ReevaluateAssertionsReactor,
     ReconciliationPump,
-    GetAssertionStatusHandler,
-    ListAssertionsHandler,
   ],
 })
-export class ReconciliationModule {}
+export class ReconciliationModule implements OnModuleInit {
+  constructor(
+    private readonly commandBus: PolicyCommandBus,
+    private readonly assertBalance: AssertBalanceHandler,
+    private readonly revokeAssertion: RevokeAssertionHandler,
+    private readonly resolveDiscrepancy: ResolveDiscrepancyHandler,
+  ) {}
+
+  onModuleInit(): void {
+    this.commandBus.register('AssertBalance', this.assertBalance);
+    this.commandBus.register('RevokeAssertion', this.revokeAssertion);
+    this.commandBus.register('ResolveDiscrepancy', this.resolveDiscrepancy);
+  }
+}

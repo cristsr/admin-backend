@@ -79,7 +79,7 @@ describe('ResolveDiscrepancyHandler', () => {
 
     const records = bus.dispatchedOf(RecordTransactionCommand);
     expect(records).toHaveLength(1);
-    expect(output.adjustmentTransactionId).toBe('adj-txn-1');
+    expect(output.aggregateId).toBe('adj-txn-1');
     expect(records[0].metadata).toMatchObject({ source: 'system', resolves_assertion: assertionId });
     // Balanced adjustment: +400 on the account, -400 on Equity:Adjustments.
     expect(records[0].postings).toEqual([

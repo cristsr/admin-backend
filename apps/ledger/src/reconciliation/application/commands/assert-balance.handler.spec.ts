@@ -54,19 +54,19 @@ describe('AssertBalanceHandler', () => {
   it('persists BalanceAsserted and runs EvaluateAssertion', async () => {
     const output = await handler.execute(command(), ctx);
 
-    const stream = await streamOf(output.assertionId);
+    const stream = await streamOf(output.aggregateId);
     expect(stream).toHaveLength(1);
     expect(stream[0].eventType).toBe(BALANCE_ASSERTED);
     expect(stream[0].externalRef).toBe('ext-1');
 
     expect(spy.dispatched).toHaveLength(1);
-    expect(spy.dispatched[0].assertionId).toBe(output.assertionId);
+    expect(spy.dispatched[0].assertionId).toBe(output.aggregateId);
   });
 
   it('returns the assertion id and the reached stream position', async () => {
     const output = await handler.execute(command(), ctx);
 
-    expect(output.assertionId).toBeTruthy();
+    expect(output.aggregateId).toBeTruthy();
     expect(output.streamPosition).toBe(1n);
   });
 });

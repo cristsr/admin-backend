@@ -1,11 +1,11 @@
-import { Injectable } from '@nestjs/common';
 import { BalanceAssertion } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.aggregate';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.repository';
 import { Money } from '@ledger/shared/domain/money';
 import { IdGenerator } from '@ledger/shared/domain/ports';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
+import { CommandHandler } from '@ledger/shared-kernel/application/command-bus/command-handler';
+import { CommandResult } from '@ledger/shared-kernel/application/command-bus/command-result.type';
 import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
-import { AssertBalanceOutputDto } from '../dto/assert-balance-output.dto';
 import { AssertBalanceCommand } from './assert-balance.command';
 import { EvaluateAssertionCommand } from './evaluate-assertion.command';
 import { EvaluateAssertionHandler } from './evaluate-assertion.handler';
@@ -15,17 +15,22 @@ import { EvaluateAssertionHandler } from './evaluate-assertion.handler';
  * caller gets a first verdict on the same stream (§3.2). The follow-up
  * evaluation is dispatched without the declaration's `external_ref` so its own
  * append does not clash with the anchor.
+ *
+ * The declaration itself is the anchor, so a retry of the same `external_ref`
+ * replays this exact `aggregateId` from the `BalanceAsserted` event without
+ * asserting anything twice (INV-10).
  */
-@Injectable()
-export class AssertBalanceHandler {
+export class AssertBalanceHandler extends CommandHandler<AssertBalanceCommand> {
   constructor(
     private readonly repository: BalanceAssertionRepository,
     private readonly evaluate: EvaluateAssertionHandler,
     private readonly catalog: CurrencyCatalog,
     private readonly ids: IdGenerator,
-  ) {}
+  ) {
+    super();
+  }
 
-  async execute(command: AssertBalanceCommand, ctx: AuthContext): Promise<AssertBalanceOutputDto> {
+  async execute(command: AssertBalanceCommand, ctx: AuthContext): Promise<CommandResult> {
     const currency = this.catalog.resolve(CurrencyCode.of(command.currency));
 
     const assertion = BalanceAssertion.assert(
@@ -46,6 +51,10 @@ export class AssertBalanceHandler {
       externalRef: null,
     });
 
-    return { assertionId: assertion.id, streamPosition: result.lastPosition };
+    return {
+      aggregateId: assertion.id,
+      streamPosition: result.lastPosition,
+      idempotentReplay: false,
+    };
   }
 }
