@@ -1,11 +1,11 @@
-import { AccountRepository } from '../account.repository';
 import { IdGenerator } from '../../../shared/domain/ports';
+import { AuthContext } from '../../../shared-kernel/application/command-bus/auth-context.type';
 import { ProjectionDispatcher } from '../../../shared-kernel/application/projection/projection-dispatcher';
 import { ReadModelStore } from '../../../shared-kernel/application/projection/read-model-store';
-import { AuthContext } from '../../../shared-kernel/application/command-bus/auth-context.type';
 import { NameCollisionException } from '../../domain/account/exceptions/account.exception';
-import { OpenAccountHandler } from './open-account.handler';
+import { AccountRepository } from '../account.repository';
 import { OpenAccountCommand } from './open-account.command';
+import { OpenAccountHandler } from './open-account.handler';
 
 const ctx: AuthContext = { userId: 'user-1', clientId: 'client-x', externalRef: null };
 

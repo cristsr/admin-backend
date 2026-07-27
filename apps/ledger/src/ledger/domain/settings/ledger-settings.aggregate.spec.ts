@@ -1,7 +1,7 @@
-import { LedgerSettings } from './ledger-settings.aggregate';
-import { LedgerInitialized } from './events/ledger-initialized.event';
 import { PresentationCurrencyChanged, TimezoneChanged } from '../../../settings/domain/ledger-settings/events';
 import { CurrencyCode, IanaTimeZone } from '../../../settings/domain/ledger-settings/value-objects';
+import { LedgerInitialized } from './events/ledger-initialized.event';
+import { LedgerSettings } from './ledger-settings.aggregate';
 
 describe('LedgerSettings (Aggregate)', () => {
   const userId = 'user-123';

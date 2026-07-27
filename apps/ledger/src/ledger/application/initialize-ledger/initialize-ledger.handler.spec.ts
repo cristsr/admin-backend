@@ -1,12 +1,12 @@
 import { AccountRepository } from '../../../accounts/application/account.repository';
-import { LedgerSettingsRepository } from '../ledger-settings.repository';
-import { LedgerSettings } from '../../domain/settings/ledger-settings.aggregate';
-import { LedgerAlreadyInitializedException } from '../../domain/settings/exceptions/ledger.exception';
 import { Clock, IdGenerator } from '../../../shared/domain/ports';
-import { ProjectionDispatcher } from '../../../shared-kernel/application/projection/projection-dispatcher';
 import { AuthContext } from '../../../shared-kernel/application/command-bus/auth-context.type';
-import { InitializeLedgerHandler } from './initialize-ledger.handler';
+import { ProjectionDispatcher } from '../../../shared-kernel/application/projection/projection-dispatcher';
+import { LedgerAlreadyInitializedException } from '../../domain/settings/exceptions/ledger.exception';
+import { LedgerSettings } from '../../domain/settings/ledger-settings.aggregate';
+import { LedgerSettingsRepository } from '../ledger-settings.repository';
 import { InitializeLedgerCommand } from './initialize-ledger.command';
+import { InitializeLedgerHandler } from './initialize-ledger.handler';
 
 const ctx: AuthContext = { userId: 'user-1', clientId: 'client-x', externalRef: 'init-ref' };
 

@@ -1,9 +1,9 @@
 import { AggregateRoot } from '@ledger/shared-kernel/domain/aggregate/aggregate-root';
 import { DomainEvent } from '@ledger/shared-kernel/domain/aggregate/domain-event';
-import { LedgerInitialized } from './events/ledger-initialized.event';
 import { PresentationCurrencyChanged, TimezoneChanged } from '../../../settings/domain/ledger-settings/events';
 import { CurrencyCode } from '../../../settings/domain/ledger-settings/value-objects';
 import { IanaTimeZone } from '../../../settings/domain/ledger-settings/value-objects';
+import { LedgerInitialized } from './events/ledger-initialized.event';
 
 /** Arguments to initialize a user's ledger. */
 export type InitializeLedgerArgs = {
@@ -21,8 +21,8 @@ export type InitializeLedgerArgs = {
  */
 export class LedgerSettings extends AggregateRoot<string> {
   private initialized = false;
-  private presentationCurrency: string = '';
-  private timezone: string = '';
+  private presentationCurrency = '';
+  private timezone = '';
 
   /** Creates the ledger, emitting {@link LedgerInitialized}. */
   static initialize(args: InitializeLedgerArgs): LedgerSettings {
