@@ -6,6 +6,7 @@ import { RenameAccountHandler } from '@ledger/accounts/application/rename-accoun
 import { AccountTreeProjector } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { InitializeLedgerHandler } from '@ledger/ledger/application/initialize-ledger/initialize-ledger.handler';
 import { LedgerSettingsRepository } from '@ledger/ledger/application/ledger-settings.repository';
+import { ReplaceLedgerSettingsHandler } from '@ledger/ledger/application/replace-ledger-settings/replace-ledger-settings.handler';
 import { LedgerSettingsProjector } from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
 import { Clock, IdGenerator } from '@ledger/shared/domain/ports';
 import { CommandBus, PolicyCommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
@@ -78,6 +79,10 @@ export function createLedgerApplication(deps: LedgerApplicationDeps): LedgerAppl
     new OptimisticConcurrencyPolicy(),
   ]);
 
+  commandBus.register(
+    'ReplaceLedgerSettings',
+    new ReplaceLedgerSettingsHandler(settings, dispatcher),
+  );
   commandBus.register(
     'InitializeLedger',
     new InitializeLedgerHandler(settings, accounts, idGenerator, clock, dispatcher),

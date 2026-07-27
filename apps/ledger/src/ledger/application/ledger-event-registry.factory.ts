@@ -5,6 +5,10 @@ import {
 } from '@ledger/accounts/domain/account/events';
 import { LedgerInitialized } from '@ledger/ledger/domain/settings/events/ledger-initialized.event';
 import {
+  PresentationCurrencyChanged,
+  TimezoneChanged,
+} from '@ledger/settings/domain/ledger-settings/events';
+import {
   DomainEventRegistry,
   EventRegistry,
 } from '@ledger/shared-kernel/application/event/event-registry';
@@ -48,6 +52,10 @@ export function createLedgerEventRegistry(catalog: CurrencyCatalog): EventRegist
   );
 
   registry.register('LedgerInitialized', (_v, payload) => LedgerInitialized.fromPayload(payload));
+  registry.register('PresentationCurrencyChanged', (_v, payload) =>
+    PresentationCurrencyChanged.fromPayload(payload),
+  );
+  registry.register('TimezoneChanged', (_v, payload) => TimezoneChanged.fromPayload(payload));
 
   return registry;
 }
