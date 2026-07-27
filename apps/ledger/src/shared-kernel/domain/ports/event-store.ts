@@ -33,6 +33,22 @@ export abstract class EventStore {
   /** Global-position-ordered slice for projection catch-up. */
   abstract readAll(fromPosition: bigint, limit: number): Promise<readonly StoredEvent[]>;
 
+  /**
+   * Runs `work` so that every `append` inside it commits or rolls back together
+   * (cross-stream atomicity).
+   *
+   * A command touching several aggregates — merging two pendings into a
+   * transfer, closing a discrepancy with an adjustment — writes to more than one
+   * stream. Without this, a process dying between appends leaves a pending
+   * voided with nothing replacing it: visible data loss, not a recoverable
+   * intermediate state.
+   *
+   * Optimistic concurrency still applies per stream (INV-7): a conflict on any
+   * of them aborts the whole scope. Nesting is not supported — an inner call
+   * joins the outer scope rather than opening a second transaction.
+   */
+  abstract withTransaction<T>(work: () => Promise<T>): Promise<T>;
+
   /** The anchor event of the command that used this `external_ref`, if any. */
   abstract findByExternalRef(
     userId: string,

@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { Nullable } from '@shared';
 import { DataSource, EntityManager, QueryFailedError } from 'typeorm';
 import { AppendResult } from '@ledger/shared-kernel/domain/event/append-result.type';
@@ -28,8 +29,24 @@ const SELECT_COLUMNS = `
  * (INV-10). Amounts stay decimal strings in `jsonb` — never parsed to `number`.
  */
 export class PostgresEventStore extends EventStore {
+  /**
+   * Manager of the transaction currently in scope, if any. Kept in
+   * AsyncLocalStorage so `append` can join an open `withTransaction` without the
+   * caller — a domain handler — having to carry a database object around
+   * (RNF-11, Artículo 1).
+   */
+  private readonly scope = new AsyncLocalStorage<EntityManager>();
+
   constructor(private readonly dataSource: DataSource) {
     super();
+  }
+
+  async withTransaction<T>(work: () => Promise<T>): Promise<T> {
+    const running = this.scope.getStore();
+
+    if (running) return work(); // guard: an inner call joins the outer scope
+
+    return this.dataSource.transaction((manager) => this.scope.run(manager, work));
   }
 
   async append(
@@ -42,9 +59,12 @@ export class PostgresEventStore extends EventStore {
     }
 
     try {
-      const stored = await this.dataSource.transaction((manager) =>
-        this.insertAll(manager, events),
-      );
+      // Inside a `withTransaction` scope this joins it, so several streams commit
+      // together; outside, it opens its own transaction exactly as before.
+      const inScope = this.scope.getStore();
+      const stored = inScope
+        ? await this.insertAll(inScope, events)
+        : await this.dataSource.transaction((manager) => this.insertAll(manager, events));
 
       return {
         events: stored,

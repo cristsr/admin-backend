@@ -209,5 +209,112 @@ export function describeEventStoreContract(
       expect(result.version).toBe(1);
       expect(await store.load(stream)).toHaveLength(1);
     });
+    describe('withTransaction — cross-stream atomicity (hu-0023)', () => {
+      it('commits appends to several streams together', async () => {
+        const first = streamFor('user-1', 'agg-1');
+        const second = streamFor('user-1', 'agg-2');
+
+        await store.withTransaction(async () => {
+          await store.append(first, 0, [anEnvelope(first, { sequence: 1 })]);
+          await store.append(second, 0, [anEnvelope(second, { sequence: 1 })]);
+        });
+
+        expect(await store.load(first)).toHaveLength(1);
+        expect(await store.load(second)).toHaveLength(1);
+      });
+
+      it('rolls back every stream when the work throws', async () => {
+        const first = streamFor('user-1', 'agg-1');
+        const second = streamFor('user-1', 'agg-2');
+
+        await expect(
+          store.withTransaction(async () => {
+            await store.append(first, 0, [anEnvelope(first, { sequence: 1 })]);
+            await store.append(second, 0, [anEnvelope(second, { sequence: 1 })]);
+            throw new Error('work failed after both appends');
+          }),
+        ).rejects.toThrow('work failed after both appends');
+
+        // Neither survives: this is the whole point — a voided pending with no
+        // transfer replacing it would be visible data loss.
+        expect(await store.load(first)).toEqual([]);
+        expect(await store.load(second)).toEqual([]);
+      });
+
+      it('rolls back an earlier stream when a later append conflicts (AC-5)', async () => {
+        const first = streamFor('user-1', 'agg-1');
+        const second = streamFor('user-1', 'agg-2');
+        await store.append(second, 0, [anEnvelope(second, { sequence: 1 })]);
+
+        await expect(
+          store.withTransaction(async () => {
+            await store.append(first, 0, [anEnvelope(first, { sequence: 1 })]);
+            // stale expectedVersion: optimistic concurrency still applies per
+            // stream, and a conflict on any of them aborts the whole scope
+            await store.append(second, 0, [anEnvelope(second, { sequence: 1 })]);
+          }),
+        ).rejects.toBeInstanceOf(ConcurrencyConflictException);
+
+        expect(await store.load(first)).toEqual([]);
+        expect(await store.load(second)).toHaveLength(1);
+      });
+
+      it('leaves previously committed events untouched on rollback', async () => {
+        const existing = streamFor('user-1', 'agg-0');
+        await store.append(existing, 0, [anEnvelope(existing, { sequence: 1 })]);
+
+        const fresh = streamFor('user-1', 'agg-1');
+        await expect(
+          store.withTransaction(async () => {
+            await store.append(fresh, 0, [anEnvelope(fresh, { sequence: 1 })]);
+            throw new Error('boom');
+          }),
+        ).rejects.toThrow('boom');
+
+        expect(await store.load(existing)).toHaveLength(1);
+        expect(await store.load(fresh)).toEqual([]);
+      });
+
+      it('returns the work result', async () => {
+        const stream = streamFor('user-1', 'agg-1');
+
+        const result = await store.withTransaction(async () => {
+          await store.append(stream, 0, [anEnvelope(stream, { sequence: 1 })]);
+
+          return 'done';
+        });
+
+        expect(result).toBe('done');
+      });
+
+      it('joins an inner scope to the outer one instead of nesting', async () => {
+        const first = streamFor('user-1', 'agg-1');
+        const second = streamFor('user-1', 'agg-2');
+
+        await expect(
+          store.withTransaction(async () => {
+            await store.append(first, 0, [anEnvelope(first, { sequence: 1 })]);
+
+            await store.withTransaction(async () => {
+              await store.append(second, 0, [anEnvelope(second, { sequence: 1 })]);
+            });
+
+            throw new Error('outer failed');
+          }),
+        ).rejects.toThrow('outer failed');
+
+        // The inner scope did not commit on its own — it belonged to the outer.
+        expect(await store.load(first)).toEqual([]);
+        expect(await store.load(second)).toEqual([]);
+      });
+
+      it('keeps a plain append outside any scope working as before', async () => {
+        const stream = streamFor('user-1', 'agg-1');
+
+        await store.append(stream, 0, [anEnvelope(stream, { sequence: 1 })]);
+
+        expect(await store.load(stream)).toHaveLength(1);
+      });
+    });
   });
 }

@@ -18,6 +18,35 @@ import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 export class InMemoryEventStore extends EventStore {
   private readonly events: StoredEvent[] = [];
   private nextPosition = 1n;
+  private depth = 0;
+
+  /**
+   * Runs `work` atomically: a failure rolls the store back to its state before
+   * the scope opened, mirroring the PostgreSQL transaction so both adapters
+   * satisfy one contract (RNF-11).
+   *
+   * The snapshot is a shallow copy of the event list — enough because
+   * `StoredEvent` is never mutated in place, only appended.
+   */
+  async withTransaction<T>(work: () => Promise<T>): Promise<T> {
+    if (this.depth > 0) return work(); // guard: an inner call joins the outer scope
+
+    const snapshot = [...this.events];
+    const positionBefore = this.nextPosition;
+    this.depth += 1;
+
+    try {
+      return await work();
+    } catch (error) {
+      this.events.length = 0;
+      this.events.push(...snapshot);
+      this.nextPosition = positionBefore;
+
+      throw error;
+    } finally {
+      this.depth -= 1;
+    }
+  }
 
   async append(
     stream: StreamId,
