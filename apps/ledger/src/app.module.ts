@@ -7,6 +7,7 @@ import { appConfig, databaseConfig } from '@ledger/config/environment';
 import { loadEnvironment } from '@ledger/env';
 import { LedgerCoreModule } from '@ledger/ledger/ledger-core.module';
 import { ReconciliationModule } from '@ledger/reconciliation/reconciliation.module';
+import { ReferenceModule } from '@ledger/reference/reference.module';
 import { SharedHttpModule } from '@ledger/shared/infrastructure/adapters/http';
 import { TransactionsHttpModule } from '@ledger/transactions/infrastructure/adapters/http';
 import { TransactionsModule } from '@ledger/transactions/transactions.module';
@@ -31,9 +32,8 @@ import { DatabaseModule } from './database/database.module';
     // EP-1 write/read buses wired into DI (in-memory adapters for now; see the
     // module's TODO on swapping in the Postgres persistence adapters).
     LedgerCoreModule,
-    // EP-4 (settings, reference, product, reporting): not implemented yet. The
-    // first attempt was removed because it targeted shared-kernel APIs that no
-    // longer exist; it will be rebuilt story by story on the current core.
+    // Global reference data: the currency catalog (hu-0019).
+    ReferenceModule,
     AccountsHttpModule,
     TransactionsHttpModule,
     // EP-3: reconciliation and the transfer feature, mounted on the real core.

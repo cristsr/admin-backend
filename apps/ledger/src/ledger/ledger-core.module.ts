@@ -9,7 +9,7 @@ import { ReadModelStore } from '@ledger/shared-kernel/application/projection/rea
 import { QueryBus } from '@ledger/shared-kernel/application/query-bus/query-bus';
 import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 import { CurrencyCatalog } from '@ledger/shared-kernel/domain/value-objects/currency-catalog';
-import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
+import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
 import { PostgresEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/postgres/postgres-event-store';
 import { PostgresReadModelStore } from '@ledger/shared-kernel/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';
 
@@ -27,7 +27,15 @@ import { PostgresReadModelStore } from '@ledger/shared-kernel/infrastructure/ada
   providers: [
     { provide: Clock, useClass: SystemClock },
     { provide: IdGenerator, useClass: UuidIdGenerator },
-    { provide: CurrencyCatalog, useClass: SeedCurrencyCatalog },
+    // The catalog is served from proj_currencies but cached in memory: `resolve`
+    // is synchronous and runs during stream rehydration (hu-0019).
+    {
+      provide: ReadModelCurrencyCatalog,
+      inject: [ReadModelStore],
+      useFactory: (readModel: ReadModelStore): ReadModelCurrencyCatalog =>
+        new ReadModelCurrencyCatalog(readModel),
+    },
+    { provide: CurrencyCatalog, useExisting: ReadModelCurrencyCatalog },
     { provide: EventStore, useClass: PostgresEventStore },
     { provide: ReadModelStore, useClass: PostgresReadModelStore },
     {
@@ -48,6 +56,15 @@ import { PostgresReadModelStore } from '@ledger/shared-kernel/infrastructure/ada
       useFactory: (readModel: ReadModelStore): QueryBus => createQueryBus(readModel),
     },
   ],
-  exports: [CommandBus, QueryBus, EventStore, ReadModelStore, CurrencyCatalog, Clock, IdGenerator],
+  exports: [
+    CommandBus,
+    QueryBus,
+    EventStore,
+    ReadModelStore,
+    CurrencyCatalog,
+    ReadModelCurrencyCatalog,
+    Clock,
+    IdGenerator,
+  ],
 })
 export class LedgerCoreModule {}

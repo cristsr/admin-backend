@@ -32,6 +32,10 @@ import {
   PROJ_ASSERTIONS,
 } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
 import { RECONCILIATION_PROJECTION } from '@ledger/reconciliation/infrastructure/adapters/events/reconciliation.pump';
+import {
+  CurrenciesProjector,
+  PROJ_CURRENCIES,
+} from '@ledger/reference/infrastructure/projections/currencies.projector';
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
@@ -70,6 +74,7 @@ async function main(): Promise<void> {
     [PROJ_BALANCES],
   );
   registry.register('ledger_settings', [new LedgerSettingsProjector()], [PROJ_LEDGER_SETTINGS]);
+  registry.register('currencies', [new CurrenciesProjector()], [PROJ_CURRENCIES]);
   // One entry, two projectors: AdjustmentAuditProjector reads proj_assertions, so
   // both must share a checkpoint and apply in order — rebuilding them apart would
   // audit against an arbitrary assertion state.
