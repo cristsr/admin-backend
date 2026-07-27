@@ -1,3 +1,4 @@
+import { Nullable } from '@shared';
 import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
 import { EventRegistry } from '@ledger/shared-kernel/application/event/event-registry';
 import { EventSourcedRepository } from '@ledger/shared-kernel/application/event-sourced.repository';
@@ -11,6 +12,27 @@ export class LedgerTransactionRepository extends EventSourcedRepository<LedgerTr
 
   constructor(eventStore: EventStore, registry: EventRegistry, envelopes: EnvelopeFactory) {
     super(eventStore, registry, envelopes);
+  }
+
+  /**
+   * The `external_ref` the client stamped on the transaction's anchor event, or
+   * `null` when the transaction was created by the system (RF-16 needs both
+   * legs' references as merge traceability metadata).
+   *
+   * It is read from the aggregate's own stream, never from `proj_transactions`:
+   * the write side does not read projections (§6.3, RNF-10), and the read model
+   * may lag behind the very aggregates the command just loaded. The reference
+   * lives in the envelope, not in `LedgerTransaction`, so the aggregate stays
+   * free of an idempotency concern that belongs to the append.
+   */
+  async externalRefOf(userId: string, transactionId: string): Promise<Nullable<string>> {
+    const stored = await this.eventStore.load({
+      userId,
+      aggregateType: this.aggregateType,
+      aggregateId: transactionId,
+    });
+
+    return stored.find((event) => !!event.externalRef)?.externalRef ?? null;
   }
 
   protected rehydrate(id: string, events: readonly DomainEvent[]): LedgerTransaction {

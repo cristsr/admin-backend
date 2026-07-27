@@ -21,6 +21,7 @@ import {
   TransactionRecorded,
   TransactionReversed,
   TransactionVoided,
+  TransfersMerged,
 } from '@ledger/transactions/domain/transaction/events';
 
 /**
@@ -50,6 +51,9 @@ export function createLedgerEventRegistry(catalog: CurrencyCatalog): EventRegist
   registry.register('TransactionVoided', (_v, payload) => TransactionVoided.fromPayload(payload));
   registry.register('TransactionReversed', (_v, payload) =>
     TransactionReversed.fromPayload(payload),
+  );
+  registry.register('TransfersMerged', (_v, payload) =>
+    TransfersMerged.fromPayload(payload, catalog),
   );
 
   registry.register('LedgerInitialized', (_v, payload) => LedgerInitialized.fromPayload(payload));

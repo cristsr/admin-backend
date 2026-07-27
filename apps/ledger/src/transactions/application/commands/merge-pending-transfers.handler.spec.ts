@@ -36,10 +36,17 @@ function aPendingTransaction(accountId: string, amount: string, status = Transac
   };
 }
 
+/** A stand-in for the transfer the merge records, ready to carry the merge fact. */
+function aRecordedTransfer() {
+  return { mergedFrom: jest.fn() };
+}
+
 function setup(accountTypes: Record<string, string> = { 'acc-out': 'ASSETS', 'acc-in': 'ASSETS' }) {
-  const transactions = { load: jest.fn(), save: jest.fn() } as unknown as jest.Mocked<
-    LedgerTransactionRepository
-  >;
+  const transactions = {
+    load: jest.fn(),
+    save: jest.fn().mockResolvedValue({ events: [], version: 2, lastPosition: 2n }),
+    externalRefOf: jest.fn().mockResolvedValue(null),
+  } as unknown as jest.Mocked<LedgerTransactionRepository>;
 
   const accounts: jest.Mocked<AccountLookup> = {
     factsOf: jest.fn(async (_userId: string, accountId: string) => {
@@ -68,12 +75,23 @@ function setup(accountTypes: Record<string, string> = { 'acc-out': 'ASSETS', 'ac
   return { handler, transactions, bus };
 }
 
+/** Seeds a mergeable pair plus the transfer the handler loads back afterwards. */
+function seedMergeablePair(
+  transactions: jest.Mocked<LedgerTransactionRepository>,
+  transfer = aRecordedTransfer(),
+) {
+  transactions.load
+    .mockResolvedValueOnce(aPendingTransaction('acc-out', '-500') as never)
+    .mockResolvedValueOnce(aPendingTransaction('acc-in', '500') as never)
+    .mockResolvedValueOnce(transfer as never);
+
+  return transfer;
+}
+
 describe('MergePendingTransfersHandler', () => {
   it('voids both legs and records a single confirmed transfer', async () => {
     const { handler, transactions, bus } = setup();
-    transactions.load
-      .mockResolvedValueOnce(aPendingTransaction('acc-out', '-500') as never)
-      .mockResolvedValueOnce(aPendingTransaction('acc-in', '500') as never);
+    seedMergeablePair(transactions);
 
     const result = await handler.execute(new MergePendingTransfersCommand(['t1', 't2']), ctx);
 
@@ -87,11 +105,62 @@ describe('MergePendingTransfersHandler', () => {
     ]);
     expect(records[0].date).toBe('2026-07-20');
     expect(records[0].metadata).toMatchObject({ merged_from: 't1,t2' });
-    expect(result.transferTransactionId).toBe('transfer-txn-1');
-    expect(result.voidedTransactionIds).toEqual(['t1', 't2']);
+    // The transfer is the idempotency anchor, so it is what the result names.
+    expect(result.aggregateId).toBe('transfer-txn-1');
 
     // The transfer is recorded directly CONFIRMED; no separate confirm dispatch.
     expect(bus.dispatchedOf(ConfirmTransactionCommand)).toHaveLength(0);
+  });
+
+  it("preserves both legs' external references in metadata (RF-16)", async () => {
+    const { handler, transactions, bus } = setup();
+    seedMergeablePair(transactions);
+    transactions.externalRefOf.mockImplementation(async (_userId, id) =>
+      ({ t1: 'bank-tx-aaa', t2: 'bank-tx-bbb' })[id] ?? null,
+    );
+
+    await handler.execute(new MergePendingTransfersCommand(['t1', 't2']), ctx);
+
+    const [record] = bus.dispatchedOf(RecordTransactionCommand);
+    expect(record.metadata).toEqual({
+      merged_from: 't1,t2',
+      merged_external_refs: 'bank-tx-aaa,bank-tx-bbb',
+    });
+  });
+
+  it('keeps the positional slot of a leg with no external reference (RF-16)', async () => {
+    const { handler, transactions, bus } = setup();
+    seedMergeablePair(transactions);
+    transactions.externalRefOf.mockImplementation(async (_userId, id) =>
+      id === 't2' ? 'bank-tx-bbb' : null,
+    );
+
+    await handler.execute(new MergePendingTransfersCommand(['t1', 't2']), ctx);
+
+    const [record] = bus.dispatchedOf(RecordTransactionCommand);
+    expect(record.metadata.merged_external_refs).toBe(',bank-tx-bbb');
+  });
+
+  it('omits the external references when neither leg carries one (RF-16)', async () => {
+    const { handler, transactions, bus } = setup();
+    seedMergeablePair(transactions);
+
+    await handler.execute(new MergePendingTransfersCommand(['t1', 't2']), ctx);
+
+    const [record] = bus.dispatchedOf(RecordTransactionCommand);
+    expect(record.metadata).toEqual({ merged_from: 't1,t2' });
+  });
+
+  it('emits TransfersMerged on the resulting transfer (§3.4)', async () => {
+    const { handler, transactions } = setup();
+    const transfer = seedMergeablePair(transactions);
+
+    await handler.execute(new MergePendingTransfersCommand(['t1', 't2']), ctx);
+
+    expect(transfer.mergedFrom).toHaveBeenCalledWith(['t1', 't2']);
+    // Appended without stamping the external_ref again: the recorded transfer
+    // is already the command's idempotency anchor.
+    expect(transactions.save).toHaveBeenCalledWith(transfer, { ...ctx, externalRef: null });
   });
 
   it('rejects when a referenced transaction does not exist', async () => {

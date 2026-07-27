@@ -115,7 +115,11 @@ describe('Transfer merge flow (e2e)', () => {
   let handler: MergePendingTransfersHandler;
 
   /** Seeds one PENDING transaction: a real-account leg against a category. */
-  const recordPending = async (accountId: string, amount: string): Promise<string> => {
+  const recordPending = async (
+    accountId: string,
+    amount: string,
+    externalRef: Nullable<string> = null,
+  ): Promise<string> => {
     const transaction = LedgerTransaction.record(
       {
         date: LedgerDate.of('2026-07-20'),
@@ -138,7 +142,7 @@ describe('Transfer merge flow (e2e)', () => {
       ids,
     );
 
-    await transactions.save(transaction, { ...ctx, externalRef: null });
+    await transactions.save(transaction, { ...ctx, externalRef });
 
     return transaction.id;
   };
@@ -171,16 +175,16 @@ describe('Transfer merge flow (e2e)', () => {
       ctx,
     );
 
-    expect(output.voidedTransactionIds).toEqual([outgoingId, incomingId]);
-
-    // Both original legs left PENDING.
+    // Both original legs left VOIDED; their ids are the caller's own request
+    // body, so the result names only the transfer (the idempotency anchor).
+    expect(output.aggregateId).toBeTruthy();
     const outgoing = await transactions.load('user-1', outgoingId);
     const incoming = await transactions.load('user-1', incomingId);
     expect(outgoing?.status).toBe(TransactionStatus.VOIDED);
     expect(incoming?.status).toBe(TransactionStatus.VOIDED);
 
     // A single confirmed transfer between the two real accounts.
-    const transfer = await transactions.load('user-1', output.transferTransactionId);
+    const transfer = await transactions.load('user-1', output.aggregateId);
     expect(transfer?.status).toBe(TransactionStatus.CONFIRMED);
     expect(transfer?.date.value).toBe('2026-07-20');
     expect(transfer?.postings.map((posting) => posting.accountId)).toEqual(['acc-out', 'acc-in']);
@@ -189,6 +193,51 @@ describe('Transfer merge flow (e2e)', () => {
       (entry) => entry.eventType === 'TransactionVoided',
     );
     expect(voided).toHaveLength(2);
+  });
+
+  it('records TransfersMerged on the resulting transfer (§3.4)', async () => {
+    const outgoingId = await recordPending('acc-out', '-500');
+    const incomingId = await recordPending('acc-in', '500');
+
+    const output = await handler.execute(
+      new MergePendingTransfersCommand([outgoingId, incomingId]),
+      ctx,
+    );
+
+    const merged = (await eventStore.readAll(0n, 100)).filter(
+      (entry) => entry.eventType === 'TransfersMerged',
+    );
+
+    expect(merged).toHaveLength(1);
+    expect(merged[0].aggregateId).toBe(output.aggregateId);
+    expect(merged[0].payload.mergedTransactionIds).toEqual([outgoingId, incomingId]);
+    expect(merged[0].payload.postings).toEqual([
+      expect.objectContaining({ accountId: 'acc-out', amount: '-500' }),
+      expect.objectContaining({ accountId: 'acc-in', amount: '500' }),
+    ]);
+    // The lifecycle events are additional to it, not replaced by it.
+    expect(merged[0].sequence).toBe(2);
+  });
+
+  it("carries both legs' external references into the transfer metadata (RF-16)", async () => {
+    const outgoingId = await recordPending('acc-out', '-500', 'bank-tx-aaa');
+    const incomingId = await recordPending('acc-in', '500', 'bank-tx-bbb');
+
+    const output = await handler.execute(
+      new MergePendingTransfersCommand([outgoingId, incomingId]),
+      ctx,
+    );
+
+    const [recorded] = (await eventStore.readAll(0n, 100)).filter(
+      (entry) =>
+        entry.eventType === 'TransactionRecorded' &&
+        entry.aggregateId === output.aggregateId,
+    );
+
+    expect(recorded.payload.metadata).toEqual({
+      merged_from: `${outgoingId},${incomingId}`,
+      merged_external_refs: 'bank-tx-aaa,bank-tx-bbb',
+    });
   });
 
   it('refuses to merge once one of the legs is no longer pending', async () => {

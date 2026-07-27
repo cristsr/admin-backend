@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import { Nullable } from '@shared';
 import { Money } from '@ledger/shared/domain/money';
 
@@ -29,7 +28,6 @@ export interface TransferPair {
  * tolerance: those belong to whoever proposes candidates to a human, which is
  * outside this ledger's scope.
  */
-@Injectable()
 export class TransferPairRule {
   /** The pair the two legs form, or null when they are not a transfer. */
   pair(first: TransferLeg, second: TransferLeg): Nullable<TransferPair> {

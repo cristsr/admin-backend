@@ -1,6 +1,7 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { createLedgerEventRegistry } from '@ledger/ledger/application/ledger-event-registry.factory';
 import { Clock, IdGenerator } from '@ledger/shared/domain/ports';
+import { CommandBus, PolicyCommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
 import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
 import { EventRegistry } from '@ledger/shared-kernel/application/event/event-registry';
 import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
@@ -18,11 +19,18 @@ import { ReadModelAccountLookup } from './infrastructure/adapters/persistence/re
  * (DRY) and validates the pair against the aggregates it loads from the event
  * store. Proposing which pendings *look* mergeable is deliberately out of scope
  * — that heuristic belongs to the client, not to this ledger.
+ *
+ * The handler is composed here but registered on the core's
+ * {@link PolicyCommandBus} at init, so `MergePendingTransfers` enters through
+ * the same policy chain as every other command (RF-11, INV-10) instead of being
+ * called as a provider.
  */
 @Module({
   controllers: [TransferController],
   providers: [
-    TransferPairRule,
+    // No Nest decorators in domain/application (RNF-11, rules Art. 1), so the
+    // dependencies are stated here rather than read off `@Injectable` metadata.
+    { provide: TransferPairRule, useFactory: (): TransferPairRule => new TransferPairRule() },
     { provide: AccountLookup, useClass: ReadModelAccountLookup },
     {
       provide: EventRegistry,
@@ -45,7 +53,33 @@ import { ReadModelAccountLookup } from './infrastructure/adapters/persistence/re
       ): LedgerTransactionRepository =>
         new LedgerTransactionRepository(eventStore, registry, envelopes),
     },
-    MergePendingTransfersHandler,
+    {
+      provide: MergePendingTransfersHandler,
+      inject: [
+        LedgerTransactionRepository,
+        AccountLookup,
+        TransferPairRule,
+        CommandBus,
+        EventStore,
+      ],
+      useFactory: (
+        transactions: LedgerTransactionRepository,
+        accounts: AccountLookup,
+        rule: TransferPairRule,
+        commandBus: CommandBus,
+        eventStore: EventStore,
+      ): MergePendingTransfersHandler =>
+        new MergePendingTransfersHandler(transactions, accounts, rule, commandBus, eventStore),
+    },
   ],
 })
-export class TransactionsModule {}
+export class TransactionsModule implements OnModuleInit {
+  constructor(
+    private readonly commandBus: PolicyCommandBus,
+    private readonly mergeTransfers: MergePendingTransfersHandler,
+  ) {}
+
+  onModuleInit(): void {
+    this.commandBus.register('MergePendingTransfers', this.mergeTransfers);
+  }
+}
