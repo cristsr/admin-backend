@@ -174,6 +174,7 @@ describe('Reconciliation discrepancy flow (e2e)', () => {
       new FixedSystemAccountLookup('equity-adjustments'),
       new AdjustmentFactory(),
       clock,
+      eventStore,
     );
 
     // The account really holds 600, but the bank statement says 1000.

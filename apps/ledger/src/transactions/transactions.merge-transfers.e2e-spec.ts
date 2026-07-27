@@ -158,6 +158,7 @@ describe('Transfer merge flow (e2e)', () => {
       new TransferAccountsLookup(),
       new TransferPairRule(),
       new TransferFlowBus(transactions, balanceRule, ids),
+      eventStore,
     );
   });
 
@@ -199,5 +200,37 @@ describe('Transfer merge flow (e2e)', () => {
     await expect(
       handler.execute(new MergePendingTransfersCommand([outgoingId, incomingId]), ctx),
     ).rejects.toThrow();
+  });
+  it('leaves nothing behind when the merge fails midway (hu-0023)', async () => {
+    const outgoingId = await recordPending('acc-out', '-500');
+    const incomingId = await recordPending('acc-in', '500');
+
+    // Fail on the transfer record, after both voids already appended.
+    const failing = new (class extends TransferFlowBus {
+      async dispatch(command: Command, ctx: AuthContext): Promise<CommandResult> {
+        if (command instanceof RecordTransactionCommand) {
+          throw new Error('transfer record failed');
+        }
+
+        return super.dispatch(command, ctx);
+      }
+    })(transactions, balanceRule, ids);
+
+    const failingHandler = new MergePendingTransfersHandler(
+      transactions,
+      new TransferAccountsLookup(),
+      new TransferPairRule(),
+      failing,
+      eventStore,
+    );
+
+    await expect(
+      failingHandler.execute(new MergePendingTransfersCommand([outgoingId, incomingId]), ctx),
+    ).rejects.toThrow('transfer record failed');
+
+    // Both legs are still PENDING. Without the transaction the user would have
+    // lost a pending with nothing replacing it.
+    expect((await transactions.load('user-1', outgoingId))?.status).toBe(TransactionStatus.PENDING);
+    expect((await transactions.load('user-1', incomingId))?.status).toBe(TransactionStatus.PENDING);
   });
 });

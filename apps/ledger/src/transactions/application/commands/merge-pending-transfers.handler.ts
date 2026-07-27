@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
 import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
+import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
@@ -35,8 +36,10 @@ interface PendingLeg {
  * this decides whether merging them is legal. Deciding *which* pendings look
  * mergeable is a client concern, not the ledger's.
  *
- * TODO(atomicity): shared-transaction adapter across streams — the two voids and
- * the transfer record are separate stream appends, not one atomic operation.
+ * The two voids and the transfer land on three different streams, so all three
+ * appends run inside `EventStore.withTransaction`. Without it, a process dying
+ * after the first void leaves the user with a pending cancelled and nothing
+ * replacing it — visible data loss, not a recoverable intermediate state.
  */
 @Injectable()
 export class MergePendingTransfersHandler {
@@ -45,6 +48,7 @@ export class MergePendingTransfersHandler {
     private readonly accounts: AccountLookup,
     private readonly rule: TransferPairRule,
     private readonly commandBus: CommandBus,
+    private readonly eventStore: EventStore,
   ) {}
 
   async execute(
@@ -67,41 +71,46 @@ export class MergePendingTransfersHandler {
     const outgoing = pair.outgoingTxnId === firstId ? first : second;
     const anchorless: AuthContext = { ...ctx, externalRef: null };
 
-    await this.commandBus.dispatch(
-      new VoidPendingTransactionCommand(firstId, 'merged into transfer'),
-      anchorless,
-    );
-    await this.commandBus.dispatch(
-      new VoidPendingTransactionCommand(secondId, 'merged into transfer'),
-      anchorless,
-    );
+    return this.eventStore.withTransaction(async () => {
+      await this.commandBus.dispatch(
+        new VoidPendingTransactionCommand(firstId, 'merged into transfer'),
+        anchorless,
+      );
+      await this.commandBus.dispatch(
+        new VoidPendingTransactionCommand(secondId, 'merged into transfer'),
+        anchorless,
+      );
 
-    const recorded = await this.commandBus.dispatch(
-      new RecordTransactionCommand(
-        outgoing.date.value,
-        null,
-        'Transfer',
-        [
-          {
-            accountId: pair.outgoingAccountId,
-            amount: pair.amount.negate().toDecimalString(),
-            currency: pair.currency,
-          },
-          {
-            accountId: pair.incomingAccountId,
-            amount: pair.amount.toDecimalString(),
-            currency: pair.currency,
-          },
-        ],
-        TransactionStatus.CONFIRMED,
-        null,
-        [],
-        { merged_from: [firstId, secondId].join(',') },
-      ),
-      ctx,
-    );
+      const recorded = await this.commandBus.dispatch(
+        new RecordTransactionCommand(
+          outgoing.date.value,
+          null,
+          'Transfer',
+          [
+            {
+              accountId: pair.outgoingAccountId,
+              amount: pair.amount.negate().toDecimalString(),
+              currency: pair.currency,
+            },
+            {
+              accountId: pair.incomingAccountId,
+              amount: pair.amount.toDecimalString(),
+              currency: pair.currency,
+            },
+          ],
+          TransactionStatus.CONFIRMED,
+          null,
+          [],
+          { merged_from: [firstId, secondId].join(',') },
+        ),
+        ctx,
+      );
 
-    return { transferTransactionId: recorded.aggregateId, voidedTransactionIds: [firstId, secondId] };
+      return {
+        transferTransactionId: recorded.aggregateId,
+        voidedTransactionIds: [firstId, secondId],
+      };
+    });
   }
 
   /** The single real-account leg of a pending transaction, or a domain failure. */

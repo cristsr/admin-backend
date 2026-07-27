@@ -9,6 +9,7 @@ import { AdjustmentFactory } from '@ledger/reconciliation/domain/services/adjust
 import { Clock } from '@ledger/shared/domain/ports';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
 import { CommandBus } from '@ledger/shared-kernel/application/command-bus/command-bus';
+import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 import { PostingInput } from '@ledger/transactions/application/posting-input.type';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
@@ -24,9 +25,9 @@ import { ResolveDiscrepancyCommand } from './resolve-discrepancy.command';
  * `TransactionRecorded` re-triggers the reactor (EP-3.4), which re-evaluates the
  * assertion to MATCHED.
  *
- * TODO(atomicity): shared-transaction adapter across streams — the adjustment
- * append and the `DiscrepancyResolved` append are two separate streams; in the
- * dev phase this is append-per-stream, not one cross-aggregate transaction.
+ * The adjustment and the `DiscrepancyResolved` land on different streams, so both
+ * appends run inside `EventStore.withTransaction`: an assertion marked resolved
+ * without its adjustment would claim the money is explained when it is not.
  */
 @Injectable()
 export class ResolveDiscrepancyHandler {
@@ -36,6 +37,7 @@ export class ResolveDiscrepancyHandler {
     private readonly accounts: SystemAccountLookup,
     private readonly factory: AdjustmentFactory,
     private readonly clock: Clock,
+    private readonly eventStore: EventStore,
   ) {}
 
   async execute(
@@ -59,31 +61,33 @@ export class ResolveDiscrepancyHandler {
     const adjustmentsAccountId = await this.accounts.adjustmentsAccountId(ctx.userId);
     const postings = this.factory.build(assertion.account, adjustmentsAccountId, difference);
 
-    // The adjustment carries the command's external_ref, so the money movement
-    // is the idempotency anchor; the linking append below stays unstamped.
-    const recordResult = await this.commandBus.dispatch(
-      new RecordTransactionCommand(
-        this.clock.now().toISOString().slice(0, 10),
-        null,
-        'Reconciliation adjustment',
-        postings.map((posting) => this.toInput(posting)),
-        TransactionStatus.CONFIRMED,
-        null,
-        [],
-        { source: 'system', resolves_assertion: assertion.id },
-      ),
-      ctx,
-    );
+    return this.eventStore.withTransaction(async () => {
+      // The adjustment carries the command's external_ref, so the money movement
+      // is the idempotency anchor; the linking append below stays unstamped.
+      const recordResult = await this.commandBus.dispatch(
+        new RecordTransactionCommand(
+          this.clock.now().toISOString().slice(0, 10),
+          null,
+          'Reconciliation adjustment',
+          postings.map((posting) => this.toInput(posting)),
+          TransactionStatus.CONFIRMED,
+          null,
+          [],
+          { source: 'system', resolves_assertion: assertion.id },
+        ),
+        ctx,
+      );
 
-    const adjustmentTxnId = recordResult.aggregateId;
-    assertion.markResolved(adjustmentTxnId);
-    const result = await this.assertions.save(assertion, { ...ctx, externalRef: null });
+      const adjustmentTxnId = recordResult.aggregateId;
+      assertion.markResolved(adjustmentTxnId);
+      const result = await this.assertions.save(assertion, { ...ctx, externalRef: null });
 
-    return {
-      assertionId: assertion.id,
-      adjustmentTransactionId: adjustmentTxnId,
-      streamPosition: result.lastPosition,
-    };
+      return {
+        assertionId: assertion.id,
+        adjustmentTransactionId: adjustmentTxnId,
+        streamPosition: result.lastPosition,
+      };
+    });
   }
 
   private toInput(posting: PostingLine): PostingInput {

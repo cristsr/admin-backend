@@ -1,6 +1,7 @@
 import { RecordingCommandBus } from '@ledger/shared/testing';
 import { aMoney } from '@ledger/shared/testing';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
+import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
@@ -51,11 +52,17 @@ function setup(accountTypes: Record<string, string> = { 'acc-out': 'ASSETS', 'ac
   };
 
   const bus = new RecordingCommandBus('transfer-txn-1');
+  // The scope just runs the work here; the rollback semantics live in the event
+  // store contract, which both adapters satisfy.
+  const eventStore = {
+    withTransaction: <T>(work: () => Promise<T>): Promise<T> => work(),
+  } as unknown as EventStore;
   const handler = new MergePendingTransfersHandler(
     transactions,
     accounts,
     new TransferPairRule(),
     bus,
+    eventStore,
   );
 
   return { handler, transactions, bus };

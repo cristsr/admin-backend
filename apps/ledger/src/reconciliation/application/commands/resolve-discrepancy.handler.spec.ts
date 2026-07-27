@@ -14,6 +14,7 @@ import {
 } from '@ledger/shared/testing';
 import { AuthContext } from '@ledger/shared-kernel/application/command-bus/auth-context.type';
 import { EnvelopeFactory } from '@ledger/shared-kernel/application/event/envelope.factory';
+import { EventStore } from '@ledger/shared-kernel/domain/ports/event-store';
 import { LedgerDate } from '@ledger/shared-kernel/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared-kernel/infrastructure/adapters/currency/seed-currency-catalog';
 import { InMemoryEventStore } from '@ledger/shared-kernel/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
@@ -46,6 +47,9 @@ describe('ResolveDiscrepancyHandler', () => {
       new FixedSystemAccountLookup('equity-adjustments'),
       new AdjustmentFactory(),
       clock,
+      // The scope just runs the work; rollback semantics are covered by the
+      // event store contract, which both adapters satisfy.
+      { withTransaction: <T>(work: () => Promise<T>): Promise<T> => work() } as EventStore,
     );
   });
 
