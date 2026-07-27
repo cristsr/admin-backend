@@ -8,6 +8,146 @@
 > entrada nueva que la referencia. Orden cronológico inverso (más reciente
 > primero).
 
+## Instante de negocio en los eventos — aserciones intradía (2026-07-27)
+
+Cierra la deuda que la auditoría de más abajo había dejado abierta. Habilitado por que no
+hay datos en producción: cambia el esquema de eventos y el de proyecciones sin upcasting
+(RNF-6 no se ejerce) y reescribiendo la migración `1790000000003` en vez de encadenar una.
+
+- **La raíz no era la columna que faltaba, era el envelope.** `EnvelopeFactory` fijaba
+  `occurredAt: recordedAt`, o sea el instante en que corrió el command. §3.4 declara los dos
+  campos por separado, y si siempre coinciden el par no tiene sentido: toda transacción
+  parecía haber ocurrido en el momento en que el ledger se enteró de ella.
+- **El evento declara su propio instante** (`DomainEvent.occurredAt()`, null por defecto) y
+  el envelope lo toma, cayendo al reloj cuando no hay ninguno. Se eligió esto antes que
+  pasar el dato por el `AuthContext` o por parámetro de `build`: quién sabe cuándo ocurrió
+  un hecho es el hecho mismo, y así cualquier evento futuro lo hereda sin tocar la factory.
+- **`RecordTransaction` acepta `occurredAt` opcional** y `TransactionRecorded` lo porta en el
+  payload. En el DTO es opcional a propósito: una notificación bancaria trae instante, un
+  gasto cargado a mano no, y forzar uno inventado es peor que no tenerlo.
+- **`occurredAt` va antes de `origin` en el constructor del command.** TypeScript obliga a
+  pasar todos los parámetros hasta el último que se quiere fijar; con el orden inverso, el
+  controller HTTP habría tenido que nombrar `origin` para llegar a `occurredAt`, destruyendo
+  la garantía de INV-13 de que nada que venga de la API puede declararse `SYSTEM`.
+- **Las proyecciones guardan el instante del payload, nunca el del envelope.** El del
+  envelope siempre tiene valor, así que proyectarlo borraría la diferencia entre «ocurrió a
+  las 14:03» y «instante desconocido» — exactamente lo que el evaluador necesita distinguir
+  para responder `INDETERMINATE` en vez de un veredicto inventado. Por eso
+  `proj_transactions.occurred_at` pasa a ser nullable y significa el instante declarado.
+- **`proj_postings` gana `occurred_at` denormalizado** desde su transacción, para que el
+  ordenamiento intradía no necesite join. Una enmienda no lo toca: revisa qué se asentó, no
+  cuándo ocurrió.
+- **El evaluador no cambió una línea.** Su lógica de partición y de `INDETERMINATE` ya era
+  correcta (§2.4); solo estaba recibiendo `null` siempre porque el adaptador lo fijaba así.
+  La pregunta abierta #6 de la spec sigue abierta en lo suyo — qué hacer cuando conviven
+  transacciones con y sin instante frente a una aserción intradía —, pero ahora es una
+  decisión que se puede tomar con datos, no un camino muerto: la regla conservadora actual
+  ya solo se dispara sobre los postings que de verdad no se pueden ordenar.
+
+---
+
+## Auditoría del núcleo contra la spec v0.8 (2026-07-27)
+
+Revisión completa del código de `apps/ledger` contra `ledger-spec.md` §3–§7 y los
+invariantes §5.1. Los hallazgos se corrigieron en la misma pasada; lo que sigue son las
+decisiones que esas correcciones obligaron a tomar.
+
+### Roturas de cableado encontradas
+
+- **`POST /v1/currencies` nunca funcionó.** El controller despachaba `RegisterCurrency` por
+  el `CommandBus`, pero la factory nunca registraba ese handler: toda llamada terminaba en
+  `UnregisteredCommandException`. En el mismo lugar faltaba `CurrenciesProjector` en el
+  dispatcher síncrono, así que `proj_currencies` solo se materializaba corriendo la CLI de
+  rebuild. El catálogo administrable (RF-21, EP-4.2) estaba muerto de punta a punta y
+  ninguna suite lo cubría.
+- **Nuevo test de wiring como red permanente** (`app.wiring.spec.ts`): compara los handlers
+  registrados en el bus contra el catálogo de §3.5. El registro ocurre en dos lugares —la
+  factory del core y el `onModuleInit` de cada módulo—, así que un command puede compilar,
+  tener endpoint y no tener handler; eso solo se veía al llegar una petición real. Obligó a
+  exponer `PolicyCommandBus.registeredTypes()`.
+
+### Idempotencia: los commands que evitaban el bus
+
+`/transfers/merge` y los tres `POST` de `/balance-assertions` invocaban sus handlers
+directamente como providers de Nest, salteándose la cadena de políticas completa. §4.1 y
+RF-11 exigen idempotencia por `external_ref` en **todos** los commands, y el contrato del
+puerto `EventStore` (§3.8) pide replay del resultado original, no un 409.
+
+- **Se enrutan los cuatro por el `PolicyCommandBus`**, registrándolos desde el
+  `onModuleInit` de `TransactionsModule` y `ReconciliationModule` (sus dependencias son
+  adaptadores que la factory del core no conoce).
+- **Los DTOs de salida propios desaparecen en favor de `CommandResult`.**
+  `MergeTransfersOutputDto`, `AssertBalanceOutputDto`, `RevokeAssertionOutputDto` y
+  `ResolveDiscrepancyOutputDto` devolvían ids que el `CommandResult` genérico ya expone como
+  `aggregateId`. El criterio para elegir cuál id: **el que lleva el `external_ref` es el que
+  la política de idempotencia reconstruye del ancla**, así que es el que el resultado debe
+  nombrar — la transferencia en el merge, la transacción de ajuste en el resolve, la
+  declaración en el assert. Los ids que el cliente mandó en su propio request no se devuelven.
+
+### INV-13: origen de posting
+
+La segunda mitad de INV-13 («las cuentas técnicas solo reciben postings de transacciones de
+origen sistema») no existía: cualquier cliente autenticado podía postear contra
+`Equity:Adjustments`. La metadata `{ source: 'system' }` que usaba `ResolveDiscrepancy` era
+convención pura, falsificable desde el body.
+
+- **`PostingOrigin` (`CLIENT` | `SYSTEM`) viaja en el command, no en metadata ni derivado de
+  `client_id`** — §2.10 fija que `client_id` es metadata opaca y jamás autorización. El
+  default es `CLIENT`: olvidarse de pasarlo solo puede fallar cerrado.
+- **`RecordOpeningBalance` es un command dedicado** (`POST /v1/accounts/{id}/opening-balance`)
+  y no una variante del DTO de transacciones. Resuelve la contrapartida y el origen en el
+  servidor, así que ningún payload HTTP puede alcanzar una cuenta técnica. Es lo que
+  desactiva la tensión entre INV-13 y RF-27: el saldo inicial tiene su propia puerta en vez
+  de obligar a dejar `Equity:OpeningBalances` abierta al command genérico.
+
+### Otras correcciones
+
+- **Colisión de nombre al renombrar (§2.1.1).** `RenameAccount` no validaba nada. El chequeo
+  se extrajo a `AccountNameRegistry`, compartido con `OpenAccount`, y **cubre el subárbol
+  completo**: el renombre re-prefija a los descendientes, así que con solo validar el nombre
+  nuevo un descendiente podía aterrizar sobre una cuenta existente. El índice único de
+  `proj_accounts (user_id, name)` habría hecho explotar el projector *después* de que el
+  evento ya estaba en el stream — proyección rota que ningún rebuild arregla.
+- **`pending_review` se construye** (§3.6). `GET /transactions?status=PENDING` responde la
+  misma pregunta, pero la bandeja solo contiene lo que está esperando decisión mientras
+  `proj_transactions` crece para siempre. Se sirve por `GET /v1/transactions/pending-review`,
+  declarado antes de `:id` porque Nest resuelve rutas por orden de declaración.
+- **RF-4: `COMPOUND` en vez de adivinar.** `derive([])` devolvía `TRANSFER` por `[].every()`
+  vacuamente cierto, y `EXPENSES` + `INCOME` juntos devolvían `EXPENSE` por el orden de los
+  `if`. Ambos casos pasan a `COMPOUND` (§9.4.4: lo no clasificable nunca se fuerza a un tipo
+  concreto). El projector aplica el mismo criterio cuando alguna cuenta todavía no está en
+  `proj_accounts`, en vez de derivar de evidencia parcial.
+- **`TransfersMerged` existe** (§3.4), sobre el stream de la transferencia resultante: es lo
+  que trajo a ese agregado a la existencia, y cada pierna ya cuenta su verdad con su
+  `TransactionVoided`. No muta estado del agregado — es procedencia, no ciclo de vida.
+- **RF-16 conserva las `external_ref` de ambas piernas**, leídas del stream y no de
+  `proj_transactions` (§6.3 fija que la fusión valida contra los agregados, nunca contra una
+  proyección). `merged_from` con los ids se conserva; `merged_external_refs` se suma.
+- **INV-7 en `ReverseConfirmedTransaction` e `InitializeLedger`.** El fix de HU-0023 cubrió
+  solo `merge` y `resolve`; estos dos seguían escribiendo dos y tres streams sin
+  `withTransaction`. El dispatch a proyecciones queda fuera del scope en ambos: los read
+  models son reconstruibles y un fallo de projector no debe revertir hechos contables.
+- **RF-14: el catálogo era mentira.** `LEDGER_ERROR_CODE` se declaraba «fuente única de
+  verdad» con 17 códigos mientras el dominio emitía 41 — el filtro compartido publica
+  cualquier `code`, así que 24 códigos llegaban a los clientes sin estar documentados. Se
+  completó y un test recorre las fuentes para que no vuelva a desincronizarse.
+- **RNF-11: `@Injectable()` fuera del núcleo.** Se había filtrado a 11 archivos de
+  `domain/` y `application/`. Los módulos ahora declaran esos providers con `useFactory`
+  explícito. Un test (`hexagonal-isolation.spec.ts`) recorre el árbol y falla ante cualquier
+  import de `@nestjs/*`, `typeorm`, `pg` o `express` en el núcleo: era un decorador inocuo,
+  y así es como se erosiona un límite — nada falla, nadie lo nota, y la infraestructura real
+  entra después por el mismo camino.
+
+### Deuda que se deja abierta a conciencia
+
+- **`ConsistencyVerifier` solo verifica balances.** RNF-5 pide verificación entre
+  proyecciones y stream; el rebuild cubre las 8 proyecciones, la verificación solo
+  `proj_balances`. No se amplió acá: es trabajo de tamaño propio y el rebuild ya resuelve el
+  caso real de corrupción.
+- ~~**Aserciones intradía inertes.**~~ **Resuelto el mismo día** — ver la entrada de abajo.
+
+---
+
 ## HU-0023 — Atomicidad cross-stream de commands multi-agregado (2026-07-27)
 
 - **`withTransaction(fn)` sobre `appendMany(batches)`** (elegido por el usuario): conserva
