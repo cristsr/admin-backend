@@ -211,17 +211,19 @@ EP-5 se disolvió: no existe en la spec (§11 define 4 fases) y mezclaba tres co
 sin relación. Se replanifican como tareas de infraestructura sueltas, sin orden
 entre sí ni dependencia con las fases de construcción.
 
-- [ ] **Backups** automatizados del event store + prueba de restauración
-      (pregunta abierta #8; **obligatorio antes de datos reales**).
-- [ ] **Runbook** de rebuild de proyecciones y verificación de consistencia — el
-      tooling ya existe (`nx run ledger:rebuild`, `:rebuildAll`,
-      `:verify-balances`); falta el documento operativo.
-- [ ] **Métricas OTel** (RNF-12): lag de proyecciones asíncronas, tasa de
-      conflictos de concurrencia optimista, errores de projectors/reactors. En
-      decoradores de los buses, nunca dentro del dominio (RNF-11).
-- [ ] **Retiro de `finances`** (`movement`, `transfer`, `category`, `summary`,
-      `budget` viejo) una vez cubiertos por `ledger`. Es trabajo sobre **otra
-      app**, no sobre el ledger.
+- [x] ~~**Backups** automatizados del event store~~ — **resuelto a nivel de
+      infraestructura** (2026-07-27). Un dump completo de la base alcanza: el event
+      store es la única fuente de verdad y las proyecciones se reconstruyen por
+      replay (RNF-5). Cierra la pregunta abierta #8 de la spec. La verificación
+      post-restauración (`rebuildAll` + `verify-balances`) queda como nota del
+      runbook.
+- [ ] **Runbook** de rebuild y verificación → `work/backlog/hu-0021`. Condición de
+      disparo: que exista un despliegue real y se haya operado al menos un rebuild.
+- [ ] **Métricas OTel** (RNF-12) → `work/backlog/hu-0022`. Condición de disparo:
+      que haya tráfico que observar y un colector al que exportar.
+- [ ] **Retiro de `finances`** — bloqueado: el recorte de alcance dejó sin dueño a
+      `budget`, `summary` y `category`, que el ledger ya no va a absorber. No se
+      puede planificar hasta decidir qué pasa con ellos.
 
 ---
 
