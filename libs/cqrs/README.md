@@ -19,9 +19,28 @@ Extracted from `apps/ledger/src/shared-kernel` on 2026-07-27. See
 | `application/query-bus` | Query bus and handler contract |
 | `application/event` | Envelope factory, event registry (schema versions, upcasting) |
 | `application/projection` | `Projector`, `ReadModelStore`, dispatcher, checkpoints |
-| `infrastructure/adapters` | PostgreSQL and in-memory implementations of every port |
+| `infrastructure/adapters` | PostgreSQL and in-memory implementations of every port, plus `SystemClock` and `UuidIdGenerator` |
+| `infrastructure/adapters/migrations` | The `event_store` and `projection_checkpoints` schema |
+| `infrastructure/adapters/http` | Accepted-command response, stream-position header, idempotency-key decorator |
 | `infrastructure/testing` | Contract suites both adapters must pass |
-| `testing` | Deterministic `Clock` / `IdGenerator` doubles for consumers |
+| `testing` | Deterministic `Clock` / `IdGenerator` doubles and a recording command bus |
+
+## Schema ownership
+
+The `event_store` and `projection_checkpoints` migrations ship here, not with a
+consumer: they are the schema `PostgresEventStore` needs to work at all, and an
+app that owned them could drift from the adapter that reads them. A consumer
+adds this directory to its TypeORM `migrations` glob ahead of its own — see
+`apps/ledger/src/database/data-source.ts`. Both sets share one migrations table,
+and these timestamps come first.
+
+## What deliberately stays in the app
+
+The authenticated-context machinery (`LedgerContext`, its guard and the gateway
+header resolver) looks generic but encodes a contract with a specific identity
+service, so it belongs to whoever holds that contract. This library only takes
+the `AuthContext` shape the buses need — `userId`, `clientId`, `externalRef` —
+and never learns where those values came from.
 
 ## The rule that defines this library
 

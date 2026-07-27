@@ -1,9 +1,9 @@
 import { ExecutionContext } from '@nestjs/common';
-import { ContextCarryingRequest } from './context-carrying-request';
+import { Request } from 'express';
 import { EXTERNAL_REF_HEADER, extractExternalRef } from './external-ref.decorator';
 
 describe('extractExternalRef', () => {
-  const ctxFor = (request: Partial<ContextCarryingRequest>): ExecutionContext =>
+  const ctxFor = (request: Partial<Request>): ExecutionContext =>
     ({ switchToHttp: () => ({ getRequest: () => request }) }) as unknown as ExecutionContext;
 
   it('reads the X-External-Ref header', () => {

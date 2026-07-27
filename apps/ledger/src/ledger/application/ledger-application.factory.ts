@@ -8,6 +8,7 @@ import { Projector } from '@cqrs/application/projection/projector';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { EventStore } from '@cqrs/domain/ports/event-store';
+import { SynchronousProjectionDispatcher } from '@cqrs/infrastructure/adapters/projection/synchronous-dispatcher';
 import { AccountNameRegistry } from '@ledger/accounts/application/account-name.registry';
 import { AccountValidationService } from '@ledger/accounts/application/account-validation.service';
 import { AccountRepository } from '@ledger/accounts/application/account.repository';
@@ -28,7 +29,6 @@ import { CurrencyCatalogRepository } from '@ledger/reference/application/currenc
 import { RegisterCurrencyHandler } from '@ledger/reference/application/register-currency.handler';
 import { CurrenciesProjector } from '@ledger/reference/infrastructure/projections/currencies.projector';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
-import { SynchronousProjectionDispatcher } from '@cqrs/infrastructure/adapters/projection/synchronous-dispatcher';
 import { AmendPendingTransactionHandler } from '@ledger/transactions/application/amend-transaction/amend-pending-transaction.handler';
 import { AnnotateTransactionHandler } from '@ledger/transactions/application/annotate-transaction/annotate-transaction.handler';
 import { ConfirmTransactionHandler } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.handler';

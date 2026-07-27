@@ -6,12 +6,12 @@ import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { EventStore } from '@cqrs/domain/ports/event-store';
 import { PostgresEventStore } from '@cqrs/infrastructure/adapters/event-store/postgres/postgres-event-store';
 import { PostgresReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';
+import { SystemClock } from '@cqrs/infrastructure/adapters/system-clock';
+import { UuidIdGenerator } from '@cqrs/infrastructure/adapters/uuid-id-generator';
 import { createLedgerApplication } from '@ledger/ledger/application/ledger-application.factory';
 import { createQueryBus } from '@ledger/read-side/query-bus.factory';
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-catalog';
-import { SystemClock } from '@ledger/shared/infrastructure/system-clock';
-import { UuidIdGenerator } from '@ledger/shared/infrastructure/uuid-id-generator';
 
 /**
  * Composition root that mounts EP-1's real write/read buses into Nest DI so the

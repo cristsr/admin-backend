@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { CommandResultInterceptor } from '@cqrs/infrastructure/adapters/http';
 import { LedgerContextResolver } from '@ledger/shared/application/ports/ledger-context-resolver';
-import { CommandResultInterceptor } from './command-result.interceptor';
 import { LedgerContextGuard } from './ledger-context.guard';
 import { GatewayHeaderContextResolver } from './resolvers/gateway-header-context.resolver';
 

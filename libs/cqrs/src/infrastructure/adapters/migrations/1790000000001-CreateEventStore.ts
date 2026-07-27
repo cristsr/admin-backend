@@ -1,9 +1,14 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
- * The append-only event store (§6.1): the ledger's source of truth. Optimistic
- * concurrency via UNIQUE (aggregate_id, sequence); idempotency via the partial
- * UNIQUE (user_id, external_ref); immutability enforced by a trigger (INV-12).
+ * The append-only event store: the source of truth for any application built on
+ * this library. Optimistic concurrency via UNIQUE (aggregate_id, sequence);
+ * idempotency via the partial UNIQUE (user_id, external_ref); immutability
+ * enforced by a trigger.
+ *
+ * Ships with the library rather than with a consumer because it is the schema
+ * `PostgresEventStore` requires to work at all — an app that owned it could
+ * drift from the adapter that reads it.
  */
 export class CreateEventStore1790000000001 implements MigrationInterface {
   name = 'CreateEventStore1790000000001';

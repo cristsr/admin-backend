@@ -1,8 +1,8 @@
 import { EventStore } from '@cqrs/domain/ports/event-store';
 import { PostgresEventStore } from '@cqrs/infrastructure/adapters/event-store/postgres/postgres-event-store';
+import { CreateEventStore1790000000001 } from '@cqrs/infrastructure/adapters/migrations/1790000000001-CreateEventStore';
 import { describeEventStoreContract } from '@cqrs/infrastructure/testing/event-store.contract';
 import { DataSource } from 'typeorm';
-import { CreateEventStore1790000000001 } from '@ledger/database/migrations/1790000000001-CreateEventStore';
 
 /**
  * Runs the shared EventStore contract against a real PostgreSQL, plus the

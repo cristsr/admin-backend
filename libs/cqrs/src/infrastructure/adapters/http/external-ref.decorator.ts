@@ -1,6 +1,6 @@
 import { ExecutionContext, createParamDecorator } from '@nestjs/common';
 import { Nullable } from '@shared';
-import { ContextCarryingRequest } from './context-carrying-request';
+import { Request } from 'express';
 
 /** Header carrying the idempotency key; preferred over the body for automated clients. */
 export const EXTERNAL_REF_HEADER = 'x-external-ref';
@@ -11,7 +11,7 @@ export const EXTERNAL_REF_HEADER = 'x-external-ref';
  * `null` when neither is a non-blank string. Exported for direct unit testing.
  */
 export function extractExternalRef(ctx: ExecutionContext): Nullable<string> {
-  const request = ctx.switchToHttp().getRequest<ContextCarryingRequest>();
+  const request = ctx.switchToHttp().getRequest<Request>();
 
   const header = request.headers[EXTERNAL_REF_HEADER];
   if (typeof header === 'string' && header.trim()) return header.trim();

@@ -51,6 +51,33 @@ sobre `DatabaseModule` y la telemetría; el motor de event sourcing es otro caso
   evalúa último — así que afirmaba lo contrario de lo que decía su nombre y
   fallaba justamente cuando el reloj avanzaba entre ambas lecturas.
 
+### Segunda pasada: la infraestructura que había quedado en el ledger
+
+Aplicando el mismo criterio, se movió lo que era técnico de fondo y seguía
+dentro de la app:
+
+- **El esquema del event store y de los checkpoints** (migraciones `…001` y
+  `…002`). Son la tabla que `PostgresEventStore` necesita para funcionar; que la
+  definiera un consumidor permite que el esquema derive del adaptador que lo lee.
+  El `data-source` del ledger ahora compone dos globs de migraciones, con las de
+  `@cqrs` primero — comparten base y tabla de migraciones, y el orden lo dan los
+  timestamps.
+- **`SystemClock` y `UuidIdGenerator`**: los puertos ya vivían en la librería y
+  sus únicas implementaciones habían quedado del otro lado.
+- **El plumbing HTTP de CQRS**: `CommandAcceptedDto`, `CommandResultInterceptor`
+  (status y header de posición de stream) y el decorator de `External-Ref`. Nada
+  de eso sabe de contabilidad; cualquier app CQRS sobre REST lo reescribiría
+  igual. El decorator dependía del tipo de request del ledger solo para tipar
+  `headers`/`body`, así que se desacopló a `express.Request`.
+- **`RecordingCommandBus`**, doble genérico del bus.
+- **Se quedan en el ledger, a conciencia**: el contexto autenticado
+  (`LedgerContext`, guard, resolver de headers del gateway) parece genérico pero
+  codifica el contrato con un servicio de identidad concreto (RF-26, pregunta
+  abierta #5), así que pertenece a quien tiene ese contrato. La librería solo
+  recibe la forma `AuthContext` que los buses necesitan y nunca aprende de dónde
+  salieron esos valores. También se quedan el catálogo semilla de monedas y las
+  migraciones de proyecciones, que son contables.
+
 ---
 
 ## Instante de negocio en los eventos — aserciones intradía (2026-07-27)
