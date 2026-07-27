@@ -35,10 +35,11 @@ el handler despacha `RecordTransaction` por el `CommandBus` en vez de escribir l
 - La aserción queda vinculada a su ajuste por `resolvedByTxn`: eso es lo que hace auditable
   la cadena discrepancia → ajuste.
 
-> **Deuda conocida:** el handler emite el `TransactionRecorded` del ajuste y el
-> `DiscrepancyResolved` en dos appends a streams distintos, que hoy no son atómicos
-> (`TODO(atomicity)`). Un proceso caído en el medio deja una aserción resuelta sin su
-> ajuste. Es el alcance de hu-0023.
+**Atomicidad (hu-0023):** el `TransactionRecorded` del ajuste y el `DiscrepancyResolved`
+van a streams distintos, así que ambos appends corren dentro de
+`EventStore.withTransaction`. Una aserción marcada como resuelta sin su ajuste afirmaría
+que el dinero está explicado cuando no lo está; con la transacción, o se aplican los dos o
+ninguno.
 
 ## Errores
 

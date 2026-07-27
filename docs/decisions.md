@@ -8,6 +8,29 @@
 > entrada nueva que la referencia. Orden cronológico inverso (más reciente
 > primero).
 
+## HU-0023 — Atomicidad cross-stream de commands multi-agregado (2026-07-27)
+
+- **`withTransaction(fn)` sobre `appendMany(batches)`** (elegido por el usuario): conserva
+  el reuso de commands. Los dos handlers despachan `RecordTransaction` y
+  `VoidPendingTransaction` por el `CommandBus` (3 dispatches en `merge`, 1 en `resolve`);
+  con `appendMany` habrían tenido que dejar de usar el bus y orquestar los agregados a mano
+  para juntar los envelopes, duplicando lógica de `RecordTransactionHandler`. Con
+  `withTransaction` solo se envuelve la operación.
+- **`AsyncLocalStorage` para propagar el `EntityManager`.** El scope transaccional tiene que
+  llegar desde el handler hasta el `append`, pero pasarlo como parámetro habría obligado al
+  dominio a cargar un objeto de base de datos (RNF-11, Artículo 1). El adaptador Postgres lo
+  guarda en AsyncLocalStorage y `append` se une al scope abierto si lo hay; fuera de uno,
+  abre su propia transacción exactamente como antes.
+- **El in-memory simula rollback con un snapshot.** Copia superficial de la lista de eventos
+  al abrir el scope y restauración al fallar — alcanza porque `StoredEvent` nunca se muta en
+  su lugar, solo se agrega. Sin esto los contract tests no podrían correr idénticos en ambos
+  adaptadores (RNF-11).
+- **Anidar une, no apila.** Una llamada interna a `withTransaction` se suma al scope externo
+  en vez de abrir una segunda transacción; el contract test lo fija, porque lo contrario
+  permitiría que un tramo confirmara por su cuenta mientras el externo revierte.
+
+---
+
 ## HU-0019 — Catálogo de monedas administrable (2026-07-26)
 
 - **Catálogo global** (elegido por el usuario): una moneda es dato de referencia universal.

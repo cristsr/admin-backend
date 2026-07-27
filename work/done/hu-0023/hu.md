@@ -25,16 +25,24 @@ sobre la aserción (`resolve-discrepancy.handler.ts:27`). Una discrepancia marca
 resuelta sin su transacción de ajuste es peor que una sin resolver: afirma que el dinero
 está explicado cuando no lo está.
 
-### AC-3: El puerto `EventStore` expone la operación atómica
+### AC-3: El puerto expone `withTransaction(fn)`
 
-El puerto gana una forma de agrupar appends de varios streams en una unidad, sin que el
-dominio conozca la transacción de Postgres que la implementa (RNF-11, Artículo 1). Los
-handlers siguen sin importar `typeorm`.
+`EventStore` gana un scope transaccional: los `append` que ocurren dentro de la función
+comparten una transacción y se confirman o se revierten juntos.
 
-[NEEDS CLARIFICATION: ¿la forma es un método `appendMany(batches)` en el puerto, o un
-`withTransaction(fn)` que abarque varios `append` sucesivos? Lo primero es más simple de
-verificar por contract test; lo segundo es más flexible pero acopla el orden de las
-llamadas al scope de la transacción.]
+```typescript
+abstract withTransaction<T>(work: () => Promise<T>): Promise<T>;
+```
+
+Se eligió esta forma sobre `appendMany(batches)` porque **conserva el reuso de commands**.
+Los dos handlers afectados despachan `RecordTransaction` y `VoidPendingTransaction` por el
+`CommandBus` (3 dispatches en `merge`, 1 en `resolve`); con `appendMany` tendrían que dejar
+de usar el bus y orquestar los agregados a mano para juntar los envelopes, duplicando lógica
+que hoy vive en `RecordTransactionHandler`. Con `withTransaction` solo se envuelve la
+operación.
+
+El dominio no conoce la transacción de Postgres: entra por el puerto (RNF-11, Artículo 1) y
+los handlers no importan `typeorm`.
 
 ### AC-4: El contract test cubre la atomicidad en ambos adaptadores
 
