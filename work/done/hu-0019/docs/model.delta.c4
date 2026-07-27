@@ -1,0 +1,96 @@
+// C4 Nivel 3 — modulo reference (apps/ledger/src/reference).
+// Extiende admin.ledger definido en docs/architecture/landscape.c4.
+// Acumula: hu-0019 (catalogo de monedas administrable).
+
+model {
+  extend admin.ledger {
+    reference = module 'Reference' {
+      description 'Datos de referencia globales: el catalogo de monedas y su precision decimal.'
+      metadata {
+        introducedIn 'hu-0019'
+      }
+
+      currencyCatalog = component 'CurrencyCatalogAggregate' {
+        technology 'Domain · Aggregate'
+        description 'Agregado plano: un codigo mapea a una precision, para siempre. Stream global.'
+        metadata {
+          introducedIn 'hu-0019'
+        }
+      }
+      registerHandler = component 'RegisterCurrencyHandler' {
+        technology 'Application · CommandHandler'
+        description 'Registra una moneda y refresca la cache del catalogo de lectura.'
+        metadata {
+          introducedIn 'hu-0019'
+        }
+      }
+      listHandler = component 'ListCurrenciesHandler' {
+        technology 'Application · QueryHandler'
+        description 'Lista proj_currencies. Global: no filtra por usuario.'
+        metadata {
+          introducedIn 'hu-0019'
+        }
+      }
+      currenciesProjector = component 'CurrenciesProjector' {
+        technology 'Infrastructure · Projector'
+        description 'Materializa proj_currencies desde CurrencyRegistered.'
+        metadata {
+          introducedIn 'hu-0019'
+        }
+      }
+      readModelCatalog = component 'ReadModelCurrencyCatalog' {
+        technology 'Infrastructure · Adapter (cache)'
+        description 'Implementa CurrencyCatalog. resolve() sigue siendo SINCRONO: sirve desde una cache hidratada al arrancar.'
+        metadata {
+          introducedIn 'hu-0019'
+        }
+      }
+      controller = component 'CurrenciesController' {
+        technology 'Infrastructure · REST'
+        description 'POST /currencies · GET /currencies'
+        metadata {
+          introducedIn 'hu-0019'
+        }
+      }
+    }
+  }
+
+  user -> admin.ledger.reference.controller 'administra monedas via HTTP/REST'
+  admin.ledger.reference.controller -> admin.ledger.shared.commandBus 'dispatch(RegisterCurrencyCommand)'
+  admin.ledger.reference.controller -> admin.ledger.shared.queryBus 'ask(ListCurrenciesQuery)'
+  admin.ledger.shared.commandBus -> admin.ledger.reference.registerHandler 'handle'
+  admin.ledger.reference.registerHandler -> admin.ledger.reference.currencyCatalog 'register(code, minorUnits)'
+  admin.ledger.reference.registerHandler -> admin.ledger.shared.eventStore 'append(CurrencyRegistered)'
+  admin.ledger.reference.registerHandler -> admin.ledger.reference.readModelCatalog 'refresh() tras persistir'
+  admin.ledger.reference.currenciesProjector -> admin.ledger.shared.readModel 'upsert proj_currencies'
+  admin.ledger.reference.readModelCatalog -> admin.ledger.shared.readModel 'query proj_currencies (al hidratar)'
+  admin.ledger.reference.listHandler -> admin.ledger.shared.readModel 'query proj_currencies'
+}
+
+views 'Reference' {
+  view referenceComponents of admin.ledger.reference {
+    title 'Componentes'
+    include admin.ledger.reference, admin.ledger.reference.*
+    include admin.ledger.shared.commandBus, admin.ledger.shared.queryBus, admin.ledger.shared.readModel
+  }
+
+  dynamic view registerCurrency {
+    title 'Registrar una moneda · trigger REST'
+
+    user -> admin.ledger.reference.controller 'POST /v1/currencies (RegisterCurrencyRequestDto)'
+    admin.ledger.reference.controller -> admin.ledger.shared.commandBus 'dispatch(RegisterCurrencyCommand)'
+    admin.ledger.shared.commandBus -> admin.ledger.reference.registerHandler 'handle'
+    admin.ledger.reference.registerHandler -> admin.ledger.reference.currencyCatalog 'register() — rango 0..4, conflicto de precision'
+    admin.ledger.reference.registerHandler -> admin.ledger.shared.eventStore 'append(CurrencyRegistered)'
+    admin.ledger.reference.registerHandler -> admin.ledger.reference.readModelCatalog 'refresh() — el proximo resolve ve la moneda'
+  }
+
+  dynamic view listCurrencies {
+    title 'Listar las monedas registradas · trigger REST'
+
+    user -> admin.ledger.reference.controller 'GET /v1/currencies'
+    admin.ledger.reference.controller -> admin.ledger.shared.queryBus 'ask(ListCurrenciesQuery)'
+    admin.ledger.shared.queryBus -> admin.ledger.reference.listHandler 'handle'
+    admin.ledger.reference.listHandler -> admin.ledger.shared.readModel 'query proj_currencies'
+  }
+}

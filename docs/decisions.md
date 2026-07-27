@@ -8,6 +8,31 @@
 > entrada nueva que la referencia. Orden cronológico inverso (más reciente
 > primero).
 
+## HU-0019 — Catálogo de monedas administrable (2026-07-26)
+
+- **Catálogo global** (elegido por el usuario): una moneda es dato de referencia universal.
+  Excepción consciente al Artículo 5, acotada a datos de referencia.
+- **`minorUnits` entre 0 y 4** (elegido): el rango de ISO-4217.
+- **Re-registro idempotente si es idéntico, rechazo si difiere** (elegido): cambiar la
+  precisión reinterpretaría montos históricos (principio #5).
+- **`resolve` conserva su firma síncrona.** Es la restricción que gobierna todo: lo
+  consumen 22 archivos, incluida la deserialización de eventos con montos
+  (`BalanceAsserted.fromPayload` y compañía). El adaptador nuevo lee la proyección pero
+  sirve desde una caché en memoria; volverlo asíncrono rompería la rehidratación de todo
+  agregado con dinero.
+- **`userId` de sistema reservado para el stream del catálogo.** Consecuencia técnica de
+  la decisión anterior, no una decisión nueva: `StreamId` exige `userId` y el `EventStore`
+  filtra por él en `load` y `findByExternalRef` (INV-9). Un stream global se estampa con un
+  UUID de sistema constante y declarado. La excepción a INV-9 es la misma que la del
+  Artículo 5 que AC-2 ya asumió, no una segunda.
+- **Las monedas ISO base viven en el adaptador, no en una migración.** Insertar COP y USD
+  en `proj_currencies` por migración las borraría el primer `rebuild currencies`: el
+  rebuild trunca la tabla y la reconstruye desde el stream, donde esos eventos no existen.
+  El adaptador resuelve primero contra la proyección y cae al conjunto base si no
+  encuentra; así COP y USD sobreviven a cualquier rebuild y a un catálogo vacío (AC-8).
+
+---
+
 ## HU-0018 — Endpoints de configuración del ledger (2026-07-26)
 
 - **`PUT /v1/ledger/settings` que reemplaza la configuración completa** (elegido por el

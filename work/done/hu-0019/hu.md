@@ -18,16 +18,22 @@ recompilar ni deployar el servicio
 el núcleo cambie: el puerto `CurrencyCatalog` y su firma `resolve(code): Currency` se
 mantienen intactos.
 
-### AC-2: Evento y command de registro
+### AC-2: Evento y command de registro, con catálogo **global del sistema**
 
 Existe el evento `CurrencyRegistered` y el command que lo emite, con `code` (ISO-4217) y
 `minorUnits`.
 
-[NEEDS CLARIFICATION: ¿el catálogo de monedas es **global del sistema** o **por usuario**?
-Todo lo demás en el ledger está particionado por `user_id`, pero una moneda es un dato de
-referencia universal: COP tiene 0 decimales para todos. Un catálogo por usuario obliga a
-sembrar monedas en cada inicialización de ledger; uno global rompe el patrón de
-particionado y necesita decidir quién puede escribirlo.]
+El catálogo es **global**, no por usuario: una moneda es un dato de referencia universal
+—COP tiene 0 decimales para todos— y no un dato de negocio de nadie. Es una excepción
+consciente al Artículo 5, acotada a datos de referencia.
+
+La razón técnica pesa igual: `CurrencyCatalog.resolve(code)` es **síncrono** y lo consumen
+22 archivos, incluida la deserialización de eventos (`BalanceAsserted.fromPayload` y
+compañía). Un catálogo por usuario obligaría a propagar `userId` hasta la rehidratación del
+stream; uno global conserva la firma intacta.
+
+El stream del catálogo se identifica con un `aggregateId` fijo y conocido, no con un
+`user_id`.
 
 ### AC-3: Proyección del catálogo
 
@@ -43,20 +49,22 @@ por referencia externa (RF-11).
 
 `GET /v1/currencies` lista las monedas registradas con su `minor_units`.
 
-### AC-6: Validación de `minor_units`
+### AC-6: Validación de `minorUnits` entre 0 y 4
 
-`minorUnits` es un entero entre 0 y un máximo razonable. Registrar una moneda con
-precisión inválida se rechaza con un código de error de dominio estable (RF-14).
+`minorUnits` es un entero de **0 a 4**, el rango que define ISO-4217 (0 para COP o JPY, 2
+para USD o EUR, 4 para CLF y UYW). Registrar una moneda fuera de ese rango se rechaza con un
+código de error de dominio estable (RF-14).
 
-[NEEDS CLARIFICATION: ¿cuál es el máximo aceptado para `minorUnits`? ISO-4217 llega hasta
-4 (p. ej. CLF, UYW), pero `NUMERIC(20,6)` en las proyecciones soporta 6.]
+`Currency.of` ya valida que sea un entero no negativo; esta historia agrega el techo.
 
-### AC-7: Re-registrar una moneda existente
+### AC-7: Re-registrar es idempotente si nada cambia, y se rechaza si difiere
 
-[NEEDS CLARIFICATION: ¿qué pasa al registrar una moneda que ya existe — es idempotente
-(no-op), se rechaza, o permite corregir `minor_units`? Corregir la precisión de una moneda
-con transacciones ya registradas cambiaría el significado de montos históricos, lo que
-choca con el principio #5 (inmutabilidad económica).]
+- Registrar una moneda **idéntica** a la existente (mismo código, mismos `minorUnits`) es un
+  no-op: no emite evento y responde `2xx` (RNF-4). Un reintento de red se resuelve solo.
+- Registrar el mismo código con **distinta precisión** se rechaza con un código estable.
+  Cambiar los `minorUnits` de una moneda reinterpretaría el significado de todos los montos
+  ya registrados en ella —`100` pasaría de ser 100 a ser 1,00— y eso viola el principio de
+  diseño #5, la inmutabilidad económica de lo ya registrado.
 
 ### AC-8: Las monedas semilla siguen disponibles
 
