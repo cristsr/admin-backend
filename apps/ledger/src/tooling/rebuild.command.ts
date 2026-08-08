@@ -19,7 +19,7 @@ import {
   AssertionStatusProjector,
   PROJ_ASSERTIONS,
 } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
-import { PROJ_CURRENCIES } from '@ledger/reference/application/read-models/currencies.read-model';
+import { PROJ_CURRENCIES } from '@ledger/reference/infrastructure/projections/currencies.schema';
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
 import { CurrenciesProjector } from '@ledger/reference/infrastructure/projections/currencies.projector';
 import { ConsistencyVerifier } from '@ledger/tooling/consistency-verifier';

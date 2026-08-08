@@ -9,7 +9,7 @@ import { OpenAccountCommand } from '@ledger/accounts/application/usecases/open-a
 import { NameCollisionException } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { InitializeLedgerCommand } from '@ledger/ledger/application/usecases/initialize-ledger/initialize-ledger.command';
 import { LedgerAlreadyInitializedException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
-import { PROJ_CURRENCIES } from '@ledger/reference/application/read-models/currencies.read-model';
+import { PROJ_CURRENCIES } from '@ledger/reference/infrastructure/projections/currencies.schema';
 import { RegisterCurrencyCommand } from '@ledger/reference/application/usecases/register-currency/register-currency.command';
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
 import { CurrencyCode } from '@ledger/shared/domain/value-objects';

@@ -1,17 +1,14 @@
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { Criteria } from '@shared';
 import { CurrencyCatalogCache } from '@ledger/reference/application/ports/currency-catalog.cache';
-import { PROJ_CURRENCIES } from '@ledger/reference/application/read-models/currencies.read-model';
+import {
+  CurrencyRow,
+  PROJ_CURRENCIES,
+} from '@ledger/reference/infrastructure/projections/currencies.schema';
 import { Currency } from '@ledger/shared/domain/money';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-catalog';
 import { CurrencyCode } from '@ledger/shared/domain/value-objects/currency-code';
 import { UnknownCurrencyException } from '@ledger/shared/domain/value-objects/value-object.exception';
-
-/** One row of `proj_currencies`. */
-type CurrencyRow = {
-  readonly code: string;
-  readonly minor_units: number;
-};
 
 /**
  * ISO-4217 currencies the ledger can always resolve, even against an empty

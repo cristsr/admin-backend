@@ -7,8 +7,8 @@ import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { Nullable } from '@shared';
 import {
   CurrencyView,
-  ListCurrenciesQuery,
-} from '@ledger/reference/application/usecases/list-currencies/list-currencies.query';
+} from '@ledger/reference/application/views/currency.view';
+import { ListCurrenciesQuery } from '@ledger/reference/application/usecases/list-currencies/list-currencies.query';
 import { RegisterCurrencyCommand } from '@ledger/reference/application/usecases/register-currency/register-currency.command';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import {
@@ -57,7 +57,7 @@ export class CurrenciesController {
   @Get()
   @ApiOperation({ summary: 'List the registered currencies.' })
   @ApiOkResponse({ type: [CurrencyDto] })
-  list(@Context() context: LedgerContext): Promise<CurrencyView[]> {
+  list(@Context() context: LedgerContext): Promise<readonly CurrencyView[]> {
     return this.queryBus.ask(new ListCurrenciesQuery(), {
       userId: context.userId,
     });

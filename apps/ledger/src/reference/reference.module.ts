@@ -1,5 +1,7 @@
 import { Logger, Module, OnModuleInit } from '@nestjs/common';
+import { CurrencyCatalogFinder } from '@ledger/reference/application/ports/currency-catalog-finder.port';
 import { CurrenciesController } from '@ledger/reference/infrastructure/adapters/http/currencies.controller';
+import { ReadModelCurrencyCatalogFinder } from '@ledger/reference/infrastructure/adapters/persistence/read-model-currency-catalog-finder';
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
 
 /**
@@ -9,7 +11,7 @@ import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapt
  * registered on the `CommandBus` by `createLedgerApplication` and
  * `ListCurrenciesHandler` on the `QueryBus` by `createQueryBus`, which are the
  * two buses {@link CurrenciesController} dispatches into. This module only owns
- * the HTTP surface and the boot hydration.
+ * the HTTP surface, the catalog finder binding and the boot hydration.
  *
  * `ReadModelCurrencyCatalog` is hydrated on boot because `CurrencyCatalog.resolve`
  * is synchronous and is called during stream rehydration — by the time an
@@ -17,6 +19,10 @@ import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapt
  */
 @Module({
   controllers: [CurrenciesController],
+  providers: [
+    { provide: CurrencyCatalogFinder, useClass: ReadModelCurrencyCatalogFinder },
+  ],
+  exports: [CurrencyCatalogFinder],
 })
 export class ReferenceModule implements OnModuleInit {
   private readonly logger = new Logger(ReferenceModule.name);

@@ -11,6 +11,8 @@ import { LedgerSettingsFinder } from '@ledger/ledger/application/ports/ledger-se
 import { SystemAccountLookup } from '@ledger/ledger/application/ports/system-account-lookup.port';
 import { ReadModelLedgerSettingsFinder } from '@ledger/ledger/infrastructure/adapters/persistence/read-model-ledger-settings-finder';
 import { ReadModelSystemAccountLookup } from '@ledger/ledger/infrastructure/adapters/persistence/read-model-system-account-lookup';
+import { CurrencyCatalogFinder } from '@ledger/reference/application/ports/currency-catalog-finder.port';
+import { ReadModelCurrencyCatalogFinder } from '@ledger/reference/infrastructure/adapters/persistence/read-model-currency-catalog-finder';
 import { PendingReviewFinder } from '@ledger/transactions/application/ports/pending-review-finder.port';
 import { TransactionFinder } from '@ledger/transactions/application/ports/transaction-finder.port';
 import { PostgresTransactionFinder } from '@ledger/transactions/infrastructure/adapters/persistence/postgres-transaction-finder';
@@ -31,7 +33,7 @@ export type QueryPorts = {
   readonly ledgerSettings: LedgerSettingsFinder;
   readonly transactions: TransactionFinder;
   readonly pendingReview: PendingReviewFinder;
-  // Completed by the `reference` phase.
+  readonly currencies: CurrencyCatalogFinder;
 };
 
 /** The read ports serving command handlers and application services. */
@@ -59,6 +61,7 @@ export function createQueryPorts(readModel: ReadModelStore): QueryPorts {
     ledgerSettings: new ReadModelLedgerSettingsFinder(readModel),
     transactions: new ReadModelTransactionFinder(readModel),
     pendingReview: new ReadModelPendingReviewFinder(readModel),
+    currencies: new ReadModelCurrencyCatalogFinder(readModel),
   };
 }
 

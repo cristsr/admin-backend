@@ -88,7 +88,7 @@ import { DataSource } from 'typeorm';
         const ports = createQueryPorts(readModel);
         const composed = dataSource ? withSqlTransactionFinder(ports, dataSource) : ports;
 
-        return createQueryBus(readModel, composed);
+        return createQueryBus(composed);
       },
     },
     { provide: QueryBus, useExisting: RegistryQueryBus },

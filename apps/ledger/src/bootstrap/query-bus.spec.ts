@@ -13,6 +13,7 @@ import { ListTransactionsQuery } from '@ledger/transactions/application/usecases
 import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { createQueryBus } from './query-bus.factory';
+import { createQueryPorts } from './read-side-ports.factory';
 
 const ctx: AuthContext = { userId: 'user-1', clientId: 'c', externalRef: null };
 
@@ -49,7 +50,7 @@ async function seed(): Promise<{ commandBus: CommandBus; queryBus: QueryBus; ass
     ctx,
   );
 
-  return { commandBus, queryBus: createQueryBus(readModel), assets: assets.aggregateId };
+  return { commandBus, queryBus: createQueryBus(createQueryPorts(readModel)), assets: assets.aggregateId };
 }
 
 describe('Query bus (read side)', () => {
