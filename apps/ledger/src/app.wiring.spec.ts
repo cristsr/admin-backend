@@ -3,6 +3,7 @@ import { Global, Module } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getDataSourceToken, getEntityManagerToken } from '@nestjs/typeorm';
 import { PolicyCommandBus } from '@cqrs/application/command-bus/command-bus';
+import { RegistryQueryBus } from '@cqrs/application/query-bus/query-bus';
 
 /** Every value the config validator demands; must be set before the modules load. */
 const environment: Record<string, string> = {
@@ -125,6 +126,45 @@ describe('Application wiring', () => {
         'ReverseConfirmedTransactionCommand',
         'RevokeAssertionCommand',
         'VoidPendingTransactionCommand',
+      ].sort(),
+    );
+
+    await app.close();
+  });
+
+  /**
+   * Same failure mode on the read side, and the same reason to pin it: the two
+   * reconciliation queries are registered by their module's `onModuleInit`, not
+   * by `createQueryBus`, because their store is bound in that module. A read
+   * that compiles and owns an endpoint can still reach no handler.
+   */
+  it('registers a handler for every query in the catalogue', async () => {
+    moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideModule(DatabaseModule)
+      .useModule(StubDatabaseModule)
+      .compile();
+
+    const app = moduleRef.createNestApplication({ logger: false });
+    await app.init();
+
+    const registered = app
+      .get(RegistryQueryBus)
+      .registeredTypes()
+      .map((query) => query.name)
+      .sort();
+
+    expect(registered).toEqual(
+      [
+        'GetAccountBalancesQuery',
+        'GetAccountByIdQuery',
+        'GetAccountTreeQuery',
+        'GetAssertionStatusQuery',
+        'GetLedgerSettingsQuery',
+        'GetTransactionByIdQuery',
+        'ListAssertionsQuery',
+        'ListCurrenciesQuery',
+        'ListPendingReviewQuery',
+        'ListTransactionsQuery',
       ].sort(),
     );
 

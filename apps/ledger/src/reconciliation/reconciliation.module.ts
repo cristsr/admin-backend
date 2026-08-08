@@ -3,6 +3,7 @@ import { CommandBus, PolicyCommandBus } from '@cqrs/application/command-bus/comm
 import { EnvelopeFactory } from '@cqrs/application/event/envelope.factory';
 import { EventRegistry } from '@cqrs/application/event/event-registry';
 import { ProjectionCheckpointRepository } from '@cqrs/application/projection/projection-checkpoint.repository';
+import { RegistryQueryBus } from '@cqrs/application/query-bus/query-bus';
 import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { EventStore } from '@cqrs/domain/ports/event-store';
 import { PostgresProjectionCheckpointRepository } from '@cqrs/infrastructure/adapters/projection/postgres-projection-checkpoint.repository';
@@ -12,7 +13,9 @@ import { AssertBalanceCommand } from './application/assert-balance/assert-balanc
 import { AssertBalanceHandler } from './application/assert-balance/assert-balance.handler';
 import { EvaluateAssertionHandler } from './application/evaluate-assertion/evaluate-assertion.handler';
 import { GetAssertionStatusHandler } from './application/get-assertion-status/get-assertion-status.handler';
+import { GetAssertionStatusQuery } from './application/get-assertion-status/get-assertion-status.query';
 import { ListAssertionsHandler } from './application/list-assertions/list-assertions.handler';
+import { ListAssertionsQuery } from './application/list-assertions/list-assertions.query';
 import { ReevaluateAssertionsReactor } from './application/reactors/reevaluate-assertions.reactor';
 import { createReconciliationEventRegistry } from './application/reconciliation-event-registry.factory';
 import { ResolveDiscrepancyCommand } from './application/resolve-discrepancy/resolve-discrepancy.command';
@@ -185,14 +188,23 @@ import { AssertionStatusProjector } from './infrastructure/projections/assertion
 export class ReconciliationModule implements OnModuleInit {
   constructor(
     private readonly commandBus: PolicyCommandBus,
+    private readonly queryBus: RegistryQueryBus,
     private readonly assertBalance: AssertBalanceHandler,
     private readonly revokeAssertion: RevokeAssertionHandler,
     private readonly resolveDiscrepancy: ResolveDiscrepancyHandler,
+    private readonly getAssertionStatus: GetAssertionStatusHandler,
+    private readonly listAssertions: ListAssertionsHandler,
   ) {}
 
   onModuleInit(): void {
     this.commandBus.register(AssertBalanceCommand, this.assertBalance);
     this.commandBus.register(RevokeAssertionCommand, this.revokeAssertion);
     this.commandBus.register(ResolveDiscrepancyCommand, this.resolveDiscrepancy);
+
+    // The reads join the same bus as every other module's. They are registered
+    // here rather than in `createQueryBus` because `AssertionStatusStore` is
+    // bound in this module, and the composition root must not know about it.
+    this.queryBus.register(GetAssertionStatusQuery, this.getAssertionStatus);
+    this.queryBus.register(ListAssertionsQuery, this.listAssertions);
   }
 }

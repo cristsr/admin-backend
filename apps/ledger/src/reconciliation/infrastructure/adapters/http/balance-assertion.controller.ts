@@ -9,16 +9,20 @@ import {
   Query,
   UseInterceptors,
 } from '@nestjs/common';
+import { ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { Command } from '@cqrs/application/command-bus/command';
 import { CommandBus } from '@cqrs/application/command-bus/command-bus';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
+import { QueryBus } from '@cqrs/application/query-bus/query-bus';
+import { QueryContext } from '@cqrs/application/query-bus/query-handler';
 import { Nullable } from '@shared';
 import { AssertBalanceCommand } from '@ledger/reconciliation/application/assert-balance/assert-balance.command';
-import { GetAssertionStatusHandler } from '@ledger/reconciliation/application/get-assertion-status/get-assertion-status.handler';
 import { GetAssertionStatusQuery } from '@ledger/reconciliation/application/get-assertion-status/get-assertion-status.query';
-import { ListAssertionsHandler } from '@ledger/reconciliation/application/list-assertions/list-assertions.handler';
 import { ListAssertionsQuery } from '@ledger/reconciliation/application/list-assertions/list-assertions.query';
+import {
+  AssertionStatusView,
+} from '@ledger/reconciliation/application/read-models/assertion-status.read-model';
 import { ResolveDiscrepancyCommand } from '@ledger/reconciliation/application/resolve-discrepancy/resolve-discrepancy.command';
 import { RevokeAssertionCommand } from '@ledger/reconciliation/application/revoke-assertion/revoke-assertion.command';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
@@ -28,6 +32,7 @@ import {
   ExternalRef,
 } from '@ledger/shared/infrastructure/adapters/http';
 import { AssertBalanceRequestDto, RevokeAssertionRequestDto } from './dto';
+import { AssertionStatusDto } from './dto/assertion-status.dto';
 
 /**
  * HTTP surface for reconciliation: translates REST calls into commands on the
@@ -36,13 +41,13 @@ import { AssertBalanceRequestDto, RevokeAssertionRequestDto } from './dto';
  * providers — is what gives these endpoints idempotency by `External-Ref`
  * (INV-10). No domain logic here; the controller only adapts.
  */
+@ApiTags('balance-assertions')
 @Controller({ path: 'balance-assertions', version: '1' })
 @UseInterceptors(CommandResultInterceptor)
 export class BalanceAssertionController {
   constructor(
     private readonly commandBus: CommandBus,
-    private readonly getStatus: GetAssertionStatusHandler,
-    private readonly listAssertions: ListAssertionsHandler,
+    private readonly queryBus: QueryBus,
   ) {}
 
   @Post()
@@ -88,13 +93,28 @@ export class BalanceAssertionController {
   }
 
   @Get(':id')
-  byId(@Context() context: LedgerContext, @Param('id') id: string) {
-    return this.getStatus.execute(new GetAssertionStatusQuery(context.userId, id));
+  @ApiOperation({ summary: 'Read one balance assertion and its verdict.' })
+  @ApiOkResponse({ type: AssertionStatusDto })
+  byId(
+    @Context() context: LedgerContext,
+    @Param('id') id: string,
+  ): Promise<Nullable<AssertionStatusView>> {
+    return this.queryBus.ask(new GetAssertionStatusQuery(id), this.queryContext(context));
   }
 
   @Get()
-  list(@Context() context: LedgerContext, @Query('accountId') accountId: string) {
-    return this.listAssertions.execute(new ListAssertionsQuery(context.userId, accountId));
+  @ApiOperation({ summary: 'List the balance assertions on an account.' })
+  @ApiOkResponse({ type: [AssertionStatusDto] })
+  list(
+    @Context() context: LedgerContext,
+    @Query('accountId') accountId: string,
+  ): Promise<readonly AssertionStatusView[]> {
+    return this.queryBus.ask(new ListAssertionsQuery(accountId), this.queryContext(context));
+  }
+
+  /** Builds the read-side context: the owning user that partitions every read (INV-9). */
+  private queryContext(context: LedgerContext): QueryContext {
+    return { userId: context.userId };
   }
 
   /** Dispatches a command with the write-side context assembled from the request. */

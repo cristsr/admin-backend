@@ -2,13 +2,19 @@
 
 **Alcance:** `apps/ledger/src/` (verificado también `libs/cqrs/src/` como kernel de apoyo)
 **Fecha:** 2026-08-07 · **Rama:** `feat/core`
-**Score:** 26/36 → **32/36** tras aplicar los HIGH y M-2
+**Score:** 26/36 → **32/36** tras aplicar los HIGH, M-1, M-2 y M-3
 
-> **Estado (2026-08-07):** los tres hallazgos HIGH, M-1 y M-2 están **aplicados**,
-> más la mitad de M-6. Suite verde: 474 tests pasan (17 nuevos), 2 suites skipped
-> (las que exigen Postgres). `tsc` limpio en `tsconfig.app.json` y
+> M-3 no mueve el puntaje: su ganancia es de consistencia de wiring, que las doce
+> dimensiones ya contaban en «Ports & bindings», y esa sigue en 2/3 hasta que se
+> muevan los seis puertos de M-6. Que el número no suba no lo hace menos valioso —
+> era la última lectura que no pasaba por el bus tipado.
+
+> **Estado (2026-08-07):** los tres hallazgos HIGH, M-1, M-2 y M-3 están
+> **aplicados**, más la mitad de M-6. Suite verde: 480 tests pasan (23 nuevos),
+> 2 suites skipped (las que exigen Postgres). `tsc` limpio en `tsconfig.app.json` y
 > `tsconfig.spec.json`. El detalle de cada fix está en la nota `✅ Resuelto` bajo el
-> hallazgo. Pendientes: M-3, M-4, M-5, la otra mitad de M-6, y los cinco LOW.
+> hallazgo. Pendientes: M-4, M-5, la otra mitad de M-6, los cinco LOW, y `total`
+> en `GET /transactions`.
 
 ## Resumen
 
@@ -231,6 +237,31 @@ Swagger y devuelven las filas `snake_case` del read model. Ya está reconocido c
   demás.
 - **Fix:** registrar ambos handlers en `createQueryBus` y hacer que el controller
   despache por el bus con `QueryContext`, moviendo `userId` fuera de la query.
+- **✅ Resuelto, pero no como decía el fix.** Registrarlos en `createQueryBus` no se
+  podía: ese factory sólo recibe el `ReadModelStore`, y estos handlers dependen de
+  `AssertionStatusStore`, que se bindea en `ReconciliationModule`. Inyectarlo en la
+  raíz de composición habría hecho que el núcleo conociera un módulo de negocio —
+  cambiar un acoplamiento por otro peor.
+
+  La salida ya estaba escrita en el lado de escritura: el módulo registra sus
+  propios handlers en `onModuleInit` sobre el bus compartido. Para eso `QueryBus`
+  (abstracto, sólo `ask`) no alcanzaba, así que el core provee ahora el
+  `RegistryQueryBus` concreto y aliasea `QueryBus` sobre él — exactamente la forma
+  que `PolicyCommandBus`/`CommandBus` ya tenían. Las dos lecturas entran por el
+  mismo bus que el resto sin que la raíz sepa que `reconciliation` existe.
+
+  Con eso, `userId` sale de las queries y viaja en el `QueryContext`: el aislamiento
+  por usuario (Art. 5) es ahora el contrato del bus para **todas** las lecturas, y no
+  algo que cada query recuerde declarar. Las queries pasan a extender `Query<T>` y
+  los handlers `QueryHandler<T>`, así que el tipo de retorno lo fija la query.
+
+  De paso se aplicó M-2 aquí: `AssertionStatusView` + `AssertionStatusDto`. El tipo
+  del puerto exponía `userId` y devolvía `Date` en `checkedAt`/`createdAt`, donde el
+  resto de la API usa strings ISO.
+
+  **`app.wiring.spec.ts` gana el caso espejo del de comandos**: un handler que no se
+  registra no falla al arrancar, sólo cuando llega el request. Ahora las diez queries
+  del catálogo están fijadas.
 
 ### [MEDIUM] M-4 · `LedgerNotInitializedException` existe dos veces con el mismo `code`
 
@@ -374,6 +405,7 @@ Artículo 4 (test primero).
 4. ~~**H-2 — mover los factories a una raíz de composición neutral.**~~ ✅
    (+ la mitad de M-6: los repositorios, que el guard exigía.)
 5. ~~**M-2 — mappers de salida por lectura.**~~ ✅
+6. ~~**M-3 — las lecturas de `reconciliation` por el `QueryBus`.**~~ ✅
 
 ### Pendiente
 
@@ -382,12 +414,9 @@ Ninguno bloquea a otro; se pueden tomar de a uno al tocar el módulo:
 - **`total` en `GET /transactions`** — el único pedazo de M-2 que quedó fuera:
   necesita un `count` en el puerto `ReadModelStore` y en sus dos adaptadores, más
   el contract test. Es una HU chica, no un fix de arquitectura.
-- **M-3** — registrar los query handlers de `reconciliation` en el `QueryBus` y
-  sacar `userId` de la query. Es además lo que falta para que **todas** las lecturas
-  pasen por el mismo camino tipado que M-2 dejó armado.
+- **M-6 (resto)** — mover a `application/ports/` los seis puertos sin consumidor de
+  dominio. Es lo único que separa «Ports & bindings» de 3/3.
 - **M-4** — unificar `LedgerNotInitializedException` en `shared/domain/errors/`.
-- **M-6 (resto)** — mover a `application/ports/` los seis puertos sin consumidor
-  de dominio.
 - **M-5** — resolver la doble implementación de INV-3/INV-4 (o borrar los métodos
   del agregado si se confirma que están muertos).
 - **L-1 … L-5** — hygiene; L-3 (`accounts` sin módulo raíz) ya es barato ahora que
@@ -399,8 +428,8 @@ Ninguno bloquea a otro; se pueden tomar de a uno al tocar el módulo:
 npx tsc -p apps/ledger/tsconfig.app.json  --noEmit    # limpio
 npx tsc -p apps/ledger/tsconfig.spec.json --noEmit    # limpio
 npx jest --config apps/ledger/jest.config.ts --rootDir apps/ledger
-#   Test Suites: 2 skipped, 79 passed, 81 total
-#   Tests:       2 skipped, 474 passed, 476 total
+#   Test Suites: 2 skipped, 80 passed, 82 total
+#   Tests:       2 skipped, 480 passed, 482 total
 ```
 
 Las 2 suites skipped son las que exigen una Postgres viva

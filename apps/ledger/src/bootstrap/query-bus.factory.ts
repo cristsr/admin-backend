@@ -1,5 +1,5 @@
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
-import { QueryBus, RegistryQueryBus } from '@cqrs/application/query-bus/query-bus';
+import { RegistryQueryBus } from '@cqrs/application/query-bus/query-bus';
 import { GetAccountBalancesHandler } from '@ledger/accounts/application/get-account-balances/get-account-balances.handler';
 import { GetAccountBalancesQuery } from '@ledger/accounts/application/get-account-balances/get-account-balances.query';
 import { GetAccountByIdHandler } from '@ledger/accounts/application/get-account-by-id/get-account-by-id.handler';
@@ -22,8 +22,13 @@ import { ListTransactionsQuery } from '@ledger/transactions/application/list-tra
 /**
  * Composition point where every module's query handlers meet on one bus; each
  * handler lives with the module that owns the read model it serves.
+ *
+ * Returns the concrete bus, not the `QueryBus` abstraction: feature modules
+ * composed outside this root — `reconciliation`, whose read port is bound in its
+ * own module — register their handlers on this very instance at init, the same
+ * way they do on `PolicyCommandBus` for writes.
  */
-export function createQueryBus(readModel: ReadModelStore): QueryBus {
+export function createQueryBus(readModel: ReadModelStore): RegistryQueryBus {
   const bus = new RegistryQueryBus();
 
   bus.register(ListTransactionsQuery, new ListTransactionsHandler(readModel));

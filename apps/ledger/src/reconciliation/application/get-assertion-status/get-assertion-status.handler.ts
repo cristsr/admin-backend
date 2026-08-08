@@ -1,14 +1,27 @@
+import {
+  QueryContext,
+  QueryHandler,
+} from '@cqrs/application/query-bus/query-handler';
 import { Nullable } from '@shared';
 import {
-  AssertionStatusRow,
-  AssertionStatusStore,
-} from '@ledger/reconciliation/domain/ports/assertion-status-store.port';
+  AssertionStatusView,
+  toAssertionStatusView,
+} from '@ledger/reconciliation/application/read-models/assertion-status.read-model';
+import { AssertionStatusStore } from '@ledger/reconciliation/domain/ports/assertion-status-store.port';
 import { GetAssertionStatusQuery } from './get-assertion-status.query';
 
-export class GetAssertionStatusHandler {
-  constructor(private readonly store: AssertionStatusStore) {}
+/** Serves one assertion from `proj_assertions`, scoped to the user (INV-9). */
+export class GetAssertionStatusHandler extends QueryHandler<GetAssertionStatusQuery> {
+  constructor(private readonly store: AssertionStatusStore) {
+    super();
+  }
 
-  execute(query: GetAssertionStatusQuery): Promise<Nullable<AssertionStatusRow>> {
-    return this.store.byId(query.userId, query.assertionId);
+  async execute(
+    query: GetAssertionStatusQuery,
+    ctx: QueryContext,
+  ): Promise<Nullable<AssertionStatusView>> {
+    const row = await this.store.byId(ctx.userId, query.assertionId);
+
+    return row ? toAssertionStatusView(row) : null;
   }
 }

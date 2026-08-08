@@ -1,7 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { CommandBus, PolicyCommandBus } from '@cqrs/application/command-bus/command-bus';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
-import { QueryBus } from '@cqrs/application/query-bus/query-bus';
+import { QueryBus, RegistryQueryBus } from '@cqrs/application/query-bus/query-bus';
 import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { EventStore } from '@cqrs/domain/ports/event-store';
 import { PostgresEventStore } from '@cqrs/infrastructure/adapters/event-store/postgres/postgres-event-store';
@@ -58,16 +58,21 @@ import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-ca
         }).commandBus,
     },
     { provide: CommandBus, useExisting: PolicyCommandBus },
+    // Same shape as the command side: the concrete bus is the provider and
+    // `QueryBus` aliases it, so a module that binds its own read port can
+    // register its handlers on the one bus the controllers ask through.
     {
-      provide: QueryBus,
+      provide: RegistryQueryBus,
       inject: [ReadModelStore],
-      useFactory: (readModel: ReadModelStore): QueryBus => createQueryBus(readModel),
+      useFactory: (readModel: ReadModelStore): RegistryQueryBus => createQueryBus(readModel),
     },
+    { provide: QueryBus, useExisting: RegistryQueryBus },
   ],
   exports: [
     CommandBus,
     PolicyCommandBus,
     QueryBus,
+    RegistryQueryBus,
     EventStore,
     ReadModelStore,
     CurrencyCatalog,

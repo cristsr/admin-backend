@@ -1,13 +1,26 @@
 import {
-  AssertionStatusRow,
-  AssertionStatusStore,
-} from '@ledger/reconciliation/domain/ports/assertion-status-store.port';
+  QueryContext,
+  QueryHandler,
+} from '@cqrs/application/query-bus/query-handler';
+import {
+  AssertionStatusView,
+  toAssertionStatusView,
+} from '@ledger/reconciliation/application/read-models/assertion-status.read-model';
+import { AssertionStatusStore } from '@ledger/reconciliation/domain/ports/assertion-status-store.port';
 import { ListAssertionsQuery } from './list-assertions.query';
 
-export class ListAssertionsHandler {
-  constructor(private readonly store: AssertionStatusStore) {}
+/** Serves every assertion on one account, scoped to the user (INV-9). */
+export class ListAssertionsHandler extends QueryHandler<ListAssertionsQuery> {
+  constructor(private readonly store: AssertionStatusStore) {
+    super();
+  }
 
-  execute(query: ListAssertionsQuery): Promise<readonly AssertionStatusRow[]> {
-    return this.store.listByAccount(query.userId, query.accountId);
+  async execute(
+    query: ListAssertionsQuery,
+    ctx: QueryContext,
+  ): Promise<readonly AssertionStatusView[]> {
+    const rows = await this.store.listByAccount(ctx.userId, query.accountId);
+
+    return rows.map(toAssertionStatusView);
   }
 }
