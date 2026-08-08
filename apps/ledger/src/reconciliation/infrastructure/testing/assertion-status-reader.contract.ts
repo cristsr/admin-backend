@@ -1,4 +1,4 @@
-import { AssertionStatusRow, AssertionStatusStore } from '@ledger/reconciliation/application/ports/assertion-status-store.port';
+import { AssertionStatusRecord, AssertionStatusReader } from '@ledger/reconciliation/application/ports/assertion-status-reader.port';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { defineContract } from '@ledger/shared/testing';
@@ -9,15 +9,15 @@ import { defineContract } from '@ledger/shared/testing';
  * itself is read-only, so the contract cannot seed through it.
  */
 export type AssertionStatusFixture = {
-  readonly store: AssertionStatusStore;
-  readonly seed: (row: AssertionStatusRow) => Promise<void>;
+  readonly store: AssertionStatusReader;
+  readonly seed: (row: AssertionStatusRecord) => Promise<void>;
 };
 
 const rowFor = (
   assertionId: string,
   accountId: string,
-  overrides: Partial<AssertionStatusRow> = {},
-): AssertionStatusRow => ({
+  overrides: Partial<AssertionStatusRecord> = {},
+): AssertionStatusRecord => ({
   assertionId,
   userId: 'user-1',
   accountId,
@@ -36,13 +36,13 @@ const rowFor = (
 });
 
 /**
- * Reusable contract for any {@link AssertionStatusStore}. Every implementation
+ * Reusable contract for any {@link AssertionStatusReader}. Every implementation
  * runs this same suite so they prove identical behaviour.
  */
-export function runAssertionStatusStoreContract(
+export function runAssertionStatusReaderContract(
   makeFixture: () => AssertionStatusFixture | Promise<AssertionStatusFixture>,
 ): void {
-  defineContract('AssertionStatusStore contract', [
+  defineContract('AssertionStatusReader contract', [
     {
       name: 'reads a row back by id',
       verify: async () => {

@@ -10,7 +10,7 @@ export type AdjustmentAuditEntry = {
 };
 
 /** Accumulated "unexplained money" per account+currency (proj_adjustment_audit). */
-export type AdjustmentAuditRow = {
+export type AdjustmentAuditRecord = {
   readonly userId: string;
   readonly accountId: string;
   readonly currencyCode: string;
@@ -25,6 +25,6 @@ export type AdjustmentAuditRow = {
  * Writes are deliberately absent: `AdjustmentAuditProjector` is the only writer
  * and it goes through the shared `ReadModelStore` (rules Art. 10).
  */
-export abstract class AdjustmentAuditStore {
-  abstract byAccount(userId: string, accountId: string): Promise<readonly AdjustmentAuditRow[]>;
+export abstract class AdjustmentAuditReader {
+  abstract byAccount(userId: string, accountId: string): Promise<readonly AdjustmentAuditRecord[]>;
 }

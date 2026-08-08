@@ -1,11 +1,11 @@
 import { Nullable } from '@shared';
-import { AssertionStatusRow } from '@ledger/reconciliation/application/ports/assertion-status-store.port';
+import { AssertionStatusRecord } from '@ledger/reconciliation/application/ports/assertion-status-reader.port';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
 
 /**
  * One balance assertion as the API exposes it.
  *
- * The port's {@link AssertionStatusRow} is the store's contract, not the wire's:
+ * The port's {@link AssertionStatusRecord} is the store's contract, not the wire's:
  * it carries the owning `userId` and hands timestamps back as `Date` objects.
  * This view drops the former (context, never content — INV-9) and states the
  * latter as ISO strings, which is what every other read on this API returns.
@@ -30,7 +30,7 @@ export type AssertionStatusView = {
 };
 
 /** Maps a stored assertion to what goes over the wire. */
-export function toAssertionStatusView(row: AssertionStatusRow): AssertionStatusView {
+export function toAssertionStatusView(row: AssertionStatusRecord): AssertionStatusView {
   return {
     id: row.assertionId,
     accountId: row.accountId,

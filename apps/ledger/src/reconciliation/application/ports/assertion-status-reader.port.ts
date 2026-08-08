@@ -3,7 +3,7 @@ import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 
 /** A materialized `assertion_status` row (proj_assertions). */
-export type AssertionStatusRow = {
+export type AssertionStatusRecord = {
   readonly assertionId: string;
   readonly userId: string;
   readonly accountId: string;
@@ -29,10 +29,10 @@ export type AssertionStatusRow = {
  * Truncation is not here either — a rebuild truncates by table through that
  * same store.
  */
-export abstract class AssertionStatusStore {
-  abstract byId(userId: string, assertionId: string): Promise<Nullable<AssertionStatusRow>>;
+export abstract class AssertionStatusReader {
+  abstract byId(userId: string, assertionId: string): Promise<Nullable<AssertionStatusRecord>>;
 
-  abstract listByAccount(userId: string, accountId: string): Promise<readonly AssertionStatusRow[]>;
+  abstract listByAccount(userId: string, accountId: string): Promise<readonly AssertionStatusRecord[]>;
 
   /**
    * Non-revoked assertions on an account whose cutoff date is at or after

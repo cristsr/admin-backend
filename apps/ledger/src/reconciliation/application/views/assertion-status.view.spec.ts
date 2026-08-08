@@ -1,8 +1,8 @@
-import { AssertionStatusRow } from '@ledger/reconciliation/application/ports/assertion-status-store.port';
+import { AssertionStatusRecord } from '@ledger/reconciliation/application/ports/assertion-status-reader.port';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
-import { toAssertionStatusView } from './assertion-status.read-model';
+import { toAssertionStatusView } from './assertion-status.view';
 
-const aRow = (overrides: Partial<AssertionStatusRow> = {}): AssertionStatusRow => ({
+const aRow = (overrides: Partial<AssertionStatusRecord> = {}): AssertionStatusRecord => ({
   assertionId: 'assertion-1',
   userId: 'user-1',
   accountId: 'acc-1',

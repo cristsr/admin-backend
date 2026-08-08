@@ -1,4 +1,4 @@
-import { AdjustmentAuditEntry, AdjustmentAuditStore } from '@ledger/reconciliation/application/ports/adjustment-audit-store.port';
+import { AdjustmentAuditEntry, AdjustmentAuditReader } from '@ledger/reconciliation/application/ports/adjustment-audit-reader.port';
 import { defineContract } from '@ledger/shared/testing';
 
 /**
@@ -7,7 +7,7 @@ import { defineContract } from '@ledger/shared/testing';
  * itself is read-only, so the contract cannot seed through it.
  */
 export type AdjustmentAuditFixture = {
-  readonly store: AdjustmentAuditStore;
+  readonly store: AdjustmentAuditReader;
   readonly seed: (entry: AdjustmentAuditEntry) => Promise<void>;
 };
 
@@ -22,14 +22,14 @@ const entryFor = (txnId: string, accountId: string, amount: string): AdjustmentA
 });
 
 /**
- * Reusable contract for any {@link AdjustmentAuditStore}. The read-model adapter
+ * Reusable contract for any {@link AdjustmentAuditReader}. The read-model adapter
  * runs this suite over the in-memory and the Postgres `ReadModelStore`, so both
  * provably behave the same.
  */
-export function runAdjustmentAuditStoreContract(
+export function runAdjustmentAuditReaderContract(
   makeFixture: () => AdjustmentAuditFixture | Promise<AdjustmentAuditFixture>,
 ): void {
-  defineContract('AdjustmentAuditStore contract', [
+  defineContract('AdjustmentAuditReader contract', [
     {
       name: 'reads back one adjustment for an account',
       verify: async () => {
