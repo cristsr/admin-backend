@@ -12,7 +12,7 @@ import {
   SystemAccountProtectedException,
 } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { LedgerHttpModule } from '@ledger/ledger/infrastructure/adapters/http';
-import { LedgerCoreModule } from '@ledger/ledger/ledger-core.module';
+import { LedgerCoreModule } from '@ledger/bootstrap/ledger-core.module';
 import { AccountType } from '@ledger/shared/domain/value-objects';
 import { STREAM_POSITION_HEADER, SharedHttpModule } from '@ledger/shared/infrastructure/adapters/http';
 import { GATEWAY_CONTEXT_HEADER } from '@ledger/shared/infrastructure/adapters/http/resolvers/gateway-header-context.resolver';

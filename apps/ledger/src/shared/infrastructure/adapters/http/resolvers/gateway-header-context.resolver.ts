@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { Nullable } from '@shared';
-import { LedgerContextResolver, RequestHeaders } from '@ledger/shared/application/ports/ledger-context-resolver';
+import { LedgerContextResolver, RequestHeaders } from '@ledger/shared/application/ports/ledger-context-resolver.port';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 
 /** Header names a trusted gateway injects after authenticating the caller. */

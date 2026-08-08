@@ -1,4 +1,4 @@
-import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
 
 /**
  * The single balancing component of the domain (INV-11). Extending balance

@@ -1,5 +1,5 @@
 import { Nullable } from '@shared';
-import { PageRequest } from '@ledger/transactions/application/ports/page-request.type';
+import { PageRequest } from '@ledger/transactions/application/types/page-request.type';
 import {
   TransactionListItemView,
   TransactionView,

@@ -4,7 +4,7 @@ import { APP_GUARD, Reflector } from '@nestjs/core';
 import { Test, TestingModule } from '@nestjs/testing';
 import { Public } from '@shared';
 import request from 'supertest';
-import { LedgerContextResolver } from '@ledger/shared/application/ports/ledger-context-resolver';
+import { LedgerContextResolver } from '@ledger/shared/application/ports/ledger-context-resolver.port';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import { Context } from './context.decorator';
 import { LedgerContextGuard } from './ledger-context.guard';

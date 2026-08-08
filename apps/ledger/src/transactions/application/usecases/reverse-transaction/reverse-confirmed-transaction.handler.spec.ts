@@ -4,20 +4,20 @@ import { ProjectionDispatcher } from '@cqrs/application/projection/projection-di
 import { IdGenerator } from '@cqrs/domain/ports';
 import { EventStore } from '@cqrs/domain/ports/event-store';
 import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
-import { createLedgerEventRegistry } from '@ledger/ledger/application/factories/ledger-event-registry.factory';
+import { createLedgerEventRegistry } from '@ledger/bootstrap/ledger-event-registry.factory';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, SequentialIdGenerator, aMoney } from '@ledger/shared/testing';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
 import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';
 import { ZeroSumBalanceRule } from '@ledger/transactions/domain/balance/zero-sum-balance-rule';
-import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
 import {
   ImmutableTransactionException,
   TransactionNotFoundException,
 } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
 import { LedgerTransaction } from '@ledger/transactions/domain/transaction/ledger-transaction.aggregate';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { ReverseConfirmedTransactionCommand } from './reverse-confirmed-transaction.command';
 import { ReverseConfirmedTransactionHandler } from './reverse-confirmed-transaction.handler';
 

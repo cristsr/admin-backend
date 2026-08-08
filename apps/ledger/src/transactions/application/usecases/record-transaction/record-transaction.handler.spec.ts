@@ -7,7 +7,7 @@ import { PostingValidator } from '@ledger/transactions/application/ports/posting
 import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
 import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';
 import { UnbalancedTransactionException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { RecordTransactionCommand } from './record-transaction.command';
 import { RecordTransactionHandler } from './record-transaction.handler';
 

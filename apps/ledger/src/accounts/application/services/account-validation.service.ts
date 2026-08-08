@@ -16,7 +16,7 @@ import {
   LedgerDate,
 } from '@ledger/shared/domain/value-objects';
 import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
-import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
 
 /**
  * Cross-aggregate validation of postings against `account_tree`: each

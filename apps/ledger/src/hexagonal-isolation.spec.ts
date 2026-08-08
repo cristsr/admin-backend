@@ -87,6 +87,65 @@ const readModelViolations = (): readonly string[] =>
       : [],
   );
 
+/** The five bounded contexts. `shared` is the kernel: reaching it is always legal. */
+const MODULES = ['accounts', 'ledger', 'reconciliation', 'reference', 'transactions'] as const;
+
+/**
+ * Cross-module reaches that stay, each with the reason it is defensible.
+ * This list only shrinks. An entry removed and not replaced by a real fix
+ * turns this suite red — which is the point.
+ */
+const ALLOWED_CROSS_MODULE: readonly { from: string; to: string; reason: string }[] = [
+  {
+    from: 'accounts',
+    to: 'transactions/infrastructure/projections/account-balances.schema',
+    reason:
+      'proj_balances lo escribe transactions y lo consulta accounts; contrato declarado en el schema',
+  },
+  {
+    from: 'transactions',
+    to: 'accounts/infrastructure/projections/account-tree.schema',
+    reason:
+      'lee proj_accounts — el adapter pasa a puerto en la Tarea 10, el projector queda con contrato declarado (Tarea 11)',
+  },
+  {
+    from: 'reconciliation',
+    to: 'transactions/infrastructure/projections/transaction-list.schema',
+    reason: 'AssertionPostingReader ya es el puerto local; contrato declarado (Tarea 11)',
+  },
+];
+
+/** The bounded context a source file belongs to, or null for bootstrap/tooling/shared. */
+const moduleOf = (path: string): string | null => {
+  const [first] = relative(SOURCE_ROOT, path).split(sep);
+
+  return MODULES.includes(first as (typeof MODULES)[number]) ? first : null;
+};
+
+const isAllowed = (from: string, source: string): boolean =>
+  ALLOWED_CROSS_MODULE.some((entry) => entry.from === from && source.includes(entry.to));
+
+/** A module reaching into another module's `domain/` or `infrastructure/`. */
+const crossModuleViolations = (): readonly string[] =>
+  sourceFiles(SOURCE_ROOT)
+    .filter((file) => !isSpec(file))
+    .flatMap((file) => {
+      const from = moduleOf(file);
+
+      if (!from) return [];
+
+      return importsOf(file)
+        .filter((source) => {
+          const target = MODULES.find((module) => source.includes(`@ledger/${module}/`));
+
+          if (!target || target === from) return false;
+          if (!reaches(source, 'domain') && !reaches(source, 'infrastructure')) return false;
+
+          return !isAllowed(from, source);
+        })
+        .map((source) => `${relative(SOURCE_ROOT, file)} -> ${source}`);
+    });
+
 /**
  * Domain and Application own no technology. Every external access goes
  * through a port, and the adapters do the wiring — which is why the
@@ -124,5 +183,61 @@ describe('Hexagonal isolation', () => {
    */
   it('keeps the read model schema out of application', () => {
     expect(readModelViolations()).toEqual([]);
+  });
+
+  /**
+   * Direction was never the whole invariant, and neither was the read model:
+   * `accounts/application` importing `transactions/domain` points inward and
+   * passes every case above. Five bounded contexts that reach into each other's
+   * aggregates are one context with five folders — and the coupling is invisible
+   * precisely because nothing fails.
+   *
+   * {@link ALLOWED_CROSS_MODULE} is the declared debt: it only shrinks, and an
+   * entry removed without a real fix turns this red.
+   */
+  it('keeps each module out of its neighbours domain and infrastructure', () => {
+    expect(crossModuleViolations()).toEqual([]);
+  });
+
+  /**
+   * A projection schema states the physical shape of a table. Importing another
+   * module's `application` from one points the arrow backwards: `accounts` read
+   * `proj_balances`, whose schema then imported `accounts`' own view to build it,
+   * closing a loop between two modules that could no longer change apart.
+   *
+   * The case above does not catch this: `application/views` is neither `domain`
+   * nor `infrastructure`, so the reach was invisible to it.
+   */
+  it('keeps projection schemas free of any other module', () => {
+    const offenders = sourceFiles(SOURCE_ROOT)
+      .filter((file) => file.endsWith('.schema.ts'))
+      .flatMap((file) => {
+        const owner = moduleOf(file);
+
+        return importsOf(file)
+          .filter((source) => {
+            const target = MODULES.find((module) => source.includes(`@ledger/${module}/`));
+
+            return Boolean(target) && target !== owner;
+          })
+          .map((source) => `${relative(SOURCE_ROOT, file)} -> ${source}`);
+      });
+
+    expect(offenders).toEqual([]);
+  });
+
+  /**
+   * The two schemas another module still reads. Both crossings are defensible
+   * and both are in {@link ALLOWED_CROSS_MODULE}, but an allowlist entry lives
+   * in this file — the person renaming a column is reading the schema. So the
+   * contract is stated there too, or it does not exist where it matters.
+   */
+  it.each([
+    'accounts/infrastructure/projections/account-tree.schema.ts',
+    'transactions/infrastructure/projections/transaction-list.schema.ts',
+  ])('declares the read contract of %s', (relativePath) => {
+    const source = readFileSync(join(SOURCE_ROOT, relativePath), 'utf8');
+
+    expect(source).toMatch(/Public read contract of the/);
   });
 });

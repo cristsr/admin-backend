@@ -1,4 +1,4 @@
-import { RequestHeaders } from '@ledger/shared/application/ports/ledger-context-resolver';
+import { RequestHeaders } from '@ledger/shared/application/ports/ledger-context-resolver.port';
 import { GATEWAY_CONTEXT_HEADER, GatewayHeaderContextResolver } from './gateway-header-context.resolver';
 
 describe('GatewayHeaderContextResolver', () => {

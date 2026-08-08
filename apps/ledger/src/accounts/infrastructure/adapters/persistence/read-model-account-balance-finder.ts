@@ -9,7 +9,6 @@ import { BalanceView } from '@ledger/accounts/application/views/balance.view';
 import {
   BalanceRow,
   PROJ_BALANCES,
-  toBalanceView,
 } from '@ledger/transactions/infrastructure/projections/account-balances.schema';
 
 /**
@@ -36,6 +35,14 @@ export class ReadModelAccountBalanceFinder extends AccountBalanceFinder {
         .equals('currency_code', filter.currency),
     );
 
-    return rows.map(toBalanceView);
+    // Mapped here rather than in the schema: that file belongs to `transactions`,
+    // and importing an `accounts` view into it closed a loop between the two
+    // modules. This adapter already knows both sides.
+    return rows.map((row) => ({
+      accountId: row.account_id,
+      currency: row.currency_code,
+      confirmed: row.confirmed_amount,
+      pending: row.pending_amount,
+    }));
   }
 }

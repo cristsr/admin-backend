@@ -2,12 +2,12 @@ import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
 import { EventPayload } from '@cqrs/domain/event/event-payload.type';
 import { Nullable } from '@shared';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
-import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
 import {
   PostingPayload,
   PostingSerializer,
 } from '@ledger/transactions/domain/posting/posting.serializer';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 
 /** Construction shape for {@link TransactionRecorded}. */
 export type TransactionRecordedProps = {

@@ -11,14 +11,16 @@ import { SystemClock } from '@cqrs/infrastructure/adapters/system-clock';
 import { UuidIdGenerator } from '@cqrs/infrastructure/adapters/uuid-id-generator';
 import { createLedgerApplication } from '@ledger/bootstrap/ledger-application.factory';
 import { createQueryBus } from '@ledger/bootstrap/query-bus.factory';
-import { createQueryPorts, withSqlTransactionFinder } from '@ledger/bootstrap/read-side-ports.factory';
-import { LedgerSettingsFinder } from '@ledger/ledger/application/ports/ledger-settings-finder.port';
+import {
+  createQueryPorts,
+  createWriteSideReadPorts,
+  withSqlTransactionFinder,
+} from '@ledger/bootstrap/read-side-ports.factory';
 import { LedgerTimezoneReader } from '@ledger/ledger/application/ports/ledger-timezone-reader.port';
 import { SystemAccountLookup } from '@ledger/ledger/application/ports/system-account-lookup.port';
-import { ReadModelLedgerSettingsFinder } from '@ledger/ledger/infrastructure/adapters/persistence/read-model-ledger-settings-finder';
 import { ReadModelLedgerTimezoneReader } from '@ledger/ledger/infrastructure/adapters/persistence/read-model-ledger-timezone-reader';
-import { ReadModelSystemAccountLookup } from '@ledger/ledger/infrastructure/adapters/persistence/read-model-system-account-lookup';
-import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
+import { CurrencyCatalogCache } from '@ledger/reference/application/ports/currency-catalog-cache.port';
+import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/persistence/read-model-currency-catalog';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-catalog';
 import { DataSource } from 'typeorm';
 
@@ -41,16 +43,29 @@ import { DataSource } from 'typeorm';
         new ReadModelCurrencyCatalog(readModel),
     },
     { provide: CurrencyCatalog, useExisting: ReadModelCurrencyCatalog },
+    // `ReferenceModule` hydrates the catalog on boot through this port instead
+    // of the concrete adapter, so it no longer depends on a class another module
+    // owns.
+    { provide: CurrencyCatalogCache, useExisting: ReadModelCurrencyCatalog },
     { provide: EventStore, useClass: PostgresEventStore },
     { provide: ReadModelStore, useClass: PostgresReadModelStore },
-    // The ledger's read ports, bound where the module that owns the read model
-    // lives. `LedgerTimezoneReader` is consumed by `ReconciliationModule`, which
-    // injects it from here; the other two also reach the factories through the
-    // store-backed composition, so this binding is what the Nest wiring and the
-    // in-memory one share.
-    { provide: LedgerSettingsFinder, useClass: ReadModelLedgerSettingsFinder },
+    // Only the read ports Nest genuinely injects are bound here, and they come
+    // from the same factory that composes the buses — binding them with
+    // `useClass` would build a second adapter for a port that already has one,
+    // and which instance answered would depend on how the caller got there.
+    //
+    // The other six used to be bound in their feature modules and nobody
+    // injected them: editing those bindings changed nothing at all. They are
+    // gone; `read-side-ports.factory` is the single root.
+    {
+      provide: SystemAccountLookup,
+      inject: [ReadModelStore],
+      useFactory: (readModel: ReadModelStore): SystemAccountLookup =>
+        createWriteSideReadPorts(readModel).systemAccounts,
+    },
+    // Not part of `WriteSideReadPorts` — its only consumer is `EvaluateAssertion`,
+    // composed by `ReconciliationModule`, so this is its one and only binding.
     { provide: LedgerTimezoneReader, useClass: ReadModelLedgerTimezoneReader },
-    { provide: SystemAccountLookup, useClass: ReadModelSystemAccountLookup },
     // The concrete bus is the provider; `CommandBus` aliases it. Feature modules
     // composed outside this root inject `PolicyCommandBus` to register
     // their own handlers on the very same policy chain (INV-10).
@@ -101,10 +116,10 @@ import { DataSource } from 'typeorm';
     EventStore,
     ReadModelStore,
     CurrencyCatalog,
+    CurrencyCatalogCache,
     ReadModelCurrencyCatalog,
     Clock,
     IdGenerator,
-    LedgerSettingsFinder,
     LedgerTimezoneReader,
     SystemAccountLookup,
   ],

@@ -7,7 +7,7 @@ import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origi
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { RecordingCommandBus } from '@ledger/shared/testing';
 import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { RecordOpeningBalanceCommand } from './record-opening-balance.command';
 import { RecordOpeningBalanceHandler } from './record-opening-balance.handler';
 

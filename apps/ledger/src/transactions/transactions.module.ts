@@ -2,9 +2,11 @@ import { Module, OnModuleInit } from '@nestjs/common';
 import { CommandBus, PolicyCommandBus } from '@cqrs/application/command-bus/command-bus';
 import { EnvelopeFactory } from '@cqrs/application/event/envelope.factory';
 import { EventRegistry } from '@cqrs/application/event/event-registry';
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { EventStore } from '@cqrs/domain/ports/event-store';
-import { createLedgerEventRegistry } from '@ledger/ledger/application/factories/ledger-event-registry.factory';
+import { createLedgerEventRegistry } from '@ledger/bootstrap/ledger-event-registry.factory';
+import { createWriteSideReadPorts } from '@ledger/bootstrap/read-side-ports.factory';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import { AccountLookup } from './application/ports/account-lookup.port';
 import { TransactionFinder } from './application/ports/transaction-finder.port';
@@ -34,7 +36,15 @@ import { ReadModelAccountLookup } from './infrastructure/adapters/persistence/re
     // No Nest decorators in domain/application (rules Art. 1), so the
     // dependencies are stated here rather than read off `@Injectable` metadata.
     { provide: TransferPairRule, useFactory: (): TransferPairRule => new TransferPairRule() },
-    { provide: AccountLookup, useClass: ReadModelAccountLookup },
+    // `AccountLookup` is answered by `accounts` through its `AccountFactsReader`
+    // port; `ReadModelAccountLookup` is the anti-corruption adapter and the only
+    // class here that knows it.
+    {
+      provide: AccountLookup,
+      inject: [ReadModelStore],
+      useFactory: (readModel: ReadModelStore): AccountLookup =>
+        new ReadModelAccountLookup(createWriteSideReadPorts(readModel).accountFacts),
+    },
     // The finder the API serves: `TransactionsModule` binds the SQL adapter
     // because the account filter needs an `EXISTS` the shared store cannot
     // express (R7). Test compositions use the in-memory twin through

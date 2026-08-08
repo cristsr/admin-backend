@@ -11,10 +11,10 @@ import { VoidPendingTransactionCommand } from '@ledger/transactions/application/
 import {
   NotATransferPairException,
   PendingLegNotFoundException,
-} from '@ledger/transactions/domain/exceptions/transfer.exception';
-import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
+} from '@ledger/transactions/domain/services/transfer.exception';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
 import { TransferPairRule } from '@ledger/transactions/domain/services/transfer-pair.rule';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { MergePendingTransfersCommand } from './merge-pending-transfers.command';
 import { MergePendingTransfersHandler } from './merge-pending-transfers.handler';
 

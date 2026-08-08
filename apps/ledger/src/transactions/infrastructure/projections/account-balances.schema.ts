@@ -1,5 +1,3 @@
-import { BalanceView } from '@ledger/accounts/application/views/balance.view';
-
 /**
  * Physical shape of `proj_balances`, declared next to the projector that writes
  * it. `AccountBalancesProjector` remains its only writer (rules Art. 10).
@@ -24,13 +22,3 @@ export type BalanceRow = {
   readonly confirmed_amount: string;
   readonly pending_amount: string;
 };
-
-/** Maps a stored row to what goes over the wire. */
-export function toBalanceView(row: BalanceRow): BalanceView {
-  return {
-    accountId: row.account_id,
-    currency: row.currency_code,
-    confirmed: row.confirmed_amount,
-    pending: row.pending_amount,
-  };
-}

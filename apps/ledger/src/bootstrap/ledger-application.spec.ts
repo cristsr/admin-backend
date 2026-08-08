@@ -9,9 +9,10 @@ import { OpenAccountCommand } from '@ledger/accounts/application/usecases/open-a
 import { NameCollisionException } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { InitializeLedgerCommand } from '@ledger/ledger/application/usecases/initialize-ledger/initialize-ledger.command';
 import { LedgerAlreadyInitializedException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
+import { PROJ_LEDGER_SETTINGS } from '@ledger/ledger/infrastructure/projections/ledger-settings.schema';
 import { PROJ_CURRENCIES } from '@ledger/reference/infrastructure/projections/currencies.schema';
 import { RegisterCurrencyCommand } from '@ledger/reference/application/usecases/register-currency/register-currency.command';
-import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
+import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/persistence/read-model-currency-catalog';
 import { CurrencyCode } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
@@ -21,7 +22,7 @@ import { ConfirmTransactionCommand } from '@ledger/transactions/application/usec
 import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
 import { ReverseConfirmedTransactionCommand } from '@ledger/transactions/application/usecases/reverse-transaction/reverse-confirmed-transaction.command';
 import { UnbalancedTransactionException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { createLedgerApplication } from './ledger-application.factory';
 
 const ctx = (externalRef: string | null = null): AuthContext => ({
@@ -56,6 +57,70 @@ async function openTwoAccounts(bus: CommandBus): Promise<{ expenses: string; ass
 
   return { expenses: expenses.aggregateId, assets: assets.aggregateId };
 }
+
+/**
+ * The initialization flow end to end over the in-memory composition. These two
+ * check the *effect*, not the mechanism: the handler's own spec proves it
+ * dispatches `OpenSystemAccountCommand`, but only a real run proves the two
+ * accounts reach the read side.
+ *
+ * That is the failure this guards against, and it is silent: the bus answers
+ * with ids and never events (rules Art. 10), so a dispatch that forgets to read
+ * the account streams back projects only `LedgerInitialized`. No append fails,
+ * no error surfaces — `proj_accounts` simply has no system accounts, and INV-13
+ * is false from the first second of the ledger's life.
+ */
+describe('Ledger initialization (in-memory composition)', () => {
+  it('projects both system accounts and points the settings at them', async () => {
+    const { bus, readModel } = setup();
+
+    await bus.dispatch(new InitializeLedgerCommand('COP', 'America/Bogota'), ctx());
+
+    const accounts = await readModel.query<{
+      account_id: string;
+      name: string;
+      is_system: boolean;
+    }>(PROJ_ACCOUNTS, Criteria.none().equals('user_id', 'user-1'));
+    const [settings] = await readModel.query<{
+      opening_balances_account_id: string;
+      adjustments_account_id: string;
+    }>(PROJ_LEDGER_SETTINGS, Criteria.none().equals('user_id', 'user-1'));
+
+    expect(accounts.map((row) => row.name).sort()).toEqual([
+      'Equity:Adjustments',
+      'Equity:OpeningBalances',
+    ]);
+    expect(accounts.every((row) => row.is_system)).toBe(true);
+
+    // And the settings name accounts that exist — INV-13 end to end.
+    const ids = new Set(accounts.map((row) => row.account_id));
+    expect(ids.has(settings.opening_balances_account_id)).toBe(true);
+    expect(ids.has(settings.adjustments_account_id)).toBe(true);
+  });
+
+  /**
+   * INV-7 against the adapter's real rollback rather than a double:
+   * `InMemoryEventStore.withTransaction` snapshots and restores, which is the
+   * behaviour the event store contract fixes for both adapters.
+   */
+  it('leaves nothing behind when an append inside the scope fails', async () => {
+    const { bus, readModel, eventStore } = setup();
+    const append = jest
+      .spyOn(eventStore, 'append')
+      .mockImplementationOnce(async () => {
+        throw new Error('append failed');
+      });
+
+    await expect(
+      bus.dispatch(new InitializeLedgerCommand('COP', 'America/Bogota'), ctx()),
+    ).rejects.toThrow('append failed');
+
+    expect(await eventStore.readAll(0n, 100)).toEqual([]);
+    expect(await readModel.query(PROJ_ACCOUNTS, Criteria.none())).toEqual([]);
+
+    append.mockRestore();
+  });
+});
 
 describe('Ledger application (write side)', () => {
   it('rejects a command without an authenticated context', async () => {

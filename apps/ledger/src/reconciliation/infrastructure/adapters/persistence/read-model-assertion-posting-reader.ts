@@ -9,7 +9,7 @@ import {
 import { Money } from '@ledger/shared/domain/money';
 import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared/domain/value-objects';
 import { PROJ_POSTINGS, PostingRow } from '@ledger/transactions/infrastructure/projections/transaction-list.schema';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 
 /**
  * Reads an account's `CONFIRMED`+`PENDING` postings up to a cutoff from

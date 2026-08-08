@@ -1,7 +1,7 @@
 import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Nullable } from '@shared';
-import { LedgerContextResolver, RequestHeaders } from '@ledger/shared/application/ports/ledger-context-resolver';
+import { LedgerContextResolver, RequestHeaders } from '@ledger/shared/application/ports/ledger-context-resolver.port';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import { ContextCarryingRequest } from './context-carrying-request';
 import { LedgerContextGuard } from './ledger-context.guard';

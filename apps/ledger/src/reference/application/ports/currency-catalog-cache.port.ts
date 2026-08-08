@@ -12,14 +12,3 @@ export abstract class CurrencyCatalogCache {
   /** Reloads the in-memory view from its backing projection. */
   abstract refresh(): Promise<void>;
 }
-
-/**
- * Cache of a catalog that is not projection-backed — the seeded catalogs the
- * in-memory compositions use. There is nothing to reload, so refreshing is a
- * no-op rather than a special case in the handler.
- */
-export class StaticCurrencyCatalogCache extends CurrencyCatalogCache {
-  refresh(): Promise<void> {
-    return Promise.resolve();
-  }
-}

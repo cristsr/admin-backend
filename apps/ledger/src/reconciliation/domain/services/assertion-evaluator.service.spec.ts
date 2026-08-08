@@ -2,7 +2,7 @@ import { SequentialIdGenerator } from '@cqrs/testing';
 import { InMemoryAssertionPostingReader } from '@ledger/reconciliation/infrastructure/adapters/persistence/in-memory/in-memory-assertion-posting-reader';
 import { Currency, Money } from '@ledger/shared/domain/money';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { AssertBalanceProps, BalanceAssertion } from '../balance-assertion/balance-assertion.aggregate';
 import { AssertionStatus } from '../balance-assertion/enums/assertion-status.enum';
 import { AssertionCutoff, AssertionEvaluator } from './assertion-evaluator.service';

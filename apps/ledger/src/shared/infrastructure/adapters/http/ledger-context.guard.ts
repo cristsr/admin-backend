@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC } from '@shared';
-import { LedgerContextResolver } from '@ledger/shared/application/ports/ledger-context-resolver';
+import { LedgerContextResolver } from '@ledger/shared/application/ports/ledger-context-resolver.port';
 import { ContextCarryingRequest } from './context-carrying-request';
 
 /**

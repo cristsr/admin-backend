@@ -12,11 +12,11 @@ import { VoidPendingTransactionCommand } from '@ledger/transactions/application/
 import {
   NotATransferPairException,
   PendingLegNotFoundException,
-} from '@ledger/transactions/domain/exceptions/transfer.exception';
+} from '@ledger/transactions/domain/services/transfer.exception';
 import { TransferLeg, TransferPairRule } from '@ledger/transactions/domain/services/transfer-pair.rule';
 import { TransactionNotFoundException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
 import { LedgerTransaction } from '@ledger/transactions/domain/transaction/ledger-transaction.aggregate';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { MergePendingTransfersCommand } from './merge-pending-transfers.command';
 
 /** Account types whose postings represent movement of real money. */

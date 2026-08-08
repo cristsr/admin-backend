@@ -3,7 +3,7 @@ import { Type } from 'class-transformer';
 import { IsDateString, IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 import { DEFAULT_TRANSACTION_PAGE_SIZE } from '@ledger/transactions/application/usecases/list-transactions/list-transactions.query';
 import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 
 /** Largest page the `transaction_list` projection will return in one call. */
 export const MAX_TRANSACTION_PAGE_SIZE = 200;

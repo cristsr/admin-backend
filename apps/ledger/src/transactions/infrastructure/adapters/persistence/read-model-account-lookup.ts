@@ -1,32 +1,27 @@
 import { Injectable } from '@nestjs/common';
-import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
-import { Criteria, Nullable } from '@shared';
+import { Nullable } from '@shared';
+import { AccountFactsReader } from '@ledger/accounts/application/ports/account-facts-reader.port';
 import {
-  AccountRow,
-  PROJ_ACCOUNTS,
-} from '@ledger/accounts/infrastructure/projections/account-tree.schema';
-import { AccountFacts, AccountLookup } from '@ledger/transactions/application/ports/account-lookup.port';
+  AccountFacts,
+  AccountLookup,
+} from '@ledger/transactions/application/ports/account-lookup.port';
 
-/** Reads account facts from the `proj_accounts` read model for transfer detection. */
+/**
+ * Anti-corruption adapter for {@link AccountLookup}: `transactions` states what
+ * it needs through its own port, and this is the only class that knows another
+ * module answers it.
+ *
+ * It used to query `proj_accounts` directly, which made the physical shape of an
+ * `accounts` projection part of this module's compile-time surface — renaming a
+ * column there broke a build here, with nothing declaring the contract.
+ */
 @Injectable()
 export class ReadModelAccountLookup extends AccountLookup {
-  constructor(private readonly readModel: ReadModelStore) {
+  constructor(private readonly accounts: AccountFactsReader) {
     super();
   }
 
   async factsOf(userId: string, accountId: string): Promise<Nullable<AccountFacts>> {
-    const [row] = await this.readModel.query<AccountRow>(
-      PROJ_ACCOUNTS,
-      Criteria.none().equals('user_id', userId).equals('account_id', accountId),
-    );
-
-    if (!row) return null;
-
-    return {
-      accountId: row.account_id,
-      type: row.type,
-      currency: row.currency_code,
-      isBankMirror: row.is_bank_mirror,
-    };
+    return this.accounts.factsOf(userId, accountId);
   }
 }

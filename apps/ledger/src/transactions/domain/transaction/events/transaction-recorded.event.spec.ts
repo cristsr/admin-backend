@@ -1,7 +1,7 @@
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { aMoney } from '@ledger/shared/testing';
-import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { TransactionRecorded, TransactionRecordedProps } from './transaction-recorded.event';
 
 describe('TransactionRecorded', () => {

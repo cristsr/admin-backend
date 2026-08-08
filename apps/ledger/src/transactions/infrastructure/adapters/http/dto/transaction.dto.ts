@@ -6,7 +6,7 @@ import {
   TransactionView,
 } from '@ledger/transactions/application/views/transaction.view';
 import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 
 /** A posting as served by the `transaction_list` projection. */
 export class TransactionPostingDto implements PostingView {

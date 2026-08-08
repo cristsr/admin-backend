@@ -1,7 +1,7 @@
 import { AccountValidationService } from '@ledger/accounts/application/services/account-validation.service';
 import { AccountType, LedgerDate, PostingOrigin } from '@ledger/shared/domain/value-objects';
 import { PostingValidator } from '@ledger/transactions/application/ports/posting-validator.port';
-import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
 
 /**
  * Anti-corruption adapter: satisfies this module's {@link PostingValidator} with

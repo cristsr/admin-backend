@@ -1,6 +1,6 @@
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { Criteria } from '@shared';
-import { CurrencyCatalogCache } from '@ledger/reference/application/ports/currency-catalog.cache';
+import { CurrencyCatalogCache } from '@ledger/reference/application/ports/currency-catalog-cache.port';
 import {
   CurrencyRow,
   PROJ_CURRENCIES,

@@ -7,11 +7,11 @@ import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { EventStore } from '@cqrs/domain/ports/event-store';
 import { ExceptionFilter } from '@shared';
 import request from 'supertest';
-import { LedgerCoreModule } from '@ledger/ledger/ledger-core.module';
+import { LedgerCoreModule } from '@ledger/bootstrap/ledger-core.module';
 import { STREAM_POSITION_HEADER, SharedHttpModule } from '@ledger/shared/infrastructure/adapters/http';
 import { GATEWAY_CONTEXT_HEADER } from '@ledger/shared/infrastructure/adapters/http/resolvers/gateway-header-context.resolver';
 import { UnbalancedTransactionException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { TransactionsHttpModule } from './transactions-http.module';
 
 /**

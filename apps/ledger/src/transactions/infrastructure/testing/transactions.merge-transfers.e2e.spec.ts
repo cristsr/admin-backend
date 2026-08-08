@@ -6,7 +6,7 @@ import { EnvelopeFactory } from '@cqrs/application/event/envelope.factory';
 import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { Nullable } from '@shared';
-import { createLedgerEventRegistry } from '@ledger/ledger/application/factories/ledger-event-registry.factory';
+import { createLedgerEventRegistry } from '@ledger/bootstrap/ledger-event-registry.factory';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, SequentialIdGenerator, aMoney } from '@ledger/shared/testing';
@@ -18,10 +18,10 @@ import { RecordTransactionCommand } from '@ledger/transactions/application/useca
 import { VoidPendingTransactionCommand } from '@ledger/transactions/application/usecases/void-transaction/void-pending-transaction.command';
 import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';
 import { ZeroSumBalanceRule } from '@ledger/transactions/domain/balance/zero-sum-balance-rule';
-import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
 import { TransferPairRule } from '@ledger/transactions/domain/services/transfer-pair.rule';
 import { LedgerTransaction } from '@ledger/transactions/domain/transaction/ledger-transaction.aggregate';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 
 /** Both transfer accounts are real; the counterpart category is not. */
 class TransferAccountsLookup extends AccountLookup {

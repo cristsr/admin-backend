@@ -12,7 +12,7 @@ import {
   IsUrl,
   ValidateNested,
 } from 'class-validator';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { PostingDto } from './posting.dto';
 
 /** Statuses a transaction may be recorded in; `VOIDED` is never a creation target. */

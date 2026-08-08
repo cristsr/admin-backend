@@ -11,7 +11,7 @@ import { AccountNotFoundException } from '@ledger/accounts/domain/account/except
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
 import { aMoney } from '@ledger/shared/testing';
-import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
 import { AccountValidationService } from './account-validation.service';
 
 type AccountSeed = {

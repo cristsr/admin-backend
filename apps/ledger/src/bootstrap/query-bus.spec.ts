@@ -11,7 +11,7 @@ import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/curr
 import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
 import { ListTransactionsQuery } from '@ledger/transactions/application/usecases/list-transactions/list-transactions.query';
 import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { createQueryBus } from './query-bus.factory';
 import { createQueryPorts } from './read-side-ports.factory';
 

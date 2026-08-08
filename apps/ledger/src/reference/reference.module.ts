@@ -1,8 +1,6 @@
 import { Logger, Module, OnModuleInit } from '@nestjs/common';
-import { CurrencyCatalogFinder } from '@ledger/reference/application/ports/currency-catalog-finder.port';
 import { CurrenciesController } from '@ledger/reference/infrastructure/adapters/http/currencies.controller';
-import { ReadModelCurrencyCatalogFinder } from '@ledger/reference/infrastructure/adapters/persistence/read-model-currency-catalog-finder';
-import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
+import { CurrencyCatalogCache } from '@ledger/reference/application/ports/currency-catalog-cache.port';
 
 /**
  * Reference data: the global currency catalog.
@@ -19,15 +17,11 @@ import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapt
  */
 @Module({
   controllers: [CurrenciesController],
-  providers: [
-    { provide: CurrencyCatalogFinder, useClass: ReadModelCurrencyCatalogFinder },
-  ],
-  exports: [CurrencyCatalogFinder],
 })
 export class ReferenceModule implements OnModuleInit {
   private readonly logger = new Logger(ReferenceModule.name);
 
-  constructor(private readonly catalog: ReadModelCurrencyCatalog) {}
+  constructor(private readonly catalog: CurrencyCatalogCache) {}
 
   /**
    * Warms the cache before the first synchronous `resolve`.

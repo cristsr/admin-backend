@@ -4,7 +4,7 @@ import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { Criteria, Nullable } from '@shared';
 import { PROJ_PENDING_REVIEW } from '@ledger/transactions/infrastructure/projections/pending-review.schema';
 import { PostingPayload } from '@ledger/transactions/domain/posting/posting.serializer';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 
 type PendingReviewRow = {
   readonly transaction_id: string;

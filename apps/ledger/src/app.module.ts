@@ -6,7 +6,7 @@ import { AccountsModule } from '@ledger/accounts/accounts.module';
 import { appConfig, databaseConfig } from '@ledger/config/environment';
 import { loadEnvironment } from '@ledger/env';
 import { LedgerHttpModule } from '@ledger/ledger/infrastructure/adapters/http';
-import { LedgerCoreModule } from '@ledger/ledger/ledger-core.module';
+import { LedgerCoreModule } from '@ledger/bootstrap/ledger-core.module';
 import { ReconciliationModule } from '@ledger/reconciliation/reconciliation.module';
 import { ReferenceModule } from '@ledger/reference/reference.module';
 import { SharedHttpModule } from '@ledger/shared/infrastructure/adapters/http';

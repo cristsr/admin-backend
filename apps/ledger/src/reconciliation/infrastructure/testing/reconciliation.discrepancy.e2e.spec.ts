@@ -14,7 +14,7 @@ import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/accou
 import { AccountValidationService } from '@ledger/accounts/application/services/account-validation.service';
 import { ReadModelAccountConstraintsReader } from '@ledger/accounts/infrastructure/adapters/persistence/read-model-account-constraints-reader';
 import { SystemAccountProtectedException } from '@ledger/accounts/domain/account/exceptions/account.exception';
-import { createLedgerEventRegistry } from '@ledger/ledger/application/factories/ledger-event-registry.factory';
+import { createLedgerEventRegistry } from '@ledger/bootstrap/ledger-event-registry.factory';
 import { createReconciliationEventRegistry } from '@ledger/reconciliation/application/factories/reconciliation-event-registry.factory';
 import { ReevaluateAssertionsReactor } from '@ledger/reconciliation/application/reactors/reevaluate-assertions.reactor';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/application/repositories/balance-assertion.repository';
@@ -42,7 +42,7 @@ import { LedgerTransactionRepository } from '@ledger/transactions/application/re
 import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
 import { RecordTransactionHandler } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.handler';
 import { ZeroSumBalanceRule } from '@ledger/transactions/domain/balance/zero-sum-balance-rule';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 
 /**
  * Test double for the write side of `transactions`: appends a `TransactionRecorded`

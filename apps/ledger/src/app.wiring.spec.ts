@@ -3,7 +3,17 @@ import { Global, Module } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getDataSourceToken, getEntityManagerToken } from '@nestjs/typeorm';
 import { PolicyCommandBus } from '@cqrs/application/command-bus/command-bus';
+import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { RegistryQueryBus } from '@cqrs/application/query-bus/query-bus';
+import { AccountBalanceFinder } from '@ledger/accounts/application/ports/account-balance-finder.port';
+import { AccountConstraintsReader } from '@ledger/accounts/application/ports/account-constraints-reader.port';
+import { AccountNameReader } from '@ledger/accounts/application/ports/account-name-reader.port';
+import { AccountTreeFinder } from '@ledger/accounts/application/ports/account-tree-finder.port';
+import { createWriteSideReadPorts } from '@ledger/bootstrap/read-side-ports.factory';
+import { LedgerSettingsFinder } from '@ledger/ledger/application/ports/ledger-settings-finder.port';
+import { LedgerTimezoneReader } from '@ledger/ledger/application/ports/ledger-timezone-reader.port';
+import { SystemAccountLookup } from '@ledger/ledger/application/ports/system-account-lookup.port';
+import { CurrencyCatalogFinder } from '@ledger/reference/application/ports/currency-catalog-finder.port';
 
 /** Every value the config validator demands; must be set before the modules load. */
 const environment: Record<string, string> = {
@@ -117,6 +127,9 @@ describe('Application wiring', () => {
         'InitializeLedgerCommand',
         'MergePendingTransfersCommand',
         'OpenAccountCommand',
+        // Internal: no controller dispatches it. `InitializeLedger` does, so the
+        // technical accounts are opened by the module that owns the aggregate.
+        'OpenSystemAccountCommand',
         'RecordOpeningBalanceCommand',
         'RecordTransactionCommand',
         'RegisterCurrencyCommand',
@@ -167,6 +180,83 @@ describe('Application wiring', () => {
         'ListTransactionsQuery',
       ].sort(),
     );
+
+    await app.close();
+  });
+
+  /**
+   * Read ports composed by `bootstrap/read-side-ports.factory`. That factory is
+   * the single root: it feeds the query bus and every in-memory composition, so
+   * a second binding in a Nest module is not a redundancy but a fork — two
+   * adapters for one port, and which one answers depends on how the caller got
+   * there.
+   *
+   * Six of them used to be bound in a module nobody injected from, which is the
+   * worst shape of the bug: editing that binding changed nothing at all, and
+   * nothing reported it.
+   */
+  const FACTORY_OWNED_PORTS = [
+    AccountTreeFinder,
+    AccountBalanceFinder,
+    AccountConstraintsReader,
+    AccountNameReader,
+    CurrencyCatalogFinder,
+    LedgerSettingsFinder,
+  ] as const;
+
+  /**
+   * Ports still bound in both roots. Empty since `refactor-module-boundaries`:
+   * every one of them is now chosen in exactly one place. Kept as the shape of
+   * the debt rather than deleted — a port added here again is a regression that
+   * should be argued for, not discovered.
+   */
+  const STILL_DOUBLE_BOUND: readonly unknown[] = [];
+
+  it('does not bind in Nest the read ports the bootstrap factory composes', async () => {
+    moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideModule(DatabaseModule)
+      .useModule(StubDatabaseModule)
+      .compile();
+
+    const app = moduleRef.createNestApplication({ logger: false });
+    await app.init();
+
+    const forked = FACTORY_OWNED_PORTS.filter((token) => !STILL_DOUBLE_BOUND.includes(token)).filter(
+      (token) => {
+        try {
+          return Boolean(app.get(token, { strict: false }));
+        } catch {
+          return false; // no provider: exactly what this asserts
+        }
+      },
+    );
+
+    expect(forked.map((token) => token.name)).toEqual([]);
+
+    await app.close();
+  });
+
+  /**
+   * The two ports Nest genuinely injects — `ReconciliationModule` resolves both.
+   * They must resolve to the same adapter the factory builds, or the write side
+   * and the reconciliation side disagree about what a system account is.
+   */
+  it('resolves the Nest-injected read ports to the factory adapter', async () => {
+    moduleRef = await Test.createTestingModule({ imports: [AppModule] })
+      .overrideModule(DatabaseModule)
+      .useModule(StubDatabaseModule)
+      .compile();
+
+    const app = moduleRef.createNestApplication({ logger: false });
+    await app.init();
+
+    const readModel = app.get(ReadModelStore);
+    const { systemAccounts } = createWriteSideReadPorts(readModel);
+
+    expect(app.get(SystemAccountLookup, { strict: false }).constructor).toBe(
+      systemAccounts.constructor,
+    );
+    expect(app.get(LedgerTimezoneReader, { strict: false })).toBeDefined();
 
     await app.close();
   });

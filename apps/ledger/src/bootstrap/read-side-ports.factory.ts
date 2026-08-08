@@ -1,10 +1,12 @@
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { AccountBalanceFinder } from '@ledger/accounts/application/ports/account-balance-finder.port';
 import { AccountConstraintsReader } from '@ledger/accounts/application/ports/account-constraints-reader.port';
+import { AccountFactsReader } from '@ledger/accounts/application/ports/account-facts-reader.port';
 import { AccountNameReader } from '@ledger/accounts/application/ports/account-name-reader.port';
 import { AccountTreeFinder } from '@ledger/accounts/application/ports/account-tree-finder.port';
 import { ReadModelAccountBalanceFinder } from '@ledger/accounts/infrastructure/adapters/persistence/read-model-account-balance-finder';
 import { ReadModelAccountConstraintsReader } from '@ledger/accounts/infrastructure/adapters/persistence/read-model-account-constraints-reader';
+import { ReadModelAccountFactsReader } from '@ledger/accounts/infrastructure/adapters/persistence/read-model-account-facts-reader';
 import { ReadModelAccountNameReader } from '@ledger/accounts/infrastructure/adapters/persistence/read-model-account-name-reader';
 import { ReadModelAccountTreeFinder } from '@ledger/accounts/infrastructure/adapters/persistence/read-model-account-tree-finder';
 import { LedgerSettingsFinder } from '@ledger/ledger/application/ports/ledger-settings-finder.port';
@@ -40,6 +42,8 @@ export type QueryPorts = {
 export type WriteSideReadPorts = {
   readonly accountConstraints: AccountConstraintsReader;
   readonly accountNames: AccountNameReader;
+  /** Consumed by `transactions` through its own `AccountLookup` port. */
+  readonly accountFacts: AccountFactsReader;
   readonly systemAccounts: SystemAccountLookup;
   // `LedgerTimezoneReader` stays out: its only consumer, `EvaluateAssertion`,
   // is composed by `ReconciliationModule`, which binds the port itself.
@@ -83,6 +87,7 @@ export function createWriteSideReadPorts(readModel: ReadModelStore): WriteSideRe
   return {
     accountConstraints: new ReadModelAccountConstraintsReader(readModel),
     accountNames: new ReadModelAccountNameReader(readModel),
+    accountFacts: new ReadModelAccountFactsReader(readModel),
     systemAccounts: new ReadModelSystemAccountLookup(readModel),
   };
 }

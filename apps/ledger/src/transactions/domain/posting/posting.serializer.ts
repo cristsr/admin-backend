@@ -3,7 +3,7 @@ import {
   CurrencyCatalog,
   CurrencyCode,
 } from '@ledger/shared/domain/value-objects';
-import { PostingLine } from './posting-line';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
 
 /** JSON shape of a posting inside an event payload (amounts as decimal strings). */
 export type PostingPayload = {

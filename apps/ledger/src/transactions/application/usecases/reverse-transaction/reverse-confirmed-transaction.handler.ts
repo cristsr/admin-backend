@@ -8,7 +8,7 @@ import { LedgerTransactionRepository } from '@ledger/transactions/application/re
 import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';
 import { TransactionNotFoundException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
 import { LedgerTransaction } from '@ledger/transactions/domain/transaction/ledger-transaction.aggregate';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { ReverseConfirmedTransactionCommand } from './reverse-confirmed-transaction.command';
 
 /**

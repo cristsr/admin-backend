@@ -1,5 +1,5 @@
 import { AccountType, LedgerDate, PostingOrigin } from '@ledger/shared/domain/value-objects';
-import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
 
 /**
  * Validates a transaction's postings against the accounts they touch, and

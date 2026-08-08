@@ -16,22 +16,22 @@ import { CloseAccountCommand } from '@ledger/accounts/application/usecases/close
 import { CloseAccountHandler } from '@ledger/accounts/application/usecases/close-account/close-account.handler';
 import { OpenAccountCommand } from '@ledger/accounts/application/usecases/open-account/open-account.command';
 import { OpenAccountHandler } from '@ledger/accounts/application/usecases/open-account/open-account.handler';
+import { OpenSystemAccountCommand } from '@ledger/accounts/application/usecases/open-system-account/open-system-account.command';
+import { OpenSystemAccountHandler } from '@ledger/accounts/application/usecases/open-system-account/open-system-account.handler';
 import { RecordOpeningBalanceCommand } from '@ledger/accounts/application/usecases/record-opening-balance/record-opening-balance.command';
 import { RecordOpeningBalanceHandler } from '@ledger/accounts/application/usecases/record-opening-balance/record-opening-balance.handler';
 import { RenameAccountCommand } from '@ledger/accounts/application/usecases/rename-account/rename-account.command';
 import { RenameAccountHandler } from '@ledger/accounts/application/usecases/rename-account/rename-account.handler';
 import { AccountTreeProjector } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
-import { createLedgerEventRegistry } from '@ledger/ledger/application/factories/ledger-event-registry.factory';
+import { createLedgerEventRegistry } from '@ledger/bootstrap/ledger-event-registry.factory';
 import { LedgerSettingsRepository } from '@ledger/ledger/application/repositories/ledger-settings.repository';
 import { InitializeLedgerCommand } from '@ledger/ledger/application/usecases/initialize-ledger/initialize-ledger.command';
 import { InitializeLedgerHandler } from '@ledger/ledger/application/usecases/initialize-ledger/initialize-ledger.handler';
 import { ReplaceLedgerSettingsCommand } from '@ledger/ledger/application/usecases/replace-ledger-settings/replace-ledger-settings.command';
 import { ReplaceLedgerSettingsHandler } from '@ledger/ledger/application/usecases/replace-ledger-settings/replace-ledger-settings.handler';
 import { LedgerSettingsProjector } from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
-import {
-  CurrencyCatalogCache,
-  StaticCurrencyCatalogCache,
-} from '@ledger/reference/application/ports/currency-catalog.cache';
+import { CurrencyCatalogCache } from '@ledger/reference/application/ports/currency-catalog-cache.port';
+import { StaticCurrencyCatalogCache } from './static-currency-catalog.cache';
 import { CurrencyCatalogRepository } from '@ledger/reference/application/repositories/currency-catalog.repository';
 import { RegisterCurrencyCommand } from '@ledger/reference/application/usecases/register-currency/register-currency.command';
 import { RegisterCurrencyHandler } from '@ledger/reference/application/usecases/register-currency/register-currency.handler';
@@ -137,9 +137,15 @@ export function createLedgerApplication(deps: LedgerApplicationDeps): LedgerAppl
     ReplaceLedgerSettingsCommand,
     new ReplaceLedgerSettingsHandler(settings, dispatcher),
   );
+  // Registered before `InitializeLedger`, which dispatches it: the bus must
+  // already know the handler by the time that command runs.
+  commandBus.register(
+    OpenSystemAccountCommand,
+    new OpenSystemAccountHandler(accounts, idGenerator),
+  );
   commandBus.register(
     InitializeLedgerCommand,
-    new InitializeLedgerHandler(settings, accounts, idGenerator, clock, dispatcher, eventStore),
+    new InitializeLedgerHandler(settings, commandBus, clock, dispatcher, eventStore),
   );
   commandBus.register(
     OpenAccountCommand,

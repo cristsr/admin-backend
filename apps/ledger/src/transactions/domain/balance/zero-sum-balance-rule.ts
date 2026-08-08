@@ -1,5 +1,5 @@
 import { Money } from '@ledger/shared/domain/money';
-import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
 import { UnbalancedTransactionException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
 import { BalanceRule } from './balance-rule';
 

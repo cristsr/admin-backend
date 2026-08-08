@@ -1,4 +1,4 @@
-import { PageRequest } from '@ledger/transactions/application/ports/page-request.type';
+import { PageRequest } from '@ledger/transactions/application/types/page-request.type';
 import { PendingReviewView } from '@ledger/transactions/application/views/pending-review.view';
 
 export type { PageRequest };

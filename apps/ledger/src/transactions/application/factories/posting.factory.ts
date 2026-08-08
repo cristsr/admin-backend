@@ -4,7 +4,7 @@ import {
   CurrencyCode,
 } from '@ledger/shared/domain/value-objects';
 import { PostingInput } from '@ledger/transactions/application/types/posting-input.type';
-import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
 
 /** Builds domain {@link PostingLine}s from API-shaped inputs, resolving scale via the catalog. */
 export function toPostingLines(

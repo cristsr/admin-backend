@@ -15,6 +15,17 @@ import { AccountType } from '@ledger/shared/domain/value-objects';
  * them described the table.
  *
  * `AccountTreeProjector` remains its only writer (rules Art. 10).
+ *
+ * **Public read contract of the `accounts` module.** One reader outside this
+ * module remains: `TransactionListProjector`, which resolves each posting's
+ * account type without crossing to the write side. Renaming a column here breaks
+ * that projector, so the change is coordinated with it.
+ *
+ * The rest of `transactions` no longer touches this file — `ReadModelAccountLookup`
+ * goes through `AccountFactsReader`. The projector keeps reading directly on
+ * purpose: the other eight take `(event, store)` and inject nothing, so a port
+ * here would break that shape and complicate the rebuilder, which builds them
+ * by hand.
  */
 export const PROJ_ACCOUNTS = 'proj_accounts';
 

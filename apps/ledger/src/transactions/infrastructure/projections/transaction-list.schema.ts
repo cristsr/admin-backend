@@ -1,6 +1,6 @@
 import { Nullable } from '@shared';
 import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import {
   PostingView,
   TransactionListItemView,
@@ -14,6 +14,17 @@ import {
  * `TransactionListProjector` remains their only writer (rules Art. 10).
  */
 export const PROJ_TRANSACTIONS = 'proj_transactions';
+/**
+ * **Public read contract of the `transactions` module.** Read from outside by
+ * `ReadModelAssertionPostingReader`, the adapter behind `reconciliation`'s own
+ * `AssertionPostingReader` — a port whose contract already declares the crossing
+ * as "the one permitted inter-aggregate read: no accounting invariant depends
+ * on it". Renaming a column here breaks that adapter.
+ *
+ * No port is placed underneath it on purpose: `AssertionPostingReader` already
+ * is the local port, so a second one would be a port wrapping a port, shaped by
+ * its only consumer.
+ */
 export const PROJ_POSTINGS = 'proj_postings';
 
 /** One row of `proj_transactions`, exactly as stored. */

@@ -4,7 +4,7 @@ import { Money } from '@ledger/shared/domain/money';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { PROJ_POSTINGS } from '@ledger/transactions/infrastructure/projections/transaction-list.schema';
-import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { ReadModelAssertionPostingReader } from './read-model-assertion-posting-reader';
 
 describe('ReadModelAssertionPostingReader', () => {

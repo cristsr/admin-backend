@@ -1,7 +1,7 @@
 import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
 import { EventPayload } from '@cqrs/domain/event/event-payload.type';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
-import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
 import {
   PostingPayload,
   PostingSerializer,
