@@ -10,7 +10,7 @@ import { EventStore } from '@cqrs/domain/ports/event-store';
 import { Nullable } from '@shared';
 
 /**
- * In-memory reference implementation of {@link EventStore} (RNF-11). A single
+ * In-memory reference implementation of {@link EventStore}. A single
  * monotonic counter models `global_position`; all invariants are enforced in
  * process, mirroring the PostgreSQL adapter so both pass one contract suite.
  * Node's single thread makes the append read-check-write step atomic.
@@ -23,7 +23,7 @@ export class InMemoryEventStore extends EventStore {
   /**
    * Runs `work` atomically: a failure rolls the store back to its state before
    * the scope opened, mirroring the PostgreSQL transaction so both adapters
-   * satisfy one contract (RNF-11).
+   * satisfy one contract.
    *
    * The snapshot is a shallow copy of the event list — enough because
    * `StoredEvent` is never mutated in place, only appended.

@@ -4,7 +4,7 @@ import { defineContract } from './define-contract';
 /**
  * The reusable contract for any Clock. Each adapter's spec invokes this
  * runner so the deterministic double and the real adapter prove identical
- * behaviour (RNF-11).
+ * behaviour.
  */
 export function runClockContract(makeClock: () => Clock): void {
   defineContract('Clock contract', [

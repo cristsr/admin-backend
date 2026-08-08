@@ -5,13 +5,13 @@ import { Response } from 'express';
 import { Observable, map } from 'rxjs';
 import { CommandAcceptedDto } from './dto/command-accepted.dto';
 
-/** Response header exposing the stream position a write reached (RNF-9). */
+/** Response header exposing the stream position a write reached. */
 export const STREAM_POSITION_HEADER = 'X-Ledger-Stream-Position';
 
 /**
  * Structural guard: a value is a command result when it carries a `bigint`
  * stream position and the replay flag. `streamPosition` is a `bigint` in the
- * real core (RNF-9) to avoid precision loss on large streams.
+ * real core to avoid precision loss on large streams.
  */
 function isCommandResult(value: unknown): value is CommandResult {
   const candidate = value as Nullable<CommandResult>;
@@ -21,7 +21,7 @@ function isCommandResult(value: unknown): value is CommandResult {
 /**
  * Turns the {@link CommandResult} a write handler returns into the standard
  * {@link CommandAcceptedDto}, and applies the two read-your-writes concerns
- * transversally (RNF-9): it stamps the stream position onto the response header
+ * transversally: it stamps the stream position onto the response header
  * and downgrades an idempotent replay (INV-10) to `200`, since a replay creates
  * nothing new. Read handlers return projections, not command results, so they
  * pass through untouched.

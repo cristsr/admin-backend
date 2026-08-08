@@ -17,7 +17,7 @@ describe('OptimisticConcurrencyPolicy', () => {
     policy = new OptimisticConcurrencyPolicy();
   });
 
-  it('should delegate to next on first attempt (AC-4)', async () => {
+  it('should delegate to next on first attempt', async () => {
     const command = new FakeCommand();
     const expected: CommandResult = { aggregateId: 'a-1', streamPosition: 3n, idempotentReplay: false };
     const next = jest.fn<Promise<CommandResult>, []>().mockResolvedValue(expected);
@@ -28,7 +28,7 @@ describe('OptimisticConcurrencyPolicy', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
-  it('should retry once on ConcurrencyConflictException and succeed (AC-4)', async () => {
+  it('should retry once on ConcurrencyConflictException and succeed', async () => {
     const command = new FakeCommand();
     const expected: CommandResult = { aggregateId: 'a-1', streamPosition: 5n, idempotentReplay: false };
     const next = jest.fn<Promise<CommandResult>, []>()
@@ -41,7 +41,7 @@ describe('OptimisticConcurrencyPolicy', () => {
     expect(next).toHaveBeenCalledTimes(2);
   });
 
-  it('should propagate ConcurrencyConflictException after max retries (AC-4)', async () => {
+  it('should propagate ConcurrencyConflictException after max retries', async () => {
     const command = new FakeCommand();
     const conflict = new ConcurrencyConflictException('persistent conflict');
     const next = jest.fn<Promise<CommandResult>, []>()
@@ -52,7 +52,7 @@ describe('OptimisticConcurrencyPolicy', () => {
     expect(next).toHaveBeenCalledTimes(2);
   });
 
-  it('should propagate non-concurrency errors immediately without retry (AC-4)', async () => {
+  it('should propagate non-concurrency errors immediately without retry', async () => {
     const command = new FakeCommand();
     const error = new Error('some other failure');
     const next = jest.fn<Promise<CommandResult>, []>().mockRejectedValue(error);
@@ -61,7 +61,7 @@ describe('OptimisticConcurrencyPolicy', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
-  it('should preserve error code after propagating conflict (AC-4)', async () => {
+  it('should preserve error code after propagating conflict', async () => {
     const command = new FakeCommand();
     const conflict = new ConcurrencyConflictException('conflict');
     const next = jest.fn<Promise<CommandResult>, []>()

@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
+import { Injectable } from '@nestjs/common';
 import { AppendResult } from '@cqrs/domain/event/append-result.type';
 import { EventEnvelope } from '@cqrs/domain/event/event-envelope.type';
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
@@ -22,18 +23,19 @@ const SELECT_COLUMNS = `
 `;
 
 /**
- * PostgreSQL {@link EventStore} adapter over the §6.1 schema. It passes the same
- * contract as the in-memory double (RNF-11): the append runs in a transaction
+ * PostgreSQL {@link EventStore} adapter. It passes the same
+ * contract as the in-memory double: the append runs in a transaction
  * and translates the unique-violation on `(aggregate_id, sequence)` to a
  * concurrency conflict (INV-7) and on `(user_id, external_ref)` to a duplicate
  * (INV-10). Amounts stay decimal strings in `jsonb` — never parsed to `number`.
  */
+@Injectable()
 export class PostgresEventStore extends EventStore {
   /**
    * Manager of the transaction currently in scope, if any. Kept in
    * AsyncLocalStorage so `append` can join an open `withTransaction` without the
    * caller — a domain handler — having to carry a database object around
-   * (RNF-11, Artículo 1).
+   * (rules Art. 1).
    */
   private readonly scope = new AsyncLocalStorage<EntityManager>();
 

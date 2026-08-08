@@ -6,7 +6,7 @@ import { MissingAuthContextException } from './missing-auth-context.exception';
 
 /**
  * Rejects any command lacking a `userId`/`clientId` before the domain is
- * touched (RF-26). The ledger never manages identity; it only demands its
+ * touched. The ledger never manages identity; it only demands its
  * presence.
  */
 export class AuthenticatedContextPolicy extends CommandPolicy {

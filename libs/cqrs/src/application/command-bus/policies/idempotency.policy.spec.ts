@@ -45,7 +45,7 @@ describe('IdempotencyPolicy', () => {
     policy = new IdempotencyPolicy(eventStore);
   });
 
-  it('should delegate to next when externalRef is null (AC-3)', async () => {
+  it('should delegate to next when externalRef is null', async () => {
     const command = new FakeCommand();
     const expected: CommandResult = { aggregateId: 'a-1', streamPosition: 5n, idempotentReplay: false };
     const next = jest.fn<Promise<CommandResult>, []>().mockResolvedValue(expected);
@@ -56,7 +56,7 @@ describe('IdempotencyPolicy', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
-  it('should delegate to next when no anchor is found for externalRef (AC-3)', async () => {
+  it('should delegate to next when no anchor is found for externalRef', async () => {
     const command = new FakeCommand();
     const expected: CommandResult = { aggregateId: 'a-1', streamPosition: 5n, idempotentReplay: false };
     const next = jest.fn<Promise<CommandResult>, []>().mockResolvedValue(expected);
@@ -67,7 +67,7 @@ describe('IdempotencyPolicy', () => {
     expect(next).toHaveBeenCalledTimes(1);
   });
 
-  it('should return replay without calling next when anchor exists (AC-3)', async () => {
+  it('should return replay without calling next when anchor exists', async () => {
     const anchor = makeAnchor({
       aggregateId: 'agg-99',
       globalPosition: 42n,
@@ -87,7 +87,7 @@ describe('IdempotencyPolicy', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('should catch DuplicateExternalRefException and replay anchor (AC-3)', async () => {
+  it('should catch DuplicateExternalRefException and replay anchor', async () => {
     const anchor = makeAnchor({
       aggregateId: 'agg-50',
       globalPosition: 10n,

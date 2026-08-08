@@ -10,9 +10,9 @@ const DEFAULT_BATCH = 500;
 
 /**
  * Asynchronous dispatcher: reads the global stream from a persisted checkpoint
- * and applies the same projectors as the synchronous path (§3.8). Upserts are
+ * and applies the same projectors as the synchronous path. Upserts are
  * idempotent by key, so replays from the checkpoint never double-count. The gap
- * to the stream head is the projection lag (RNF-12).
+ * to the stream head is the projection lag.
  */
 export class PollingProjectionDispatcher extends ProjectionDispatcher {
   constructor(

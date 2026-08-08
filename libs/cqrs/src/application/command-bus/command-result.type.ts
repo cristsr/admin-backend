@@ -1,6 +1,6 @@
 /**
- * The only thing a command returns (RNF-10): identifiers and the stream
- * position for read-your-writes (RNF-9), plus whether this was an idempotent
+ * The only thing a command returns: identifiers and the stream
+ * position for read-your-writes, plus whether this was an idempotent
  * replay. Never a read model.
  */
 export type CommandResult = {

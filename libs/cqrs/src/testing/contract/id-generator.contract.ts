@@ -7,7 +7,7 @@ const UNIQUENESS_SAMPLE = 1_000;
 /**
  * The reusable contract for any IdGenerator. Each adapter's spec invokes this
  * runner so the deterministic double and the real adapter prove identical
- * behaviour (RNF-11).
+ * behaviour.
  */
 export function runIdGeneratorContract(makeIdGenerator: () => IdGenerator): void {
   defineContract('IdGenerator contract', [

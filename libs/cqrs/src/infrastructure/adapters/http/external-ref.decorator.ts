@@ -6,7 +6,7 @@ import { Request } from 'express';
 export const EXTERNAL_REF_HEADER = 'x-external-ref';
 
 /**
- * Pure extraction of the `external_ref` idempotency key (RF-11 / INV-10): the
+ * Pure extraction of the `external_ref` idempotency key (INV-10): the
  * `X-External-Ref` header wins, falling back to `external_ref` in the body, and
  * `null` when neither is a non-blank string. Exported for direct unit testing.
  */

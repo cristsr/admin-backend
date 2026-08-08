@@ -17,7 +17,7 @@ describe('AuthenticatedContextPolicy', () => {
     policy = new AuthenticatedContextPolicy();
   });
 
-  it('should reject when userId is empty (AC-2)', async () => {
+  it('should reject when userId is empty', async () => {
     const command = new FakeCommand();
     const ctx: AuthContext = { userId: '', clientId: 'client-x', externalRef: null };
     const next = jest.fn<Promise<CommandResult>, []>();
@@ -28,7 +28,7 @@ describe('AuthenticatedContextPolicy', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('should reject when clientId is empty (AC-2)', async () => {
+  it('should reject when clientId is empty', async () => {
     const command = new FakeCommand();
     const ctx: AuthContext = { userId: 'user-1', clientId: '', externalRef: null };
     const next = jest.fn<Promise<CommandResult>, []>();
@@ -39,7 +39,7 @@ describe('AuthenticatedContextPolicy', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('should reject when ctx is null (AC-2)', async () => {
+  it('should reject when ctx is null', async () => {
     const command = new FakeCommand();
     const next = jest.fn<Promise<CommandResult>, []>();
 
@@ -49,7 +49,7 @@ describe('AuthenticatedContextPolicy', () => {
     expect(next).not.toHaveBeenCalled();
   });
 
-  it('should delegate to next when context is valid (AC-2)', async () => {
+  it('should delegate to next when context is valid', async () => {
     const command = new FakeCommand();
     const expected: CommandResult = { aggregateId: 'a-1', streamPosition: 0n, idempotentReplay: false };
     const next = jest.fn<Promise<CommandResult>, []>().mockResolvedValue(expected);

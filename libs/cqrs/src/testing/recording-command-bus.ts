@@ -5,7 +5,7 @@ import { CommandResult } from '@cqrs/application/command-bus/command-result.type
 /**
  * Test double for {@link CommandBus}: records every dispatched command and
  * answers a fixed `aggregateId`, so handlers that reuse another aggregate's
- * command through the bus (DRY, spec §3.3) can be tested without wiring the
+ * command through the bus (DRY) can be tested without wiring the
  * real target handler.
  */
 export class RecordingCommandBus extends CommandBus {

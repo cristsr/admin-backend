@@ -2,7 +2,7 @@ import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { ReadModelStore } from './read-model-store';
 
 /**
- * A projector maps events to a read model (core code, §3.7). The same instance
+ * A projector maps events to a read model (core code). The same instance
  * runs synchronously (in the command transaction) or asynchronously (poller); it
  * never knows which. It declares the event types it consumes so the dispatcher
  * can route efficiently.

@@ -9,9 +9,9 @@ interface CheckpointRow {
 
 /**
  * PostgreSQL {@link ProjectionCheckpointRepository} over `projection_checkpoints`
- * (§6.1). Positions survive restarts, so an async projection resumes where it
+ *. Positions survive restarts, so an async projection resumes where it
  * left off instead of replaying the whole stream, and the gap to the stream head
- * is readable as projection lag (RNF-12).
+ * is readable as projection lag.
  *
  * `last_position` is `BIGINT`: the driver hands it back as a string and it is
  * parsed with `BigInt`, never `Number` — global positions outgrow `Number`'s

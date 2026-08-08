@@ -64,9 +64,9 @@ describe('EnvelopeFactory', () => {
     );
 
   /**
-   * §3.4 gives the envelope both `occurred_at` and `recorded_at`; collapsing
+   * The envelope carries both `occurred_at` and `recorded_at`; collapsing
    * them would make the pair pointless and leaves intraday assertions with
-   * nothing to order by (§2.4).
+   * nothing to order by.
    */
   describe('occurred_at vs recorded_at', () => {
     it("takes the fact's own instant when the event declares one", () => {
@@ -85,7 +85,7 @@ describe('EnvelopeFactory', () => {
     });
   });
 
-  it('serializes amounts as decimal strings, never floats (RNF-2)', () => {
+  it('serializes amounts as decimal strings, never floats', () => {
     const [envelope] = build().build(stream, 0, [new Priced('31900', '7.99')], ctx);
 
     expect(envelope.payload).toEqual({ cop: '31900', usd: '7.99' });

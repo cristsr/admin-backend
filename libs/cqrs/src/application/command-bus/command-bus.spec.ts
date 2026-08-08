@@ -35,7 +35,7 @@ describe('PolicyCommandBus', () => {
     bus = new PolicyCommandBus([new NoOpPolicy()]);
   });
 
-  it('should reject an unregistered command (AC-1)', async () => {
+  it('should reject an unregistered command', async () => {
     const command = new AnotherCommand();
 
     await expect(bus.dispatch(command, ctx)).rejects.toBeInstanceOf(
@@ -43,8 +43,8 @@ describe('PolicyCommandBus', () => {
     );
   });
 
-  it('should dispatch a registered command to its handler (AC-1)', async () => {
-    (bus as PolicyCommandBus).register('Hello', new HelloHandler());
+  it('should dispatch a registered command to its handler', async () => {
+    (bus as PolicyCommandBus).register(HelloCommand, new HelloHandler());
     const command = new HelloCommand('world');
 
     const result = await bus.dispatch(command, ctx);
@@ -70,7 +70,7 @@ describe('PolicyCommandBus', () => {
     }
 
     const orderedBus = new PolicyCommandBus([new FirstPolicy(), new SecondPolicy()]);
-    orderedBus.register('Hello', new HelloHandler());
+    orderedBus.register(HelloCommand, new HelloHandler());
 
     await orderedBus.dispatch(new HelloCommand('x'), ctx);
 
@@ -85,13 +85,30 @@ describe('PolicyCommandBus', () => {
     }
 
     const blockedBus = new PolicyCommandBus([new BlockingPolicy()]);
-    blockedBus.register('Hello', new HelloHandler());
+    blockedBus.register(HelloCommand, new HelloHandler());
 
     await expect(blockedBus.dispatch(new HelloCommand('x'), ctx)).rejects.toThrow('blocked');
   });
 
   it('should not throw on duplicate handler registration', () => {
-    (bus as PolicyCommandBus).register('Hello', new HelloHandler());
-    expect(() => (bus as PolicyCommandBus).register('Hello', new HelloHandler())).not.toThrow();
+    (bus as PolicyCommandBus).register(HelloCommand, new HelloHandler());
+    expect(() => (bus as PolicyCommandBus).register(HelloCommand, new HelloHandler())).not.toThrow();
+  });
+
+  it('should expose the registered commands as their constructors', () => {
+    (bus as PolicyCommandBus).register(HelloCommand, new HelloHandler());
+
+    expect((bus as PolicyCommandBus).registeredTypes()).toEqual([HelloCommand]);
+  });
+
+  /**
+   * The reason routing moved off `commandType`: the string overload accepted any
+   * handler for any key. `AnotherCommand` differs from `HelloCommand` only by
+   * that literal, which is what makes this a compile error rather than a
+   * dispatch that silently runs the wrong handler.
+   */
+  it('should reject a handler that does not accept the registered command', () => {
+    // @ts-expect-error -- HelloHandler does not handle AnotherCommand.
+    (bus as PolicyCommandBus).register(AnotherCommand, new HelloHandler());
   });
 });

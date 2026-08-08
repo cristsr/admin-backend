@@ -10,6 +10,13 @@ export class UnregisteredCommandException extends DomainUnprocessableException {
   readonly code: string = 'UNREGISTERED_COMMAND';
 }
 
+/**
+ * Constructor of a concrete command. The bus routes on this reference, so
+ * `register` correlates a command with the one handler that accepts it and a
+ * mismatched pair fails to compile instead of at the first request.
+ */
+export type CommandCtor<TCommand extends Command> = new (...args: never[]) => TCommand;
+
 /** Dispatches commands to their handler through the policy chain. */
 export abstract class CommandBus {
   abstract dispatch(command: Command, ctx: AuthContext): Promise<CommandResult>;
@@ -20,27 +27,30 @@ export abstract class CommandBus {
  * concurrency), applied in registration order around the handler at the center.
  */
 export class PolicyCommandBus extends CommandBus {
-  private readonly handlers = new Map<string, CommandHandler<Command>>();
+  private readonly handlers = new Map<CommandCtor<Command>, CommandHandler<Command>>();
 
   constructor(private readonly policies: readonly CommandPolicy[]) {
     super();
   }
 
-  register(commandType: string, handler: CommandHandler<Command>): void {
-    this.handlers.set(commandType, handler);
+  register<TCommand extends Command>(
+    command: CommandCtor<TCommand>,
+    handler: CommandHandler<TCommand>,
+  ): void {
+    this.handlers.set(command, handler as CommandHandler<Command>);
   }
 
   /**
-   * Command types that currently resolve to a handler. Exists so the wiring test
-   * can assert the §3.5 catalogue is complete: a controller dispatching a command
-   * nobody registered only fails once a request reaches it in production.
+   * Commands that currently resolve to a handler. Exists so the wiring test can
+   * assert the catalogue is complete: a controller dispatching a command nobody
+   * registered only fails once a request reaches it in production.
    */
-  registeredTypes(): readonly string[] {
+  registeredTypes(): readonly CommandCtor<Command>[] {
     return [...this.handlers.keys()];
   }
 
   async dispatch(command: Command, ctx: AuthContext): Promise<CommandResult> {
-    const handler = this.handlers.get(command.commandType);
+    const handler = this.handlers.get(command.constructor as CommandCtor<Command>);
 
     if (!handler) {
       throw new UnregisteredCommandException(

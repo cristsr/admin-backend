@@ -5,8 +5,8 @@ import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 
 /**
  * Runs the configured projectors inline over freshly appended events, so
- * critical views are updated in the command's unit of work (read-your-writes,
- * RNF-9). A projector failure propagates, aborting the command.
+ * critical views are updated in the command's unit of work (read-your-writes).
+ * A projector failure propagates, aborting the command.
  */
 export class SynchronousProjectionDispatcher extends ProjectionDispatcher {
   constructor(

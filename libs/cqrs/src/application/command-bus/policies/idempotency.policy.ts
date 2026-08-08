@@ -12,7 +12,7 @@ import { CommandResult } from '../command-result.type';
  * handler it looks up the anchor event; if one exists, it replays the original
  * outcome without emitting new events. It also catches the store's duplicate
  * error, closing the race where two identical commands pass the pre-check
- * concurrently (defense-in-depth via the unique index, RNF-1).
+ * concurrently (defense-in-depth via the unique index).
  */
 export class IdempotencyPolicy extends CommandPolicy {
   constructor(private readonly eventStore: EventStore) {

@@ -55,7 +55,7 @@ describe('EventSourcedRepository', () => {
   });
 
   describe('save', () => {
-    it('returns early without calling append when aggregate has no uncommitted changes (AC-11)', async () => {
+    it('returns early without calling append when aggregate has no uncommitted changes', async () => {
       const aggregate = new TestAggregate('agg-1');
       const ctx: AuthContext = { userId: 'user-1', clientId: 'client-1', externalRef: null };
 

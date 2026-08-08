@@ -7,7 +7,7 @@ import { Criteria, Filter, FilterOperator, OrderType } from '@shared';
 
 /**
  * In-memory {@link ReadModelStore} for testing the full read side without a
- * database (RNF-11). Rows live in a per-table map keyed by their primary key;
+ * database. Rows live in a per-table map keyed by their primary key;
  * queries evaluate the shared {@link Criteria} in process.
  */
 export class InMemoryReadModelStore extends ReadModelStore {

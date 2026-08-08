@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-/** Projection checkpoints for async catch-up and rebuild (§6.1, RNF-5). */
+/** Projection checkpoints for async catch-up and rebuild. */
 export class CreateProjectionCheckpoints1790000000002 implements MigrationInterface {
   name = 'CreateProjectionCheckpoints1790000000002';
 

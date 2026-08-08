@@ -11,7 +11,7 @@ export class UnknownEventTypeException extends DomainUnprocessableException {
 }
 
 /**
- * Central map from `event_type` to its deserializer (RNF-6). Upcasting of old
+ * Central map from `event_type` to its deserializer. Upcasting of old
  * `schema_version`s happens inside the registered deserializer; events are
  * never migrated in place.
  */

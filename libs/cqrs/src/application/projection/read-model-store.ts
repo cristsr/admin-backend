@@ -7,9 +7,9 @@ export type ReadModelKey = Readonly<Record<string, string>>;
 export type ReadModelRow = Readonly<Record<string, unknown>>;
 
 /**
- * Read-model persistence port (RNF-10): no business logic, and only projectors
+ * Read-model persistence port: no business logic, and only projectors
  * write to it. Queries reuse the shared {@link Criteria}. `truncate` supports
- * full projection rebuilds (RNF-5).
+ * full projection rebuilds.
  */
 export abstract class ReadModelStore {
   abstract upsert(table: string, key: ReadModelKey, row: ReadModelRow): Promise<void>;

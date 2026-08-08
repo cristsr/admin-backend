@@ -7,7 +7,7 @@ import { Nullable } from '@shared';
 /**
  * Append-only event store (INV-12) — the ledger's source of truth. Its contract
  * is verified by one reusable suite that runs identically against the in-memory
- * double and the PostgreSQL adapter (RNF-11).
+ * double and the PostgreSQL adapter.
  *
  * Concurrency (INV-7): `expectedVersion` is the sequence the caller believes is
  * the current head — 0 for a new stream. A mismatch throws
@@ -17,7 +17,7 @@ import { Nullable } from '@shared';
  * only. Appending a batch whose anchor `external_ref` already exists for the
  * user throws {@link DuplicateExternalRefException}; the primary idempotency
  * check runs in the bus via {@link findByExternalRef}, the unique index being
- * defense-in-depth (RNF-1).
+ * defense-in-depth.
  */
 export abstract class EventStore {
   /** Atomically appends a batch to one stream under optimistic concurrency. */

@@ -62,7 +62,7 @@ function streamFor(userLabel: string, aggregateLabel: string): StreamId {
 }
 
 /**
- * The single contract every {@link EventStore} adapter must satisfy (RNF-11).
+ * The single contract every {@link EventStore} adapter must satisfy.
  * Run identically against the in-memory double and PostgreSQL, so both provably
  * behave the same.
  */
@@ -199,7 +199,7 @@ export function describeEventStoreContract(
       expect(await store.load(stream)).toHaveLength(1);
     });
 
-    it('treats an empty batch as a no-op (AC-11)', async () => {
+    it('treats an empty batch as a no-op', async () => {
       const stream = streamFor('user-1', 'agg-1');
       await store.append(stream, 0, [anEnvelope(stream, { sequence: 1 })]);
 
@@ -209,7 +209,7 @@ export function describeEventStoreContract(
       expect(result.version).toBe(1);
       expect(await store.load(stream)).toHaveLength(1);
     });
-    describe('withTransaction — cross-stream atomicity (hu-0023)', () => {
+    describe('withTransaction — cross-stream atomicity', () => {
       it('commits appends to several streams together', async () => {
         const first = streamFor('user-1', 'agg-1');
         const second = streamFor('user-1', 'agg-2');
@@ -241,7 +241,7 @@ export function describeEventStoreContract(
         expect(await store.load(second)).toEqual([]);
       });
 
-      it('rolls back an earlier stream when a later append conflicts (AC-5)', async () => {
+      it('rolls back an earlier stream when a later append conflicts', async () => {
         const first = streamFor('user-1', 'agg-1');
         const second = streamFor('user-1', 'agg-2');
         await store.append(second, 0, [anEnvelope(second, { sequence: 1 })]);
