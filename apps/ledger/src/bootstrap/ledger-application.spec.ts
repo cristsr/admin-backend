@@ -5,25 +5,23 @@ import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria } from '@shared';
 import { OpenAccountCommand } from '@ledger/accounts/application/open-account/open-account.command';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
 import { NameCollisionException } from '@ledger/accounts/domain/account/exceptions/account.exception';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { InitializeLedgerCommand } from '@ledger/ledger/application/initialize-ledger/initialize-ledger.command';
 import { LedgerAlreadyInitializedException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
+import { PROJ_CURRENCIES } from '@ledger/reference/application/read-models/currencies.read-model';
 import { RegisterCurrencyCommand } from '@ledger/reference/application/register-currency.command';
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
-import { PROJ_CURRENCIES } from '@ledger/reference/infrastructure/projections/currencies.projector';
 import { CurrencyCode } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
 import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
+import { PROJ_BALANCES } from '@ledger/transactions/application/read-models/account-balances.read-model';
+import { PROJ_TRANSACTIONS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { ReverseConfirmedTransactionCommand } from '@ledger/transactions/application/reverse-transaction/reverse-confirmed-transaction.command';
 import { UnbalancedTransactionException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
-import { PROJ_BALANCES } from '@ledger/transactions/infrastructure/projections/account-balances.projector';
-import {
-  PROJ_TRANSACTIONS,
-} from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
 import { createLedgerApplication } from './ledger-application.factory';
 
 const ctx = (externalRef: string | null = null): AuthContext => ({
@@ -60,7 +58,7 @@ async function openTwoAccounts(bus: CommandBus): Promise<{ expenses: string; ass
 }
 
 describe('Ledger application (write side)', () => {
-  it('rejects a command without an authenticated context (RF-26)', async () => {
+  it('rejects a command without an authenticated context', async () => {
     const { bus } = setup();
 
     await expect(
@@ -208,7 +206,7 @@ describe('Ledger application (write side)', () => {
     expect(after).toBe(before);
   });
 
-  it('registers a currency, projects it, and makes it resolvable without a restart (RF-21)', async () => {
+  it('registers a currency, projects it, and makes it resolvable without a restart', async () => {
     const eventStore = new InMemoryEventStore();
     const readModel = new InMemoryReadModelStore();
     // The production catalog: served from `proj_currencies` through a cache,
@@ -239,7 +237,7 @@ describe('Ledger application (write side)', () => {
     expect(catalog.resolve(CurrencyCode.of('CLF')).minorUnits).toBe(4);
   });
 
-  it('reverses a confirmed transaction with a linked reversing transaction (RF-7)', async () => {
+  it('reverses a confirmed transaction with a linked reversing transaction', async () => {
     const { bus, readModel } = setup();
     const { expenses, assets } = await openTwoAccounts(bus);
     const recorded = await bus.dispatch(

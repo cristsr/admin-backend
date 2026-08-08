@@ -12,13 +12,20 @@ import { SynchronousProjectionDispatcher } from '@cqrs/infrastructure/adapters/p
 import { AccountNameRegistry } from '@ledger/accounts/application/account-name.registry';
 import { AccountValidationService } from '@ledger/accounts/application/account-validation.service';
 import { AccountRepository } from '@ledger/accounts/application/account.repository';
+import { CloseAccountCommand } from '@ledger/accounts/application/close-account/close-account.command';
 import { CloseAccountHandler } from '@ledger/accounts/application/close-account/close-account.handler';
+import { OpenAccountCommand } from '@ledger/accounts/application/open-account/open-account.command';
 import { OpenAccountHandler } from '@ledger/accounts/application/open-account/open-account.handler';
+import { RecordOpeningBalanceCommand } from '@ledger/accounts/application/record-opening-balance/record-opening-balance.command';
 import { RecordOpeningBalanceHandler } from '@ledger/accounts/application/record-opening-balance/record-opening-balance.handler';
+import { RenameAccountCommand } from '@ledger/accounts/application/rename-account/rename-account.command';
 import { RenameAccountHandler } from '@ledger/accounts/application/rename-account/rename-account.handler';
 import { AccountTreeProjector } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
+import { InitializeLedgerCommand } from '@ledger/ledger/application/initialize-ledger/initialize-ledger.command';
 import { InitializeLedgerHandler } from '@ledger/ledger/application/initialize-ledger/initialize-ledger.handler';
+import { createLedgerEventRegistry } from '@ledger/ledger/application/ledger-event-registry.factory';
 import { LedgerSettingsRepository } from '@ledger/ledger/application/ledger-settings.repository';
+import { ReplaceLedgerSettingsCommand } from '@ledger/ledger/application/replace-ledger-settings/replace-ledger-settings.command';
 import { ReplaceLedgerSettingsHandler } from '@ledger/ledger/application/replace-ledger-settings/replace-ledger-settings.handler';
 import { LedgerSettingsProjector } from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
 import {
@@ -26,26 +33,32 @@ import {
   StaticCurrencyCatalogCache,
 } from '@ledger/reference/application/currency-catalog.cache';
 import { CurrencyCatalogRepository } from '@ledger/reference/application/currency-catalog.repository';
+import { RegisterCurrencyCommand } from '@ledger/reference/application/register-currency.command';
 import { RegisterCurrencyHandler } from '@ledger/reference/application/register-currency.handler';
 import { CurrenciesProjector } from '@ledger/reference/infrastructure/projections/currencies.projector';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
+import { AmendPendingTransactionCommand } from '@ledger/transactions/application/amend-transaction/amend-pending-transaction.command';
 import { AmendPendingTransactionHandler } from '@ledger/transactions/application/amend-transaction/amend-pending-transaction.handler';
+import { AnnotateTransactionCommand } from '@ledger/transactions/application/annotate-transaction/annotate-transaction.command';
 import { AnnotateTransactionHandler } from '@ledger/transactions/application/annotate-transaction/annotate-transaction.handler';
+import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
 import { ConfirmTransactionHandler } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.handler';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
+import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { RecordTransactionHandler } from '@ledger/transactions/application/record-transaction/record-transaction.handler';
+import { ReverseConfirmedTransactionCommand } from '@ledger/transactions/application/reverse-transaction/reverse-confirmed-transaction.command';
 import { ReverseConfirmedTransactionHandler } from '@ledger/transactions/application/reverse-transaction/reverse-confirmed-transaction.handler';
+import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';
 import { VoidPendingTransactionHandler } from '@ledger/transactions/application/void-transaction/void-pending-transaction.handler';
 import { ZeroSumBalanceRule } from '@ledger/transactions/domain/balance/zero-sum-balance-rule';
 import { AccountBalancesProjector } from '@ledger/transactions/infrastructure/projections/account-balances.projector';
 import { PendingReviewProjector } from '@ledger/transactions/infrastructure/projections/pending-review.projector';
 import { TransactionListProjector } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
-import { createLedgerEventRegistry } from './ledger-event-registry.factory';
 
 /**
  * The wired write side: the command bus plus the projector set for the read
  * side. The bus is exposed as the concrete {@link PolicyCommandBus} so feature
- * modules composed outside this root (EP-3) can register their own handlers on
+ * modules composed outside this root can register their own handlers on
  * the same policy chain instead of bypassing it.
  */
 export type LedgerApplication = {
@@ -70,8 +83,8 @@ export type LedgerApplicationDeps = {
 };
 
 /**
- * Composition root for the EP-1 write side. Wires repositories, projectors, the
- * synchronous dispatcher (read-your-writes, RNF-9) and the command bus with its
+ * Composition root for the write side. Wires repositories, projectors, the
+ * synchronous dispatcher (read-your-writes) and the command bus with its
  * cross-cutting policies, then registers every core handler.
  */
 export function createLedgerApplication(deps: LedgerApplicationDeps): LedgerApplication {
@@ -88,7 +101,7 @@ export function createLedgerApplication(deps: LedgerApplicationDeps): LedgerAppl
     new AccountBalancesProjector(catalog),
     new LedgerSettingsProjector(),
     // Without it `CurrencyRegistered` has no consumer and the catalog only
-    // materializes through the rebuild CLI (RF-21).
+    // materializes through the rebuild CLI.
     new CurrenciesProjector(),
   ];
   const dispatcher = new SynchronousProjectionDispatcher(projectors, readModel);
@@ -107,53 +120,47 @@ export function createLedgerApplication(deps: LedgerApplicationDeps): LedgerAppl
   ]);
 
   commandBus.register(
-    'ReplaceLedgerSettings',
+    ReplaceLedgerSettingsCommand,
     new ReplaceLedgerSettingsHandler(settings, dispatcher),
   );
   commandBus.register(
-    'InitializeLedger',
+    InitializeLedgerCommand,
     new InitializeLedgerHandler(settings, accounts, idGenerator, clock, dispatcher, eventStore),
   );
   commandBus.register(
-    'OpenAccount',
+    OpenAccountCommand,
     new OpenAccountHandler(accounts, names, idGenerator, dispatcher),
   );
-  commandBus.register('RenameAccount', new RenameAccountHandler(accounts, names, dispatcher));
-  commandBus.register('CloseAccount', new CloseAccountHandler(accounts, dispatcher));
+  commandBus.register(RenameAccountCommand, new RenameAccountHandler(accounts, names, dispatcher));
+  commandBus.register(CloseAccountCommand, new CloseAccountHandler(accounts, dispatcher));
+  // Reuses `RecordTransaction` over the same bus, so it is registered with the
+  // bus it dispatches into rather than with a repository of its own.
   commandBus.register(
-    'RecordOpeningBalance',
-    new RecordOpeningBalanceHandler(
-      transactions,
-      validation,
-      readModel,
-      catalog,
-      balance,
-      idGenerator,
-      dispatcher,
-    ),
+    RecordOpeningBalanceCommand,
+    new RecordOpeningBalanceHandler(commandBus, readModel, catalog),
   );
   commandBus.register(
-    'RecordTransaction',
+    RecordTransactionCommand,
     new RecordTransactionHandler(transactions, validation, catalog, balance, idGenerator, dispatcher),
   );
   commandBus.register(
-    'ConfirmTransaction',
+    ConfirmTransactionCommand,
     new ConfirmTransactionHandler(transactions, clock, dispatcher),
   );
   commandBus.register(
-    'AmendPendingTransaction',
+    AmendPendingTransactionCommand,
     new AmendPendingTransactionHandler(transactions, validation, catalog, balance, dispatcher),
   );
   commandBus.register(
-    'AnnotateTransaction',
+    AnnotateTransactionCommand,
     new AnnotateTransactionHandler(transactions, dispatcher),
   );
   commandBus.register(
-    'VoidPendingTransaction',
+    VoidPendingTransactionCommand,
     new VoidPendingTransactionHandler(transactions, dispatcher),
   );
   commandBus.register(
-    'RegisterCurrency',
+    RegisterCurrencyCommand,
     new RegisterCurrencyHandler(
       currencies,
       dispatcher,
@@ -161,7 +168,7 @@ export function createLedgerApplication(deps: LedgerApplicationDeps): LedgerAppl
     ),
   );
   commandBus.register(
-    'ReverseConfirmedTransaction',
+    ReverseConfirmedTransactionCommand,
     new ReverseConfirmedTransactionHandler(
       transactions,
       balance,
