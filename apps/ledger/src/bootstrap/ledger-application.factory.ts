@@ -9,9 +9,6 @@ import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { EventStore } from '@cqrs/domain/ports/event-store';
 import { SynchronousProjectionDispatcher } from '@cqrs/infrastructure/adapters/projection/synchronous-dispatcher';
-import { AccountNameRegistry } from '@ledger/accounts/application/account-name.registry';
-import { AccountValidationService } from '@ledger/accounts/application/account-validation.service';
-import { AccountRepository } from '@ledger/accounts/application/account.repository';
 import { CloseAccountCommand } from '@ledger/accounts/application/close-account/close-account.command';
 import { CloseAccountHandler } from '@ledger/accounts/application/close-account/close-account.handler';
 import { OpenAccountCommand } from '@ledger/accounts/application/open-account/open-account.command';
@@ -20,21 +17,24 @@ import { RecordOpeningBalanceCommand } from '@ledger/accounts/application/record
 import { RecordOpeningBalanceHandler } from '@ledger/accounts/application/record-opening-balance/record-opening-balance.handler';
 import { RenameAccountCommand } from '@ledger/accounts/application/rename-account/rename-account.command';
 import { RenameAccountHandler } from '@ledger/accounts/application/rename-account/rename-account.handler';
+import { AccountRepository } from '@ledger/accounts/application/repositories/account.repository';
+import { AccountNameRegistry } from '@ledger/accounts/application/services/account-name.registry';
+import { AccountValidationService } from '@ledger/accounts/application/services/account-validation.service';
 import { AccountTreeProjector } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
+import { createLedgerEventRegistry } from '@ledger/ledger/application/factories/ledger-event-registry.factory';
 import { InitializeLedgerCommand } from '@ledger/ledger/application/initialize-ledger/initialize-ledger.command';
 import { InitializeLedgerHandler } from '@ledger/ledger/application/initialize-ledger/initialize-ledger.handler';
-import { createLedgerEventRegistry } from '@ledger/ledger/application/ledger-event-registry.factory';
-import { LedgerSettingsRepository } from '@ledger/ledger/application/ledger-settings.repository';
 import { ReplaceLedgerSettingsCommand } from '@ledger/ledger/application/replace-ledger-settings/replace-ledger-settings.command';
 import { ReplaceLedgerSettingsHandler } from '@ledger/ledger/application/replace-ledger-settings/replace-ledger-settings.handler';
+import { LedgerSettingsRepository } from '@ledger/ledger/application/repositories/ledger-settings.repository';
 import { LedgerSettingsProjector } from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
 import {
   CurrencyCatalogCache,
   StaticCurrencyCatalogCache,
-} from '@ledger/reference/application/currency-catalog.cache';
-import { CurrencyCatalogRepository } from '@ledger/reference/application/currency-catalog.repository';
+} from '@ledger/reference/application/ports/currency-catalog.cache';
 import { RegisterCurrencyCommand } from '@ledger/reference/application/register-currency/register-currency.command';
 import { RegisterCurrencyHandler } from '@ledger/reference/application/register-currency/register-currency.handler';
+import { CurrencyCatalogRepository } from '@ledger/reference/application/repositories/currency-catalog.repository';
 import { CurrenciesProjector } from '@ledger/reference/infrastructure/projections/currencies.projector';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import { AmendPendingTransactionCommand } from '@ledger/transactions/application/amend-transaction/amend-pending-transaction.command';
@@ -43,14 +43,15 @@ import { AnnotateTransactionCommand } from '@ledger/transactions/application/ann
 import { AnnotateTransactionHandler } from '@ledger/transactions/application/annotate-transaction/annotate-transaction.handler';
 import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
 import { ConfirmTransactionHandler } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.handler';
-import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { RecordTransactionHandler } from '@ledger/transactions/application/record-transaction/record-transaction.handler';
+import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
 import { ReverseConfirmedTransactionCommand } from '@ledger/transactions/application/reverse-transaction/reverse-confirmed-transaction.command';
 import { ReverseConfirmedTransactionHandler } from '@ledger/transactions/application/reverse-transaction/reverse-confirmed-transaction.handler';
 import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';
 import { VoidPendingTransactionHandler } from '@ledger/transactions/application/void-transaction/void-pending-transaction.handler';
 import { ZeroSumBalanceRule } from '@ledger/transactions/domain/balance/zero-sum-balance-rule';
+import { AccountTreePostingValidator } from '@ledger/transactions/infrastructure/adapters/accounts/account-tree-posting-validator';
 import { AccountBalancesProjector } from '@ledger/transactions/infrastructure/projections/account-balances.projector';
 import { PendingReviewProjector } from '@ledger/transactions/infrastructure/projections/pending-review.projector';
 import { TransactionListProjector } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
@@ -110,7 +111,9 @@ export function createLedgerApplication(deps: LedgerApplicationDeps): LedgerAppl
   const transactions = new LedgerTransactionRepository(eventStore, registry, envelopes);
   const settings = new LedgerSettingsRepository(eventStore, registry, envelopes);
   const currencies = new CurrencyCatalogRepository(eventStore, registry, envelopes);
-  const validation = new AccountValidationService(readModel);
+  // `transactions` asks for a PostingValidator; `accounts` is what answers it.
+  // Binding the two is this root's job — it is the only place that may know both.
+  const validation = new AccountTreePostingValidator(new AccountValidationService(readModel));
   const names = new AccountNameRegistry(readModel);
 
   const commandBus = new PolicyCommandBus([

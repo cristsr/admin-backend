@@ -2,7 +2,7 @@ import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { IdGenerator } from '@cqrs/domain/ports';
-import { BalanceAssertionRepository } from '@ledger/reconciliation/application/balance-assertion.repository';
+import { BalanceAssertionRepository } from '@ledger/reconciliation/application/repositories/balance-assertion.repository';
 import { BalanceAssertion } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.aggregate';
 import { Money } from '@ledger/shared/domain/money';
 import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared/domain/value-objects';

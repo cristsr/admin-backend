@@ -3,10 +3,10 @@ import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
 import { IdGenerator } from '@cqrs/domain/ports';
-import { AccountValidationService } from '@ledger/accounts/application/account-validation.service';
 import { CurrencyCatalog, LedgerDate, Payee } from '@ledger/shared/domain/value-objects';
-import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
-import { toPostingLines } from '@ledger/transactions/application/posting.factory';
+import { toPostingLines } from '@ledger/transactions/application/factories/posting.factory';
+import { PostingValidator } from '@ledger/transactions/application/ports/posting-validator.port';
+import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
 import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';
 import { LedgerTransaction } from '@ledger/transactions/domain/transaction/ledger-transaction.aggregate';
 import { RecordTransactionCommand } from './record-transaction.command';
@@ -19,7 +19,7 @@ import { RecordTransactionCommand } from './record-transaction.command';
 export class RecordTransactionHandler extends CommandHandler<RecordTransactionCommand> {
   constructor(
     private readonly transactions: LedgerTransactionRepository,
-    private readonly validation: AccountValidationService,
+    private readonly validation: PostingValidator,
     private readonly catalog: CurrencyCatalog,
     private readonly balance: BalanceRule,
     private readonly idGenerator: IdGenerator,

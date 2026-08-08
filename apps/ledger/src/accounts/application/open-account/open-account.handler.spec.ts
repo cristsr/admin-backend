@@ -2,9 +2,9 @@ import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { IdGenerator } from '@cqrs/domain/ports';
+import { AccountRepository } from '@ledger/accounts/application/repositories/account.repository';
+import { AccountNameRegistry } from '@ledger/accounts/application/services/account-name.registry';
 import { NameCollisionException } from '../../domain/account/exceptions/account.exception';
-import { AccountNameRegistry } from '../account-name.registry';
-import { AccountRepository } from '../account.repository';
 import { OpenAccountCommand } from './open-account.command';
 import { OpenAccountHandler } from './open-account.handler';
 

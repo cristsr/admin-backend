@@ -1,7 +1,7 @@
 import { Command } from '@cqrs/application/command-bus/command';
 import { Nullable } from '@shared';
-import { PostingOrigin } from '@ledger/accounts/application/posting-origin';
-import { PostingInput } from '@ledger/transactions/application/posting-input.type';
+import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
+import { PostingInput } from '@ledger/transactions/application/types/posting-input.type';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 
 /**

@@ -1,8 +1,8 @@
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
-import { PostingOrigin } from '@ledger/accounts/application/posting-origin';
 import { PROJ_LEDGER_SETTINGS } from '@ledger/ledger/application/read-models/ledger-settings.read-model';
 import { LedgerNotInitializedException } from '@ledger/shared/domain/errors/ledger.exception';
+import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { RecordingCommandBus } from '@ledger/shared/testing';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';

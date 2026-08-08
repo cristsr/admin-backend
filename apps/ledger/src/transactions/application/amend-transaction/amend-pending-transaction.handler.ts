@@ -2,11 +2,11 @@ import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
-import { AccountValidationService } from '@ledger/accounts/application/account-validation.service';
-import { PostingOrigin } from '@ledger/accounts/application/posting-origin';
 import { CurrencyCatalog, LedgerDate } from '@ledger/shared/domain/value-objects';
-import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
-import { toPostingLines } from '@ledger/transactions/application/posting.factory';
+import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
+import { toPostingLines } from '@ledger/transactions/application/factories/posting.factory';
+import { PostingValidator } from '@ledger/transactions/application/ports/posting-validator.port';
+import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
 import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';
 import { TransactionNotFoundException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
 import { AmendPendingTransactionCommand } from './amend-pending-transaction.command';
@@ -15,7 +15,7 @@ import { AmendPendingTransactionCommand } from './amend-pending-transaction.comm
 export class AmendPendingTransactionHandler extends CommandHandler<AmendPendingTransactionCommand> {
   constructor(
     private readonly transactions: LedgerTransactionRepository,
-    private readonly validation: AccountValidationService,
+    private readonly validation: PostingValidator,
     private readonly catalog: CurrencyCatalog,
     private readonly balance: BalanceRule,
     private readonly dispatcher: ProjectionDispatcher,

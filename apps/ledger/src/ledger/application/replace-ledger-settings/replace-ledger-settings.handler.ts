@@ -2,7 +2,7 @@ import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
-import { LedgerSettingsRepository } from '@ledger/ledger/application/ledger-settings.repository';
+import { LedgerSettingsRepository } from '@ledger/ledger/application/repositories/ledger-settings.repository';
 import { LedgerNotInitializedException } from '@ledger/shared/domain/errors/ledger.exception';
 import { CurrencyCode, IanaTimeZone } from '@ledger/shared/domain/value-objects';
 import { ReplaceLedgerSettingsCommand } from './replace-ledger-settings.command';

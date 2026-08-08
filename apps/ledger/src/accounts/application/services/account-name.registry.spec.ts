@@ -1,7 +1,7 @@
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { Criteria } from '@shared';
+import { NameCollisionException } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { AccountName } from '@ledger/shared/domain/value-objects';
-import { NameCollisionException } from '../domain/account/exceptions/account.exception';
 import { AccountNameRegistry } from './account-name.registry';
 
 /** A read model holding exactly the names the test declares, for one user. */

@@ -3,8 +3,8 @@ import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
 import { IdGenerator } from '@cqrs/domain/ports';
-import { AccountNameRegistry } from '@ledger/accounts/application/account-name.registry';
-import { AccountRepository } from '@ledger/accounts/application/account.repository';
+import { AccountRepository } from '@ledger/accounts/application/repositories/account.repository';
+import { AccountNameRegistry } from '@ledger/accounts/application/services/account-name.registry';
 import { Account } from '@ledger/accounts/domain/account/account.aggregate';
 import {
   AccountName,

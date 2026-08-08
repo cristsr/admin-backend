@@ -5,4 +5,5 @@ export * from './currency-code';
 export * from './iana-timezone';
 export * from './ledger-date';
 export * from './payee';
+export * from '@ledger/shared/domain/value-objects/posting-origin';
 export * from './value-object.exception';

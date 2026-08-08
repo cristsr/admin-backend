@@ -2,10 +2,10 @@ import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
 import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { EventStore } from '@cqrs/domain/ports/event-store';
+import { AccountRepository } from '@ledger/accounts/application/repositories/account.repository';
+import { LedgerSettingsRepository } from '@ledger/ledger/application/repositories/ledger-settings.repository';
 import { LedgerAlreadyInitializedException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
-import { AccountRepository } from '../../../accounts/application/account.repository';
 import { LedgerSettings } from '../../domain/settings/ledger-settings.aggregate';
-import { LedgerSettingsRepository } from '../ledger-settings.repository';
 import { InitializeLedgerCommand } from './initialize-ledger.command';
 import { InitializeLedgerHandler } from './initialize-ledger.handler';
 

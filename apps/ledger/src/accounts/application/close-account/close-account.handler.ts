@@ -2,7 +2,7 @@ import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
-import { AccountRepository } from '@ledger/accounts/application/account.repository';
+import { AccountRepository } from '@ledger/accounts/application/repositories/account.repository';
 import { AccountNotFoundException } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { CloseAccountCommand } from './close-account.command';

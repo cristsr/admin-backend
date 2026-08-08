@@ -6,6 +6,7 @@ import { RecordingCommandBus } from '@ledger/shared/testing';
 import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
 import { AccountFacts, AccountLookup } from '@ledger/transactions/application/ports/account-lookup.port';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
+import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
 import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';
 import {
   NotATransferPairException,
@@ -14,7 +15,6 @@ import {
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
 import { TransferPairRule } from '@ledger/transactions/domain/services/transfer-pair.rule';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
-import { LedgerTransactionRepository } from '../ledger-transaction.repository';
 import { MergePendingTransfersCommand } from './merge-pending-transfers.command';
 import { MergePendingTransfersHandler } from './merge-pending-transfers.handler';
 

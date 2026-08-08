@@ -1,8 +1,8 @@
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
 import { Clock } from '@cqrs/domain/ports';
+import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
 import { ImmutableTransactionException, TransactionNotFoundException } from '../../domain/transaction/exceptions/transaction.exception';
-import { LedgerTransactionRepository } from '../ledger-transaction.repository';
 import { ConfirmTransactionCommand } from './confirm-transaction.command';
 import { ConfirmTransactionHandler } from './confirm-transaction.handler';
 

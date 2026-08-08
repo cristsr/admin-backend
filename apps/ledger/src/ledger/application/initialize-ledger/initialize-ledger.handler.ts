@@ -4,9 +4,9 @@ import { CommandResult } from '@cqrs/application/command-bus/command-result.type
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
 import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { EventStore } from '@cqrs/domain/ports/event-store';
-import { AccountRepository } from '@ledger/accounts/application/account.repository';
+import { AccountRepository } from '@ledger/accounts/application/repositories/account.repository';
 import { Account } from '@ledger/accounts/domain/account/account.aggregate';
-import { LedgerSettingsRepository } from '@ledger/ledger/application/ledger-settings.repository';
+import { LedgerSettingsRepository } from '@ledger/ledger/application/repositories/ledger-settings.repository';
 import { LedgerAlreadyInitializedException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
 import { LedgerSettings } from '@ledger/ledger/domain/settings/ledger-settings.aggregate';
 import { AccountName, LedgerDate } from '@ledger/shared/domain/value-objects';

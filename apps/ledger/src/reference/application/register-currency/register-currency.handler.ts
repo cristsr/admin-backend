@@ -2,8 +2,8 @@ import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
-import { CurrencyCatalogCache } from '@ledger/reference/application/currency-catalog.cache';
-import { CurrencyCatalogRepository, SYSTEM_USER_ID } from '@ledger/reference/application/currency-catalog.repository';
+import { CurrencyCatalogCache } from '@ledger/reference/application/ports/currency-catalog.cache';
+import { CurrencyCatalogRepository, SYSTEM_USER_ID } from '@ledger/reference/application/repositories/currency-catalog.repository';
 import {
   CURRENCY_CATALOG_ID,
   CurrencyCatalogAggregate,

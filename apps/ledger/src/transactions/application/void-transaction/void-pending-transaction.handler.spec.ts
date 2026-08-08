@@ -1,7 +1,7 @@
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
+import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
 import { ImmutableTransactionException, TransactionNotFoundException } from '../../domain/transaction/exceptions/transaction.exception';
-import { LedgerTransactionRepository } from '../ledger-transaction.repository';
 import { VoidPendingTransactionCommand } from './void-pending-transaction.command';
 import { VoidPendingTransactionHandler } from './void-pending-transaction.handler';
 

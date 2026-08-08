@@ -4,7 +4,6 @@ import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { Criteria } from '@shared';
-import { PostingOrigin } from '@ledger/accounts/application/posting-origin';
 import {
   LedgerSettingsRow,
   PROJ_LEDGER_SETTINGS,
@@ -12,6 +11,7 @@ import {
 import { LedgerNotInitializedException } from '@ledger/shared/domain/errors/ledger.exception';
 import { Money } from '@ledger/shared/domain/money';
 import { CurrencyCatalog, CurrencyCode } from '@ledger/shared/domain/value-objects';
+import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { RecordOpeningBalanceCommand } from './record-opening-balance.command';

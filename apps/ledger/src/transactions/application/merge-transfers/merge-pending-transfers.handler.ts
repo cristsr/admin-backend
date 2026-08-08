@@ -5,9 +5,9 @@ import { CommandResult } from '@cqrs/application/command-bus/command-result.type
 import { EventStore } from '@cqrs/domain/ports/event-store';
 import { Nullable } from '@shared';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
-import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
 import { AccountLookup } from '@ledger/transactions/application/ports/account-lookup.port';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
+import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
 import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';
 import {
   NotATransferPairException,

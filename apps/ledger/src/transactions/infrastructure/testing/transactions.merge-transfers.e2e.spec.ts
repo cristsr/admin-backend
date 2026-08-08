@@ -6,22 +6,22 @@ import { EnvelopeFactory } from '@cqrs/application/event/envelope.factory';
 import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { Nullable } from '@shared';
-import { createLedgerEventRegistry } from '@ledger/ledger/application/ledger-event-registry.factory';
+import { createLedgerEventRegistry } from '@ledger/ledger/application/factories/ledger-event-registry.factory';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, SequentialIdGenerator, aMoney } from '@ledger/shared/testing';
-import { LedgerTransactionRepository } from './application/ledger-transaction.repository';
-import { MergePendingTransfersCommand } from './application/merge-transfers/merge-pending-transfers.command';
-import { MergePendingTransfersHandler } from './application/merge-transfers/merge-pending-transfers.handler';
-import { AccountFacts, AccountLookup } from './application/ports/account-lookup.port';
-import { RecordTransactionCommand } from './application/record-transaction/record-transaction.command';
-import { VoidPendingTransactionCommand } from './application/void-transaction/void-pending-transaction.command';
-import { BalanceRule } from './domain/balance/balance-rule';
-import { ZeroSumBalanceRule } from './domain/balance/zero-sum-balance-rule';
-import { PostingLine } from './domain/posting/posting-line';
-import { TransferPairRule } from './domain/services/transfer-pair.rule';
-import { LedgerTransaction } from './domain/transaction/ledger-transaction.aggregate';
-import { TransactionStatus } from './domain/transaction/transaction-status';
+import { MergePendingTransfersCommand } from '@ledger/transactions/application/merge-transfers/merge-pending-transfers.command';
+import { MergePendingTransfersHandler } from '@ledger/transactions/application/merge-transfers/merge-pending-transfers.handler';
+import { AccountFacts, AccountLookup } from '@ledger/transactions/application/ports/account-lookup.port';
+import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
+import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
+import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';
+import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';
+import { ZeroSumBalanceRule } from '@ledger/transactions/domain/balance/zero-sum-balance-rule';
+import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
+import { TransferPairRule } from '@ledger/transactions/domain/services/transfer-pair.rule';
+import { LedgerTransaction } from '@ledger/transactions/domain/transaction/ledger-transaction.aggregate';
+import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 
 /** Both transfer accounts are real; the counterpart category is not. */
 class TransferAccountsLookup extends AccountLookup {

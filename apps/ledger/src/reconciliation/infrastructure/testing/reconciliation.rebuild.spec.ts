@@ -7,17 +7,17 @@ import { ProjectionRebuilder } from '@cqrs/infrastructure/adapters/projection/pr
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria } from '@shared';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
-import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
-import { RECONCILIATION_PROJECTION } from './infrastructure/adapters/events/reconciliation.pump';
+import { RECONCILIATION_PROJECTION } from '@ledger/reconciliation/infrastructure/adapters/events/reconciliation.pump';
 import {
   AdjustmentAuditProjector,
   PROJ_ADJUSTMENT_AUDIT,
   PROJ_ADJUSTMENT_AUDIT_ENTRIES,
-} from './infrastructure/projections/adjustment-audit.projector';
+} from '@ledger/reconciliation/infrastructure/projections/adjustment-audit.projector';
 import {
   AssertionStatusProjector,
   PROJ_ASSERTIONS,
-} from './infrastructure/projections/assertion-status.projector';
+} from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
+import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 
 const AT = new Date('2026-07-22T10:00:00.000Z');
 

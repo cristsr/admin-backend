@@ -1,6 +1,5 @@
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { Criteria } from '@shared';
-import { PostingOrigin } from '@ledger/accounts/application/posting-origin';
 import {
   AccountRow,
   PROJ_ACCOUNTS,
@@ -18,6 +17,7 @@ import {
   CurrencyCode,
   LedgerDate,
 } from '@ledger/shared/domain/value-objects';
+import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
 
 /**

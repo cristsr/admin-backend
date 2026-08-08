@@ -23,11 +23,11 @@ import {
   ListTransactionsQuery,
   TransactionPage,
 } from '@ledger/transactions/application/list-transactions/list-transactions.query';
-import { PostingInput } from '@ledger/transactions/application/posting-input.type';
 import { PendingReviewView } from '@ledger/transactions/application/read-models/pending-review.read-model';
 import { TransactionView } from '@ledger/transactions/application/read-models/transaction-list.read-model';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { ReverseConfirmedTransactionCommand } from '@ledger/transactions/application/reverse-transaction/reverse-confirmed-transaction.command';
+import { PostingInput } from '@ledger/transactions/application/types/posting-input.type';
 import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';
 import { AmendTransactionRequestDto } from './dto/amend-transaction-request.dto';
 import { AnnotateTransactionRequestDto } from './dto/annotate-transaction-request.dto';

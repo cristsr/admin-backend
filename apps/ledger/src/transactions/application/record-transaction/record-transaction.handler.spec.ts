@@ -2,12 +2,12 @@ import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
 import { IdGenerator } from '@cqrs/domain/ports';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
-import { AccountValidationService } from '../../../accounts/application/account-validation.service';
-import { PostingOrigin } from '../../../accounts/application/posting-origin';
+import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
+import { PostingValidator } from '@ledger/transactions/application/ports/posting-validator.port';
+import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
 import { BalanceRule } from '../../domain/balance/balance-rule';
 import { UnbalancedTransactionException } from '../../domain/transaction/exceptions/transaction.exception';
 import { TransactionStatus } from '../../domain/transaction/transaction-status';
-import { LedgerTransactionRepository } from '../ledger-transaction.repository';
 import { RecordTransactionCommand } from './record-transaction.command';
 import { RecordTransactionHandler } from './record-transaction.handler';
 
@@ -20,7 +20,7 @@ function setup() {
 
   const validation = {
     validate: jest.fn().mockResolvedValue(undefined),
-  } as unknown as jest.Mocked<AccountValidationService>;
+  } as unknown as jest.Mocked<PostingValidator>;
 
   const catalog = {
     resolve: jest.fn().mockReturnValue({ code: 'COP', minorUnits: 2 }),

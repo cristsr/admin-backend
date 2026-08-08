@@ -1,8 +1,8 @@
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { EnvelopeFactory } from '@cqrs/application/event/envelope.factory';
 import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
-import { BalanceAssertionRepository } from '@ledger/reconciliation/application/balance-assertion.repository';
-import { createReconciliationEventRegistry } from '@ledger/reconciliation/application/reconciliation-event-registry.factory';
+import { createReconciliationEventRegistry } from '@ledger/reconciliation/application/factories/reconciliation-event-registry.factory';
+import { BalanceAssertionRepository } from '@ledger/reconciliation/application/repositories/balance-assertion.repository';
 import { BALANCE_ASSERTED } from '@ledger/reconciliation/domain/balance-assertion/events';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';

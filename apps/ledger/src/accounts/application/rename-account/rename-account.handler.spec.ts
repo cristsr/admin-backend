@@ -3,6 +3,8 @@ import { ProjectionDispatcher } from '@cqrs/application/projection/projection-di
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { IdGenerator } from '@cqrs/domain/ports';
 import { Criteria } from '@shared';
+import { AccountRepository } from '@ledger/accounts/application/repositories/account.repository';
+import { AccountNameRegistry } from '@ledger/accounts/application/services/account-name.registry';
 import { AccountNotFoundException } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import {
   AccountName,
@@ -14,8 +16,6 @@ import {
   NameCollisionException,
   SystemAccountProtectedException,
 } from '../../domain/account/exceptions/account.exception';
-import { AccountNameRegistry } from '../account-name.registry';
-import { AccountRepository } from '../account.repository';
 import { RenameAccountCommand } from './rename-account.command';
 import { RenameAccountHandler } from './rename-account.handler';
 
