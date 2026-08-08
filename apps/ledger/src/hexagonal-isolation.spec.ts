@@ -74,6 +74,19 @@ const layerViolations = (): readonly string[] =>
       .map((source) => `${layer}: ${relative(SOURCE_ROOT, file)} -> ${source}`),
   );
 
+/** What `application` must not reach for, now that every read goes through a port. */
+const FORBIDDEN_READ_ACCESS = ['read-model-store', 'Criteria'];
+
+/** Core files whose imports mention a forbidden read symbol. */
+const readModelViolations = (): readonly string[] =>
+  coreFiles().flatMap(({ file, layer }) =>
+    layer === 'application'
+      ? importsOf(file)
+          .filter((source) => FORBIDDEN_READ_ACCESS.some((banned) => source.includes(banned)))
+          .map((source) => `${layer}: ${relative(SOURCE_ROOT, file)} -> ${source}`)
+      : [],
+  );
+
 /**
  * Domain and Application own no technology. Every external access goes
  * through a port, and the adapters do the wiring — which is why the
@@ -98,5 +111,18 @@ describe('Hexagonal isolation', () => {
    */
   it('keeps dependencies pointing inward across the codebase layers', () => {
     expect(layerViolations()).toEqual([]);
+  });
+
+  /**
+   * Application states what it needs; infrastructure knows where it lives.
+   *
+   * The two cases above policed direction, and the read side slipped past
+   * them: the table names were declared *inside* `application` precisely so
+   * no import would point outward. Nothing failed, and the physical schema —
+   * `proj_accounts`, `snake_case`, nullable columns — reached the use cases
+   * anyway. Direction was never the whole invariant.
+   */
+  it('keeps the read model schema out of application', () => {
+    expect(readModelViolations()).toEqual([]);
   });
 });

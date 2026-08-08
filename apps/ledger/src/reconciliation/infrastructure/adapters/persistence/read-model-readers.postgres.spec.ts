@@ -1,8 +1,8 @@
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { PostgresReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';
 import { DataSource } from 'typeorm';
-import { AdjustmentAuditEntry } from '@ledger/reconciliation/application/ports/adjustment-audit-store.port';
-import { AssertionStatusRow } from '@ledger/reconciliation/application/ports/assertion-status-store.port';
+import { AdjustmentAuditEntry } from '@ledger/reconciliation/application/ports/adjustment-audit-reader.port';
+import { AssertionStatusRecord } from '@ledger/reconciliation/application/ports/assertion-status-reader.port';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
 import {
   AdjustmentAuditProjector,
@@ -12,12 +12,12 @@ import {
 import { PROJ_ASSERTIONS } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
 import {
   AdjustmentAuditFixture,
-  runAdjustmentAuditStoreContract,
-} from '@ledger/reconciliation/infrastructure/testing/adjustment-audit-store.contract';
+  runAdjustmentAuditReaderContract,
+} from '@ledger/reconciliation/infrastructure/testing/adjustment-audit-reader.contract';
 import {
   AssertionStatusFixture,
-  runAssertionStatusStoreContract,
-} from '@ledger/reconciliation/infrastructure/testing/assertion-status-store.contract';
+  runAssertionStatusReaderContract,
+} from '@ledger/reconciliation/infrastructure/testing/assertion-status-reader.contract';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { ReadModelAdjustmentAuditReader } from './read-model-adjustment-audit-reader';
 import { ReadModelAssertionStatusReader } from './read-model-assertion-status-reader';
@@ -56,7 +56,7 @@ if (runPgTests) {
   const assertionFixture = async (): Promise<AssertionStatusFixture> => {
     const store = await freshStore();
 
-    const seed = (row: AssertionStatusRow): Promise<void> =>
+    const seed = (row: AssertionStatusRecord): Promise<void> =>
       store.upsert(
         PROJ_ASSERTIONS,
         { assertion_id: row.assertionId },
@@ -134,8 +134,8 @@ if (runPgTests) {
   };
 
   describe('over PostgresReadModelStore', () => {
-    runAssertionStatusStoreContract(assertionFixture);
-    runAdjustmentAuditStoreContract(auditFixture);
+    runAssertionStatusReaderContract(assertionFixture);
+    runAdjustmentAuditReaderContract(auditFixture);
   });
 } else {
   describe.skip('Reconciliation readers over Postgres (set RUN_PG_TESTS=1 with a database)', () => {

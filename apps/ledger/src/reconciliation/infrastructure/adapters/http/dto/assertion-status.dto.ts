@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Nullable } from '@shared';
-import { AssertionStatusView } from '@ledger/reconciliation/application/read-models/assertion-status.read-model';
+import { AssertionStatusView } from '@ledger/reconciliation/application/views/assertion-status.view';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
 
 /**

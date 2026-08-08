@@ -1,6 +1,6 @@
 import { Query } from '@cqrs/application/query-bus/query';
 import { Nullable } from '@shared';
-import { AssertionStatusView } from '@ledger/reconciliation/application/read-models/assertion-status.read-model';
+import { AssertionStatusView } from '@ledger/reconciliation/application/views/assertion-status.view';
 
 /**
  * Reads a single assertion's reconciliation status. The owning user travels in

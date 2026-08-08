@@ -1,13 +1,13 @@
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
-import { AdjustmentAuditEntry } from '@ledger/reconciliation/application/ports/adjustment-audit-store.port';
+import { AdjustmentAuditEntry } from '@ledger/reconciliation/application/ports/adjustment-audit-reader.port';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
 import { AdjustmentAuditProjector } from '@ledger/reconciliation/infrastructure/projections/adjustment-audit.projector';
 import { PROJ_ASSERTIONS } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
 import {
   AdjustmentAuditFixture,
-  runAdjustmentAuditStoreContract,
-} from '@ledger/reconciliation/infrastructure/testing/adjustment-audit-store.contract';
+  runAdjustmentAuditReaderContract,
+} from '@ledger/reconciliation/infrastructure/testing/adjustment-audit-reader.contract';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { ReadModelAdjustmentAuditReader } from './read-model-adjustment-audit-reader';
 
@@ -70,4 +70,4 @@ const makeFixture = (): AdjustmentAuditFixture => {
   return { store: new ReadModelAdjustmentAuditReader(store), seed };
 };
 
-runAdjustmentAuditStoreContract(makeFixture);
+runAdjustmentAuditReaderContract(makeFixture);

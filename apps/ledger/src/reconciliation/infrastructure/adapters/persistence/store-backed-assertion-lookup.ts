@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { AssertionLookupPort } from '@ledger/reconciliation/application/ports/assertion-lookup.port';
-import { AssertionStatusStore } from '@ledger/reconciliation/application/ports/assertion-status-store.port';
+import { AssertionStatusReader } from '@ledger/reconciliation/application/ports/assertion-status-reader.port';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 
 /**
@@ -9,7 +9,7 @@ import { LedgerDate } from '@ledger/shared/domain/value-objects';
  */
 @Injectable()
 export class StoreBackedAssertionLookup extends AssertionLookupPort {
-  constructor(private readonly store: AssertionStatusStore) {
+  constructor(private readonly store: AssertionStatusReader) {
     super();
   }
 

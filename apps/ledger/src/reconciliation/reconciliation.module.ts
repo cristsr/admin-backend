@@ -10,9 +10,9 @@ import { PostgresProjectionCheckpointRepository } from '@cqrs/infrastructure/ada
 import { BalanceAssertionRepository } from '@ledger/reconciliation/application/repositories/balance-assertion.repository';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import { createReconciliationEventRegistry } from './application/factories/reconciliation-event-registry.factory';
-import { AdjustmentAuditStore } from './application/ports/adjustment-audit-store.port';
+import { AdjustmentAuditReader } from './application/ports/adjustment-audit-reader.port';
 import { AssertionLookupPort } from './application/ports/assertion-lookup.port';
-import { AssertionStatusStore } from './application/ports/assertion-status-store.port';
+import { AssertionStatusReader } from './application/ports/assertion-status-reader.port';
 import { LedgerTimezoneReader } from '@ledger/ledger/application/ports/ledger-timezone-reader.port';
 import { SystemAccountLookup } from '@ledger/ledger/application/ports/system-account-lookup.port';
 import { ReevaluateAssertionsReactor } from './application/reactors/reevaluate-assertions.reactor';
@@ -81,8 +81,8 @@ import { AssertionStatusProjector } from './infrastructure/projections/assertion
       ): BalanceAssertionRepository =>
         new BalanceAssertionRepository(eventStore, registry, envelopes),
     },
-    { provide: AdjustmentAuditStore, useClass: ReadModelAdjustmentAuditReader },
-    { provide: AssertionStatusStore, useClass: ReadModelAssertionStatusReader },
+    { provide: AdjustmentAuditReader, useClass: ReadModelAdjustmentAuditReader },
+    { provide: AssertionStatusReader, useClass: ReadModelAssertionStatusReader },
     { provide: ProjectionCheckpointRepository, useClass: PostgresProjectionCheckpointRepository },
     { provide: AssertionStatusProjector, useFactory: (): AssertionStatusProjector => new AssertionStatusProjector() },
     {
@@ -166,14 +166,14 @@ import { AssertionStatusProjector } from './infrastructure/projections/assertion
     },
     {
       provide: GetAssertionStatusHandler,
-      inject: [AssertionStatusStore],
-      useFactory: (store: AssertionStatusStore): GetAssertionStatusHandler =>
+      inject: [AssertionStatusReader],
+      useFactory: (store: AssertionStatusReader): GetAssertionStatusHandler =>
         new GetAssertionStatusHandler(store),
     },
     {
       provide: ListAssertionsHandler,
-      inject: [AssertionStatusStore],
-      useFactory: (store: AssertionStatusStore): ListAssertionsHandler =>
+      inject: [AssertionStatusReader],
+      useFactory: (store: AssertionStatusReader): ListAssertionsHandler =>
         new ListAssertionsHandler(store),
     },
     AssertionStatusProjector,
@@ -198,7 +198,7 @@ export class ReconciliationModule implements OnModuleInit {
     this.commandBus.register(ResolveDiscrepancyCommand, this.resolveDiscrepancy);
 
     // The reads join the same bus as every other module's. They are registered
-    // here rather than in `createQueryBus` because `AssertionStatusStore` is
+    // here rather than in `createQueryBus` because `AssertionStatusReader` is
     // bound in this module, and the composition root must not know about it.
     this.queryBus.register(GetAssertionStatusQuery, this.getAssertionStatus);
     this.queryBus.register(ListAssertionsQuery, this.listAssertions);

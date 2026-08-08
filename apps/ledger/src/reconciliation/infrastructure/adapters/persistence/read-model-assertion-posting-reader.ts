@@ -35,15 +35,20 @@ export class ReadModelAssertionPostingReader extends AssertionPostingReader {
     accountId: string,
     date: LedgerDate,
   ): Promise<readonly AssertablePosting[]> {
+    // The VOIDED and cutoff filters live in the WHERE, not in a `filter()`
+    // after the fetch: the `(user_id, account_id, date)` index covers exactly
+    // this query. Comparing `date` as text is safe — the column is DATE and
+    // the format ISO, so lexicographic and chronological order coincide.
     const rows = await this.readModel.query<PostingRow>(
       PROJ_POSTINGS,
-      Criteria.none().equals('user_id', userId).equals('account_id', accountId),
+      Criteria.none()
+        .equals('user_id', userId)
+        .equals('account_id', accountId)
+        .notEquals('status', TransactionStatus.VOIDED)
+        .lessOrEqual('date', date.value),
     );
 
-    return rows
-      .filter((row) => row.status !== TransactionStatus.VOIDED)
-      .map((row) => this.toPosting(row))
-      .filter((posting) => posting.date.isSameOrBefore(date));
+    return rows.map((row) => this.toPosting(row));
   }
 
   async touchedByTransaction(

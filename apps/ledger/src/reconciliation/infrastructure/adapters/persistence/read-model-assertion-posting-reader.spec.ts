@@ -1,4 +1,5 @@
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
+import { FilterOperator } from '@shared';
 import { Money } from '@ledger/shared/domain/money';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
@@ -79,6 +80,16 @@ describe('ReadModelAssertionPostingReader', () => {
       await seed('p-2', 'txn-2', 'acc-1', TransactionStatus.CONFIRMED, '2026-07-25');
 
       expect(await reader.byAccountUpToDate('user-1', 'acc-1', LedgerDate.of('2026-07-20'))).toHaveLength(1);
+    });
+
+    it('excludes voided postings in the query, not after it', async () => {
+      const spy = jest.spyOn(store, 'query');
+
+      await reader.byAccountUpToDate('user-1', 'acc-1', LedgerDate.of('2026-03-01'));
+
+      expect(spy.mock.calls[0][1].filters).toContainEqual(
+        expect.objectContaining({ field: 'status', operator: FilterOperator.NOT_EQUAL }),
+      );
     });
   });
 

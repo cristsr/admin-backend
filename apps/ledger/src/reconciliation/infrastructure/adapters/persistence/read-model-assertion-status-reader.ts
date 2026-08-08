@@ -5,25 +5,25 @@ import {
 } from '@cqrs/application/projection/read-model-store';
 import { Criteria, Nullable } from '@shared';
 import {
-  AssertionStatusRow,
-  AssertionStatusStore,
-} from '@ledger/reconciliation/application/ports/assertion-status-store.port';
+  AssertionStatusRecord,
+  AssertionStatusReader,
+} from '@ledger/reconciliation/application/ports/assertion-status-reader.port';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
 import { PROJ_ASSERTIONS } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 
 /**
- * Serves {@link AssertionStatusStore} from `proj_assertions` through the shared
+ * Serves {@link AssertionStatusReader} from `proj_assertions` through the shared
  * {@link ReadModelStore}, so reads hit the same persistence as the rest of the
  * read side instead of a bespoke store.
  */
 @Injectable()
-export class ReadModelAssertionStatusReader extends AssertionStatusStore {
+export class ReadModelAssertionStatusReader extends AssertionStatusReader {
   constructor(private readonly store: ReadModelStore) {
     super();
   }
 
-  async byId(userId: string, assertionId: string): Promise<Nullable<AssertionStatusRow>> {
+  async byId(userId: string, assertionId: string): Promise<Nullable<AssertionStatusRecord>> {
     const rows = await this.store.query<ReadModelRow>(
       PROJ_ASSERTIONS,
       Criteria.none().equals('user_id', userId).equals('assertion_id', assertionId),
@@ -32,7 +32,7 @@ export class ReadModelAssertionStatusReader extends AssertionStatusStore {
     return rows.length ? this.toRow(rows[0]) : null;
   }
 
-  async listByAccount(userId: string, accountId: string): Promise<readonly AssertionStatusRow[]> {
+  async listByAccount(userId: string, accountId: string): Promise<readonly AssertionStatusRecord[]> {
     const rows = await this.store.query<ReadModelRow>(
       PROJ_ASSERTIONS,
       Criteria.none().equals('user_id', userId).equals('account_id', accountId),
@@ -58,7 +58,7 @@ export class ReadModelAssertionStatusReader extends AssertionStatusStore {
     return rows.map((row) => row.assertion_id as string);
   }
 
-  private toRow(row: ReadModelRow): AssertionStatusRow {
+  private toRow(row: ReadModelRow): AssertionStatusRecord {
     return {
       assertionId: row.assertion_id as string,
       userId: row.user_id as string,

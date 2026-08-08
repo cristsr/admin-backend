@@ -19,7 +19,7 @@ import { QueryContext } from '@cqrs/application/query-bus/query-handler';
 import { Nullable } from '@shared';
 import {
   AssertionStatusView,
-} from '@ledger/reconciliation/application/read-models/assertion-status.read-model';
+} from '@ledger/reconciliation/application/views/assertion-status.view';
 import { AssertBalanceCommand } from '@ledger/reconciliation/application/usecases/assert-balance/assert-balance.command';
 import { GetAssertionStatusQuery } from '@ledger/reconciliation/application/usecases/get-assertion-status/get-assertion-status.query';
 import { ListAssertionsQuery } from '@ledger/reconciliation/application/usecases/list-assertions/list-assertions.query';
