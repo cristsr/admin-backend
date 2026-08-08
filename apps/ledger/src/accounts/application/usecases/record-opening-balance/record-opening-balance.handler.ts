@@ -12,7 +12,7 @@ import { LedgerNotInitializedException } from '@ledger/shared/domain/errors/ledg
 import { Money } from '@ledger/shared/domain/money';
 import { CurrencyCatalog, CurrencyCode } from '@ledger/shared/domain/value-objects';
 import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
-import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
+import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { RecordOpeningBalanceCommand } from './record-opening-balance.command';
 

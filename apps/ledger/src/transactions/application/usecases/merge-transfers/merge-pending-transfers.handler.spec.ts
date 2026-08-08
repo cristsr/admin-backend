@@ -3,11 +3,11 @@ import { EventStore } from '@cqrs/domain/ports/event-store';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { aMoney } from '@ledger/shared/testing';
 import { RecordingCommandBus } from '@ledger/shared/testing';
-import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
 import { AccountFacts, AccountLookup } from '@ledger/transactions/application/ports/account-lookup.port';
-import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
-import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';
+import { ConfirmTransactionCommand } from '@ledger/transactions/application/usecases/confirm-transaction/confirm-transaction.command';
+import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
+import { VoidPendingTransactionCommand } from '@ledger/transactions/application/usecases/void-transaction/void-pending-transaction.command';
 import {
   NotATransferPairException,
   PendingLegNotFoundException,

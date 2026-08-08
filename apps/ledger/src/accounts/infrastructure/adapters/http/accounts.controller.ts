@@ -6,14 +6,14 @@ import { CommandResult } from '@cqrs/application/command-bus/command-result.type
 import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { QueryContext } from '@cqrs/application/query-bus/query-handler';
 import { Nullable } from '@shared';
-import { CloseAccountCommand } from '@ledger/accounts/application/close-account/close-account.command';
-import { GetAccountBalancesQuery } from '@ledger/accounts/application/get-account-balances/get-account-balances.query';
-import { GetAccountByIdQuery } from '@ledger/accounts/application/get-account-by-id/get-account-by-id.query';
-import { GetAccountTreeQuery } from '@ledger/accounts/application/get-account-tree/get-account-tree.query';
-import { OpenAccountCommand } from '@ledger/accounts/application/open-account/open-account.command';
 import { AccountView } from '@ledger/accounts/application/read-models/account-tree.read-model';
-import { RecordOpeningBalanceCommand } from '@ledger/accounts/application/record-opening-balance/record-opening-balance.command';
-import { RenameAccountCommand } from '@ledger/accounts/application/rename-account/rename-account.command';
+import { CloseAccountCommand } from '@ledger/accounts/application/usecases/close-account/close-account.command';
+import { GetAccountBalancesQuery } from '@ledger/accounts/application/usecases/get-account-balances/get-account-balances.query';
+import { GetAccountByIdQuery } from '@ledger/accounts/application/usecases/get-account-by-id/get-account-by-id.query';
+import { GetAccountTreeQuery } from '@ledger/accounts/application/usecases/get-account-tree/get-account-tree.query';
+import { OpenAccountCommand } from '@ledger/accounts/application/usecases/open-account/open-account.command';
+import { RecordOpeningBalanceCommand } from '@ledger/accounts/application/usecases/record-opening-balance/record-opening-balance.command';
+import { RenameAccountCommand } from '@ledger/accounts/application/usecases/rename-account/rename-account.command';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import {
   CommandAcceptedDto,

@@ -10,12 +10,12 @@ import { createLedgerEventRegistry } from '@ledger/ledger/application/factories/
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, SequentialIdGenerator, aMoney } from '@ledger/shared/testing';
-import { MergePendingTransfersCommand } from '@ledger/transactions/application/merge-transfers/merge-pending-transfers.command';
-import { MergePendingTransfersHandler } from '@ledger/transactions/application/merge-transfers/merge-pending-transfers.handler';
 import { AccountFacts, AccountLookup } from '@ledger/transactions/application/ports/account-lookup.port';
-import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
-import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';
+import { MergePendingTransfersCommand } from '@ledger/transactions/application/usecases/merge-transfers/merge-pending-transfers.command';
+import { MergePendingTransfersHandler } from '@ledger/transactions/application/usecases/merge-transfers/merge-pending-transfers.handler';
+import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
+import { VoidPendingTransactionCommand } from '@ledger/transactions/application/usecases/void-transaction/void-pending-transaction.command';
 import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';
 import { ZeroSumBalanceRule } from '@ledger/transactions/domain/balance/zero-sum-balance-rule';
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';

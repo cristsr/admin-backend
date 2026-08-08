@@ -1,10 +1,10 @@
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { AssertionLookupPort } from '@ledger/reconciliation/application/ports/assertion-lookup.port';
+import { EvaluateAssertionCommand } from '@ledger/reconciliation/application/usecases/evaluate-assertion/evaluate-assertion.command';
+import { EvaluateAssertionHandler } from '@ledger/reconciliation/application/usecases/evaluate-assertion/evaluate-assertion.handler';
 import { AssertionPostingReader } from '@ledger/reconciliation/domain/ports/assertion-posting-reader.port';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
-import { EvaluateAssertionCommand } from '../evaluate-assertion/evaluate-assertion.command';
-import { EvaluateAssertionHandler } from '../evaluate-assertion/evaluate-assertion.handler';
 
 /**
  * Events that can change an assertion's verdict.

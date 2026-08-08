@@ -3,11 +3,11 @@ import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { IdGenerator } from '@cqrs/domain/ports';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/application/repositories/balance-assertion.repository';
+import { EvaluateAssertionCommand } from '@ledger/reconciliation/application/usecases/evaluate-assertion/evaluate-assertion.command';
+import { EvaluateAssertionHandler } from '@ledger/reconciliation/application/usecases/evaluate-assertion/evaluate-assertion.handler';
 import { BalanceAssertion } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.aggregate';
 import { Money } from '@ledger/shared/domain/money';
 import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared/domain/value-objects';
-import { EvaluateAssertionCommand } from '../evaluate-assertion/evaluate-assertion.command';
-import { EvaluateAssertionHandler } from '../evaluate-assertion/evaluate-assertion.handler';
 import { AssertBalanceCommand } from './assert-balance.command';
 
 /**

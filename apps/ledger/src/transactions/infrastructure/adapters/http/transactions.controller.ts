@@ -14,21 +14,21 @@ import {
   Context,
   ExternalRef,
 } from '@ledger/shared/infrastructure/adapters/http';
-import { AmendPendingTransactionCommand } from '@ledger/transactions/application/amend-transaction/amend-pending-transaction.command';
-import { AnnotateTransactionCommand } from '@ledger/transactions/application/annotate-transaction/annotate-transaction.command';
-import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
-import { GetTransactionByIdQuery } from '@ledger/transactions/application/get-transaction-by-id/get-transaction-by-id.query';
-import { ListPendingReviewQuery } from '@ledger/transactions/application/list-pending-review/list-pending-review.query';
+import { PendingReviewView } from '@ledger/transactions/application/read-models/pending-review.read-model';
+import { TransactionView } from '@ledger/transactions/application/read-models/transaction-list.read-model';
+import { PostingInput } from '@ledger/transactions/application/types/posting-input.type';
+import { AmendPendingTransactionCommand } from '@ledger/transactions/application/usecases/amend-transaction/amend-pending-transaction.command';
+import { AnnotateTransactionCommand } from '@ledger/transactions/application/usecases/annotate-transaction/annotate-transaction.command';
+import { ConfirmTransactionCommand } from '@ledger/transactions/application/usecases/confirm-transaction/confirm-transaction.command';
+import { GetTransactionByIdQuery } from '@ledger/transactions/application/usecases/get-transaction-by-id/get-transaction-by-id.query';
+import { ListPendingReviewQuery } from '@ledger/transactions/application/usecases/list-pending-review/list-pending-review.query';
 import {
   ListTransactionsQuery,
   TransactionPage,
-} from '@ledger/transactions/application/list-transactions/list-transactions.query';
-import { PendingReviewView } from '@ledger/transactions/application/read-models/pending-review.read-model';
-import { TransactionView } from '@ledger/transactions/application/read-models/transaction-list.read-model';
-import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
-import { ReverseConfirmedTransactionCommand } from '@ledger/transactions/application/reverse-transaction/reverse-confirmed-transaction.command';
-import { PostingInput } from '@ledger/transactions/application/types/posting-input.type';
-import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';
+} from '@ledger/transactions/application/usecases/list-transactions/list-transactions.query';
+import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
+import { ReverseConfirmedTransactionCommand } from '@ledger/transactions/application/usecases/reverse-transaction/reverse-confirmed-transaction.command';
+import { VoidPendingTransactionCommand } from '@ledger/transactions/application/usecases/void-transaction/void-pending-transaction.command';
 import { AmendTransactionRequestDto } from './dto/amend-transaction-request.dto';
 import { AnnotateTransactionRequestDto } from './dto/annotate-transaction-request.dto';
 import { ConfirmTransactionRequestDto } from './dto/confirm-transaction-request.dto';

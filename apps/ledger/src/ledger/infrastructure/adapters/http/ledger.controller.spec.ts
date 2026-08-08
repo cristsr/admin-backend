@@ -1,8 +1,8 @@
 import { CommandBus } from '@cqrs/application/command-bus/command-bus';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { QueryBus } from '@cqrs/application/query-bus/query-bus';
-import { GetLedgerSettingsQuery } from '@ledger/ledger/application/get-ledger-settings/get-ledger-settings.query';
-import { InitializeLedgerCommand } from '@ledger/ledger/application/initialize-ledger/initialize-ledger.command';
+import { GetLedgerSettingsQuery } from '@ledger/ledger/application/usecases/get-ledger-settings/get-ledger-settings.query';
+import { InitializeLedgerCommand } from '@ledger/ledger/application/usecases/initialize-ledger/initialize-ledger.command';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import { LedgerController } from './ledger.controller';
 

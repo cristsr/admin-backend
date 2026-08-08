@@ -5,9 +5,9 @@ import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
 import { PostingValidator } from '@ledger/transactions/application/ports/posting-validator.port';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
-import { BalanceRule } from '../../domain/balance/balance-rule';
-import { UnbalancedTransactionException } from '../../domain/transaction/exceptions/transaction.exception';
-import { TransactionStatus } from '../../domain/transaction/transaction-status';
+import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';
+import { UnbalancedTransactionException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
+import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { RecordTransactionCommand } from './record-transaction.command';
 import { RecordTransactionHandler } from './record-transaction.handler';
 

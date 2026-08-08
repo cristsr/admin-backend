@@ -5,7 +5,7 @@ import { LedgerNotInitializedException } from '@ledger/shared/domain/errors/ledg
 import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { RecordingCommandBus } from '@ledger/shared/testing';
-import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
+import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { RecordOpeningBalanceCommand } from './record-opening-balance.command';
 import { RecordOpeningBalanceHandler } from './record-opening-balance.handler';

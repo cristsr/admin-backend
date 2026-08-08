@@ -5,7 +5,7 @@ import { EventStore } from '@cqrs/domain/ports/event-store';
 import { AccountRepository } from '@ledger/accounts/application/repositories/account.repository';
 import { LedgerSettingsRepository } from '@ledger/ledger/application/repositories/ledger-settings.repository';
 import { LedgerAlreadyInitializedException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
-import { LedgerSettings } from '../../domain/settings/ledger-settings.aggregate';
+import { LedgerSettings } from '@ledger/ledger/domain/settings/ledger-settings.aggregate';
 import { InitializeLedgerCommand } from './initialize-ledger.command';
 import { InitializeLedgerHandler } from './initialize-ledger.handler';
 

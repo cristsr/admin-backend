@@ -8,8 +8,8 @@ import { Nullable } from '@shared';
 import {
   CurrencyView,
   ListCurrenciesQuery,
-} from '@ledger/reference/application/list-currencies/list-currencies.query';
-import { RegisterCurrencyCommand } from '@ledger/reference/application/register-currency/register-currency.command';
+} from '@ledger/reference/application/usecases/list-currencies/list-currencies.query';
+import { RegisterCurrencyCommand } from '@ledger/reference/application/usecases/register-currency/register-currency.command';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import {
   CommandAcceptedDto,

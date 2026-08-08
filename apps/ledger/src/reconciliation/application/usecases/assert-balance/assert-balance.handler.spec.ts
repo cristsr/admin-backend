@@ -3,11 +3,11 @@ import { EnvelopeFactory } from '@cqrs/application/event/envelope.factory';
 import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { createReconciliationEventRegistry } from '@ledger/reconciliation/application/factories/reconciliation-event-registry.factory';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/application/repositories/balance-assertion.repository';
+import { EvaluateAssertionCommand } from '@ledger/reconciliation/application/usecases/evaluate-assertion/evaluate-assertion.command';
+import { EvaluateAssertionHandler } from '@ledger/reconciliation/application/usecases/evaluate-assertion/evaluate-assertion.handler';
 import { BALANCE_ASSERTED } from '@ledger/reconciliation/domain/balance-assertion/events';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
-import { EvaluateAssertionCommand } from '../evaluate-assertion/evaluate-assertion.command';
-import { EvaluateAssertionHandler } from '../evaluate-assertion/evaluate-assertion.handler';
 import { AssertBalanceCommand } from './assert-balance.command';
 import { AssertBalanceHandler } from './assert-balance.handler';
 

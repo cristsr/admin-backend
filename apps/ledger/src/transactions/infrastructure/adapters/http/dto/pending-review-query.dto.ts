@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Max, Min } from 'class-validator';
-import { DEFAULT_PENDING_REVIEW_PAGE_SIZE } from '@ledger/transactions/application/list-pending-review/list-pending-review.query';
+import { DEFAULT_PENDING_REVIEW_PAGE_SIZE } from '@ledger/transactions/application/usecases/list-pending-review/list-pending-review.query';
 import { MAX_TRANSACTION_PAGE_SIZE } from './transaction-query.dto';
 
 /**

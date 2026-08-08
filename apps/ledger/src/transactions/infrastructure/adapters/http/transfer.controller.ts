@@ -9,7 +9,7 @@ import {
   Context,
   ExternalRef,
 } from '@ledger/shared/infrastructure/adapters/http';
-import { MergePendingTransfersCommand } from '@ledger/transactions/application/merge-transfers/merge-pending-transfers.command';
+import { MergePendingTransfersCommand } from '@ledger/transactions/application/usecases/merge-transfers/merge-pending-transfers.command';
 import { MergeTransfersRequestDto } from './dto';
 
 /**

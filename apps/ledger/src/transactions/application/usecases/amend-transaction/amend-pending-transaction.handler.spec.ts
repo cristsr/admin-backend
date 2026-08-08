@@ -3,8 +3,8 @@ import { ProjectionDispatcher } from '@cqrs/application/projection/projection-di
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import { PostingValidator } from '@ledger/transactions/application/ports/posting-validator.port';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
-import { BalanceRule } from '../../domain/balance/balance-rule';
-import { ImmutableTransactionException, TransactionNotFoundException } from '../../domain/transaction/exceptions/transaction.exception';
+import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';
+import { ImmutableTransactionException, TransactionNotFoundException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
 import { AmendPendingTransactionCommand } from './amend-pending-transaction.command';
 import { AmendPendingTransactionHandler } from './amend-pending-transaction.handler';
 

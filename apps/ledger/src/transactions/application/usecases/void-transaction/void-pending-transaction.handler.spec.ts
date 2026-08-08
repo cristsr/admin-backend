@@ -1,9 +1,9 @@
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
-import { TransactionNotFoundException } from '../../domain/transaction/exceptions/transaction.exception';
-import { AnnotateTransactionCommand } from './annotate-transaction.command';
-import { AnnotateTransactionHandler } from './annotate-transaction.handler';
+import { ImmutableTransactionException, TransactionNotFoundException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
+import { VoidPendingTransactionCommand } from './void-pending-transaction.command';
+import { VoidPendingTransactionHandler } from './void-pending-transaction.handler';
 
 const ctx: AuthContext = { userId: 'user-1', clientId: 'client-x', externalRef: null };
 
@@ -15,7 +15,7 @@ function setup() {
 
   const dispatcher: jest.Mocked<ProjectionDispatcher> = { dispatch: jest.fn().mockResolvedValue(undefined) };
 
-  const handler = new AnnotateTransactionHandler(transactions, dispatcher);
+  const handler = new VoidPendingTransactionHandler(transactions, dispatcher);
 
   return { handler, transactions };
 }
@@ -23,27 +23,25 @@ function setup() {
 function makeTransaction(id: string) {
   return {
     id,
-    annotate: jest.fn(),
+    void: jest.fn(),
   };
 }
 
-describe('AnnotateTransactionHandler', () => {
-  it('should annotate transaction metadata', async () => {
+describe('VoidPendingTransactionHandler', () => {
+  it('should void a PENDING transaction', async () => {
     const { handler, transactions } = setup();
     const tx = makeTransaction('tx-1');
     transactions.load.mockResolvedValue(tx as any);
     transactions.save.mockResolvedValue({ events: [], version: 2, lastPosition: 5n });
 
     const result = await handler.execute(
-      new AnnotateTransactionCommand(
-        'tx-1', 'New Payee', 'New Description', null, ['tag1'], { note: 'test' },
-      ),
+      new VoidPendingTransactionCommand('tx-1', 'Duplicate entry'),
       ctx,
     );
 
     expect(result.aggregateId).toBe('tx-1');
     expect(result.idempotentReplay).toBe(false);
-    expect(tx.annotate).toHaveBeenCalledTimes(1);
+    expect(tx.void).toHaveBeenCalledWith('Duplicate entry');
     expect(transactions.save).toHaveBeenCalledTimes(1);
   });
 
@@ -52,22 +50,20 @@ describe('AnnotateTransactionHandler', () => {
     transactions.load.mockResolvedValue(null);
 
     await expect(
-      handler.execute(new AnnotateTransactionCommand('non-existent', null, 'desc'), ctx),
+      handler.execute(new VoidPendingTransactionCommand('non-existent', 'reason'), ctx),
     ).rejects.toBeInstanceOf(TransactionNotFoundException);
   });
 
-  it('should annotate any non-VOIDED transaction', async () => {
+  it('should throw IMMUTABLE_TRANSACTION when voiding is not allowed', async () => {
     const { handler, transactions } = setup();
     const tx = makeTransaction('tx-1');
+    tx.void.mockImplementation(() => {
+      throw new ImmutableTransactionException('Already confirmed');
+    });
     transactions.load.mockResolvedValue(tx as any);
-    transactions.save.mockResolvedValue({ events: [], version: 3, lastPosition: 10n });
 
-    const result = await handler.execute(
-      new AnnotateTransactionCommand('tx-1', 'Updated', 'Still valid'),
-      ctx,
-    );
-
-    expect(result.aggregateId).toBe('tx-1');
-    expect(tx.annotate).toHaveBeenCalled();
+    await expect(
+      handler.execute(new VoidPendingTransactionCommand('tx-1', 'Too late'), ctx),
+    ).rejects.toBeInstanceOf(ImmutableTransactionException);
   });
 });

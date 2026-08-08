@@ -5,17 +5,17 @@ import { IdGenerator } from '@cqrs/domain/ports';
 import { Criteria } from '@shared';
 import { AccountRepository } from '@ledger/accounts/application/repositories/account.repository';
 import { AccountNameRegistry } from '@ledger/accounts/application/services/account-name.registry';
+import { Account } from '@ledger/accounts/domain/account/account.aggregate';
 import { AccountNotFoundException } from '@ledger/accounts/domain/account/exceptions/account.exception';
+import {
+  NameCollisionException,
+  SystemAccountProtectedException,
+} from '@ledger/accounts/domain/account/exceptions/account.exception';
 import {
   AccountName,
   CurrencyCode,
   LedgerDate,
 } from '@ledger/shared/domain/value-objects';
-import { Account } from '../../domain/account/account.aggregate';
-import {
-  NameCollisionException,
-  SystemAccountProtectedException,
-} from '../../domain/account/exceptions/account.exception';
 import { RenameAccountCommand } from './rename-account.command';
 import { RenameAccountHandler } from './rename-account.handler';
 

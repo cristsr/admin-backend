@@ -18,8 +18,8 @@ import {
   SequentialIdGenerator,
   aMoney,
 } from '@ledger/shared/testing';
-import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
-import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
+import { ConfirmTransactionCommand } from '@ledger/transactions/application/usecases/confirm-transaction/confirm-transaction.command';
+import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
 import { ResolveDiscrepancyCommand } from './resolve-discrepancy.command';
 import { ResolveDiscrepancyHandler } from './resolve-discrepancy.handler';
 

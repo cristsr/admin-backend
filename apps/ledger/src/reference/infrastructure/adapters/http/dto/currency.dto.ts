@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { CurrencyView } from '@ledger/reference/application/list-currencies/list-currencies.query';
+import { CurrencyView } from '@ledger/reference/application/usecases/list-currencies/list-currencies.query';
 
 /**
  * One currency of the reference catalog.

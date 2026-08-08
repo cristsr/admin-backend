@@ -4,7 +4,7 @@ import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { IdGenerator } from '@cqrs/domain/ports';
 import { AccountRepository } from '@ledger/accounts/application/repositories/account.repository';
 import { AccountNameRegistry } from '@ledger/accounts/application/services/account-name.registry';
-import { NameCollisionException } from '../../domain/account/exceptions/account.exception';
+import { NameCollisionException } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { OpenAccountCommand } from './open-account.command';
 import { OpenAccountHandler } from './open-account.handler';
 

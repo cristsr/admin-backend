@@ -5,15 +5,15 @@ import { InMemoryProjectionCheckpointRepository } from '@cqrs/infrastructure/ada
 import { ProjectionRebuilder } from '@cqrs/infrastructure/adapters/projection/projection-rebuilder';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria } from '@shared';
-import { OpenAccountCommand } from '@ledger/accounts/application/open-account/open-account.command';
 import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
+import { OpenAccountCommand } from '@ledger/accounts/application/usecases/open-account/open-account.command';
 import { AccountTreeProjector } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { createLedgerApplication } from '@ledger/bootstrap/ledger-application.factory';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
 import { PROJ_BALANCES } from '@ledger/transactions/application/read-models/account-balances.read-model';
 import { PROJ_POSTINGS, PROJ_TRANSACTIONS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
-import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
+import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { AccountBalancesProjector } from '@ledger/transactions/infrastructure/projections/account-balances.projector';
 import { TransactionListProjector } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';

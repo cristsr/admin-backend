@@ -9,8 +9,8 @@ import { BalanceAssertionRepository } from '@ledger/reconciliation/application/r
 import { AssertionNotFoundException, DiscrepancyNotResolvableException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { AdjustmentFactory } from '@ledger/reconciliation/domain/services/adjustment.factory';
 import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
-import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { PostingInput } from '@ledger/transactions/application/types/posting-input.type';
+import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { ResolveDiscrepancyCommand } from './resolve-discrepancy.command';

@@ -17,14 +17,14 @@ import { CommandResult } from '@cqrs/application/command-bus/command-result.type
 import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { QueryContext } from '@cqrs/application/query-bus/query-handler';
 import { Nullable } from '@shared';
-import { AssertBalanceCommand } from '@ledger/reconciliation/application/assert-balance/assert-balance.command';
-import { GetAssertionStatusQuery } from '@ledger/reconciliation/application/get-assertion-status/get-assertion-status.query';
-import { ListAssertionsQuery } from '@ledger/reconciliation/application/list-assertions/list-assertions.query';
 import {
   AssertionStatusView,
 } from '@ledger/reconciliation/application/read-models/assertion-status.read-model';
-import { ResolveDiscrepancyCommand } from '@ledger/reconciliation/application/resolve-discrepancy/resolve-discrepancy.command';
-import { RevokeAssertionCommand } from '@ledger/reconciliation/application/revoke-assertion/revoke-assertion.command';
+import { AssertBalanceCommand } from '@ledger/reconciliation/application/usecases/assert-balance/assert-balance.command';
+import { GetAssertionStatusQuery } from '@ledger/reconciliation/application/usecases/get-assertion-status/get-assertion-status.query';
+import { ListAssertionsQuery } from '@ledger/reconciliation/application/usecases/list-assertions/list-assertions.query';
+import { ResolveDiscrepancyCommand } from '@ledger/reconciliation/application/usecases/resolve-discrepancy/resolve-discrepancy.command';
+import { RevokeAssertionCommand } from '@ledger/reconciliation/application/usecases/revoke-assertion/revoke-assertion.command';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import {
   CommandResultInterceptor,

@@ -1,13 +1,13 @@
 import { EventPayload } from '@cqrs/domain/event/event-payload.type';
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { AssertionLookupPort } from '@ledger/reconciliation/application/ports/assertion-lookup.port';
+import { EvaluateAssertionCommand } from '@ledger/reconciliation/application/usecases/evaluate-assertion/evaluate-assertion.command';
+import { EvaluateAssertionHandler } from '@ledger/reconciliation/application/usecases/evaluate-assertion/evaluate-assertion.handler';
 import { AssertionPostingReader } from '@ledger/reconciliation/domain/ports/assertion-posting-reader.port';
 import { InMemoryAssertionPostingReader } from '@ledger/reconciliation/infrastructure/adapters/persistence/in-memory/in-memory-assertion-posting-reader';
 import { Currency, Money } from '@ledger/shared/domain/money';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
-import { EvaluateAssertionCommand } from '../evaluate-assertion/evaluate-assertion.command';
-import { EvaluateAssertionHandler } from '../evaluate-assertion/evaluate-assertion.handler';
 import { ReevaluateAssertionsReactor } from './reevaluate-assertions.reactor';
 
 /** Records the last lookup call and returns pre-seeded assertion ids per account. */
