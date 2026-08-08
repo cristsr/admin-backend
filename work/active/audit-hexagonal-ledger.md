@@ -102,6 +102,27 @@ Tres causas distintas, y ninguna es "se me pasó":
   `services/`: declara un `abstract class`, o sea que era un puerto con nombre de
   colaborador.
 
+- **✅ Corregido después (T-1b).** La primera versión dejó las carpetas de caso de uso
+  **al lado** de las de rol, y eso mezcla dos criterios en el mismo nivel: siete
+  intenciones de negocio y tres roles técnicos en una lista plana, donde no se puede
+  saber cuántos casos de uso tiene el módulo sin conocer el dominio.
+
+  El primer nivel de `application/` es **sólo roles**; los casos de uso son uno de
+  ellos y viven bajo `usecases/`, conservando su carpeta propia adentro:
+
+  ```
+  accounts:        read-models repositories services usecases
+  transactions:    factories ports read-models repositories types usecases
+  reconciliation:  factories ports reactors read-models repositories usecases
+  ledger:          factories read-models repositories usecases
+  reference:       ports read-models repositories usecases
+  ```
+
+  El error venía de la skill, no del proyecto: yo había escrito ahí que "carpeta por
+  caso de uso en la raíz de `application/`" era una segunda forma válida. No lo es.
+  La skill quedó corregida y ganó un detector (`use-case folders beside role
+  folders`) para que la regla no dependa de que alguien la recuerde.
+
 ### [MEDIUM] T-2 · Tres suites e2e quedan fuera del type-check
 
 - **Dónde:** `tsconfig.spec.json` incluye `src/**/*.spec.ts`. Estos tres usan guión y
