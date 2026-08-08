@@ -24,13 +24,13 @@ cierra la refactorización y la deja defendida.
 
 ---
 
-### Tarea 0: Rama de trabajo
+### Tarea 0: Rama de trabajo [X]
 
 Se continúa en `feat/core`. Working tree limpio.
 
 ---
 
-### Tarea 1: El guard de fronteras — AC-1, AC-2
+### Tarea 1: El guard de fronteras — AC-1, AC-2 [X]
 
 **Archivos:**
 - Modificar: `apps/ledger/src/hexagonal-isolation.spec.ts`
@@ -82,7 +82,7 @@ Esperado: PASS — 3 casos.
 
 ---
 
-### Tarea 2: Renombres en `reconciliation` — AC-6
+### Tarea 2: Renombres en `reconciliation` — AC-6 [X]
 
 **Archivos:**
 - Renombrar: `assertion-status-store.port.ts` → `assertion-status-reader.port.ts` (`AssertionStatusStore` → `AssertionStatusReader`, `AssertionStatusRow` → `AssertionStatusRecord`)
@@ -113,7 +113,7 @@ Esperado: PASS, sin cambios en ningún assert.
 
 ---
 
-### Tarea 3: `AssertionPostingReader` filtra en la base
+### Tarea 3: `AssertionPostingReader` filtra en la base [X]
 
 **Archivos:**
 - Modificar: `apps/ledger/src/reconciliation/infrastructure/adapters/persistence/read-model-assertion-posting-reader.ts`
@@ -162,7 +162,7 @@ Esperado: PASS — incluidos los tests del evaluador, que dependen de qué posti
 
 ---
 
-### Tarea 4: Verificación final de estructura — AC-4, AC-5
+### Tarea 4: Verificación final de estructura — AC-4, AC-5 [X]
 
 **Step 1: No queda ninguna carpeta `read-models/`**
 
@@ -192,7 +192,7 @@ Esperado: un archivo `*.view.ts` por vista, en los cinco módulos.
 
 ---
 
-### Tarea 5: Suite completa del app — AC-10, AC-11
+### Tarea 5: Suite completa del app — AC-10, AC-11 [X]
 
 **Step 1: Todo**
 
