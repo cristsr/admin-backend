@@ -24,13 +24,13 @@ contract test compartido — Integration-First Gate.
 
 ---
 
-### Tarea 0: Rama de trabajo
+### Tarea 0: Rama de trabajo [X]
 
 Se continúa en `feat/core`. Working tree limpio.
 
 ---
 
-### Tarea 1: Esquemas de `proj_transactions`, `proj_postings` y `proj_pending_review`
+### Tarea 1: Esquemas de `proj_transactions`, `proj_postings` y `proj_pending_review` [X]
 
 **Archivos:**
 - Crear: `apps/ledger/src/transactions/infrastructure/projections/transaction-list.schema.ts`
@@ -74,7 +74,7 @@ Esperado: PASS.
 
 ---
 
-### Tarea 2: `View`s a `application/views/`
+### Tarea 2: `View`s a `application/views/` [X]
 
 **Archivos:**
 - Crear: `apps/ledger/src/transactions/application/views/transaction.view.ts` (`PostingView`, `TransactionListItemView`, `TransactionView`)
@@ -86,7 +86,7 @@ string decimal exacto (INV-8, Art. 7).
 
 ---
 
-### Tarea 3: `PendingReviewFinder` + adapter
+### Tarea 3: `PendingReviewFinder` + adapter [X]
 
 **Archivos:**
 - Crear: `apps/ledger/src/transactions/application/ports/pending-review-finder.port.ts`
@@ -121,7 +121,7 @@ Esperado: PASS. Migrar `ListPendingReviewHandler` en el mismo ciclo.
 
 ---
 
-### Tarea 4: Contract test de `TransactionFinder` — Integration-First
+### Tarea 4: Contract test de `TransactionFinder` — Integration-First [X]
 
 **Archivos:**
 - Crear: `apps/ledger/src/transactions/infrastructure/testing/transaction-finder.contract.ts`
@@ -162,7 +162,7 @@ Esperado: FAIL — el puerto no existe.
 
 ---
 
-### Tarea 5: `TransactionFinder` + los dos adapters
+### Tarea 5: `TransactionFinder` + los dos adapters [X]
 
 **Archivos:**
 - Crear: `apps/ledger/src/transactions/application/ports/transaction-finder.port.ts`
@@ -234,7 +234,7 @@ Esperado: PASS — el mismo contrato verde contra los dos adaptadores.
 
 ---
 
-### Tarea 6: Migrar `ListTransactions` y `GetTransactionById`
+### Tarea 6: Migrar `ListTransactions` y `GetTransactionById` [X]
 
 **Archivos:**
 - Modificar: los dos handlers y sus specs
@@ -252,7 +252,7 @@ Esperado: PASS.
 
 ---
 
-### Tarea 7: Wiring
+### Tarea 7: Wiring [X]
 
 **Archivos:**
 - Modificar: `transactions.module.ts` (2 bindings), `read-side-ports.factory.ts`, `query-bus.factory.ts`
@@ -269,7 +269,7 @@ Esperado: PASS.
 
 ---
 
-### Tarea 8: Borrar lo viejo — AC-1, AC-5
+### Tarea 8: Borrar lo viejo — AC-1, AC-5 [X]
 
 - Borrar: `apps/ledger/src/transactions/application/read-models/` completo (3 archivos + specs).
 - Verificar:
@@ -282,7 +282,7 @@ Esperado: sin resultados.
 
 ---
 
-### Tarea 9: Suite completa — AC-9, AC-11
+### Tarea 9: Suite completa — AC-9, AC-11 [X]
 
 ```bash
 npx jest apps/ledger --no-coverage
