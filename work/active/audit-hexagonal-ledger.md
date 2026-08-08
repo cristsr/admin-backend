@@ -2,13 +2,13 @@
 
 **Alcance:** `apps/ledger/src/` (verificado también `libs/cqrs/src/` como kernel de apoyo)
 **Fecha:** 2026-08-07 · **Rama:** `feat/core`
-**Score:** 26/36 → **30/36** tras aplicar los HIGH
+**Score:** 26/36 → **32/36** tras aplicar los HIGH y M-2
 
-> **Estado (2026-08-07):** los tres hallazgos HIGH y M-1 están **aplicados**, más la
-> mitad de M-6. Suite verde: 457 tests pasan, 2 suites skipped (las que exigen
-> Postgres). `tsc` limpio en `tsconfig.app.json` y `tsconfig.spec.json`.
-> El detalle de cada fix está en la nota `✅ Resuelto` bajo el hallazgo.
-> Pendientes: M-2, M-3, M-4, M-5, la otra mitad de M-6, y los cinco LOW.
+> **Estado (2026-08-07):** los tres hallazgos HIGH, M-1 y M-2 están **aplicados**,
+> más la mitad de M-6. Suite verde: 474 tests pasan (17 nuevos), 2 suites skipped
+> (las que exigen Postgres). `tsc` limpio en `tsconfig.app.json` y
+> `tsconfig.spec.json`. El detalle de cada fix está en la nota `✅ Resuelto` bajo el
+> hallazgo. Pendientes: M-3, M-4, M-5, la otra mitad de M-6, y los cinco LOW.
 
 ## Resumen
 
@@ -43,7 +43,7 @@ Swagger y devuelven las filas `snake_case` del read model. Ya está reconocido c
 | 4 | Ports & bindings | 2/3 | 2/3 | los 4 repositorios ya están alineados; los puertos de `reconciliation` siguen mal ubicados |
 | 5 | Use case granularity | 3/3 | 3/3 | un handler = un `execute()`, sin excepción |
 | 6 | Adapter thinness | 3/3 | 3/3 | controllers y pump sólo adaptan; el pump además maneja error y reentrada |
-| 7 | Mapping isolation | 1/3 | 1/3 | los controllers siguen devolviendo filas del read model (M-2, pendiente) |
+| 7 | Mapping isolation | 1/3 | **3/3** | fila ≠ vista ≠ DTO, unidas por mappers; el DTO `implements` la vista |
 | 8 | Error handling | 3/3 | 3/3 | jerarquía tipada, catálogo de códigos congelado por test de contrato |
 | 9 | Naming consistency | 2/3 | 2/3 | uniforme salvo el módulo `reference`; barrels casi ausentes |
 | 10 | Shared kernel hygiene | 2/3 | 2/3 | `shared/` limpio, pero `AccountNotFoundException` vive en el módulo equivocado |
@@ -185,6 +185,37 @@ Swagger y devuelven las filas `snake_case` del read model. Ya está reconocido c
   de fila ya habrá bajado a `application/`. Los `FIXME` documentan que `total` exige
   una count query — esa parte es trabajo aparte y conviene dejarla explícita en la
   HU correspondiente.
+- **✅ Resuelto.** Tres formas distintas donde antes había una: `XRow` (storage,
+  `snake_case`), `XView` (lo que va por el cable, camelCase) y `XDto` (el contrato
+  Swagger). El handler de query devuelve la vista; el DTO **`implements` la vista**,
+  así que un campo agregado a la vista sin su `@ApiProperty` deja de compilar — el
+  contrato ya no puede desincronizarse en silencio. El DTO no puede vivir en
+  `application/` (lleva decoradores de Swagger, que son infraestructura), y esta es
+  la razón por la que la vista existe como tipo intermedio.
+
+  Siete lecturas migradas: las tres de `accounts`, las tres de `transactions` y la de
+  `ledger`. `reference` ya lo hacía bien con `CurrencyView` — fue el modelo a seguir.
+  17 tests nuevos sobre los mappers, incluidos los casos que rompen en producción y
+  no en desarrollo: `posting_count` que el driver de Postgres devuelve como string, y
+  columnas ausentes en filas viejas que llegaban como `undefined`.
+
+  **Tres decisiones de contrato**, todas por el mismo criterio — el contrato declara
+  lo que existe:
+  - `GET /transactions` devuelve la lista, sin el envelope `{ items, total }`.
+    `total` necesita un `count` que `ReadModelStore` no expone; inventarlo por
+    request escanearía la proyección entera. La paginación por `limit`/`offset`
+    sigue igual. **Sigue pendiente** y merece su propia HU.
+  - `GET /accounts` devuelve la lista plana con `parentId`; se fueron el envelope
+    `AccountTreeDto` y el parámetro `?view=tree|flat`, que el controller ignoraba
+    (tenía un `TODO(read-shape)`). Un parámetro que no hace nada es la misma clase
+    de mentira que un DTO que no corresponde.
+  - `?currency` en `/accounts/:id/balance` también se ignoraba, pero costaba tres
+    líneas: ahora filtra de verdad.
+
+  Dos ganancias que no estaban en el hallazgo: `GET /transactions/:id` ahora sí
+  devuelve sus `postings` (los legs viven en `proj_postings` y nadie los leía, aunque
+  el DTO los prometía), y ni `user_id` ni los ids de las cuentas de sistema salen ya
+  por el cable — están cubiertos por tests (INV-9, INV-13).
 
 ### [MEDIUM] M-3 · `BalanceAssertionController` inyecta los query handlers en vez del `QueryBus`
 
@@ -342,16 +373,18 @@ Artículo 4 (test primero).
 3. ~~**H-3 — `RecordOpeningBalance` despacha por el `CommandBus`.**~~ ✅
 4. ~~**H-2 — mover los factories a una raíz de composición neutral.**~~ ✅
    (+ la mitad de M-6: los repositorios, que el guard exigía.)
-5. **M-2 — mappers de salida por lectura** en los handlers de query, para que el
-   contrato OpenAPI publicado deje de mentir. La paginación (`total`) es trabajo
-   aparte y merece su propia HU. **← siguiente**
+5. ~~**M-2 — mappers de salida por lectura.**~~ ✅
 
-### Pendiente después de M-2
+### Pendiente
 
 Ninguno bloquea a otro; se pueden tomar de a uno al tocar el módulo:
 
+- **`total` en `GET /transactions`** — el único pedazo de M-2 que quedó fuera:
+  necesita un `count` en el puerto `ReadModelStore` y en sus dos adaptadores, más
+  el contract test. Es una HU chica, no un fix de arquitectura.
 - **M-3** — registrar los query handlers de `reconciliation` en el `QueryBus` y
-  sacar `userId` de la query.
+  sacar `userId` de la query. Es además lo que falta para que **todas** las lecturas
+  pasen por el mismo camino tipado que M-2 dejó armado.
 - **M-4** — unificar `LedgerNotInitializedException` en `shared/domain/errors/`.
 - **M-6 (resto)** — mover a `application/ports/` los seis puertos sin consumidor
   de dominio.
@@ -366,8 +399,8 @@ Ninguno bloquea a otro; se pueden tomar de a uno al tocar el módulo:
 npx tsc -p apps/ledger/tsconfig.app.json  --noEmit    # limpio
 npx tsc -p apps/ledger/tsconfig.spec.json --noEmit    # limpio
 npx jest --config apps/ledger/jest.config.ts --rootDir apps/ledger
-#   Test Suites: 2 skipped, 76 passed, 78 total
-#   Tests:       2 skipped, 457 passed, 459 total
+#   Test Suites: 2 skipped, 79 passed, 81 total
+#   Tests:       2 skipped, 474 passed, 476 total
 ```
 
 Las 2 suites skipped son las que exigen una Postgres viva

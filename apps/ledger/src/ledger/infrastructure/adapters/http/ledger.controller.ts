@@ -7,7 +7,7 @@ import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { Nullable } from '@shared';
 import { GetLedgerSettingsQuery } from '@ledger/ledger/application/get-ledger-settings/get-ledger-settings.query';
 import { InitializeLedgerCommand } from '@ledger/ledger/application/initialize-ledger/initialize-ledger.command';
-import { LedgerSettingsRow } from '@ledger/ledger/application/read-models/ledger-settings.read-model';
+import { LedgerSettingsView } from '@ledger/ledger/application/read-models/ledger-settings.read-model';
 import { ReplaceLedgerSettingsCommand } from '@ledger/ledger/application/replace-ledger-settings/replace-ledger-settings.command';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import {
@@ -72,13 +72,10 @@ export class LedgerController {
     return this.commandBus.dispatch(command, ctx);
   }
 
-  // FIXME: returns the `proj_ledger_settings` row as stored, not the
-  // `LedgerSettingsDto` the response is documented as. See the note in
-  // AccountsController: the typed query bus exposed the gap, it did not cause it.
   @Get('settings')
   @ApiOperation({ summary: 'Read the ledger settings projection.' })
   @ApiOkResponse({ type: LedgerSettingsDto })
-  settings(@Context() context: LedgerContext): Promise<Nullable<LedgerSettingsRow>> {
+  settings(@Context() context: LedgerContext): Promise<Nullable<LedgerSettingsView>> {
     return this.queryBus.ask(new GetLedgerSettingsQuery(), {
       userId: context.userId,
     });

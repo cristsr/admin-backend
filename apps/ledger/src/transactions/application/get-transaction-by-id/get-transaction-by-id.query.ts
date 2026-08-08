@@ -1,14 +1,9 @@
 import { Query } from '@cqrs/application/query-bus/query';
 import { Nullable } from '@shared';
+import { TransactionView } from '@ledger/transactions/application/read-models/transaction-list.read-model';
 
-/** One transaction as `proj_transactions` stores it. */
-export type TransactionRow = {
-  readonly transaction_id: string;
-  readonly user_id: string;
-};
-
-/** Reads a single transaction from `proj_transactions` for the owning user. */
-export class GetTransactionByIdQuery extends Query<Nullable<TransactionRow>> {
+/** Reads a single transaction, with its postings, for the owning user. */
+export class GetTransactionByIdQuery extends Query<Nullable<TransactionView>> {
   readonly queryType = 'GetTransactionById';
 
   constructor(readonly transactionId: string) {

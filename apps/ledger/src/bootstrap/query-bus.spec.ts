@@ -75,7 +75,7 @@ describe('Query bus (read side)', () => {
     const rows = await queryBus.ask(new GetAccountBalancesQuery(assets), ctx);
 
     expect(rows).toEqual([
-      expect.objectContaining({ account_id: assets, confirmed_amount: '-5000' }),
+      expect.objectContaining({ accountId: assets, confirmed: '-5000' }),
     ]);
   });
 
@@ -85,7 +85,7 @@ describe('Query bus (read side)', () => {
     const rows = await queryBus.ask(new ListTransactionsQuery(null, null, null, null, 'c'), ctx);
 
     expect(rows).toHaveLength(1);
-    expect(rows[0].transaction_id).toBeDefined();
+    expect(rows[0].id).toBeDefined();
   });
 
   it('returns empty list when clientId does not match', async () => {
@@ -136,7 +136,7 @@ describe('Query bus (read side)', () => {
     );
     expect(page2).toHaveLength(1);
 
-    expect(page1[0].transaction_id).not.toBe(page2[0].transaction_id);
+    expect(page1[0].id).not.toBe(page2[0].id);
   });
 
   it('does not leak data across users (INV-9)', async () => {

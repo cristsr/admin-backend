@@ -4,7 +4,12 @@ import {
   QueryHandler,
 } from '@cqrs/application/query-bus/query-handler';
 import { Criteria, Nullable } from '@shared';
-import { LedgerSettingsRow, PROJ_LEDGER_SETTINGS } from '@ledger/ledger/application/read-models/ledger-settings.read-model';
+import {
+  LedgerSettingsRow,
+  LedgerSettingsView,
+  PROJ_LEDGER_SETTINGS,
+  toLedgerSettingsView,
+} from '@ledger/ledger/application/read-models/ledger-settings.read-model';
 import { GetLedgerSettingsQuery } from './get-ledger-settings.query';
 
 /** Serves the user's ledger settings from `proj_ledger_settings` (INV-9). */
@@ -16,12 +21,12 @@ export class GetLedgerSettingsHandler extends QueryHandler<GetLedgerSettingsQuer
   async execute(
     _query: GetLedgerSettingsQuery,
     ctx: QueryContext,
-  ): Promise<Nullable<LedgerSettingsRow>> {
+  ): Promise<Nullable<LedgerSettingsView>> {
     const [row] = await this.readModel.query<LedgerSettingsRow>(
       PROJ_LEDGER_SETTINGS,
       Criteria.none().equals('user_id', ctx.userId),
     );
 
-    return row ?? null;
+    return row ? toLedgerSettingsView(row) : null;
   }
 }

@@ -6,6 +6,7 @@ export * from './confirm-transaction-request.dto';
 export * from './void-transaction-request.dto';
 export * from './reverse-transaction-request.dto';
 export * from './transaction-query.dto';
+export * from './pending-review-query.dto';
 export * from './transaction.dto';
-export * from './transaction-list.dto';
+export * from './pending-review.dto';
 export * from './merge-transfers-request.dto';

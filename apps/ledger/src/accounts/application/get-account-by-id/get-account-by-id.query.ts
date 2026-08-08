@@ -1,15 +1,9 @@
 import { Query } from '@cqrs/application/query-bus/query';
 import { Nullable } from '@shared';
-
-/** One account node as `proj_accounts` stores it. */
-export type AccountRow = {
-  readonly account_id: string;
-  readonly user_id: string;
-  readonly name: string;
-};
+import { AccountView } from '@ledger/accounts/application/read-models/account-tree.read-model';
 
 /** Reads a single account node from `proj_accounts` for the owning user. */
-export class GetAccountByIdQuery extends Query<Nullable<AccountRow>> {
+export class GetAccountByIdQuery extends Query<Nullable<AccountView>> {
   readonly queryType = 'GetAccountById';
 
   constructor(readonly accountId: string) {

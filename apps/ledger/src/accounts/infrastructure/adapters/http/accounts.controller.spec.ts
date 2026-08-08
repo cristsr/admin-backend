@@ -11,7 +11,6 @@ import { RenameAccountCommand } from '@ledger/accounts/application/rename-accoun
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import { AccountType } from '@ledger/shared/domain/value-objects';
 import { AccountsController } from './accounts.controller';
-import { AccountTreeView } from './dto/account-tree-view';
 
 describe('AccountsController', () => {
   const context: LedgerContext = { userId: 'user-1', clientId: 'frontend' };
@@ -106,7 +105,7 @@ describe('AccountsController', () => {
     const tree = { accounts: [] };
     queryBus.ask.mockResolvedValue(tree);
 
-    const returned = await controller.list(context, { view: AccountTreeView.FLAT });
+    const returned = await controller.list(context);
 
     const [query, ctx] = queryBus.ask.mock.calls[0];
     expect(query).toBeInstanceOf(GetAccountTreeQuery);

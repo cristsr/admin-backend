@@ -17,19 +17,15 @@ import {
 import { AmendPendingTransactionCommand } from '@ledger/transactions/application/amend-transaction/amend-pending-transaction.command';
 import { AnnotateTransactionCommand } from '@ledger/transactions/application/annotate-transaction/annotate-transaction.command';
 import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
-import {
-  GetTransactionByIdQuery,
-  TransactionRow,
-} from '@ledger/transactions/application/get-transaction-by-id/get-transaction-by-id.query';
-import {
-  ListPendingReviewQuery,
-  PendingReviewRow,
-} from '@ledger/transactions/application/list-pending-review/list-pending-review.query';
-import {
-  ListTransactionsQuery,
-  TransactionListRow,
-} from '@ledger/transactions/application/list-transactions/list-transactions.query';
+import { GetTransactionByIdQuery } from '@ledger/transactions/application/get-transaction-by-id/get-transaction-by-id.query';
+import { ListPendingReviewQuery } from '@ledger/transactions/application/list-pending-review/list-pending-review.query';
+import { ListTransactionsQuery } from '@ledger/transactions/application/list-transactions/list-transactions.query';
 import { PostingInput } from '@ledger/transactions/application/posting-input.type';
+import { PendingReviewView } from '@ledger/transactions/application/read-models/pending-review.read-model';
+import {
+  TransactionListItemView,
+  TransactionView,
+} from '@ledger/transactions/application/read-models/transaction-list.read-model';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { ReverseConfirmedTransactionCommand } from '@ledger/transactions/application/reverse-transaction/reverse-confirmed-transaction.command';
 import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';
@@ -37,12 +33,12 @@ import { AmendTransactionRequestDto } from './dto/amend-transaction-request.dto'
 import { AnnotateTransactionRequestDto } from './dto/annotate-transaction-request.dto';
 import { ConfirmTransactionRequestDto } from './dto/confirm-transaction-request.dto';
 import { PendingReviewQueryDto } from './dto/pending-review-query.dto';
+import { PendingReviewDto } from './dto/pending-review.dto';
 import { PostingDto } from './dto/posting.dto';
 import { RecordTransactionRequestDto } from './dto/record-transaction-request.dto';
 import { ReverseTransactionRequestDto } from './dto/reverse-transaction-request.dto';
-import { TransactionListDto } from './dto/transaction-list.dto';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
-import { TransactionDto } from './dto/transaction.dto';
+import { TransactionDto, TransactionListItemDto } from './dto/transaction.dto';
 import { VoidTransactionRequestDto } from './dto/void-transaction-request.dto';
 
 /**
@@ -86,16 +82,19 @@ export class TransactionsController {
     return this.dispatch(command, context, externalRef);
   }
 
-  // FIXME: returns the bare `proj_transactions` rows, not the paginated
-  // `TransactionListDto` envelope the response is documented as — `total` has no
-  // source today (no count query). See the note in AccountsController.
+  /**
+   * A page of the list, newest first. Paging is by `limit`/`offset`; there is
+   * deliberately no `total` — counting matching rows needs a `count` the read
+   * model port does not expose, and inventing one per request would scan the
+   * whole projection.
+   */
   @Get()
   @ApiOperation({ summary: 'List and filter transactions.' })
-  @ApiOkResponse({ type: TransactionListDto })
+  @ApiOkResponse({ type: [TransactionListItemDto] })
   list(
     @Context() context: LedgerContext,
     @Query() query: TransactionQueryDto,
-  ): Promise<readonly TransactionListRow[]> {
+  ): Promise<readonly TransactionListItemView[]> {
     return this.queryBus.ask(
       new ListTransactionsQuery(
         query.account ?? null,
@@ -118,24 +117,24 @@ export class TransactionsController {
    */
   @Get('pending-review')
   @ApiOperation({ summary: "The review inbox: transactions awaiting the user's decision." })
+  @ApiOkResponse({ type: [PendingReviewDto] })
   pendingReview(
     @Context() context: LedgerContext,
     @Query() query: PendingReviewQueryDto,
-  ): Promise<readonly PendingReviewRow[]> {
+  ): Promise<readonly PendingReviewView[]> {
     return this.queryBus.ask(
       new ListPendingReviewQuery(query.limit ?? null, query.offset ?? null),
       this.queryContext(context),
     );
   }
 
-  // FIXME: returns the `proj_transactions` row as stored, not `TransactionDto`.
   @Get(':id')
-  @ApiOperation({ summary: 'Get a single transaction.' })
+  @ApiOperation({ summary: 'Get a single transaction, with its postings.' })
   @ApiOkResponse({ type: TransactionDto })
   getOne(
     @Context() context: LedgerContext,
     @Param('id') id: string,
-  ): Promise<Nullable<TransactionRow>> {
+  ): Promise<Nullable<TransactionView>> {
     return this.queryBus.ask(new GetTransactionByIdQuery(id), this.queryContext(context));
   }
 

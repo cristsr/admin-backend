@@ -5,8 +5,13 @@ import {
 } from '@cqrs/application/query-bus/query-handler';
 import { Criteria } from '@shared';
 import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
-import { PROJ_BALANCES } from '@ledger/transactions/application/read-models/account-balances.read-model';
-import { BalanceRow, GetAccountBalancesQuery } from './get-account-balances.query';
+import {
+  BalanceRow,
+  BalanceView,
+  PROJ_BALANCES,
+  toBalanceView,
+} from '@ledger/transactions/application/read-models/account-balances.read-model';
+import { GetAccountBalancesQuery } from './get-account-balances.query';
 
 /**
  * Serves balances from `proj_balances`, scoped to the user's own accounts
@@ -20,15 +25,18 @@ export class GetAccountBalancesHandler extends QueryHandler<GetAccountBalancesQu
   async execute(
     query: GetAccountBalancesQuery,
     ctx: QueryContext,
-  ): Promise<readonly BalanceRow[]> {
+  ): Promise<readonly BalanceView[]> {
     const owned = await this.ownedAccountIds(ctx.userId);
     const balances = await this.readModel.query<BalanceRow>(PROJ_BALANCES, Criteria.none());
 
-    return balances.filter(
-      (balance) =>
-        owned.has(balance.account_id) &&
-        (!query.accountId || balance.account_id === query.accountId),
-    );
+    return balances
+      .filter(
+        (balance) =>
+          owned.has(balance.account_id) &&
+          (!query.accountId || balance.account_id === query.accountId) &&
+          (!query.currency || balance.currency_code === query.currency),
+      )
+      .map(toBalanceView);
   }
 
   private async ownedAccountIds(userId: string): Promise<Set<string>> {

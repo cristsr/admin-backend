@@ -4,11 +4,15 @@ import {
   QueryHandler,
 } from '@cqrs/application/query-bus/query-handler';
 import { Criteria, OrderType } from '@shared';
-import { PROJ_PENDING_REVIEW } from '@ledger/transactions/application/read-models/pending-review.read-model';
+import {
+  PROJ_PENDING_REVIEW,
+  PendingReviewRow,
+  PendingReviewView,
+  toPendingReviewView,
+} from '@ledger/transactions/application/read-models/pending-review.read-model';
 import {
   DEFAULT_PENDING_REVIEW_PAGE_SIZE,
   ListPendingReviewQuery,
-  PendingReviewRow,
 } from './list-pending-review.query';
 
 /**
@@ -22,10 +26,10 @@ export class ListPendingReviewHandler extends QueryHandler<ListPendingReviewQuer
     super();
   }
 
-  execute(
+  async execute(
     query: ListPendingReviewQuery,
     ctx: QueryContext,
-  ): Promise<readonly PendingReviewRow[]> {
+  ): Promise<readonly PendingReviewView[]> {
     const criteria = Criteria.none()
       .equals('user_id', ctx.userId)
       .orderBy('date', OrderType.ASC)
@@ -34,6 +38,8 @@ export class ListPendingReviewHandler extends QueryHandler<ListPendingReviewQuer
         limit: query.limit ?? DEFAULT_PENDING_REVIEW_PAGE_SIZE,
       });
 
-    return this.readModel.query<PendingReviewRow>(PROJ_PENDING_REVIEW, criteria);
+    const rows = await this.readModel.query<PendingReviewRow>(PROJ_PENDING_REVIEW, criteria);
+
+    return rows.map(toPendingReviewView);
   }
 }

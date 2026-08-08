@@ -7,19 +7,11 @@ import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { QueryContext } from '@cqrs/application/query-bus/query-handler';
 import { Nullable } from '@shared';
 import { CloseAccountCommand } from '@ledger/accounts/application/close-account/close-account.command';
-import {
-  BalanceRow,
-  GetAccountBalancesQuery,
-} from '@ledger/accounts/application/get-account-balances/get-account-balances.query';
-import {
-  AccountRow,
-  GetAccountByIdQuery,
-} from '@ledger/accounts/application/get-account-by-id/get-account-by-id.query';
-import {
-  AccountTreeRow,
-  GetAccountTreeQuery,
-} from '@ledger/accounts/application/get-account-tree/get-account-tree.query';
+import { GetAccountBalancesQuery } from '@ledger/accounts/application/get-account-balances/get-account-balances.query';
+import { GetAccountByIdQuery } from '@ledger/accounts/application/get-account-by-id/get-account-by-id.query';
+import { GetAccountTreeQuery } from '@ledger/accounts/application/get-account-tree/get-account-tree.query';
 import { OpenAccountCommand } from '@ledger/accounts/application/open-account/open-account.command';
+import { AccountView } from '@ledger/accounts/application/read-models/account-tree.read-model';
 import { RecordOpeningBalanceCommand } from '@ledger/accounts/application/record-opening-balance/record-opening-balance.command';
 import { RenameAccountCommand } from '@ledger/accounts/application/rename-account/rename-account.command';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
@@ -29,10 +21,9 @@ import {
   Context,
   ExternalRef,
 } from '@ledger/shared/infrastructure/adapters/http';
+import { BalanceView } from '@ledger/transactions/application/read-models/account-balances.read-model';
 import { AccountBalanceQueryDto } from './dto/account-balance-query.dto';
 import { AccountBalanceDto } from './dto/account-balance.dto';
-import { AccountTreeQueryDto } from './dto/account-tree-query.dto';
-import { AccountTreeDto } from './dto/account-tree.dto';
 import { AccountDto } from './dto/account.dto';
 import { CloseAccountRequestDto } from './dto/close-account-request.dto';
 import { OpenAccountRequestDto } from './dto/open-account-request.dto';
@@ -68,19 +59,15 @@ export class AccountsController {
     return this.commandBus.dispatch(command, this.authContext(context, externalRef));
   }
 
-  // FIXME: the three reads below return the read-model rows as they are stored
-  // (snake_case, no envelope), which is not what the `@ApiOkResponse` DTOs
-  // describe. The mismatch predates the typed query bus and was hidden by
-  // `ask<Dto>()` asserting a shape nobody produced; the signatures now state
-  // what actually goes over the wire. Mapping rows to the DTOs is a separate
-  // change — `AccountTreeDto.view` and its envelope have no source yet.
+  /**
+   * Flat, ordered by name; `parentId` carries the hierarchy. Nesting is left to
+   * the client on purpose — the projection stores flat rows, and shaping them
+   * server-side would be a second representation of the same tree.
+   */
   @Get()
-  @ApiOperation({ summary: 'List the account tree.' })
-  @ApiOkResponse({ type: AccountTreeDto })
-  list(
-    @Context() context: LedgerContext,
-    @Query() _query: AccountTreeQueryDto,
-  ): Promise<readonly AccountTreeRow[]> {
+  @ApiOperation({ summary: 'List the chart of accounts.' })
+  @ApiOkResponse({ type: [AccountDto] })
+  list(@Context() context: LedgerContext): Promise<readonly AccountView[]> {
     return this.queryBus.ask(new GetAccountTreeQuery(), this.queryContext(context));
   }
 
@@ -90,7 +77,7 @@ export class AccountsController {
   getOne(
     @Context() context: LedgerContext,
     @Param('id') id: string,
-  ): Promise<Nullable<AccountRow>> {
+  ): Promise<Nullable<AccountView>> {
     return this.queryBus.ask(new GetAccountByIdQuery(id), this.queryContext(context));
   }
 
@@ -100,9 +87,12 @@ export class AccountsController {
   balance(
     @Context() context: LedgerContext,
     @Param('id') id: string,
-    @Query() _query: AccountBalanceQueryDto,
-  ): Promise<readonly BalanceRow[]> {
-    return this.queryBus.ask(new GetAccountBalancesQuery(id), this.queryContext(context));
+    @Query() query: AccountBalanceQueryDto,
+  ): Promise<readonly BalanceView[]> {
+    return this.queryBus.ask(
+      new GetAccountBalancesQuery(id, query.currency ?? null),
+      this.queryContext(context),
+    );
   }
 
   @Post(':id/rename')

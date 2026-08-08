@@ -4,11 +4,16 @@ import {
   QueryHandler,
 } from '@cqrs/application/query-bus/query-handler';
 import { Criteria, OrderType } from '@shared';
-import { PROJ_POSTINGS, PROJ_TRANSACTIONS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
+import {
+  PROJ_POSTINGS,
+  PROJ_TRANSACTIONS,
+  TransactionListItemView,
+  TransactionRow,
+  toTransactionListItemView,
+} from '@ledger/transactions/application/read-models/transaction-list.read-model';
 import {
   DEFAULT_TRANSACTION_PAGE_SIZE,
   ListTransactionsQuery,
-  TransactionListRow,
 } from './list-transactions.query';
 
 /**
@@ -24,7 +29,7 @@ export class ListTransactionsHandler extends QueryHandler<ListTransactionsQuery>
   async execute(
     query: ListTransactionsQuery,
     ctx: QueryContext,
-  ): Promise<readonly TransactionListRow[]> {
+  ): Promise<readonly TransactionListItemView[]> {
     let criteria = Criteria.none()
       .equals('user_id', ctx.userId)
       .equals('status', query.status)
@@ -49,7 +54,9 @@ export class ListTransactionsHandler extends QueryHandler<ListTransactionsQuery>
       limit: query.limit ?? DEFAULT_TRANSACTION_PAGE_SIZE,
     });
 
-    return this.readModel.query<TransactionListRow>(PROJ_TRANSACTIONS, criteria);
+    const rows = await this.readModel.query<TransactionRow>(PROJ_TRANSACTIONS, criteria);
+
+    return rows.map(toTransactionListItemView);
   }
 
   private async transactionIdsForAccount(accountId: string): Promise<Set<string>> {
