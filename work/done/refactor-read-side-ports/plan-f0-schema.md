@@ -22,7 +22,7 @@ Ningún puerto todavía: esta fase prepara el terreno y deja la suite verde.
 
 ---
 
-### Tarea 0: Rama de trabajo
+### Tarea 0: Rama de trabajo [X]
 
 **Step 1: Verificar dónde estamos (read-only)**
 
