@@ -1,17 +1,17 @@
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { Criteria } from '@shared';
 import { CurrencyCatalogCache } from '@ledger/reference/application/currency-catalog.cache';
-import { PROJ_CURRENCIES } from '@ledger/reference/infrastructure/projections/currencies.projector';
+import { PROJ_CURRENCIES } from '@ledger/reference/application/read-models/currencies.read-model';
 import { Currency } from '@ledger/shared/domain/money';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-catalog';
 import { CurrencyCode } from '@ledger/shared/domain/value-objects/currency-code';
 import { UnknownCurrencyException } from '@ledger/shared/domain/value-objects/value-object.exception';
 
 /** One row of `proj_currencies`. */
-interface CurrencyRow {
+type CurrencyRow = {
   readonly code: string;
   readonly minor_units: number;
-}
+};
 
 /**
  * ISO-4217 currencies the ledger can always resolve, even against an empty
@@ -20,7 +20,7 @@ interface CurrencyRow {
  * They live here rather than in a migration on purpose: `rebuild currencies`
  * truncates the projection and replays the stream, so seed rows inserted by a
  * migration would vanish on the first rebuild. Keeping them in the adapter makes
- * them survive anything (AC-8).
+ * them survive anything.
  */
 const BASE_CURRENCIES: Readonly<Record<string, number>> = { COP: 0, USD: 2 };
 

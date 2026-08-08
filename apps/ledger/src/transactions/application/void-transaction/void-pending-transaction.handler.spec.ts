@@ -28,7 +28,7 @@ function makeTransaction(id: string) {
 }
 
 describe('VoidPendingTransactionHandler', () => {
-  it('should void a PENDING transaction (AC-8)', async () => {
+  it('should void a PENDING transaction', async () => {
     const { handler, transactions } = setup();
     const tx = makeTransaction('tx-1');
     transactions.load.mockResolvedValue(tx as any);
@@ -45,7 +45,7 @@ describe('VoidPendingTransactionHandler', () => {
     expect(transactions.save).toHaveBeenCalledTimes(1);
   });
 
-  it('should throw TransactionNotFoundException for non-existent transaction (AC-8)', async () => {
+  it('should throw TransactionNotFoundException for non-existent transaction', async () => {
     const { handler, transactions } = setup();
     transactions.load.mockResolvedValue(null);
 
@@ -54,7 +54,7 @@ describe('VoidPendingTransactionHandler', () => {
     ).rejects.toBeInstanceOf(TransactionNotFoundException);
   });
 
-  it('should throw IMMUTABLE_TRANSACTION when voiding is not allowed (AC-8)', async () => {
+  it('should throw IMMUTABLE_TRANSACTION when voiding is not allowed', async () => {
     const { handler, transactions } = setup();
     const tx = makeTransaction('tx-1');
     tx.void.mockImplementation(() => {

@@ -5,7 +5,7 @@ import { PostingInput } from '@ledger/transactions/application/posting-input.typ
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 
 /**
- * Records a transaction with explicit postings in PENDING or CONFIRMED state (RF-3).
+ * Records a transaction with explicit postings in PENDING or CONFIRMED state.
  *
  * `origin` is never read from the request body: the HTTP adapter builds this
  * command positionally and never states it, so anything arriving from the API
@@ -28,7 +28,7 @@ export class RecordTransactionCommand extends Command {
     /**
      * ISO-8601 instant the movement actually happened, when the caller knows it
      * (a bank notification carries one; a manually entered expense does not).
-     * Null means it coincides with recording. Feeds intraday assertions (§2.4).
+     * Null means it coincides with recording. Feeds intraday assertions.
      *
      * Declared before `origin` deliberately: the HTTP adapter has to pass every
      * parameter up to the last one it sets, and it must never reach `origin`.

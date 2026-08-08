@@ -1,4 +1,4 @@
-/** API-shaped posting: amount as a decimal string with its currency code (RNF-2). */
+/** API-shaped posting: amount as a decimal string with its currency code. */
 export type PostingInput = {
   readonly accountId: string;
   readonly amount: string;

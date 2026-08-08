@@ -1,6 +1,6 @@
 import { DomainNotFoundException, DomainUnprocessableException } from '@shared';
 
-/** The two pending transactions do not form a valid transfer pair (RF-16). */
+/** The two pending transactions do not form a valid transfer pair. */
 export class NotATransferPairException extends DomainUnprocessableException {
   readonly code = 'NOT_A_TRANSFER_PAIR';
 }

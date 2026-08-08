@@ -3,7 +3,7 @@ import { CurrenciesController } from '@ledger/reference/infrastructure/adapters/
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
 
 /**
- * Reference data: the global currency catalog (RF-21).
+ * Reference data: the global currency catalog.
  *
  * Neither side of the catalog is composed here: `RegisterCurrencyHandler` is
  * registered on the `CommandBus` by `createLedgerApplication` and

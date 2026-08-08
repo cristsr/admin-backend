@@ -30,7 +30,7 @@ export type OpenAccountArgs = {
 };
 
 /**
- * Account lifecycle aggregate (§3.3): opening, renaming and closing. Protects
+ * Account lifecycle aggregate: opening, renaming and closing. Protects
  * INV-4 (allowed currencies), INV-13 (system accounts are immutable), INV-14
  * (root type never changes) and INV-3 partially (open-on-date range). The
  * cross-aggregate posting checks (INV-3/INV-4 against the tree) live in the
@@ -44,7 +44,7 @@ export class Account extends AggregateRoot<string> {
   private closedOn: Nullable<LedgerDate> = null;
   private system = false;
 
-  /** Opens an account, enforcing the real-account single-currency rule (§2.1). */
+  /** Opens an account, enforcing the real-account single-currency rule. */
   static open(args: OpenAccountArgs, idGenerator: IdGenerator): Account {
     const rootType = args.name.rootType;
 

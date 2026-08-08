@@ -18,7 +18,7 @@ export class AmendTransactionRequestDto {
   @Type(() => PostingDto)
   readonly postings!: PostingDto[];
 
-  @ApiProperty({ example: '2026-07-20', description: 'Plain accounting date (RNF-7).' })
+  @ApiProperty({ example: '2026-07-20', description: 'Plain accounting date.' })
   @IsDateString()
   readonly date!: string;
 }

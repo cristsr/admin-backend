@@ -2,7 +2,7 @@ import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
 
 /**
  * The single balancing component of the domain (INV-11). Extending balance
- * modes (e.g. at-cost lots, §9.2) means a new subclass, never a change to
+ * modes (e.g. at-cost lots) means a new subclass, never a change to
  * callers. v1 balances at nominal value per currency (INV-1).
  */
 export abstract class BalanceRule {

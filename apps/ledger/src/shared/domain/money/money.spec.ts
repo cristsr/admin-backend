@@ -80,7 +80,7 @@ describe('Money', () => {
     expect(Money.of('3', USD).equals(Money.of('3', COP))).toBe(false);
   });
 
-  it('serializes negative amounts as decimal strings for events (RNF-2)', () => {
+  it('serializes negative amounts as decimal strings for events', () => {
     expect(Money.of('-31900', COP).toDecimalString()).toBe('-31900');
     expect(Money.of('-31900', COP).toString()).toBe('-31900 COP');
   });

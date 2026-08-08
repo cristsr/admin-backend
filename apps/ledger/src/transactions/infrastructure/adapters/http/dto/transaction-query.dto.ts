@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsDateString, IsEnum, IsInt, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
-import { DEFAULT_TRANSACTION_PAGE_SIZE } from '@ledger/read-side/list-transactions/list-transactions.query';
+import { DEFAULT_TRANSACTION_PAGE_SIZE } from '@ledger/transactions/application/list-transactions/list-transactions.query';
 import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 
@@ -9,7 +9,7 @@ import { TransactionStatus } from '@ledger/transactions/domain/transaction/trans
 export const MAX_TRANSACTION_PAGE_SIZE = 200;
 
 /**
- * Query string of `GET /transactions` (RF-13). A typed contract over the
+ * Query string of `GET /transactions`. A typed contract over the
  * `transaction_list` projection filters — the query handler translates it; the
  * controller never builds SQL or domain criteria.
  */
@@ -34,7 +34,7 @@ export class TransactionQueryDto {
   @IsEnum(TransactionStatus)
   readonly status?: TransactionStatus;
 
-  @ApiPropertyOptional({ enum: DerivedKind, description: 'Projector-derived classification (RF-4).' })
+  @ApiPropertyOptional({ enum: DerivedKind, description: 'Projector-derived classification.' })
   @IsOptional()
   @IsEnum(DerivedKind)
   readonly derivedKind?: DerivedKind;
@@ -44,7 +44,7 @@ export class TransactionQueryDto {
   @IsString()
   readonly payee?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by the client that recorded the transaction (RF-12).' })
+  @ApiPropertyOptional({ description: 'Filter by the client that recorded the transaction.' })
   @IsOptional()
   @IsString()
   readonly clientId?: string;

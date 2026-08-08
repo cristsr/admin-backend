@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
- * `pending_review` (§3.6): the frontend's review inbox. Holds only transactions
+ * `pending_review`: the frontend's review inbox. Holds only transactions
  * awaiting review, so the row disappears on confirm or void — unlike
  * `proj_transactions`, which keeps every transaction for the life of the ledger.
  *
- * Minimal constraints, like the rest of the read side (§6.3): the truth lives in
+ * Minimal constraints, like the rest of the read side: the truth lives in
  * the stream and a projection bug is fixed by rebuilding, never by editing rows.
  */
 export class CreatePendingReviewProjection1790000000007 implements MigrationInterface {

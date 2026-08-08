@@ -5,7 +5,7 @@ import { LedgerContextResolver } from '@ledger/shared/application/ports/ledger-c
 import { ContextCarryingRequest } from './context-carrying-request';
 
 /**
- * Enforces RF-26 globally: no business route runs without an authenticated
+ * Enforced globally: no business route runs without an authenticated
  * `(user_id, client_id)` context. The resolver decides how the context is read;
  * a missing or malformed one is a 401. Endpoints marked `@Public()` (e.g. health)
  * bypass the check. The resolved context is attached to the request for the

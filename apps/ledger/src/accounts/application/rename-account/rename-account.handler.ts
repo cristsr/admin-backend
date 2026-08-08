@@ -10,8 +10,8 @@ import { RenameAccountCommand } from './rename-account.command';
 
 /**
  * Loads the account, applies the rename and republishes the affected
- * projections. §2.1.1 forbids the new name from colliding with another account
- * of the user, and the rename drags every descendant with it (§6.3), so the
+ * projections. The new name must not collide with another account
+ * of the user, and the rename drags every descendant with it, so the
  * whole resulting subtree is cleared with {@link AccountNameRegistry} before
  * anything is emitted.
  */

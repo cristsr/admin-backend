@@ -25,7 +25,7 @@ export const ROOT_TYPE_LABEL: Readonly<Record<AccountType, string>> = {
   [AccountType.EQUITY]: 'Equity',
 };
 
-/** Real accounts (bank-like) that must declare exactly one currency (§2.1). */
+/** Real accounts (bank-like) that must declare exactly one currency. */
 export const REAL_ACCOUNT_TYPES: readonly AccountType[] = [
   AccountType.ASSETS,
   AccountType.LIABILITIES,

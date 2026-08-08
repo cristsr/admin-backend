@@ -5,7 +5,7 @@ import { LedgerDate } from '@ledger/shared/domain/value-objects';
 
 /**
  * Implements the reactor's lookup over the `assertion_status` projection, so the
- * per-account index lives in exactly one place (DRY, EP-3.6 note).
+ * per-account index lives in exactly one place (DRY).
  */
 @Injectable()
 export class StoreBackedAssertionLookup extends AssertionLookupPort {

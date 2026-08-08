@@ -1,13 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsInt, IsOptional, Max, Min } from 'class-validator';
-import { DEFAULT_PENDING_REVIEW_PAGE_SIZE } from '@ledger/read-side/list-pending-review/list-pending-review.query';
+import { DEFAULT_PENDING_REVIEW_PAGE_SIZE } from '@ledger/transactions/application/list-pending-review/list-pending-review.query';
 import { MAX_TRANSACTION_PAGE_SIZE } from './transaction-query.dto';
 
 /**
  * Query string of `GET /transactions/pending-review`. Paging only: the inbox is
  * everything the user still has to decide on, so filtering it would defeat its
- * purpose — narrower searches belong to `GET /transactions` (RF-13).
+ * purpose — narrower searches belong to `GET /transactions`.
  */
 export class PendingReviewQueryDto {
   @ApiPropertyOptional({

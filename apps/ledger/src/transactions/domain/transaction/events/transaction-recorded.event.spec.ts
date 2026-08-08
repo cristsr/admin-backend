@@ -25,7 +25,7 @@ describe('TransactionRecorded', () => {
     };
   }
 
-  it('round-trips COP postings preserving the exact decimal value (RNF-2, INV-8)', () => {
+  it('round-trips COP postings preserving the exact decimal value (INV-8)', () => {
     const event = new TransactionRecorded(props());
 
     const payload = event.toPayload();
@@ -37,7 +37,7 @@ describe('TransactionRecorded', () => {
     expect(rebuilt.props.postings[0].currencyCode).toBe('COP');
   });
 
-  it('round-trips USD postings preserving the exact decimal value (RNF-2, INV-8)', () => {
+  it('round-trips USD postings preserving the exact decimal value (INV-8)', () => {
     const usdPostings = [
       PostingLine.of({ accountId: 'expenses', amount: aMoney().of('7.99').inUsd(), metadata: {} }),
       PostingLine.of({ accountId: 'assets', amount: aMoney().of('-7.99').inUsd(), metadata: {} }),

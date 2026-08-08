@@ -6,15 +6,16 @@ import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { EventStore } from '@cqrs/domain/ports/event-store';
 import { createLedgerEventRegistry } from '@ledger/ledger/application/ledger-event-registry.factory';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
-import { MergePendingTransfersHandler } from './application/commands/merge-pending-transfers.handler';
 import { LedgerTransactionRepository } from './application/ledger-transaction.repository';
+import { MergePendingTransfersCommand } from './application/merge-transfers/merge-pending-transfers.command';
+import { MergePendingTransfersHandler } from './application/merge-transfers/merge-pending-transfers.handler';
 import { AccountLookup } from './domain/ports/account-lookup.port';
 import { TransferPairRule } from './domain/services/transfer-pair.rule';
 import { TransferController } from './infrastructure/adapters/http/transfer.controller';
 import { ReadModelAccountLookup } from './infrastructure/adapters/persistence/read-model-account-lookup';
 
 /**
- * Transfer merging (RF-16) mounted on the real EP-1 core: the merge command
+ * Transfer merging mounted on the real core: the merge command
  * reuses `RecordTransaction`/`VoidPendingTransaction` through the CommandBus
  * (DRY) and validates the pair against the aggregates it loads from the event
  * store. Proposing which pendings *look* mergeable is deliberately out of scope
@@ -22,13 +23,13 @@ import { ReadModelAccountLookup } from './infrastructure/adapters/persistence/re
  *
  * The handler is composed here but registered on the core's
  * {@link PolicyCommandBus} at init, so `MergePendingTransfers` enters through
- * the same policy chain as every other command (RF-11, INV-10) instead of being
+ * the same policy chain as every other command (INV-10) instead of being
  * called as a provider.
  */
 @Module({
   controllers: [TransferController],
   providers: [
-    // No Nest decorators in domain/application (RNF-11, rules Art. 1), so the
+    // No Nest decorators in domain/application (rules Art. 1), so the
     // dependencies are stated here rather than read off `@Injectable` metadata.
     { provide: TransferPairRule, useFactory: (): TransferPairRule => new TransferPairRule() },
     { provide: AccountLookup, useClass: ReadModelAccountLookup },
@@ -80,6 +81,6 @@ export class TransactionsModule implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    this.commandBus.register('MergePendingTransfers', this.mergeTransfers);
+    this.commandBus.register(MergePendingTransfersCommand, this.mergeTransfers);
   }
 }

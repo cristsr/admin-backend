@@ -73,7 +73,7 @@ function appending(scope: TransactionScope, label: string) {
 }
 
 describe('InitializeLedgerHandler', () => {
-  it('should create two system accounts and return userId (AC-5)', async () => {
+  it('should create two system accounts and return userId', async () => {
     const { handler, settings, accounts, dispatcher } = setup();
     settings.load.mockResolvedValue(null);
     accounts.save.mockResolvedValue({ events: [], version: 1, lastPosition: 3n });
@@ -92,7 +92,7 @@ describe('InitializeLedgerHandler', () => {
     expect(settings.save.mock.calls[0][0].isInitialized).toBe(true);
   });
 
-  it('should reject re-initialization with LEDGER_ALREADY_INITIALIZED (AC-5)', async () => {
+  it('should reject re-initialization with LEDGER_ALREADY_INITIALIZED', async () => {
     const { handler, settings } = setup();
     const existing = { isInitialized: true } as LedgerSettings;
     settings.load.mockResolvedValue(existing);
@@ -105,7 +105,7 @@ describe('InitializeLedgerHandler', () => {
     ).rejects.toBeInstanceOf(LedgerAlreadyInitializedException);
   });
 
-  it('should save system accounts without externalRef (AC-5)', async () => {
+  it('should save system accounts without externalRef', async () => {
     const { handler, settings, accounts } = setup();
     settings.load.mockResolvedValue(null);
     accounts.save.mockResolvedValue({ events: [], version: 1, lastPosition: 1n });

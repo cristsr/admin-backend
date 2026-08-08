@@ -3,24 +3,24 @@ import { Money } from '@ledger/shared/domain/money';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 
-/** A posting of the asserted account, as materialized by `proj_postings` (EP-1). */
-export interface AssertablePosting {
+/** A posting of the asserted account, as materialized by `proj_postings`. */
+export type AssertablePosting = {
   readonly amount: Money;
   readonly date: LedgerDate;
   readonly occurredAt: Nullable<Date>;
   readonly status: TransactionStatus;
-}
+};
 
 /** An account a transaction posted to, with that transaction's accounting date. */
-export interface TouchedAccount {
+export type TouchedAccount = {
   readonly accountId: string;
   readonly date: LedgerDate;
-}
+};
 
 /**
  * Reads the `CONFIRMED`+`PENDING` postings of exactly one account (no
- * subaccounts, §2.4) up to a temporal cutoff. `VOIDED` postings are never
- * returned. This is the permitted inter-aggregate read of §3.5/§3.6: no
+ * subaccounts) up to a temporal cutoff. `VOIDED` postings are never
+ * returned. This is the one permitted inter-aggregate read: no
  * accounting invariant depends on it.
  */
 export abstract class AssertionPostingReader {

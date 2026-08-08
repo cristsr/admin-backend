@@ -1,13 +1,13 @@
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
-import {
-  AdjustmentAuditFixture,
-  runAdjustmentAuditStoreContract,
-} from '@ledger/reconciliation/domain/ports/adjustment-audit-store.contract';
 import { AdjustmentAuditEntry } from '@ledger/reconciliation/domain/ports/adjustment-audit-store.port';
 import { AdjustmentAuditProjector } from '@ledger/reconciliation/infrastructure/projections/adjustment-audit.projector';
 import { PROJ_ASSERTIONS } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
+import {
+  AdjustmentAuditFixture,
+  runAdjustmentAuditStoreContract,
+} from '@ledger/reconciliation/infrastructure/testing/adjustment-audit-store.contract';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { ReadModelAdjustmentAuditReader } from './read-model-adjustment-audit-reader';
 
@@ -15,7 +15,7 @@ const AT = new Date('2026-07-22T10:00:00.000Z');
 
 /**
  * Seeds through the real projector: it is the only writer of this projection
- * (RNF-10), so the contract exercises the same path production uses — including
+ *, so the contract exercises the same path production uses — including
  * the recalculated summary that makes replays idempotent.
  */
 const makeFixture = (): AdjustmentAuditFixture => {

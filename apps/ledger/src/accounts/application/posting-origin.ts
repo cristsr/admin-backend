@@ -1,10 +1,10 @@
 /**
- * Who is asking to post against an account (INV-13, RF-27).
+ * Who is asking to post against an account (INV-13).
  *
  * It travels in the command, never in client-supplied data: the
  * `{ source: 'system' }` metadata that reconciliation adjustments carry is a
  * label any caller can type into a `POST /transactions` body, and `client_id`
- * is opaque provenance that §2.10 forbids using as authorization. Only a
+ * is opaque provenance and must never be used as authorization. Only a
  * command the ledger builds for itself — `RecordOpeningBalance`,
  * `ResolveDiscrepancy` — may claim {@link PostingOrigin.SYSTEM}; anything
  * arriving from the API is {@link PostingOrigin.CLIENT}, which is also the

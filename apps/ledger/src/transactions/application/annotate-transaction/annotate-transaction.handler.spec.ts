@@ -28,7 +28,7 @@ function makeTransaction(id: string) {
 }
 
 describe('AnnotateTransactionHandler', () => {
-  it('should annotate transaction metadata (AC-8)', async () => {
+  it('should annotate transaction metadata', async () => {
     const { handler, transactions } = setup();
     const tx = makeTransaction('tx-1');
     transactions.load.mockResolvedValue(tx as any);
@@ -47,7 +47,7 @@ describe('AnnotateTransactionHandler', () => {
     expect(transactions.save).toHaveBeenCalledTimes(1);
   });
 
-  it('should throw TransactionNotFoundException for non-existent transaction (AC-8)', async () => {
+  it('should throw TransactionNotFoundException for non-existent transaction', async () => {
     const { handler, transactions } = setup();
     transactions.load.mockResolvedValue(null);
 
@@ -56,7 +56,7 @@ describe('AnnotateTransactionHandler', () => {
     ).rejects.toBeInstanceOf(TransactionNotFoundException);
   });
 
-  it('should annotate any non-VOIDED transaction (AC-8)', async () => {
+  it('should annotate any non-VOIDED transaction', async () => {
     const { handler, transactions } = setup();
     const tx = makeTransaction('tx-1');
     transactions.load.mockResolvedValue(tx as any);

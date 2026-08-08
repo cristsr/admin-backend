@@ -1,11 +1,11 @@
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Nullable } from '@shared';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
 import {
   AccountClosedException,
   CurrencyNotAllowedException,
   SystemAccountProtectedException,
 } from '@ledger/accounts/domain/account/exceptions/account.exception';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { AccountNotFoundException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { aMoney } from '@ledger/shared/testing';

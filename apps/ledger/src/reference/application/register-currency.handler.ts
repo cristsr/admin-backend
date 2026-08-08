@@ -33,7 +33,7 @@ export class RegisterCurrencyHandler extends CommandHandler<RegisterCurrencyComm
     aggregate.register(command.code, command.minorUnits, command.name);
 
     // The stream is owned by the system; the caller's client_id still travels in
-    // the envelope for audit (RF-12).
+    // the envelope for audit.
     const systemCtx: AuthContext = { ...ctx, userId: SYSTEM_USER_ID };
     const result = await this.catalog.save(aggregate, systemCtx);
 

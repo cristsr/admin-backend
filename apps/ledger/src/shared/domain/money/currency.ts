@@ -2,8 +2,8 @@ import { InvalidCurrencyException } from './money.exception';
 
 /**
  * A currency with its minor-unit precision (COP → 0, USD → 2). Seed value
- * object keeping `(amount, currency)` inseparable (spec §9.4.1); the full
- * registry (CurrencyRegistered, §2.5) arrives in EP-1.1.
+ * object keeping `(amount, currency)` inseparable; the registered catalog
+ * resolves precision separately.
  */
 export class Currency {
   private constructor(
@@ -26,7 +26,7 @@ export class Currency {
     return new Currency(code.trim().toUpperCase(), minorUnits);
   }
 
-  /** Identity is the ISO code until the EP-1.1 registry exists. */
+  /** Identity is the ISO code. */
   equals(other: Currency): boolean {
     return this.code === other.code;
   }

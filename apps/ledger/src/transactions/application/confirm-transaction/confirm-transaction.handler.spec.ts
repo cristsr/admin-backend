@@ -30,7 +30,7 @@ function makeTransaction(id: string) {
 }
 
 describe('ConfirmTransactionHandler', () => {
-  it('should confirm a PENDING transaction (AC-8)', async () => {
+  it('should confirm a PENDING transaction', async () => {
     const { handler, transactions } = setup();
     const tx = makeTransaction('tx-1');
     transactions.load.mockResolvedValue(tx as any);
@@ -44,7 +44,7 @@ describe('ConfirmTransactionHandler', () => {
     expect(transactions.save).toHaveBeenCalledTimes(1);
   });
 
-  it('should throw TransactionNotFoundException for non-existent transaction (AC-8)', async () => {
+  it('should throw TransactionNotFoundException for non-existent transaction', async () => {
     const { handler, transactions } = setup();
     transactions.load.mockResolvedValue(null);
 
@@ -53,7 +53,7 @@ describe('ConfirmTransactionHandler', () => {
     ).rejects.toBeInstanceOf(TransactionNotFoundException);
   });
 
-  it('should propagate errors from the aggregate when immutable (AC-8)', async () => {
+  it('should propagate errors from the aggregate when immutable', async () => {
     const { handler, transactions } = setup();
     const tx = makeTransaction('tx-1');
     tx.confirm.mockImplementation(() => {

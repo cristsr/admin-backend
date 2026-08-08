@@ -22,7 +22,7 @@ import {
 const AT = new Date('2026-07-22T10:00:00.000Z');
 
 /**
- * Rebuild of the reconciliation projections from the stream (AC-6, AC-8, RNF-5).
+ * Rebuild of the reconciliation projections from the stream.
  * Registers both projectors under one projection name, the same way
  * `rebuild.command.ts` does, so the audit is always rebuilt against a current
  * `proj_assertions`.
@@ -126,7 +126,7 @@ describe('Reconciliation projections rebuild', () => {
     await seedStream();
   });
 
-  it('rebuilds both projections from an empty read model (AC-6)', async () => {
+  it('rebuilds both projections from an empty read model', async () => {
     const applied = await rebuilder.rebuild(RECONCILIATION_PROJECTION);
 
     expect(applied).toBe(5);
@@ -167,7 +167,7 @@ describe('Reconciliation projections rebuild', () => {
     expect(revoked.revoke_reason).toBe('wrong statement');
   });
 
-  it('is idempotent: a second rebuild yields the identical state (AC-8)', async () => {
+  it('is idempotent: a second rebuild yields the identical state', async () => {
     await rebuilder.rebuild(RECONCILIATION_PROJECTION);
     const first = await snapshot();
 

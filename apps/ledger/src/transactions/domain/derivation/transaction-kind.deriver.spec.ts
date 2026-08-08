@@ -23,14 +23,14 @@ describe('TransactionKindDeriver', () => {
     expect(deriver.derive([AccountType.ASSETS, AccountType.EQUITY])).toBe(DerivedKind.COMPOUND);
   });
 
-  it('classifies EXPENSES and INCOME together as COMPOUND (§9.4.4)', () => {
+  it('classifies EXPENSES and INCOME together as COMPOUND', () => {
     expect(deriver.derive([AccountType.EXPENSES, AccountType.INCOME])).toBe(DerivedKind.COMPOUND);
     expect(deriver.derive([AccountType.ASSETS, AccountType.INCOME, AccountType.EXPENSES])).toBe(
       DerivedKind.COMPOUND,
     );
   });
 
-  it('classifies an empty set of account types as COMPOUND (§9.4.4)', () => {
+  it('classifies an empty set of account types as COMPOUND', () => {
     expect(deriver.derive([])).toBe(DerivedKind.COMPOUND);
   });
 });

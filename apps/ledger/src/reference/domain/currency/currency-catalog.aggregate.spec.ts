@@ -27,7 +27,7 @@ describe('CurrencyCatalogAggregate', () => {
     expect(catalog.precisionOf('CLF')).toBe(4);
   });
 
-  describe('re-registration (AC-7)', () => {
+  describe('re-registration', () => {
     it('is a silent no-op when the precision is identical', () => {
       const catalog = CurrencyCatalogAggregate.rehydrate([
         new CurrencyRegistered('CLF', 4, 'Unidad de Fomento'),
@@ -50,7 +50,7 @@ describe('CurrencyCatalogAggregate', () => {
       );
     });
 
-    it('reports CURRENCY_PRECISION_CONFLICT (RF-14)', () => {
+    it('reports CURRENCY_PRECISION_CONFLICT', () => {
       const catalog = CurrencyCatalogAggregate.rehydrate([new CurrencyRegistered('CLF', 4, 'UF')]);
 
       expect(() => catalog.register('CLF', 2, 'UF')).toThrow(
@@ -59,7 +59,7 @@ describe('CurrencyCatalogAggregate', () => {
     });
   });
 
-  describe('minor units range (AC-6)', () => {
+  describe('minor units range', () => {
     it.each([0, 2, 4])('accepts %i, inside ISO-4217 range', (minorUnits) => {
       const catalog = emptyCatalog();
 

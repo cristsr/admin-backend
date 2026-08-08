@@ -1,5 +1,5 @@
-import { PresentationCurrencyChanged, TimezoneChanged } from '../../../settings/domain/ledger-settings/events';
-import { CurrencyCode, IanaTimeZone } from '../../../settings/domain/ledger-settings/value-objects';
+import { CurrencyCode, IanaTimeZone } from '@ledger/shared/domain/value-objects';
+import { PresentationCurrencyChanged, TimezoneChanged } from './events';
 import { LedgerInitialized } from './events/ledger-initialized.event';
 import { LedgerSettings } from './ledger-settings.aggregate';
 

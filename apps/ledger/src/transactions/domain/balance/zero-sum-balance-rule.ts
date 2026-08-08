@@ -5,7 +5,7 @@ import { BalanceRule } from './balance-rule';
 
 /**
  * Nominal-value balancing (INV-1): for every currency present, the signed sum
- * of posting amounts must be exactly zero — no tolerance (§2.7.1).
+ * of posting amounts must be exactly zero — no tolerance.
  */
 export class ZeroSumBalanceRule extends BalanceRule {
   ensureBalanced(postings: readonly PostingLine[]): void {

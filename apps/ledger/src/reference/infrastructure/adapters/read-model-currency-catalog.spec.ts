@@ -1,5 +1,5 @@
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
-import { PROJ_CURRENCIES } from '@ledger/reference/infrastructure/projections/currencies.projector';
+import { PROJ_CURRENCIES } from '@ledger/reference/application/read-models/currencies.read-model';
 import { CurrencyCode } from '@ledger/shared/domain/value-objects/currency-code';
 import { UnknownCurrencyException } from '@ledger/shared/domain/value-objects/value-object.exception';
 import { ReadModelCurrencyCatalog } from './read-model-currency-catalog';
@@ -20,7 +20,7 @@ describe('ReadModelCurrencyCatalog', () => {
     catalog = new ReadModelCurrencyCatalog(store);
   });
 
-  it('resolves the ISO base currencies without any projection row (AC-8)', () => {
+  it('resolves the ISO base currencies without any projection row', () => {
     expect(catalog.resolve(CurrencyCode.of('COP')).minorUnits).toBe(0);
     expect(catalog.resolve(CurrencyCode.of('USD')).minorUnits).toBe(2);
   });
@@ -49,7 +49,7 @@ describe('ReadModelCurrencyCatalog', () => {
     expect(currency.code).toBe('CLF');
   });
 
-  it('throws UnknownCurrencyException for an unregistered code (AC-9)', () => {
+  it('throws UnknownCurrencyException for an unregistered code', () => {
     expect(() => catalog.resolve(CurrencyCode.of('XXX'))).toThrow(UnknownCurrencyException);
   });
 

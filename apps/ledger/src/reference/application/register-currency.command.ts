@@ -1,6 +1,6 @@
 import { Command } from '@cqrs/application/command-bus/command';
 
-/** Registers a currency in the global reference catalog (RF-21). */
+/** Registers a currency in the global reference catalog. */
 export class RegisterCurrencyCommand extends Command {
   readonly commandType = 'RegisterCurrency';
 

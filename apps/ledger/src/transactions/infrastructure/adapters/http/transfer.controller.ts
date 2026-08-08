@@ -9,18 +9,13 @@ import {
   Context,
   ExternalRef,
 } from '@ledger/shared/infrastructure/adapters/http';
-import { MergePendingTransfersCommand } from '@ledger/transactions/application/commands/merge-pending-transfers.command';
-
-/** Body for the merge endpoint: exactly two pending transaction ids. */
-interface MergeTransfersInputDto {
-  readonly pendingIds: readonly [string, string];
-}
+import { MergePendingTransfersCommand } from '@ledger/transactions/application/merge-transfers/merge-pending-transfers.command';
+import { MergeTransfersRequestDto } from './dto';
 
 /**
- * HTTP surface for transfers (§7.2): merging two pendings into one transfer.
- * The command travels the `CommandBus` like every other write, so the
- * authenticated-context, idempotency and concurrency policies apply (RF-11,
- * INV-10).
+ * HTTP surface for transfers: merging two pendings into one transfer. The
+ * command travels the `CommandBus` like every other write, so the
+ * authenticated-context, idempotency and concurrency policies apply (INV-10).
  */
 @Controller({ path: 'transfers', version: '1' })
 @UseInterceptors(CommandResultInterceptor)
@@ -32,7 +27,7 @@ export class TransferController {
   merge(
     @Context() context: LedgerContext,
     @ExternalRef() externalRef: Nullable<string>,
-    @Body() body: MergeTransfersInputDto,
+    @Body() body: MergeTransfersRequestDto,
   ): Promise<CommandResult> {
     const ctx: AuthContext = {
       userId: context.userId,

@@ -4,7 +4,7 @@ import { EventPayload } from '@cqrs/domain/event/event-payload.type';
 /** Event type name, exported so registry and projector never drift on a literal. */
 export const CURRENCY_REGISTERED = 'CurrencyRegistered';
 
-/** A currency joined the reference catalog with its decimal precision (RF-21). */
+/** A currency joined the reference catalog with its decimal precision. */
 export class CurrencyRegistered extends DomainEvent {
   readonly eventType = CURRENCY_REGISTERED;
   readonly schemaVersion = 1;

@@ -4,7 +4,7 @@ import {
   DomainUnprocessableException,
 } from '@shared';
 
-/** A ledger is initialized only once per user (RF-2). */
+/** A ledger is initialized only once per user. */
 export class LedgerAlreadyInitializedException extends DomainConflictException {
   readonly code: string = 'LEDGER_ALREADY_INITIALIZED';
 }
@@ -12,7 +12,7 @@ export class LedgerAlreadyInitializedException extends DomainConflictException {
 /**
  * An operation needs a ledger that was never initialized. Reuses the stable code
  * already declared in `shared/domain/errors/ledger-error-code.ts` — the same one
- * `reconciliation` reports for this condition (RF-14).
+ * `reconciliation` reports for this condition.
  */
 export class LedgerNotInitializedException extends DomainUnprocessableException {
   readonly code: string = 'LEDGER_NOT_INITIALIZED';

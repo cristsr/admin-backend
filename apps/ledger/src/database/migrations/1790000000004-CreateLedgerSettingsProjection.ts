@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
- * Read-model table for the per-user ledger settings (§6.2), maintained by
+ * Read-model table for the per-user ledger settings, maintained by
  * `LedgerSettingsProjector` from `LedgerInitialized`. Keyed by user id — one row
  * per ledger. Holds the presentation settings plus the two system account ids
  * that reconciliation adjustments and opening balances post against.

@@ -15,7 +15,7 @@ import { AccountType } from '@ledger/shared/domain/value-objects';
 /**
  * Body of `POST /accounts`. Validates shape only — hierarchy, name collision,
  * single-currency rule for real accounts and system-account protection are
- * domain invariants the `Account` aggregate (EP-1) owns, not this DTO.
+ * domain invariants the `Account` aggregate owns, not this DTO.
  */
 export class OpenAccountRequestDto {
   @ApiProperty({ enum: AccountType })
@@ -38,7 +38,7 @@ export class OpenAccountRequestDto {
   @IsString({ each: true })
   readonly currencies: string[];
 
-  @ApiProperty({ example: '2026-07-20', description: 'Plain accounting date, no timezone (RNF-7).' })
+  @ApiProperty({ example: '2026-07-20', description: 'Plain accounting date, no timezone.' })
   @IsDateString()
   readonly openedOn: string;
 

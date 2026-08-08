@@ -27,7 +27,7 @@ export class Money {
 
   /**
    * Builds from an exact decimal string, e.g. `"31900"`, `"-7.99"`. The
-   * amount's scale must not exceed the currency `minorUnits` (spec §2.7.1):
+   * amount's scale must not exceed the currency `minorUnits`:
    * `"100.5"` for a 0-decimal COP is rejected. Never accepts a `number`.
    */
   static of(amount: string, currency: Currency): Money {
@@ -85,7 +85,7 @@ export class Money {
     return this.value.cmp(other.value);
   }
 
-  /** Exact decimal string for event payloads / DTOs / NUMERIC columns (RNF-2). */
+  /** Exact decimal string for event payloads / DTOs / NUMERIC columns. */
   toDecimalString(): string {
     return this.value.toFixed();
   }

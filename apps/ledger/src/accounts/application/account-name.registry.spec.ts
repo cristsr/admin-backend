@@ -27,7 +27,7 @@ describe('AccountNameRegistry', () => {
       await expect(registry.ensureAvailable('user-1', name('Assets:Cash'))).resolves.toBeUndefined();
     });
 
-    it('rejects a name already held with NAME_COLLISION (§2.1.1)', async () => {
+    it('rejects a name already held with NAME_COLLISION', async () => {
       const registry = new AccountNameRegistry(storeWith(['Assets:Bank']));
 
       await expect(registry.ensureAvailable('user-1', name('Assets:Bank'))).rejects.toBeInstanceOf(
@@ -57,7 +57,7 @@ describe('AccountNameRegistry', () => {
       ).resolves.toBeUndefined();
     });
 
-    it('rejects a rename onto another account of the same user (§2.1.1)', async () => {
+    it('rejects a rename onto another account of the same user', async () => {
       const registry = new AccountNameRegistry(storeWith(['Assets:Bank', 'Assets:Cash']));
 
       await expect(
@@ -83,7 +83,7 @@ describe('AccountNameRegistry', () => {
       ).resolves.toBeUndefined();
     });
 
-    it('rejects when a descendant would land on an existing name (§6.3 propagation)', async () => {
+    it('rejects when a descendant would land on an existing name through propagation', async () => {
       // `Assets:Bank:Savings` already exists without `Assets:Bank` being its
       // parent row, so renaming `Assets:Cash` -> `Assets:Bank` would drag
       // `Assets:Cash:Savings` onto it.

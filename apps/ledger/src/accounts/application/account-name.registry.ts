@@ -1,7 +1,7 @@
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { Criteria } from '@shared';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
 import { NameCollisionException } from '@ledger/accounts/domain/account/exceptions/account.exception';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { AccountName } from '@ledger/shared/domain/value-objects';
 
 /** The only two columns name uniqueness needs from `account_tree`. */
@@ -11,13 +11,13 @@ type NamedAccountRow = {
 };
 
 /**
- * Single point of truth for "one hierarchical name per user" (§2.1.1). Both
+ * Single point of truth for "one hierarchical name per user". Both
  * `OpenAccount` and `RenameAccount` ask here instead of each rolling its own
  * query (DRY); the unique `(user_id, name)` index on `proj_accounts` is the
- * storage-level defense in depth behind it (RNF-1).
+ * storage-level defense in depth behind it.
  *
  * The rule is cross-aggregate, so it reads `account_tree` under the relaxed
- * consistency §3.5 accepts: a lost race surfaces as a duplicate name to correct,
+ * consistency the design accepts: a lost race surfaces as a duplicate name to correct,
  * never as accounting corruption.
  */
 export class AccountNameRegistry {
@@ -36,7 +36,7 @@ export class AccountNameRegistry {
   }
 
   /**
-   * Rename variant. A rename re-prefixes every descendant too (§6.3), so the
+   * Rename variant. A rename re-prefixes every descendant too, so the
    * whole resulting subtree — not just the new name — is compared against the
    * accounts that stay put. Excluding the moving accounts is what makes
    * renaming an account to its own current name a no-op instead of a collision

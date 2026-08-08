@@ -4,7 +4,7 @@ import { InvalidLedgerDateException } from './value-object.exception';
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
 /**
- * A plain accounting date with no time or zone (RNF-7). Local interpretations
+ * A plain accounting date with no time or zone. Local interpretations
  * (day boundaries for assertions) are derived on the fly from ledger settings;
  * this value is a bare calendar day, e.g. `2026-07-22`.
  */

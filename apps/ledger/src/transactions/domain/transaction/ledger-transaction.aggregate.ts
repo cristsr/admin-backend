@@ -33,7 +33,7 @@ export type RecordTransactionArgs = {
   readonly tags: readonly string[];
   readonly metadata: Readonly<Record<string, string>>;
   /**
-   * Instant the movement actually happened, when known (§2.4). Optional because
+   * Instant the movement actually happened, when known. Optional because
    * not knowing it is the ordinary case — only a source that timestamps the
    * movement itself, like a bank notification, can supply one.
    */
@@ -42,7 +42,7 @@ export type RecordTransactionArgs = {
 
 /**
  * What the handler needs to record the linked reversing transaction after a
- * confirmed transaction is reversed (§3.4). Keeps a single audited write path.
+ * confirmed transaction is reversed. Keeps a single audited write path.
  */
 export type ReversalPlan = {
   readonly reversalId: string;
@@ -55,7 +55,7 @@ export type ReversalPlan = {
 const MIN_POSTINGS = 2;
 
 /**
- * The transaction aggregate (§3.3). Groups postings and protects INV-1 (zero
+ * The transaction aggregate. Groups postings and protects INV-1 (zero
  * balance per currency, via {@link BalanceRule}), INV-2 (>= 2 postings) and
  * INV-6 (economic immutability once confirmed vs. free annotation). Covers the
  * PENDING -> CONFIRMED lifecycle plus amendment, annotation, voiding and the
@@ -188,7 +188,7 @@ export class LedgerTransaction extends AggregateRoot<string> {
 
   /**
    * Records that this confirmed transfer is the result of merging two pending
-   * transactions (RF-16, §3.4), emitting {@link TransfersMerged} with the ids of
+   * transactions, emitting {@link TransfersMerged} with the ids of
    * the voided pendings and this transfer's postings.
    *
    * The fact belongs to the **resulting transfer's** stream, not to the two

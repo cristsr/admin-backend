@@ -10,7 +10,7 @@ import { Money } from '@ledger/shared/domain/money';
 import { CurrencyCatalog, CurrencyCode } from '@ledger/shared/domain/value-objects';
 import { PROJ_ASSERTIONS } from './assertion-status.projector';
 
-/** Accumulated "unexplained money" per account and currency (§6.2). */
+/** Accumulated "unexplained money" per account and currency. */
 export const PROJ_ADJUSTMENT_AUDIT = 'proj_adjustment_audit';
 
 /** One detail row per resolution, keyed by its adjustment transaction. */
@@ -27,7 +27,7 @@ export const PROJ_ADJUSTMENT_AUDIT_ENTRIES = 'proj_adjustment_audit_entries';
  * against a stale `proj_assertions` would silently produce a wrong audit.
  *
  * The summary is **recalculated** from the detail rows, never incremented. An
- * `UPDATE … SET total = total + x` would not survive a replay (RNF-4, AC-8).
+ * `UPDATE … SET total = total + x` would not survive a replay.
  */
 export class AdjustmentAuditProjector extends Projector {
   readonly name = 'adjustment_audit';

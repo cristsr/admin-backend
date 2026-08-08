@@ -84,9 +84,9 @@ describe('Application wiring', () => {
    * Registration happens in two places — the core factory and each module's
    * `onModuleInit` — so a command can compile, own an endpoint, and still have
    * no handler on the bus. That failure only surfaces when a request arrives, so
-   * it is pinned here against the §3.5 catalogue.
+   * it is pinned here against the command catalogue.
    */
-  it('registers a handler for every command in the §3.5 catalogue', async () => {
+  it('registers a handler for every command in the catalogue', async () => {
     moduleRef = await Test.createTestingModule({ imports: [AppModule] })
       .overrideModule(DatabaseModule)
       .useModule(StubDatabaseModule)
@@ -97,27 +97,34 @@ describe('Application wiring', () => {
 
     const bus = app.get(PolicyCommandBus);
 
+    // Names, not the constructors themselves, so a mismatch prints a readable
+    // diff. Safe here because the test runner never minifies.
+    const registered = bus
+      .registeredTypes()
+      .map((command) => command.name)
+      .sort();
+
     // ChangePresentationCurrency + ChangeTimezone ship as one command
-    // (ReplaceLedgerSettings); RecordOpeningBalance covers RF-27.
-    expect([...bus.registeredTypes()].sort()).toEqual(
+    // (ReplaceLedgerSettings).
+    expect(registered).toEqual(
       [
-        'AmendPendingTransaction',
-        'AnnotateTransaction',
-        'AssertBalance',
-        'CloseAccount',
-        'ConfirmTransaction',
-        'InitializeLedger',
-        'MergePendingTransfers',
-        'OpenAccount',
-        'RecordOpeningBalance',
-        'RecordTransaction',
-        'RegisterCurrency',
-        'RenameAccount',
-        'ReplaceLedgerSettings',
-        'ResolveDiscrepancy',
-        'ReverseConfirmedTransaction',
-        'RevokeAssertion',
-        'VoidPendingTransaction',
+        'AmendPendingTransactionCommand',
+        'AnnotateTransactionCommand',
+        'AssertBalanceCommand',
+        'CloseAccountCommand',
+        'ConfirmTransactionCommand',
+        'InitializeLedgerCommand',
+        'MergePendingTransfersCommand',
+        'OpenAccountCommand',
+        'RecordOpeningBalanceCommand',
+        'RecordTransactionCommand',
+        'RegisterCurrencyCommand',
+        'RenameAccountCommand',
+        'ReplaceLedgerSettingsCommand',
+        'ResolveDiscrepancyCommand',
+        'ReverseConfirmedTransactionCommand',
+        'RevokeAssertionCommand',
+        'VoidPendingTransactionCommand',
       ].sort(),
     );
 

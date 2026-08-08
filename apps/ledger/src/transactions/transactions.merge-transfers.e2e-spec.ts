@@ -10,9 +10,9 @@ import { createLedgerEventRegistry } from '@ledger/ledger/application/ledger-eve
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, SequentialIdGenerator, aMoney } from '@ledger/shared/testing';
-import { MergePendingTransfersCommand } from './application/commands/merge-pending-transfers.command';
-import { MergePendingTransfersHandler } from './application/commands/merge-pending-transfers.handler';
 import { LedgerTransactionRepository } from './application/ledger-transaction.repository';
+import { MergePendingTransfersCommand } from './application/merge-transfers/merge-pending-transfers.command';
+import { MergePendingTransfersHandler } from './application/merge-transfers/merge-pending-transfers.handler';
 import { RecordTransactionCommand } from './application/record-transaction/record-transaction.command';
 import { VoidPendingTransactionCommand } from './application/void-transaction/void-pending-transaction.command';
 import { BalanceRule } from './domain/balance/balance-rule';
@@ -35,7 +35,7 @@ class TransferAccountsLookup extends AccountLookup {
 /**
  * Test double for the write side: appends `TransactionVoided` (continuing the
  * leg's own stream) and `TransactionRecorded` (a fresh stream for the merged
- * transfer), the way the real EP-1 handlers would. Only what
+ * transfer), the way the real handlers would. Only what
  * `MergePendingTransfersHandler` dispatches.
  */
 class TransferFlowBus extends CommandBus {
@@ -98,7 +98,7 @@ class TransferFlowBus extends CommandBus {
 }
 
 /**
- * End-to-end transfer merge (spec §7.2) over the real EP-1 event store, event
+ * End-to-end transfer merge over the real event store, event
  * registry and event-sourced repository: two opposite pending legs are merged
  * into a single confirmed transfer, both originals end up VOIDED, and the
  * resulting transfer is readable back from the stream.
@@ -195,7 +195,7 @@ describe('Transfer merge flow (e2e)', () => {
     expect(voided).toHaveLength(2);
   });
 
-  it('records TransfersMerged on the resulting transfer (§3.4)', async () => {
+  it('records TransfersMerged on the resulting transfer', async () => {
     const outgoingId = await recordPending('acc-out', '-500');
     const incomingId = await recordPending('acc-in', '500');
 
@@ -219,7 +219,7 @@ describe('Transfer merge flow (e2e)', () => {
     expect(merged[0].sequence).toBe(2);
   });
 
-  it("carries both legs' external references into the transfer metadata (RF-16)", async () => {
+  it("carries both legs' external references into the transfer metadata", async () => {
     const outgoingId = await recordPending('acc-out', '-500', 'bank-tx-aaa');
     const incomingId = await recordPending('acc-in', '500', 'bank-tx-bbb');
 
@@ -250,7 +250,7 @@ describe('Transfer merge flow (e2e)', () => {
       handler.execute(new MergePendingTransfersCommand([outgoingId, incomingId]), ctx),
     ).rejects.toThrow();
   });
-  it('leaves nothing behind when the merge fails midway (hu-0023)', async () => {
+  it('leaves nothing behind when the merge fails midway', async () => {
     const outgoingId = await recordPending('acc-out', '-500');
     const incomingId = await recordPending('acc-in', '500');
 

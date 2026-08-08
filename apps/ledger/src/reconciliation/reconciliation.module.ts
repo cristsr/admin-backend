@@ -6,16 +6,19 @@ import { ProjectionCheckpointRepository } from '@cqrs/application/projection/pro
 import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { EventStore } from '@cqrs/domain/ports/event-store';
 import { PostgresProjectionCheckpointRepository } from '@cqrs/infrastructure/adapters/projection/postgres-projection-checkpoint.repository';
-import { BalanceAssertionRepository } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.repository';
+import { BalanceAssertionRepository } from '@ledger/reconciliation/application/balance-assertion.repository';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
-import { AssertBalanceHandler } from './application/commands/assert-balance.handler';
-import { EvaluateAssertionHandler } from './application/commands/evaluate-assertion.handler';
-import { ResolveDiscrepancyHandler } from './application/commands/resolve-discrepancy.handler';
-import { RevokeAssertionHandler } from './application/commands/revoke-assertion.handler';
-import { GetAssertionStatusHandler } from './application/queries/get-assertion-status.query';
-import { ListAssertionsHandler } from './application/queries/list-assertions.query';
+import { AssertBalanceCommand } from './application/assert-balance/assert-balance.command';
+import { AssertBalanceHandler } from './application/assert-balance/assert-balance.handler';
+import { EvaluateAssertionHandler } from './application/evaluate-assertion/evaluate-assertion.handler';
+import { GetAssertionStatusHandler } from './application/get-assertion-status/get-assertion-status.handler';
+import { ListAssertionsHandler } from './application/list-assertions/list-assertions.handler';
 import { ReevaluateAssertionsReactor } from './application/reactors/reevaluate-assertions.reactor';
 import { createReconciliationEventRegistry } from './application/reconciliation-event-registry.factory';
+import { ResolveDiscrepancyCommand } from './application/resolve-discrepancy/resolve-discrepancy.command';
+import { ResolveDiscrepancyHandler } from './application/resolve-discrepancy/resolve-discrepancy.handler';
+import { RevokeAssertionCommand } from './application/revoke-assertion/revoke-assertion.command';
+import { RevokeAssertionHandler } from './application/revoke-assertion/revoke-assertion.handler';
 import { AdjustmentAuditStore } from './domain/ports/adjustment-audit-store.port';
 import { AssertionLookupPort } from './domain/ports/assertion-lookup.port';
 import { AssertionPostingReader } from './domain/ports/assertion-posting-reader.port';
@@ -37,20 +40,20 @@ import { AdjustmentAuditProjector } from './infrastructure/projections/adjustmen
 import { AssertionStatusProjector } from './infrastructure/projections/assertion-status.projector';
 
 /**
- * Reconciliation module (EP-3.1–EP-3.6), mounted on the real EP-1 core. The
+ * Reconciliation, mounted on the real core. The
  * event-sourced repository, envelope factory and a reconciliation-only event
  * registry are wired over the shared {@link EventStore}; the write handlers
  * orchestrate the real `RecordTransaction` through the {@link CommandBus}.
  *
  * The read models persist through the shared `ReadModelStore` like the rest of
  * the read side, and {@link ReconciliationPump} drives them from the global
- * stream on a persisted checkpoint (§8.1).
+ * stream on a persisted checkpoint.
  *
  * The write handlers are composed here but registered on the core's
  * {@link PolicyCommandBus} at init, so every reconciliation command enters
- * through the same policy chain as the rest (RF-11, INV-10) instead of being
+ * through the same policy chain as the rest (INV-10) instead of being
  * called as a provider. `EvaluateAssertion` stays off the bus on purpose: it is
- * internal (§3.5 does not catalogue it) and is dispatched by the reactor.
+ * internal — it is not part of the public command catalogue — and is dispatched by the reactor.
  */
 @Module({
   controllers: [BalanceAssertionController],
@@ -92,7 +95,7 @@ import { AssertionStatusProjector } from './infrastructure/projections/assertion
     { provide: AssertionLookupPort, useClass: StoreBackedAssertionLookup },
     { provide: LedgerSettingsReader, useClass: ReadModelLedgerSettingsReader },
     { provide: SystemAccountLookup, useClass: ReadModelSystemAccountLookup },
-    // Domain and application classes carry no Nest decorators (RNF-11, rules
+    // Domain and application classes carry no Nest decorators (rules
     // Art. 1), so each one states its dependencies here instead of relying on
     // `@Injectable` metadata. The wiring is the adapter's job, not the core's.
     {
@@ -188,8 +191,8 @@ export class ReconciliationModule implements OnModuleInit {
   ) {}
 
   onModuleInit(): void {
-    this.commandBus.register('AssertBalance', this.assertBalance);
-    this.commandBus.register('RevokeAssertion', this.revokeAssertion);
-    this.commandBus.register('ResolveDiscrepancy', this.resolveDiscrepancy);
+    this.commandBus.register(AssertBalanceCommand, this.assertBalance);
+    this.commandBus.register(RevokeAssertionCommand, this.revokeAssertion);
+    this.commandBus.register(ResolveDiscrepancyCommand, this.resolveDiscrepancy);
   }
 }

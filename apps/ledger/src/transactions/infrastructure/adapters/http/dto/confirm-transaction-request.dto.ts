@@ -5,7 +5,7 @@ import { PostingDto } from './posting.dto';
 
 /**
  * Body of `POST /transactions/{id}/confirm`. Optional final postings let a
- * confirmation adjust a pending estimate before freezing it (§7.1).
+ * confirmation adjust a pending estimate before freezing it.
  */
 export class ConfirmTransactionRequestDto {
   @ApiPropertyOptional({ type: [PostingDto], description: 'Final postings; omit to confirm as-is.' })

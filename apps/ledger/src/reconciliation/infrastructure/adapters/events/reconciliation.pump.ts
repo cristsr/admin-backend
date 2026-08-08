@@ -22,18 +22,18 @@ export const RECONCILIATION_PROJECTION = 'reconciliation';
 
 /**
  * Drives the reconciliation read models and {@link ReevaluateAssertionsReactor}
- * from the global stream with a persisted checkpoint. The spec (§8.1) classifies
+ * from the global stream with a persisted checkpoint. The spec classifies
  * `assertion_status` and `adjustment_audit` as asynchronous projections served
  * by a poller with checkpoint, unlike `transaction_list`/`account_balances`
  * which project inside the command transaction.
  *
  * Each event first updates the projections and only then feeds the reactor, so a
- * reactor lookup always reads a current `assertion_status` (§3.2). That ordering
+ * reactor lookup always reads a current `assertion_status`. That ordering
  * is a correctness guarantee: two independent pollers would let the reactor run
  * ahead of the projections and query stale state.
  *
  * Delivery is at-least-once, which is safe because the projections upsert by key
- * and `EvaluateAssertion` stays silent on an unchanged verdict (RNF-4).
+ * and `EvaluateAssertion` stays silent on an unchanged verdict.
  */
 @Injectable()
 export class ReconciliationPump {
@@ -91,7 +91,7 @@ export class ReconciliationPump {
       await this.auditProjector.project(event, this.readModel);
       await this.reactor.on(event);
     } catch (error) {
-      // A silently failing pump breaks re-evaluation invisibly (RNF-12): surface
+      // A silently failing pump breaks re-evaluation invisibly: surface
       // it and stop so the checkpoint does not skip the event.
       this.logger.error(
         `Reconciliation pump failed at position ${event.globalPosition}`,

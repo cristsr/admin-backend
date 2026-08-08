@@ -52,7 +52,7 @@ describe('LedgerTransaction', () => {
     );
   });
 
-  it('records directly as CONFIRMED (RF-3)', () => {
+  it('records directly as CONFIRMED', () => {
     const tx = LedgerTransaction.record(
       recordArgs({ initialStatus: TransactionStatus.CONFIRMED }),
       balance,
@@ -156,7 +156,7 @@ describe('LedgerTransaction', () => {
     expect(() => tx.reverse('rev-1')).toThrow(InvalidTransactionStateException);
   });
 
-  it('records the merge fact on the resulting confirmed transfer (RF-16, §3.4)', () => {
+  it('records the merge fact on the resulting confirmed transfer', () => {
     const tx = LedgerTransaction.record(
       recordArgs({ initialStatus: TransactionStatus.CONFIRMED }),
       balance,
@@ -174,7 +174,7 @@ describe('LedgerTransaction', () => {
     expect(tx.status).toBe(TransactionStatus.CONFIRMED);
   });
 
-  it('refuses to record a merge on a transfer that is not CONFIRMED (RF-16)', () => {
+  it('refuses to record a merge on a transfer that is not CONFIRMED', () => {
     const tx = LedgerTransaction.record(recordArgs(), balance, idGen);
 
     expect(() => tx.mergedFrom(['leg-1', 'leg-2'])).toThrow(InvalidTransactionStateException);

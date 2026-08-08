@@ -1,9 +1,9 @@
 /**
- * Stable, client-facing domain error codes (RF-14). This constant is the single
+ * Stable, client-facing domain error codes. This constant is the single
  * source of truth for the strings the API exposes: exceptions carry them and the
  * exception filter surfaces them verbatim, so a consumer can branch on `code`
  * without parsing prose. Adding a code is additive; changing the HTTP status a
- * code maps to is a breaking change (new API version, RNF-8).
+ * code maps to is a breaking change (new API version).
  */
 export const LEDGER_ERROR_CODE = {
   // Transactions
@@ -51,7 +51,7 @@ export const LEDGER_ERROR_CODE = {
   INVALID_LEDGER_DATE: 'INVALID_LEDGER_DATE',
   INVALID_PAYEE: 'INVALID_PAYEE',
 
-  // Platform (§3.8, RF-26)
+  // Platform
   DUPLICATE_EXTERNAL_REF: 'DUPLICATE_EXTERNAL_REF',
   CONCURRENCY_CONFLICT: 'CONCURRENCY_CONFLICT',
   MISSING_AUTH_CONTEXT: 'MISSING_AUTH_CONTEXT',
@@ -60,5 +60,5 @@ export const LEDGER_ERROR_CODE = {
   UNKNOWN_EVENT_TYPE: 'UNKNOWN_EVENT_TYPE',
 } as const;
 
-/** Union of every stable RF-14 code. */
+/** Union of every stable code. */
 export type LedgerErrorCode = (typeof LEDGER_ERROR_CODE)[keyof typeof LEDGER_ERROR_CODE];

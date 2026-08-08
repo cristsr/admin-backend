@@ -74,7 +74,7 @@ describe('AdjustmentAuditProjector', () => {
     store = new InMemoryReadModelStore();
   });
 
-  it('declares the Projector contract (AC-0)', () => {
+  it('declares the Projector contract', () => {
     expect(projector.name).toBe('adjustment_audit');
     expect(projector.consumes).toEqual(['DiscrepancyResolved']);
     expect(projector.handles('DiscrepancyResolved')).toBe(true);
@@ -128,7 +128,7 @@ describe('AdjustmentAuditProjector', () => {
     expect(summary.total_adjusted).toBe('250');
   });
 
-  it('recalculates instead of incrementing, so a replay never double-counts (AC-8)', async () => {
+  it('recalculates instead of incrementing, so a replay never double-counts', async () => {
     await seedAssertion('a-1', 'acc-1', '400');
 
     await projector.project(resolvedEvent('a-1', 'txn-9'), store);

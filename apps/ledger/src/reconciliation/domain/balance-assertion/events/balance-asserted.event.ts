@@ -4,7 +4,7 @@ import { Nullable } from '@shared';
 import { Money } from '@ledger/shared/domain/money';
 import { CurrencyCatalog, CurrencyCode } from '@ledger/shared/domain/value-objects';
 
-/** Stable event-type name for the assertion declaration (spec §3.4). */
+/** Stable event-type name for the assertion declaration. */
 export const BALANCE_ASSERTED = 'BalanceAsserted';
 
 /** Construction shape for {@link BalanceAsserted}. */
@@ -16,7 +16,7 @@ export type BalanceAssertedProps = {
   readonly tolerance: Money;
 };
 
-/** A balance assertion was declared against an account at a cutoff (RF-17). */
+/** A balance assertion was declared against an account at a cutoff. */
 export class BalanceAsserted extends DomainEvent {
   readonly eventType = BALANCE_ASSERTED;
   readonly schemaVersion = 1;

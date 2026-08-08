@@ -16,9 +16,9 @@ import { TransactionsHttpModule } from './transactions-http.module';
 
 /**
  * End-to-end HTTP behaviour of the transactions adapter with the real buses
- * mocked: versioning, the global context guard (RF-26), DTO validation, the
- * stable error mapping (EP-2.6), read-your-writes headers and `external_ref`
- * idempotency (EP-2.7) — everything the driving adapter owns.
+ * mocked: versioning, the global context guard, DTO validation, the
+ * stable error mapping, read-your-writes headers and `external_ref`
+ * idempotency — everything the driving adapter owns.
  */
 describe('Transactions API (e2e, buses mocked)', () => {
   let app: INestApplication;
@@ -71,7 +71,7 @@ describe('Transactions API (e2e, buses mocked)', () => {
     ask.mockReset();
   });
 
-  it('rejects a request without context headers with 401 (RF-26)', async () => {
+  it('rejects a request without context headers with 401', async () => {
     await request(app.getHttpServer()).post('/api/v1/transactions').send(validBody).expect(401);
     expect(dispatch).not.toHaveBeenCalled();
   });

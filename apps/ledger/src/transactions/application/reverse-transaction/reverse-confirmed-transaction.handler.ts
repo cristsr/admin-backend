@@ -15,7 +15,7 @@ import { ReverseConfirmedTransactionCommand } from './reverse-confirmed-transact
  * Reverses a confirmed transaction. Records the linked reversing transaction
  * (inverted postings, `reverses_id` metadata, CONFIRMED) and emits
  * {@link TransactionReversed} on the original — a single audited write path
- * (§3.4). The original stream is the idempotency anchor; the reversing append
+ *. The original stream is the idempotency anchor; the reversing append
  * carries no external_ref (anchor-only stamping).
  *
  * The two appends land on different streams, so both run inside

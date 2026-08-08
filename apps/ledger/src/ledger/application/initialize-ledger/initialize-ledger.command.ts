@@ -1,6 +1,6 @@
 import { Command } from '@cqrs/application/command-bus/command';
 
-/** Initializes a user's ledger with its presentation currency and timezone (RF-2). */
+/** Initializes a user's ledger with its presentation currency and timezone. */
 export class InitializeLedgerCommand extends Command {
   readonly commandType = 'InitializeLedger';
 

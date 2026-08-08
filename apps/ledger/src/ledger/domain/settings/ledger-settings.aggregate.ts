@@ -1,9 +1,11 @@
 import { AggregateRoot } from '@cqrs/domain/aggregate/aggregate-root';
 import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
-import { PresentationCurrencyChanged, TimezoneChanged } from '../../../settings/domain/ledger-settings/events';
-import { CurrencyCode } from '../../../settings/domain/ledger-settings/value-objects';
-import { IanaTimeZone } from '../../../settings/domain/ledger-settings/value-objects';
-import { LedgerInitialized } from './events/ledger-initialized.event';
+import { CurrencyCode, IanaTimeZone } from '@ledger/shared/domain/value-objects';
+import {
+  LedgerInitialized,
+  PresentationCurrencyChanged,
+  TimezoneChanged,
+} from './events';
 
 /** Arguments to initialize a user's ledger. */
 export type InitializeLedgerArgs = {
@@ -15,9 +17,9 @@ export type InitializeLedgerArgs = {
 };
 
 /**
- * Per-user ledger settings aggregate (§3.3), streamed under the user id.
- * Presentation currency and timezone are recorded at initialization; the
- * technical account ids link the ledger to its system accounts (INV-13).
+ * Per-user ledger settings, streamed under the user id. Presentation currency
+ * and time zone are recorded at initialization; the technical account ids link
+ * the ledger to its system accounts (INV-13).
  */
 export class LedgerSettings extends AggregateRoot<string> {
   private initialized = false;
@@ -50,34 +52,22 @@ export class LedgerSettings extends AggregateRoot<string> {
     return this.initialized;
   }
 
-  /**
-   * Change the presentation currency. No-op if the currency is already set to this value (idempotent).
-   * @param currency The new currency code
-   */
+  /** Silent when the currency already holds this value, so replays append nothing. */
   changePresentationCurrency(currency: CurrencyCode): void {
-    const newValue = currency.toString();
-    if (this.presentationCurrency === newValue) {
-      return; // idempotent: no-op if unchanged
+    if (this.presentationCurrency === currency.value) {
+      return;
     }
 
-    this.raise(
-      new PresentationCurrencyChanged(this.id, newValue),
-    );
+    this.raise(new PresentationCurrencyChanged(this.id, currency.value));
   }
 
-  /**
-   * Change the timezone. No-op if the timezone is already set to this value (idempotent).
-   * @param timezone The new IANA timezone
-   */
+  /** Silent when the time zone already holds this value, so replays append nothing. */
   changeTimezone(timezone: IanaTimeZone): void {
-    const newValue = timezone.toString();
-    if (this.timezone === newValue) {
-      return; // idempotent: no-op if unchanged
+    if (this.timezone === timezone.value) {
+      return;
     }
 
-    this.raise(
-      new TimezoneChanged(this.id, newValue),
-    );
+    this.raise(new TimezoneChanged(this.id, timezone.value));
   }
 
   protected apply(event: DomainEvent): void {

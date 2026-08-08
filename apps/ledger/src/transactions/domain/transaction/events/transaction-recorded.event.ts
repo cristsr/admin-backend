@@ -20,11 +20,11 @@ export type TransactionRecordedProps = {
   readonly tags: readonly string[];
   readonly postings: readonly PostingLine[];
   readonly metadata: Readonly<Record<string, string>>;
-  /** Instant the movement actually happened, when the client knows it (§2.4). */
+  /** Instant the movement actually happened, when the client knows it. */
   readonly occurredAt?: Nullable<Date>;
 };
 
-/** A transaction was recorded in PENDING or CONFIRMED state (§3.4, RF-3). */
+/** A transaction was recorded in PENDING or CONFIRMED state. */
 export class TransactionRecorded extends DomainEvent {
   readonly eventType = 'TransactionRecorded';
   readonly schemaVersion = 1;
@@ -61,7 +61,7 @@ export class TransactionRecorded extends DomainEvent {
       tags: [...this.props.tags],
       postings: this.props.postings.map((posting) => PostingSerializer.toPayload(posting)),
       metadata: this.props.metadata,
-      // UTC exclusively, like every timestamp in the system (RNF-7).
+      // UTC exclusively, like every timestamp in the system.
       occurredAt: this.props.occurredAt?.toISOString() ?? null,
     };
   }

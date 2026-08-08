@@ -30,7 +30,7 @@ function setup() {
 }
 
 describe('ReplaceLedgerSettingsHandler', () => {
-  it('applies both changes and persists them once (AC-1, AC-3)', async () => {
+  it('applies both changes and persists them once', async () => {
     const { handler, settings } = setup();
     const ledger = aLedger();
     settings.load.mockResolvedValue(ledger as never);
@@ -40,11 +40,11 @@ describe('ReplaceLedgerSettingsHandler', () => {
     expect(ledger.changePresentationCurrency).toHaveBeenCalledTimes(1);
     expect(ledger.changeTimezone).toHaveBeenCalledTimes(1);
     // One save means one append: both events share it, so no intermediate state
-    // where the currency changed and the timezone did not (§3.5).
+    // where the currency changed and the timezone did not.
     expect(settings.save).toHaveBeenCalledTimes(1);
   });
 
-  it('returns the stream position so the caller can read its own write (AC-8)', async () => {
+  it('returns the stream position so the caller can read its own write', async () => {
     const { handler, settings } = setup();
     settings.load.mockResolvedValue(aLedger() as never);
 
@@ -66,7 +66,7 @@ describe('ReplaceLedgerSettingsHandler', () => {
     expect(dispatcher.dispatch).toHaveBeenCalledTimes(1);
   });
 
-  it('rejects a ledger that was never initialized (AC-7)', async () => {
+  it('rejects a ledger that was never initialized', async () => {
     const { handler, settings } = setup();
     settings.load.mockResolvedValue(null as never);
 
@@ -75,7 +75,7 @@ describe('ReplaceLedgerSettingsHandler', () => {
     ).rejects.toBeInstanceOf(LedgerNotInitializedException);
   });
 
-  it('rejects a ledger aggregate that exists but is not initialized (AC-7)', async () => {
+  it('rejects a ledger aggregate that exists but is not initialized', async () => {
     const { handler, settings } = setup();
     settings.load.mockResolvedValue(aLedger(false) as never);
 
@@ -84,7 +84,7 @@ describe('ReplaceLedgerSettingsHandler', () => {
     ).rejects.toBeInstanceOf(LedgerNotInitializedException);
   });
 
-  it('reports LEDGER_NOT_INITIALIZED, the code shared with reconciliation (RF-14)', async () => {
+  it('reports LEDGER_NOT_INITIALIZED, the code shared with reconciliation', async () => {
     const { handler, settings } = setup();
     settings.load.mockResolvedValue(null as never);
 
@@ -93,7 +93,7 @@ describe('ReplaceLedgerSettingsHandler', () => {
     ).rejects.toMatchObject({ code: 'LEDGER_NOT_INITIALIZED' });
   });
 
-  it('rejects an invalid ISO-4217 currency before touching the aggregate (AC-4)', async () => {
+  it('rejects an invalid ISO-4217 currency before touching the aggregate', async () => {
     const { handler, settings } = setup();
     settings.load.mockResolvedValue(aLedger() as never);
 
@@ -103,7 +103,7 @@ describe('ReplaceLedgerSettingsHandler', () => {
     expect(settings.save).not.toHaveBeenCalled();
   });
 
-  it('rejects an invalid IANA timezone (AC-5)', async () => {
+  it('rejects an invalid IANA timezone', async () => {
     const { handler, settings } = setup();
     settings.load.mockResolvedValue(aLedger() as never);
 

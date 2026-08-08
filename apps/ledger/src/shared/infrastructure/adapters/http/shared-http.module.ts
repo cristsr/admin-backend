@@ -8,7 +8,7 @@ import { GatewayHeaderContextResolver } from './resolvers/gateway-header-context
 /**
  * Wires the cross-cutting HTTP kernel: the context resolver binding (swap this
  * one provider to change the auth mechanism — spec pregunta #5), the global
- * context guard enforcing RF-26 on every route, and the shared write-result
+ * context guard enforced on every route, and the shared write-result
  * interceptor. Global so every feature module inherits them without re-importing.
  */
 @Global()

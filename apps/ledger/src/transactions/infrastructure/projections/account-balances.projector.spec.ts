@@ -1,11 +1,9 @@
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria } from '@shared';
-import {
-  AccountBalancesProjector,
-  PROJ_BALANCES,
-} from './account-balances.projector';
-import { PROJ_POSTINGS } from './transaction-list.projector';
+import { PROJ_BALANCES } from '@ledger/transactions/application/read-models/account-balances.read-model';
+import { PROJ_POSTINGS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
+import { AccountBalancesProjector } from './account-balances.projector';
 
 function postingRow(
   transactionId: string, accountId: string, amount: string,

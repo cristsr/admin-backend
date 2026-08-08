@@ -42,7 +42,7 @@ export class RegisterCurrencyRequestDto {
 /**
  * Reference currency catalog. Global by design: a currency's precision is
  * universal, so these endpoints are not scoped by user even though they still
- * require an authenticated context (RF-26).
+ * require an authenticated context.
  */
 @ApiTags('currencies')
 @Controller({ path: 'currencies', version: '1' })
@@ -77,7 +77,7 @@ export class CurrenciesController {
   @ApiOperation({ summary: 'List the registered currencies.' })
   @ApiOkResponse({ type: CommandAcceptedDto, isArray: false })
   list(@Context() context: LedgerContext): Promise<CurrencyView[]> {
-    return this.queryBus.ask<CurrencyView[]>(new ListCurrenciesQuery(), {
+    return this.queryBus.ask(new ListCurrenciesQuery(), {
       userId: context.userId,
     });
   }

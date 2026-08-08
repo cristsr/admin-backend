@@ -6,7 +6,7 @@ import { PostingSerializer } from './posting.serializer';
 describe('PostingSerializer', () => {
   const catalog = new SeedCurrencyCatalog();
 
-  it('round-trips a COP posting preserving the exact decimal value (RNF-2, INV-8)', () => {
+  it('round-trips a COP posting preserving the exact decimal value (INV-8)', () => {
     const original = PostingLine.of({
       accountId: 'expenses',
       amount: aMoney().of('31900').inCop(),
@@ -31,7 +31,7 @@ describe('PostingSerializer', () => {
     expect(rebuilt.metadata).toEqual({ note: 'coffee' });
   });
 
-  it('round-trips a USD posting preserving the exact decimal value (RNF-2, INV-8)', () => {
+  it('round-trips a USD posting preserving the exact decimal value (INV-8)', () => {
     const original = PostingLine.of({
       accountId: 'assets',
       amount: aMoney().of('-7.99').inUsd(),

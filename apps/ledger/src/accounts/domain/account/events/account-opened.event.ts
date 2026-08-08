@@ -15,7 +15,7 @@ export type AccountOpenedProps = {
   readonly isSystem: boolean;
 };
 
-/** An account was opened under one of the five root types (§3.4). */
+/** An account was opened under one of the five root types. */
 export class AccountOpened extends DomainEvent {
   readonly eventType = 'AccountOpened';
   readonly schemaVersion = 1;

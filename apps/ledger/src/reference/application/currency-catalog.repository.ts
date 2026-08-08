@@ -14,8 +14,8 @@ import {
  * `StreamId` requires a `userId` and the event store filters every read by it
  * (INV-9), but the catalog is global — a currency's precision belongs to no
  * user. A constant system id keeps the stream addressable without pretending it
- * belongs to someone. Declared exception, same one AC-2 already took on
- * Artículo 5.
+ * belongs to someone. A declared exception to the per-user isolation rule
+ * (rules Art. 5).
  */
 export const SYSTEM_USER_ID = '00000000-0000-0000-0000-000000000000';
 

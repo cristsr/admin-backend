@@ -31,12 +31,12 @@ const declaredCodes = (): readonly string[] => {
 
 /**
  * `LEDGER_ERROR_CODE` claims to be the single source of truth for the strings the
- * API exposes (RF-14), but nothing forced it to stay that way: exceptions carry
+ * API exposes, but nothing forced it to stay that way: exceptions carry
  * their own `code` and the shared filter surfaces it verbatim, so an exception
  * added without touching the constant still reaches clients — as an undocumented
  * code. This walks the sources so the catalogue cannot silently fall behind.
  */
-describe('LEDGER_ERROR_CODE catalogue completeness (RF-14)', () => {
+describe('LEDGER_ERROR_CODE catalogue completeness', () => {
   it('lists every error code the ledger sources declare', () => {
     const catalogued = new Set<string>(Object.values(LEDGER_ERROR_CODE));
     const missing = declaredCodes().filter((code) => !catalogued.has(code));

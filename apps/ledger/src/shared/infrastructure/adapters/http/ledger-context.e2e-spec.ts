@@ -54,21 +54,21 @@ describe('LedgerContextGuard (e2e)', () => {
     await app.close();
   });
 
-  it('rejects POST without x-user-id with 401 (AC-1)', async () => {
+  it('rejects POST without x-user-id with 401', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/test/write')
       .set('x-client-id', 'frontend')
       .expect(401);
   });
 
-  it('rejects POST without x-client-id with 401 (AC-2)', async () => {
+  it('rejects POST without x-client-id with 401', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/test/write')
       .set('x-user-id', 'user-1')
       .expect(401);
   });
 
-  it('attaches context and lets the request through when both headers are present (AC-3, AC-4)', async () => {
+  it('attaches context and lets the request through when both headers are present', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/test/write')
       .set('x-user-id', 'user-1')
@@ -77,7 +77,7 @@ describe('LedgerContextGuard (e2e)', () => {
       .expect({ userId: 'user-1', clientId: 'frontend' });
   });
 
-  it('lets @Public() endpoints through without headers (AC-5)', async () => {
+  it('lets @Public endpoints through without headers', async () => {
     await request(app.getHttpServer())
       .get('/api/v1/test/health')
       .expect(200)

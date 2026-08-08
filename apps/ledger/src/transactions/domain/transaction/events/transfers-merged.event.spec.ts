@@ -17,7 +17,7 @@ describe('TransfersMerged', () => {
     };
   }
 
-  it('round-trips the merged ids and the resulting postings (RNF-2, INV-8)', () => {
+  it('round-trips the merged ids and the resulting postings (INV-8)', () => {
     const event = new TransfersMerged(props());
 
     const payload = event.toPayload();
@@ -29,7 +29,7 @@ describe('TransfersMerged', () => {
     expect(rebuilt.props.postings[0].currencyCode).toBe('USD');
   });
 
-  it('round-trips COP postings preserving the exact decimal value (RNF-2, INV-8)', () => {
+  it('round-trips COP postings preserving the exact decimal value (INV-8)', () => {
     const event = new TransfersMerged(
       props({
         postings: [

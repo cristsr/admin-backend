@@ -7,12 +7,12 @@ import {
   AccountOpened,
   AccountRenamed,
 } from '@ledger/accounts/domain/account/events';
-import { LedgerInitialized } from '@ledger/ledger/domain/settings/events/ledger-initialized.event';
-import { CurrencyRegistered } from '@ledger/reference/domain/currency/events/currency-registered.event';
 import {
   PresentationCurrencyChanged,
   TimezoneChanged,
-} from '@ledger/settings/domain/ledger-settings/events';
+} from '@ledger/ledger/domain/settings/events';
+import { LedgerInitialized } from '@ledger/ledger/domain/settings/events/ledger-initialized.event';
+import { CurrencyRegistered } from '@ledger/reference/domain/currency/events/currency-registered.event';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import {
   TransactionAmended,
@@ -25,7 +25,7 @@ import {
 } from '@ledger/transactions/domain/transaction/events';
 
 /**
- * Wires every domain event's deserializer into an {@link EventRegistry} (RNF-6).
+ * Wires every domain event's deserializer into an {@link EventRegistry}.
  * Events carrying postings resolve `Money` scale through the {@link CurrencyCatalog}.
  * This is the composition point where the modules' event catalogs meet.
  */

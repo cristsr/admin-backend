@@ -2,8 +2,8 @@ import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model
 import { Money } from '@ledger/shared/domain/money';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
+import { PROJ_POSTINGS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
-import { PROJ_POSTINGS } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
 import { ReadModelAssertionPostingReader } from './read-model-assertion-posting-reader';
 
 describe('ReadModelAssertionPostingReader', () => {
@@ -41,7 +41,7 @@ describe('ReadModelAssertionPostingReader', () => {
   });
 
   describe('byAccountUpToDate', () => {
-    it('carries the business instant through, so intraday ordering is possible (§2.4)', async () => {
+    it('carries the business instant through, so intraday ordering is possible', async () => {
       await seed('p-1', 'txn-1', 'acc-1', TransactionStatus.CONFIRMED, '2026-07-10', 'user-1', '2026-07-10T14:03:11.000Z');
 
       const [posting] = await reader.byAccountUpToDate('user-1', 'acc-1', LedgerDate.of('2026-07-31'));

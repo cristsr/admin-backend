@@ -3,7 +3,7 @@ import { EventPayload } from '@cqrs/domain/event/event-payload.type';
 
 /**
  * A CONFIRMED transaction was reversed, pointing to the system-created
- * reversing transaction that offsets it (§3.4, RF-7).
+ * reversing transaction that offsets it.
  */
 export class TransactionReversed extends DomainEvent {
   readonly eventType = 'TransactionReversed';

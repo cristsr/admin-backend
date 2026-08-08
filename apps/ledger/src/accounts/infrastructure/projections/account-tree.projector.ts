@@ -2,10 +2,8 @@ import { Projector } from '@cqrs/application/projection/projector';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { Criteria, Nullable } from '@shared';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
 import { AccountName } from '@ledger/shared/domain/value-objects';
-
-/** Read-model table name for the account tree. */
-export const PROJ_ACCOUNTS = 'proj_accounts';
 
 type AccountRow = {
   readonly account_id: string;
@@ -21,8 +19,8 @@ type AccountRow = {
 };
 
 /**
- * Maintains `proj_accounts` (§6.2) from account events. A rename updates the
- * account's own name and re-prefixes every descendant (§6.3) — the only
+ * Maintains `proj_accounts` from account events. A rename updates the
+ * account's own name and re-prefixes every descendant — the only
  * projection the rename touches, since all other views reference `account_id`.
  */
 export class AccountTreeProjector extends Projector {
@@ -86,7 +84,7 @@ export class AccountTreeProjector extends Projector {
 
   /**
    * Rewrite order that never leaves two rows of a user sharing a name mid-flight
-   * — the unique `(user_id, name)` index (RNF-1) rejects that even when the
+   * — the unique `(user_id, name)` index rejects that even when the
    * final state is sound, and the read-model adapter runs each upsert on its own
    * connection, so there is no transaction to defer the check to.
    *

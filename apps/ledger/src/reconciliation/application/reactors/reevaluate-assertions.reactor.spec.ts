@@ -6,8 +6,8 @@ import { InMemoryAssertionPostingReader } from '@ledger/reconciliation/infrastru
 import { Currency, Money } from '@ledger/shared/domain/money';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
-import { EvaluateAssertionCommand } from '../commands/evaluate-assertion.command';
-import { EvaluateAssertionHandler } from '../commands/evaluate-assertion.handler';
+import { EvaluateAssertionCommand } from '../evaluate-assertion/evaluate-assertion.command';
+import { EvaluateAssertionHandler } from '../evaluate-assertion/evaluate-assertion.handler';
 import { ReevaluateAssertionsReactor } from './reevaluate-assertions.reactor';
 
 /** Records the last lookup call and returns pre-seeded assertion ids per account. */
@@ -149,7 +149,7 @@ describe('ReevaluateAssertionsReactor', () => {
     expect(spy.dispatched.every((command) => command.assertionId === 'assert-a')).toBe(true);
   });
 
-  describe('voided transactions (AC-1, AC-3)', () => {
+  describe('voided transactions', () => {
     /** Seeds the postings the now-voided transaction used to touch. */
     const seedVoided = (accountIds: readonly string[], date: string): void => {
       for (const accountId of accountIds) {
@@ -203,7 +203,7 @@ describe('ReevaluateAssertionsReactor', () => {
       expect(lookup.calls).toHaveLength(0);
     });
 
-    it('never re-evaluates a revoked assertion (AC-5)', async () => {
+    it('never re-evaluates a revoked assertion', async () => {
       seedVoided(['acc-1'], '2026-07-10');
       // StubLookup stands in for nonRevokedOnAccountFrom, which filters revoked
       // assertions out at the source: an account whose only assertion is revoked
@@ -215,7 +215,7 @@ describe('ReevaluateAssertionsReactor', () => {
       expect(spy.dispatched).toHaveLength(0);
     });
 
-    it('reprocessing the same void is idempotent (AC-4)', async () => {
+    it('reprocessing the same void is idempotent', async () => {
       seedVoided(['acc-1'], '2026-07-10');
       const lookup = new StubLookup({ 'acc-1': ['assert-a'] });
       const reactor = reactorWith(lookup);
@@ -231,7 +231,7 @@ describe('ReevaluateAssertionsReactor', () => {
     });
   });
 
-  describe('why confirmations and reversals carry no trigger (AC-2)', () => {
+  describe('why confirmations and reversals carry no trigger', () => {
     it('ignores TransactionConfirmed: the evaluated amount does not change', async () => {
       // AssertionPostingReader returns CONFIRMED *and* PENDING, and
       // AssertionEvaluator sums them alike. Confirming moves a posting between

@@ -8,8 +8,8 @@ import {
 } from '@ledger/reconciliation/domain/ports/assertion-posting-reader.port';
 import { Money } from '@ledger/shared/domain/money';
 import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared/domain/value-objects';
+import { PROJ_POSTINGS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
-import { PROJ_POSTINGS } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
 
 type PostingRow = {
   readonly transaction_id: string;
@@ -23,7 +23,7 @@ type PostingRow = {
 
 /**
  * Reads an account's `CONFIRMED`+`PENDING` postings up to a cutoff from
- * `proj_postings` (§2.4). `VOIDED` rows are excluded.
+ * `proj_postings`. `VOIDED` rows are excluded.
  *
  * `occurred_at` is denormalized onto each posting by the transaction projector,
  * so intraday ordering needs no join. It stays null when the client never

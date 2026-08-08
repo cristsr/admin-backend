@@ -3,14 +3,14 @@ import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-ca
 import { CurrencyCode } from '@ledger/shared/domain/value-objects/currency-code';
 import { UnknownCurrencyException } from '@ledger/shared/domain/value-objects/value-object.exception';
 
-/** Minor-unit precision of the seed currencies until EP-4 registers more. */
+/** Minor-unit precision of the seed currencies. */
 const SEED_MINOR_UNITS: Readonly<Record<string, number>> = {
   COP: 0,
   USD: 2,
 };
 
 /**
- * Fixed catalog seeding `{ COP: 0, USD: 2 }` (roadmap decision). EP-4 replaces
+ * Fixed catalog seeding `{ COP: 0, USD: 2 }`. The registered catalog replaces
  * it with a projection fed by `CurrencyRegistered`, without touching the core.
  */
 export class SeedCurrencyCatalog extends CurrencyCatalog {

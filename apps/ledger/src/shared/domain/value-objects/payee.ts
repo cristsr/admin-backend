@@ -5,7 +5,7 @@ import { InvalidPayeeException } from './value-object.exception';
 const MAX_LENGTH = 255;
 
 /**
- * First-class merchant/counterparty of a transaction (§2.2). Trimmed and
+ * First-class merchant/counterparty of a transaction. Trimmed and
  * length-bounded; blank input collapses to `null` rather than an empty payee.
  */
 export class Payee {

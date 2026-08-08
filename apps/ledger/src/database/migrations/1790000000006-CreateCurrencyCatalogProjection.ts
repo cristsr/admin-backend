@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
- * Reference currency catalog (§6.2). Deliberately without `user_id`: a
+ * Reference currency catalog. Deliberately without `user_id`: a
  * currency's decimal precision is universal, not a per-user fact — the one
  * projection in the ledger that is global by design.
  *

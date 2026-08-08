@@ -9,8 +9,8 @@ export type PostingLineProps = {
 
 /**
  * A single ledger posting: an account reference plus a signed {@link Money} and
- * free-form metadata (§2.3). The currency is carried by `Money`, so there is
- * never an amount without a currency (principle §9.4.1). Immutable.
+ * free-form metadata. The currency is carried by `Money`, so there is
+ * never an amount without a currency. Immutable.
  */
 export class PostingLine {
   readonly accountId: string;

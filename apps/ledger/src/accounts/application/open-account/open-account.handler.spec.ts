@@ -33,7 +33,7 @@ function setup() {
 }
 
 describe('OpenAccountHandler', () => {
-  it('should open a new account and return its id (AC-6)', async () => {
+  it('should open a new account and return its id', async () => {
     const { handler, accounts, readModel } = setup();
     readModel.query.mockResolvedValue([]);
     const savedAccount = { id: 'account-1', pullChanges: () => [] } as any;
@@ -51,7 +51,7 @@ describe('OpenAccountHandler', () => {
     expect(accounts.save).toHaveBeenCalledTimes(1);
   });
 
-  it('should reject a duplicate name with NAME_COLLISION (AC-6)', async () => {
+  it('should reject a duplicate name with NAME_COLLISION', async () => {
     const { handler, readModel } = setup();
     readModel.query.mockResolvedValue([{ name: 'Assets:Duplicate' }]);
 
@@ -60,7 +60,7 @@ describe('OpenAccountHandler', () => {
     ).rejects.toBeInstanceOf(NameCollisionException);
   });
 
-  it('should allow same name for different users (AC-6 / Art. 5)', async () => {
+  it('should allow same name for different users (rules Art. 5)', async () => {
     const { handler, accounts, readModel } = setup();
     readModel.query.mockResolvedValue([]);
     accounts.save.mockResolvedValue({ events: [], version: 1, lastPosition: 1n });
@@ -75,7 +75,7 @@ describe('OpenAccountHandler', () => {
     );
   });
 
-  it('should dispatch events after save (AC-6)', async () => {
+  it('should dispatch events after save', async () => {
     const { handler, accounts, readModel, dispatcher } = setup();
     readModel.query.mockResolvedValue([]);
     accounts.save.mockResolvedValue({ events: ['ev-1', 'ev-2'] as any, version: 1, lastPosition: 2n });

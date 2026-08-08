@@ -6,7 +6,7 @@
  * in memory. Registering a currency therefore writes `proj_currencies` *and*
  * reloads that cache; without the reload the freshly registered currency stays
  * unusable until the process restarts, which makes `POST /currencies` look like
- * it worked while nothing can be booked in the new currency (RF-21).
+ * it worked while nothing can be booked in the new currency.
  */
 export abstract class CurrencyCatalogCache {
   /** Reloads the in-memory view from its backing projection. */

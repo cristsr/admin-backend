@@ -2,7 +2,7 @@ import { Command } from '@cqrs/application/command-bus/command';
 
 /**
  * Seeds the balance a pre-existing account already had when the user started
- * using the ledger (RF-27): an opening transaction against
+ * using the ledger: an opening transaction against
  * `Equity:OpeningBalances`.
  *
  * The command names the account and the amount only. The counterparty is

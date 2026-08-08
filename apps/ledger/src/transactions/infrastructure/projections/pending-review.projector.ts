@@ -2,11 +2,9 @@ import { Projector } from '@cqrs/application/projection/projector';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { Criteria, Nullable } from '@shared';
+import { PROJ_PENDING_REVIEW } from '@ledger/transactions/application/read-models/pending-review.read-model';
 import { PostingPayload } from '@ledger/transactions/domain/posting/posting.serializer';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
-
-/** Read-model table owned by this projector. */
-export const PROJ_PENDING_REVIEW = 'proj_pending_review';
 
 type PendingReviewRow = {
   readonly transaction_id: string;
@@ -21,7 +19,7 @@ type PendingReviewRow = {
 };
 
 /**
- * The frontend's review inbox (`pending_review`, §3.6): one row per `PENDING`
+ * The frontend's review inbox (`pending_review`): one row per `PENDING`
  * transaction, removed the moment it is confirmed or voided.
  *
  * `transaction_list` filtered by `status=PENDING` answers the same question, but

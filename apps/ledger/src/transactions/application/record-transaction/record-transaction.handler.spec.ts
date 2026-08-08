@@ -41,7 +41,7 @@ function setup() {
 }
 
 describe('RecordTransactionHandler', () => {
-  it('should record a balanced PENDING transaction (AC-7)', async () => {
+  it('should record a balanced PENDING transaction', async () => {
     const { handler, transactions } = setup();
     transactions.save.mockResolvedValue({ events: [], version: 1, lastPosition: 3n });
 
@@ -59,7 +59,7 @@ describe('RecordTransactionHandler', () => {
     expect(transactions.save).toHaveBeenCalledTimes(1);
   });
 
-  it('should reject an unbalanced transaction (AC-7)', async () => {
+  it('should reject an unbalanced transaction', async () => {
     const { handler, balance } = setup();
     balance.ensureBalanced.mockImplementation(() => {
       throw new UnbalancedTransactionException('Not balanced');
@@ -77,7 +77,7 @@ describe('RecordTransactionHandler', () => {
     ).rejects.toBeInstanceOf(UnbalancedTransactionException);
   });
 
-  it('should validate accounts before recording (AC-7)', async () => {
+  it('should validate accounts before recording', async () => {
     const { handler, validation, transactions } = setup();
     transactions.save.mockResolvedValue({ events: [], version: 1, lastPosition: 1n });
 

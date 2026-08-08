@@ -1,7 +1,7 @@
 import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
 import { EventPayload } from '@cqrs/domain/event/event-payload.type';
 
-/** A PENDING transaction was voided with a reason (§3.4, RF-8). */
+/** A PENDING transaction was voided with a reason. */
 export class TransactionVoided extends DomainEvent {
   readonly eventType = 'TransactionVoided';
   readonly schemaVersion = 1;

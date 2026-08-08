@@ -14,33 +14,27 @@ import { Command } from '@cqrs/application/command-bus/command';
 import { CommandBus } from '@cqrs/application/command-bus/command-bus';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { Nullable } from '@shared';
-import { AssertBalanceCommand } from '@ledger/reconciliation/application/commands/assert-balance.command';
-import { ResolveDiscrepancyCommand } from '@ledger/reconciliation/application/commands/resolve-discrepancy.command';
-import { RevokeAssertionCommand } from '@ledger/reconciliation/application/commands/revoke-assertion.command';
-import { AssertBalanceInputDto } from '@ledger/reconciliation/application/dto/assert-balance-input.dto';
-import { RevokeAssertionInputDto } from '@ledger/reconciliation/application/dto/revoke-assertion-input.dto';
-import {
-  GetAssertionStatusHandler,
-  GetAssertionStatusQuery,
-} from '@ledger/reconciliation/application/queries/get-assertion-status.query';
-import {
-  ListAssertionsHandler,
-  ListAssertionsQuery,
-} from '@ledger/reconciliation/application/queries/list-assertions.query';
+import { AssertBalanceCommand } from '@ledger/reconciliation/application/assert-balance/assert-balance.command';
+import { GetAssertionStatusHandler } from '@ledger/reconciliation/application/get-assertion-status/get-assertion-status.handler';
+import { GetAssertionStatusQuery } from '@ledger/reconciliation/application/get-assertion-status/get-assertion-status.query';
+import { ListAssertionsHandler } from '@ledger/reconciliation/application/list-assertions/list-assertions.handler';
+import { ListAssertionsQuery } from '@ledger/reconciliation/application/list-assertions/list-assertions.query';
+import { ResolveDiscrepancyCommand } from '@ledger/reconciliation/application/resolve-discrepancy/resolve-discrepancy.command';
+import { RevokeAssertionCommand } from '@ledger/reconciliation/application/revoke-assertion/revoke-assertion.command';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import {
   CommandResultInterceptor,
   Context,
   ExternalRef,
 } from '@ledger/shared/infrastructure/adapters/http';
+import { AssertBalanceRequestDto, RevokeAssertionRequestDto } from './dto';
 
 /**
- * HTTP surface for reconciliation (§7.5): translates REST calls into commands
- * on the {@link CommandBus}, passing the authenticated {@link AuthContext}
- * separately (RNF-10). Routing the writes through the bus — instead of calling
- * the handlers as providers — is what gives these endpoints the idempotency by
- * `External-Ref` that RF-11 requires of *every* command (INV-10). No domain
- * logic here; the controller only adapts.
+ * HTTP surface for reconciliation: translates REST calls into commands on the
+ * {@link CommandBus}, passing the authenticated {@link AuthContext} separately.
+ * Routing the writes through the bus — instead of calling the handlers as
+ * providers — is what gives these endpoints idempotency by `External-Ref`
+ * (INV-10). No domain logic here; the controller only adapts.
  */
 @Controller({ path: 'balance-assertions', version: '1' })
 @UseInterceptors(CommandResultInterceptor)
@@ -56,7 +50,7 @@ export class BalanceAssertionController {
   assert(
     @Context() context: LedgerContext,
     @ExternalRef() externalRef: Nullable<string>,
-    @Body() body: AssertBalanceInputDto,
+    @Body() body: AssertBalanceRequestDto,
   ): Promise<CommandResult> {
     return this.dispatch(
       new AssertBalanceCommand(
@@ -78,7 +72,7 @@ export class BalanceAssertionController {
     @Context() context: LedgerContext,
     @ExternalRef() externalRef: Nullable<string>,
     @Param('id') id: string,
-    @Body() body: RevokeAssertionInputDto,
+    @Body() body: RevokeAssertionRequestDto,
   ): Promise<CommandResult> {
     return this.dispatch(new RevokeAssertionCommand(id, body.reason), context, externalRef);
   }

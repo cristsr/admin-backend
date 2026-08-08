@@ -11,7 +11,7 @@ export type LedgerInitializedProps = {
 
 /**
  * A user's ledger was initialized with a presentation currency, timezone and
- * the two technical system accounts (§3.4, RF-2).
+ * the two technical system accounts.
  */
 export class LedgerInitialized extends DomainEvent {
   readonly eventType = 'LedgerInitialized';

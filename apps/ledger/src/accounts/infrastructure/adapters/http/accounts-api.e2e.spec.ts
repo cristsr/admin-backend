@@ -11,6 +11,7 @@ import {
   NameCollisionException,
   SystemAccountProtectedException,
 } from '@ledger/accounts/domain/account/exceptions/account.exception';
+import { LedgerHttpModule } from '@ledger/ledger/infrastructure/adapters/http';
 import { LedgerCoreModule } from '@ledger/ledger/ledger-core.module';
 import { AccountType } from '@ledger/shared/domain/value-objects';
 import { STREAM_POSITION_HEADER, SharedHttpModule } from '@ledger/shared/infrastructure/adapters/http';
@@ -20,7 +21,7 @@ import { AccountsHttpModule } from './accounts-http.module';
 /**
  * End-to-end HTTP behaviour of the accounts + ledger adapters with the real
  * buses replaced by mocks. Covers initialization, read-your-writes and the
- * account-specific stable error codes (EP-2.4 / EP-2.6).
+ * account-specific stable error codes.
  */
 describe('Accounts API (e2e, buses mocked)', () => {
   let app: INestApplication;
@@ -42,7 +43,7 @@ describe('Accounts API (e2e, buses mocked)', () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [LedgerCoreModule, SharedHttpModule, AccountsHttpModule],
+      imports: [LedgerCoreModule, SharedHttpModule, LedgerHttpModule, AccountsHttpModule],
     })
       .overrideProvider(EventStore)
       .useValue({})
@@ -106,7 +107,7 @@ describe('Accounts API (e2e, buses mocked)', () => {
     expect(response.body).toMatchObject({ statusCode: 409, code: 'NAME_COLLISION' });
   });
 
-  it('records an opening balance and ignores anything the body invents (RF-27, INV-13)', async () => {
+  it('records an opening balance and ignores anything the body invents (INV-13)', async () => {
     dispatch.mockResolvedValue({ ...accepted, aggregateId: 'txn-1' });
 
     const response = await withContext(

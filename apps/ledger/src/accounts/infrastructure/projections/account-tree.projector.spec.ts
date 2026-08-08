@@ -2,7 +2,8 @@ import { EventPayload } from '@cqrs/domain/event/event-payload.type';
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria } from '@shared';
-import { AccountTreeProjector, PROJ_ACCOUNTS } from './account-tree.projector';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
+import { AccountTreeProjector } from './account-tree.projector';
 
 let position = 0n;
 
@@ -65,7 +66,7 @@ describe('AccountTreeProjector', () => {
     expect(child.currency_code).toBe('COP');
   });
 
-  it('propagates a rename to the account and its descendants (§6.3)', async () => {
+  it('propagates a rename to the account and its descendants', async () => {
     await projector.project(opened('a1', 'Assets:Bank', null), store);
     await projector.project(opened('a2', 'Assets:Bank:Savings', 'Assets:Bank'), store);
     await projector.project(
@@ -86,7 +87,7 @@ describe('AccountTreeProjector', () => {
     expect(names.a2).toBe('Assets:Bancolombia:Savings');
   });
 
-  describe('rename rewrite order (unique (user_id, name) index, RNF-1)', () => {
+  describe('rename rewrite order under the unique (user_id, name) index', () => {
     /**
      * Stands in for the unique index: rejects the moment two rows of a user
      * share a name, so a transiently duplicated name fails the test the same

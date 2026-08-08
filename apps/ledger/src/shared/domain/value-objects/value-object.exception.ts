@@ -23,6 +23,11 @@ export class InvalidCurrencyCodeException extends DomainUnprocessableException {
   readonly code: string = 'INVALID_CURRENCY_CODE';
 }
 
+/** A time zone is blank or not an identifier the runtime's zone database knows. */
+export class InvalidTimeZoneException extends DomainUnprocessableException {
+  readonly code: string = 'INVALID_TIME_ZONE';
+}
+
 /** No currency is registered for the requested code in the catalog. */
 export class UnknownCurrencyException extends DomainUnprocessableException {
   readonly code: string = 'UNKNOWN_CURRENCY';

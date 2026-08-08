@@ -1,7 +1,7 @@
 import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
 import { EventPayload } from '@cqrs/domain/event/event-payload.type';
 
-/** An account was closed on a given accounting date (§3.4). */
+/** An account was closed on a given accounting date. */
 export class AccountClosed extends DomainEvent {
   readonly eventType = 'AccountClosed';
   readonly schemaVersion = 1;

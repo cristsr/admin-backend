@@ -76,7 +76,7 @@ function makeTransaction(id: string) {
 }
 
 describe('ReverseConfirmedTransactionHandler', () => {
-  it('should reverse a CONFIRMED transaction and return reversing id (AC-9)', async () => {
+  it('should reverse a CONFIRMED transaction and return reversing id', async () => {
     const { handler, transactions } = setup();
     const tx = makeTransaction('tx-1');
     transactions.load.mockResolvedValue(tx as never);
@@ -90,7 +90,7 @@ describe('ReverseConfirmedTransactionHandler', () => {
     expect(transactions.save).toHaveBeenCalledTimes(2);
   });
 
-  it('should throw TransactionNotFoundException for non-existent transaction (AC-9)', async () => {
+  it('should throw TransactionNotFoundException for non-existent transaction', async () => {
     const { handler, transactions } = setup();
     transactions.load.mockResolvedValue(null);
 
@@ -99,7 +99,7 @@ describe('ReverseConfirmedTransactionHandler', () => {
     ).rejects.toBeInstanceOf(TransactionNotFoundException);
   });
 
-  it('should propagate IMMUTABLE_TRANSACTION when aggregate rejects reversal (AC-9 / AC-8)', async () => {
+  it('should propagate IMMUTABLE_TRANSACTION when aggregate rejects reversal', async () => {
     const { handler, transactions } = setup();
     const tx = makeTransaction('tx-1');
     tx.reverse.mockImplementation(() => {
@@ -112,7 +112,7 @@ describe('ReverseConfirmedTransactionHandler', () => {
     ).rejects.toBeInstanceOf(ImmutableTransactionException);
   });
 
-  it('should save the original with externalRef and reversing without (AC-9)', async () => {
+  it('should save the original with externalRef and reversing without', async () => {
     const { handler, transactions } = setup();
     const tx = makeTransaction('tx-1');
     transactions.load.mockResolvedValue(tx as never);
@@ -127,7 +127,7 @@ describe('ReverseConfirmedTransactionHandler', () => {
     });
   });
 
-  it('projects only after both streams committed (AC-9)', async () => {
+  it('projects only after both streams committed', async () => {
     const { handler, transactions, dispatcher } = setup();
     const tx = makeTransaction('tx-1');
     transactions.load.mockResolvedValue(tx as never);
@@ -144,7 +144,7 @@ describe('ReverseConfirmedTransactionHandler', () => {
 });
 
 /**
- * Cross-stream atomicity over the real event store (INV-7, hu-0023): the
+ * Cross-stream atomicity over the real event store (INV-7): the
  * original and the reversing transaction are two different streams, so a
  * failure between the two appends must leave neither behind.
  */
@@ -220,7 +220,7 @@ describe('ReverseConfirmedTransactionHandler (cross-stream atomicity)', () => {
     ]);
   });
 
-  it('leaves nothing behind when the reversing append fails (hu-0023)', async () => {
+  it('leaves nothing behind when the reversing append fails', async () => {
     const originalId = await recordConfirmed();
     const append = jest.spyOn(eventStore, 'append');
     let appends = 0;

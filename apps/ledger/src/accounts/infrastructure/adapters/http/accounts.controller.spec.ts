@@ -2,12 +2,12 @@ import { CommandBus } from '@cqrs/application/command-bus/command-bus';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { CloseAccountCommand } from '@ledger/accounts/application/close-account/close-account.command';
+import { GetAccountBalancesQuery } from '@ledger/accounts/application/get-account-balances/get-account-balances.query';
+import { GetAccountByIdQuery } from '@ledger/accounts/application/get-account-by-id/get-account-by-id.query';
+import { GetAccountTreeQuery } from '@ledger/accounts/application/get-account-tree/get-account-tree.query';
 import { OpenAccountCommand } from '@ledger/accounts/application/open-account/open-account.command';
 import { RecordOpeningBalanceCommand } from '@ledger/accounts/application/record-opening-balance/record-opening-balance.command';
 import { RenameAccountCommand } from '@ledger/accounts/application/rename-account/rename-account.command';
-import { GetAccountBalancesQuery } from '@ledger/read-side/get-account-balances/get-account-balances.query';
-import { GetAccountByIdQuery } from '@ledger/read-side/get-account-by-id/get-account-by-id.query';
-import { GetAccountTreeQuery } from '@ledger/read-side/get-account-tree/get-account-tree.query';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import { AccountType } from '@ledger/shared/domain/value-objects';
 import { AccountsController } from './accounts.controller';
@@ -75,7 +75,7 @@ describe('AccountsController', () => {
     expect(command).toMatchObject({ accountId: 'acc-7', closedOn: '2026-07-20' });
   });
 
-  it('dispatches RecordOpeningBalanceCommand without letting the body name a counterparty (RF-27)', async () => {
+  it('dispatches RecordOpeningBalanceCommand without letting the body name a counterparty', async () => {
     await controller.openingBalance(context, 'ref-9', 'acc-42', {
       amount: '1500000',
       currency: 'COP',

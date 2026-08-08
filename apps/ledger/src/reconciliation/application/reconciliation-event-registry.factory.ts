@@ -12,7 +12,7 @@ import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 
 /**
  * Wires the reconciliation domain events' deserializers into an
- * {@link EventRegistry} (RNF-6). Events carrying money resolve `Money` scale
+ * {@link EventRegistry}. Events carrying money resolve `Money` scale
  * through the {@link CurrencyCatalog}. Kept separate from the core registry so
  * the reconciliation stream can be replayed in isolation.
  */

@@ -8,19 +8,15 @@ import { PostgresEventStore } from '@cqrs/infrastructure/adapters/event-store/po
 import { PostgresReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';
 import { SystemClock } from '@cqrs/infrastructure/adapters/system-clock';
 import { UuidIdGenerator } from '@cqrs/infrastructure/adapters/uuid-id-generator';
-import { createLedgerApplication } from '@ledger/ledger/application/ledger-application.factory';
-import { createQueryBus } from '@ledger/read-side/query-bus.factory';
+import { createLedgerApplication } from '@ledger/bootstrap/ledger-application.factory';
+import { createQueryBus } from '@ledger/bootstrap/query-bus.factory';
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-catalog';
 
 /**
- * Composition root that mounts EP-1's real write/read buses into Nest DI so the
- * HTTP adapters (EP-2/EP-3) resolve the same `CommandBus`/`QueryBus` the tests
- * exercise directly. Global, so every feature module inherits the buses.
- *
- * EP-5.0: Swapped to PostgreSQL persistence adapters for production readiness.
- * EventStore and ReadModelStore now persist to Postgres with LWW conflict resolution
- * via global_position and checkpoint-based projection lag tracking (RNF-5, RNF-9).
+ * Composition root that mounts the real write and read buses into Nest DI, so
+ * the HTTP adapters resolve the same `CommandBus`/`QueryBus` the tests exercise
+ * directly. Global, so every feature module inherits them.
  */
 @Global()
 @Module({
@@ -28,7 +24,7 @@ import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-ca
     { provide: Clock, useClass: SystemClock },
     { provide: IdGenerator, useClass: UuidIdGenerator },
     // The catalog is served from proj_currencies but cached in memory: `resolve`
-    // is synchronous and runs during stream rehydration (hu-0019).
+    // is synchronous and runs during stream rehydration.
     {
       provide: ReadModelCurrencyCatalog,
       inject: [ReadModelStore],
@@ -39,8 +35,8 @@ import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-ca
     { provide: EventStore, useClass: PostgresEventStore },
     { provide: ReadModelStore, useClass: PostgresReadModelStore },
     // The concrete bus is the provider; `CommandBus` aliases it. Feature modules
-    // composed outside this root (EP-3) inject `PolicyCommandBus` to register
-    // their own handlers on the very same policy chain (INV-10, RF-11).
+    // composed outside this root inject `PolicyCommandBus` to register
+    // their own handlers on the very same policy chain (INV-10).
     {
       provide: PolicyCommandBus,
       inject: [EventStore, ReadModelStore, Clock, IdGenerator, CurrencyCatalog, ReadModelCurrencyCatalog],

@@ -21,20 +21,20 @@ import { AssertionEvaluation } from './types/assertion-evaluation.type';
 export const BALANCE_ASSERTION = 'BalanceAssertion';
 
 /** Immutable declaration payload of a reconciliation checkpoint. */
-export interface AssertBalanceProps {
+export type AssertBalanceProps = {
   readonly accountId: string;
   readonly date: LedgerDate;
   readonly occurredAt: Nullable<Date>;
   readonly expectedAmount: Money;
   readonly tolerance: Money;
-}
+};
 
 /**
  * Event-sourced lifecycle of a balance assertion: declared (`BalanceAsserted`),
  * evaluated one or more times (`BalanceAssertionEvaluated`), revoked
  * (`AssertionRevoked`) or resolved (`DiscrepancyResolved`). The aggregate never
  * computes a balance (INV-5): it receives a verdict already produced by the
- * evaluator (EP-3.2) and decides whether that verdict warrants a new event.
+ * evaluator and decides whether that verdict warrants a new event.
  */
 export class BalanceAssertion extends AggregateRoot<string> {
   private accountId!: string;
@@ -75,7 +75,7 @@ export class BalanceAssertion extends AggregateRoot<string> {
    * Records an evaluation verdict. Emits `BalanceAssertionEvaluated` only when
    * the outcome (status or difference) actually changed — re-evaluations that
    * confirm the prior verdict stay silent. No-op when already `REVOKED`, so a
-   * late reactor re-evaluation is tolerated (EP-3.1 design note).
+   * late reactor re-evaluation is tolerated.
    */
   applyEvaluation(evaluation: AssertionEvaluation, clock: Clock): void {
     if (this.status === AssertionStatus.REVOKED) return;
@@ -112,7 +112,7 @@ export class BalanceAssertion extends AggregateRoot<string> {
     );
   }
 
-  /** True when the current status admits a reconciliation adjustment (EP-3.5). */
+  /** True when the current status admits a reconciliation adjustment. */
   get isResolvable(): boolean {
     return this.status === AssertionStatus.MISMATCHED && !this.resolvedByTxn;
   }
@@ -127,7 +127,7 @@ export class BalanceAssertion extends AggregateRoot<string> {
     return this.expected;
   }
 
-  /** Per-assertion tolerance; zero by default (bank data is exact, §2.4). */
+  /** Per-assertion tolerance; zero by default (bank data is exact). */
   get toleranceAmount(): Money {
     return this.tolerance;
   }
@@ -146,7 +146,7 @@ export class BalanceAssertion extends AggregateRoot<string> {
     return this.status;
   }
 
-  /** The account under reconciliation; needed by EP-3.5 to build the adjustment. */
+  /** The account under reconciliation; the adjustment is built against it. */
   get account(): string {
     return this.accountId;
   }

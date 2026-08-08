@@ -9,21 +9,21 @@ import { AssertablePosting, AssertionPostingReader } from '../ports/assertion-po
 import { DayBoundaryResolver } from './day-boundary.resolver';
 
 /** Temporal cutoff of an assertion: its date, optional intraday instant, timezone. */
-export interface AssertionCutoff {
+export type AssertionCutoff = {
   readonly date: LedgerDate;
   readonly occurredAt: Nullable<Date>;
   readonly timezone: string;
-}
+};
 
 /** Internal partition of the evaluable population against the cutoff. */
-interface Partition {
+type Partition = {
   readonly included: readonly AssertablePosting[];
   readonly ambiguous: readonly AssertablePosting[];
-}
+};
 
 /**
  * Computes an assertion's verdict and exact difference against the projected
- * balance of the exact account (no subaccounts, §2.4). Pure domain service: no
+ * balance of the exact account (no subaccounts). Pure domain service: no
  * NestJS transport, no SQL — it reads the population through a port. `difference`
  * is always `expected - actual`.
  */
@@ -125,7 +125,7 @@ export class AssertionEvaluator {
     const withinWith = this.isWithinTolerance(differenceWith, tolerance);
 
     // Both scenarios agree it matches → MATCHED; otherwise the ambiguity could
-    // flip the verdict, so stay conservative (§2.4, open question #6).
+    // flip the verdict, so stay conservative (open question #6).
     if (withinWithout && withinWith) return AssertionStatus.MATCHED;
 
     return AssertionStatus.INDETERMINATE;

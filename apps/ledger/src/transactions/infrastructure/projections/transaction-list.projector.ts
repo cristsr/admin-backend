@@ -2,15 +2,15 @@ import { Projector } from '@cqrs/application/projection/projector';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { Criteria, Nullable } from '@shared';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
 import { AccountType } from '@ledger/shared/domain/value-objects';
+import {
+  PROJ_POSTINGS,
+  PROJ_TRANSACTIONS,
+} from '@ledger/transactions/application/read-models/transaction-list.read-model';
 import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
 import { TransactionKindDeriver } from '@ledger/transactions/domain/derivation/transaction-kind.deriver';
 import { PostingPayload } from '@ledger/transactions/domain/posting/posting.serializer';
-
-/** Read-model tables owned by this projector. */
-export const PROJ_TRANSACTIONS = 'proj_transactions';
-export const PROJ_POSTINGS = 'proj_postings';
 
 type TransactionRow = {
   readonly transaction_id: string;
@@ -44,8 +44,8 @@ type PostingRow = {
 
 /**
  * Maintains `proj_transactions` (denormalized, includes `payee`, `derived_kind`,
- * `reverses_id`) and one `proj_postings` row per posting (§6.2). `derived_kind`
- * is computed from the touched account types read from `account_tree` (RF-4).
+ * `reverses_id`) and one `proj_postings` row per posting. `derived_kind`
+ * is computed from the touched account types read from `account_tree`.
  */
 export class TransactionListProjector extends Projector {
   readonly name = 'transaction_list';
@@ -92,7 +92,7 @@ export class TransactionListProjector extends Projector {
       // The declared business instant, not the envelope's: the envelope always
       // has one (it falls back to the append time), and that would erase the
       // difference between "happened at 14:03" and "instant unknown" — which is
-      // exactly what an intraday assertion needs to tell apart (§2.4).
+      // exactly what an intraday assertion needs to tell apart.
       occurred_at: (payload.occurredAt as Nullable<string>) ?? null,
       payee: (payload.payee as Nullable<string>) ?? null,
       description: payload.description as string,
@@ -228,7 +228,7 @@ export class TransactionListProjector extends Projector {
   }
 
   /**
-   * Points each voided leg at the transfer that replaced it (§3.6). The
+   * Points each voided leg at the transfer that replaced it. The
    * transfer's own row already carries `merged_from`; this closes the other
    * direction so a client reading a voided pending can follow it forward
    * without scanning every transfer's metadata.
@@ -280,7 +280,7 @@ export class TransactionListProjector extends Projector {
     // An account still missing from `account_tree` (projections catch up
     // independently) makes the whole classification unreliable: deriving from
     // the subset that did resolve would publish a concrete kind from partial
-    // evidence. §9.4.4 — what cannot be classified is COMPOUND.
+    // evidence: what cannot be classified is COMPOUND.
     if (types.some((type) => !type)) return DerivedKind.COMPOUND;
 
     return this.deriver.derive(types as AccountType[]);

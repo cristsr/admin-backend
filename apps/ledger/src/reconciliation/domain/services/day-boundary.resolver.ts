@@ -1,21 +1,21 @@
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 
 /** UTC half-open window `[startUtc, endUtc)` covering one local calendar day. */
-export interface DayWindow {
+export type DayWindow = {
   readonly startUtc: Date;
   readonly endUtc: Date;
-}
+};
 
 /** The numeric `year`/`month`/`day` components of a {@link LedgerDate}. */
-interface DateParts {
+type DateParts = {
   readonly year: number;
   readonly month: number;
   readonly day: number;
-}
+};
 
 /**
  * Translates a plain accounting date and an IANA timezone into UTC instants
- * (RNF-7: everything is stored in UTC; the timezone is the only lens for local
+ * (everything is stored in UTC; the timezone is the only lens for local
  * interpretation). Wraps the timezone maths behind a domain signature so the
  * evaluator stays free of library concerns.
  */
@@ -30,7 +30,7 @@ export abstract class DayBoundaryResolver {
 /**
  * Standard-library implementation over `Intl.DateTimeFormat`. Deriving the
  * offset from the target instant (rather than assuming a fixed one) makes it
- * DST-correct at day boundaries — the case §2.4 hinges on.
+ * DST-correct at day boundaries, which is what an intraday assertion hinges on.
  */
 export class IntlDayBoundaryResolver extends DayBoundaryResolver {
   resolve(date: LedgerDate, timezone: string): DayWindow {

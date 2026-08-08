@@ -15,7 +15,7 @@ export type PostingPayload = {
 
 /**
  * Maps {@link PostingLine} to and from its event payload. Serialization keeps
- * amounts as decimal strings (RNF-2); deserialization rebuilds `Money` at the
+ * amounts as decimal strings; deserialization rebuilds `Money` at the
  * currency's precision via the {@link CurrencyCatalog} (INV-8).
  */
 export class PostingSerializer {

@@ -16,11 +16,11 @@ export class LedgerTransactionRepository extends EventSourcedRepository<LedgerTr
 
   /**
    * The `external_ref` the client stamped on the transaction's anchor event, or
-   * `null` when the transaction was created by the system (RF-16 needs both
+   * `null` when the transaction was created by the system (merging needs both
    * legs' references as merge traceability metadata).
    *
    * It is read from the aggregate's own stream, never from `proj_transactions`:
-   * the write side does not read projections (§6.3, RNF-10), and the read model
+   * the write side does not read projections, and the read model
    * may lag behind the very aggregates the command just loaded. The reference
    * lives in the envelope, not in `LedgerTransaction`, so the aggregate stays
    * free of an idempotency concern that belongs to the append.

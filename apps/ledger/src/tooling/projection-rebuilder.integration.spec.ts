@@ -6,21 +6,17 @@ import { ProjectionRebuilder } from '@cqrs/infrastructure/adapters/projection/pr
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria } from '@shared';
 import { OpenAccountCommand } from '@ledger/accounts/application/open-account/open-account.command';
-import { AccountTreeProjector, PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
-import { createLedgerApplication } from '@ledger/ledger/application/ledger-application.factory';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
+import { AccountTreeProjector } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
+import { createLedgerApplication } from '@ledger/bootstrap/ledger-application.factory';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
+import { PROJ_BALANCES } from '@ledger/transactions/application/read-models/account-balances.read-model';
+import { PROJ_POSTINGS, PROJ_TRANSACTIONS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
-import {
-  AccountBalancesProjector,
-  PROJ_BALANCES,
-} from '@ledger/transactions/infrastructure/projections/account-balances.projector';
-import {
-  PROJ_POSTINGS,
-  PROJ_TRANSACTIONS,
-  TransactionListProjector,
-} from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
+import { AccountBalancesProjector } from '@ledger/transactions/infrastructure/projections/account-balances.projector';
+import { TransactionListProjector } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
 
 const ctx: AuthContext = { userId: 'user-1', clientId: 'c', externalRef: null };
 
@@ -51,7 +47,7 @@ function buildRegistry() {
 }
 
 describe('ProjectionRebuilder', () => {
-  it('reconstructs the whole read model from the event stream (RNF-5)', async () => {
+  it('reconstructs the whole read model from the event stream', async () => {
     const eventStore = new InMemoryEventStore();
     const liveReadModel = new InMemoryReadModelStore();
     const { catalog } = buildRegistry();
@@ -99,7 +95,7 @@ describe('ProjectionRebuilder', () => {
     expect(rebuilt).toEqual(live);
   });
 
-  it('rebuilds a single projection without affecting others (AC-2)', async () => {
+  it('rebuilds a single projection without affecting others', async () => {
     const eventStore = new InMemoryEventStore();
     const liveReadModel = new InMemoryReadModelStore();
     const { catalog } = buildRegistry();
@@ -135,7 +131,7 @@ describe('ProjectionRebuilder', () => {
     expect(accountsBefore.length).toBeGreaterThan(0);
   });
 
-  it('rebuildAll reconstructs all registered projections and returns reports (AC-3)', async () => {
+  it('rebuildAll reconstructs all registered projections and returns reports', async () => {
     const eventStore = new InMemoryEventStore();
     const liveReadModel = new InMemoryReadModelStore();
     const { catalog } = buildRegistry();
@@ -174,7 +170,7 @@ describe('ProjectionRebuilder', () => {
     }
   });
 
-  it('rebuild is idempotent — running twice produces same state (AC-4)', async () => {
+  it('rebuild is idempotent — running twice produces same state', async () => {
     const eventStore = new InMemoryEventStore();
     const liveReadModel = new InMemoryReadModelStore();
     const { catalog } = buildRegistry();

@@ -1,6 +1,6 @@
 import { Command } from '@cqrs/application/command-bus/command';
 
-/** Opens an account under one of the five root types (RF-1). */
+/** Opens an account under one of the five root types. */
 export class OpenAccountCommand extends Command {
   readonly commandType = 'OpenAccount';
 

@@ -7,10 +7,6 @@ import { CommandResult } from '@cqrs/application/command-bus/command-result.type
 import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { QueryContext } from '@cqrs/application/query-bus/query-handler';
 import { Nullable } from '@shared';
-import { GetTransactionByIdQuery } from '@ledger/read-side/get-transaction-by-id/get-transaction-by-id.query';
-import { PendingReviewRow } from '@ledger/read-side/list-pending-review/list-pending-review.handler';
-import { ListPendingReviewQuery } from '@ledger/read-side/list-pending-review/list-pending-review.query';
-import { ListTransactionsQuery } from '@ledger/read-side/list-transactions/list-transactions.query';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import {
   CommandAcceptedDto,
@@ -21,6 +17,18 @@ import {
 import { AmendPendingTransactionCommand } from '@ledger/transactions/application/amend-transaction/amend-pending-transaction.command';
 import { AnnotateTransactionCommand } from '@ledger/transactions/application/annotate-transaction/annotate-transaction.command';
 import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
+import {
+  GetTransactionByIdQuery,
+  TransactionRow,
+} from '@ledger/transactions/application/get-transaction-by-id/get-transaction-by-id.query';
+import {
+  ListPendingReviewQuery,
+  PendingReviewRow,
+} from '@ledger/transactions/application/list-pending-review/list-pending-review.query';
+import {
+  ListTransactionsQuery,
+  TransactionListRow,
+} from '@ledger/transactions/application/list-transactions/list-transactions.query';
 import { PostingInput } from '@ledger/transactions/application/posting-input.type';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { ReverseConfirmedTransactionCommand } from '@ledger/transactions/application/reverse-transaction/reverse-confirmed-transaction.command';
@@ -38,10 +46,10 @@ import { TransactionDto } from './dto/transaction.dto';
 import { VoidTransactionRequestDto } from './dto/void-transaction-request.dto';
 
 /**
- * Transaction lifecycle and reads (§7.1–§7.4). Each state transition is its own
+ * Transaction lifecycle and reads. Each state transition is its own
  * POST action sub-resource mapping to a distinct command with distinct
  * invariants; the controller maps HTTP to the buses and passes the authenticated
- * {@link AuthContext} separately (RNF-10). Writes return a {@link CommandAcceptedDto};
+ * {@link AuthContext} separately. Writes return a {@link CommandAcceptedDto};
  * reads return the projection unchanged.
  */
 @ApiTags('transactions')
@@ -78,11 +86,17 @@ export class TransactionsController {
     return this.dispatch(command, context, externalRef);
   }
 
+  // FIXME: returns the bare `proj_transactions` rows, not the paginated
+  // `TransactionListDto` envelope the response is documented as — `total` has no
+  // source today (no count query). See the note in AccountsController.
   @Get()
-  @ApiOperation({ summary: 'List and filter transactions (RF-13).' })
+  @ApiOperation({ summary: 'List and filter transactions.' })
   @ApiOkResponse({ type: TransactionListDto })
-  list(@Context() context: LedgerContext, @Query() query: TransactionQueryDto): Promise<TransactionListDto> {
-    return this.queryBus.ask<TransactionListDto>(
+  list(
+    @Context() context: LedgerContext,
+    @Query() query: TransactionQueryDto,
+  ): Promise<readonly TransactionListRow[]> {
+    return this.queryBus.ask(
       new ListTransactionsQuery(
         query.account ?? null,
         query.status ?? null,
@@ -103,25 +117,26 @@ export class TransactionsController {
    * parameterized route would otherwise swallow this path.
    */
   @Get('pending-review')
-  @ApiOperation({ summary: "The review inbox: transactions awaiting the user's decision (§3.6)." })
+  @ApiOperation({ summary: "The review inbox: transactions awaiting the user's decision." })
   pendingReview(
     @Context() context: LedgerContext,
     @Query() query: PendingReviewQueryDto,
   ): Promise<readonly PendingReviewRow[]> {
-    return this.queryBus.ask<readonly PendingReviewRow[]>(
+    return this.queryBus.ask(
       new ListPendingReviewQuery(query.limit ?? null, query.offset ?? null),
       this.queryContext(context),
     );
   }
 
+  // FIXME: returns the `proj_transactions` row as stored, not `TransactionDto`.
   @Get(':id')
   @ApiOperation({ summary: 'Get a single transaction.' })
   @ApiOkResponse({ type: TransactionDto })
-  getOne(@Context() context: LedgerContext, @Param('id') id: string): Promise<TransactionDto> {
-    return this.queryBus.ask<TransactionDto>(
-      new GetTransactionByIdQuery(id),
-      this.queryContext(context),
-    );
+  getOne(
+    @Context() context: LedgerContext,
+    @Param('id') id: string,
+  ): Promise<Nullable<TransactionRow>> {
+    return this.queryBus.ask(new GetTransactionByIdQuery(id), this.queryContext(context));
   }
 
   @Post(':id/amend')
@@ -188,7 +203,7 @@ export class TransactionsController {
   }
 
   @Post(':id/reverse')
-  @ApiOperation({ summary: 'Reverse a confirmed transaction; returns the reversal id (§7.3).' })
+  @ApiOperation({ summary: 'Reverse a confirmed transaction; returns the reversal id.' })
   @ApiCreatedResponse({ type: CommandAcceptedDto })
   reverse(
     @Context() context: LedgerContext,

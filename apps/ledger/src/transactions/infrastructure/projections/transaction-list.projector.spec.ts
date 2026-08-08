@@ -1,14 +1,11 @@
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria, Nullable } from '@shared';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
 import { AccountType } from '@ledger/shared/domain/value-objects';
+import { PROJ_POSTINGS, PROJ_TRANSACTIONS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
 import { TransactionKindDeriver } from '@ledger/transactions/domain/derivation/transaction-kind.deriver';
-import {
-  PROJ_POSTINGS,
-  PROJ_TRANSACTIONS,
-  TransactionListProjector,
-} from './transaction-list.projector';
+import { TransactionListProjector } from './transaction-list.projector';
 
 type TransactionRow = {
   readonly transaction_id: string;
@@ -92,7 +89,7 @@ describe('TransactionListProjector', () => {
     expect(row.reverses_id).toBe('reversal-tx-1');
   });
 
-  it('links both voided legs to the transfer when TransfersMerged is projected (§3.6)', async () => {
+  it('links both voided legs to the transfer when TransfersMerged is projected', async () => {
     await projector.project(storedEvent({ aggregateId: 'leg-1' }), store);
     await projector.project(storedEvent({ aggregateId: 'leg-2' }), store);
     await projector.project(storedEvent({ aggregateId: 'transfer-1' }), store);
@@ -145,7 +142,7 @@ describe('TransactionListProjector', () => {
     expect(row.derived_kind).toBe('EXPENSE');
   });
 
-  it('falls back to COMPOUND when an account is not in account_tree yet (§9.4.4)', async () => {
+  it('falls back to COMPOUND when an account is not in account_tree yet', async () => {
     await projector.project(
       storedEvent({
         aggregateId: 'tx-unresolved',
@@ -186,9 +183,9 @@ describe('TransactionListProjector', () => {
    * The envelope's `occurred_at` always holds a value (it falls back to the
    * append instant), so projecting it would make every posting look precisely
    * timed. Only the payload distinguishes a declared instant from an unknown
-   * one, and an intraday assertion's verdict hangs on that difference (§2.4).
+   * one, and an intraday assertion's verdict hangs on that difference.
    */
-  describe('business instant (§2.4)', () => {
+  describe('business instant', () => {
     const instantOf = async (payloadInstant: Nullable<string>) => {
       const base = storedEvent();
       await projector.project(

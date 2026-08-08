@@ -1,10 +1,8 @@
 import { Projector } from '@cqrs/application/projection/projector';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
+import { PROJ_CURRENCIES } from '@ledger/reference/application/read-models/currencies.read-model';
 import { CURRENCY_REGISTERED } from '@ledger/reference/domain/currency/events/currency-registered.event';
-
-/** Read-model table backing the reference currency catalog. */
-export const PROJ_CURRENCIES = 'proj_currencies';
 
 /**
  * Materializes `proj_currencies` from `CurrencyRegistered`. Global by design:

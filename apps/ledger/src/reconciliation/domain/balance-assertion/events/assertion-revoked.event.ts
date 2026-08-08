@@ -1,7 +1,7 @@
 import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
 import { EventPayload } from '@cqrs/domain/event/event-payload.type';
 
-/** Stable event-type name for a revocation (spec §3.4). */
+/** Stable event-type name for a revocation. */
 export const ASSERTION_REVOKED = 'AssertionRevoked';
 
 /** An assertion was revoked; the reason is audited in the stream. */

@@ -1,7 +1,8 @@
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria, Nullable } from '@shared';
-import { PROJ_PENDING_REVIEW, PendingReviewProjector } from './pending-review.projector';
+import { PROJ_PENDING_REVIEW } from '@ledger/transactions/application/read-models/pending-review.read-model';
+import { PendingReviewProjector } from './pending-review.projector';
 
 type PendingRow = {
   readonly transaction_id: string;

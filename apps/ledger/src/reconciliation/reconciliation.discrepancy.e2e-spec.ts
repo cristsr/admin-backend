@@ -11,8 +11,8 @@ import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in
 import { SynchronousProjectionDispatcher } from '@cqrs/infrastructure/adapters/projection/synchronous-dispatcher';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { AccountValidationService } from '@ledger/accounts/application/account-validation.service';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
 import { SystemAccountProtectedException } from '@ledger/accounts/domain/account/exceptions/account.exception';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { createLedgerEventRegistry } from '@ledger/ledger/application/ledger-event-registry.factory';
 import { Money } from '@ledger/shared/domain/money';
 import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared/domain/value-objects';
@@ -23,15 +23,15 @@ import { RecordTransactionCommand } from '@ledger/transactions/application/recor
 import { RecordTransactionHandler } from '@ledger/transactions/application/record-transaction/record-transaction.handler';
 import { ZeroSumBalanceRule } from '@ledger/transactions/domain/balance/zero-sum-balance-rule';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
-import { AssertBalanceCommand } from './application/commands/assert-balance.command';
-import { AssertBalanceHandler } from './application/commands/assert-balance.handler';
-import { EvaluateAssertionHandler } from './application/commands/evaluate-assertion.handler';
-import { ResolveDiscrepancyCommand } from './application/commands/resolve-discrepancy.command';
-import { ResolveDiscrepancyHandler } from './application/commands/resolve-discrepancy.handler';
+import { AssertBalanceCommand } from './application/assert-balance/assert-balance.command';
+import { AssertBalanceHandler } from './application/assert-balance/assert-balance.handler';
+import { BalanceAssertionRepository } from './application/balance-assertion.repository';
+import { EvaluateAssertionHandler } from './application/evaluate-assertion/evaluate-assertion.handler';
 import { ReevaluateAssertionsReactor } from './application/reactors/reevaluate-assertions.reactor';
 import { createReconciliationEventRegistry } from './application/reconciliation-event-registry.factory';
+import { ResolveDiscrepancyCommand } from './application/resolve-discrepancy/resolve-discrepancy.command';
+import { ResolveDiscrepancyHandler } from './application/resolve-discrepancy/resolve-discrepancy.handler';
 import { BalanceAssertion } from './domain/balance-assertion/balance-assertion.aggregate';
-import { BalanceAssertionRepository } from './domain/balance-assertion/balance-assertion.repository';
 import { AssertionStatus } from './domain/balance-assertion/enums/assertion-status.enum';
 import { AdjustmentFactory } from './domain/services/adjustment.factory';
 import { AssertionEvaluator } from './domain/services/assertion-evaluator.service';
@@ -46,7 +46,7 @@ import { AssertionStatusProjector } from './infrastructure/projections/assertion
 /**
  * Test double for the write side of `transactions`: appends a `TransactionRecorded`
  * event straight to the shared event store and mirrors it into the posting reader,
- * the way the real EP-1 handler + `account_balances` projector would. Only
+ * the way the real handler + `account_balances` projector would. Only
  * `RecordTransactionCommand` is exercised in this flow (ResolveDiscrepancy).
  */
 class TransactionRecordingBus extends CommandBus {
@@ -111,7 +111,7 @@ class TransactionRecordingBus extends CommandBus {
 }
 
 /**
- * End-to-end reconciliation flow (spec §7.5) over the real EP-1 event store and
+ * End-to-end reconciliation flow over the real event store and
  * ports, with a transaction-recording double standing in for the transactions
  * module's write side: declare an assertion against a short balance → MISMATCHED
  * → resolve → the system adjustment closes the gap → the reactor re-evaluates the
@@ -294,7 +294,7 @@ describe('Discrepancy resolution over the real RecordTransaction path (INV-13)',
       new OptimisticConcurrencyPolicy(),
     ]);
     bus.register(
-      'RecordTransaction',
+      RecordTransactionCommand,
       new RecordTransactionHandler(
         new LedgerTransactionRepository(eventStore, createLedgerEventRegistry(catalog), envelopes),
         new AccountValidationService(readModel),

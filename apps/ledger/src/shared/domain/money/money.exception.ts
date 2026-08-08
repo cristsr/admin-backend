@@ -10,7 +10,7 @@ export class CurrencyMismatchException extends DomainUnprocessableException {
   readonly code: string = 'CURRENCY_MISMATCH';
 }
 
-/** The amount's scale exceeds the currency's minor units (spec §2.7.1). */
+/** The amount's scale exceeds the currency's minor units. */
 export class MoneyScaleException extends DomainUnprocessableException {
   readonly code: string = 'MONEY_SCALE';
 }

@@ -17,7 +17,7 @@ export const CURRENCY_CATALOG_ID = 'currency-catalog';
 const MAX_MINOR_UNITS = 4;
 
 /**
- * The reference currency catalog (§3.3): a deliberately thin event-sourced
+ * The reference currency catalog: a deliberately thin event-sourced
  * aggregate. It guards no accounting invariant — its whole job is that a code
  * maps to one precision, forever.
  */
@@ -33,7 +33,7 @@ export class CurrencyCatalogAggregate extends AggregateRoot<string> {
 
   /**
    * Registers a currency. Re-registering with the same precision is a silent
-   * no-op (RNF-4); with a different one it is rejected — changing a currency's
+   * no-op; with a different one it is rejected — changing a currency's
    * precision would reinterpret every amount ever recorded in it, which is
    * exactly what design principle #5 forbids.
    */

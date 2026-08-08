@@ -1,9 +1,9 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
 /**
- * Read-model tables for reconciliation (§6.2). No
+ * Read-model tables for reconciliation. No
  * business constraints: the truth lives in the event stream and a bug is fixed
- * by rebuild (§6.3). `NUMERIC(20,6)` materializes amounts; exact arithmetic
+ * by rebuild. `NUMERIC(20,6)` materializes amounts; exact arithmetic
  * stays in the `Money` value object. Enum-like columns are `TEXT` (no DB enums).
  */
 export class CreateReconciliationProjections1790000000005 implements MigrationInterface {

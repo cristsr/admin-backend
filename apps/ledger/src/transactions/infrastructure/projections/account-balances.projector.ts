@@ -8,10 +8,8 @@ import {
   CurrencyCode,
 } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
-import { PROJ_POSTINGS } from './transaction-list.projector';
-
-/** Read-model table for balances per account and currency. */
-export const PROJ_BALANCES = 'proj_balances';
+import { PROJ_BALANCES } from '@ledger/transactions/application/read-models/account-balances.read-model';
+import { PROJ_POSTINGS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
 
 type PostingRow = {
   readonly account_id: string;
@@ -21,11 +19,11 @@ type PostingRow = {
 };
 
 /**
- * Maintains `proj_balances` (§6.2): confirmed and pending amounts per account
+ * Maintains `proj_balances`: confirmed and pending amounts per account
  * and currency, tracked separately (INV-5 — balances are a projection, never
  * written by a command). It recomputes each affected account+currency from
  * `proj_postings`, so it must run after `transaction_list` in the projector
- * order; recompute keeps it correct on replay and rebuild (RNF-5).
+ * order; recompute keeps it correct on replay and rebuild.
  */
 export class AccountBalancesProjector extends Projector {
   readonly name = 'account_balances';

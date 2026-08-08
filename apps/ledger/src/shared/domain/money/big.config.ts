@@ -8,10 +8,10 @@ import Big from 'big.js';
  * - `strict`: the constructor and arithmetic methods reject primitive numbers,
  *   enforcing INV-8 (no float-derived values) at runtime, not just at types.
  * - `DP`: division precision; core posting arithmetic (+ − ×) is exact
- *   regardless, this only matters for read-side valuation (EP-4.5).
+ * regardless, this only matters for read-side valuation.
  * - `RM = 2`: round-half-even (banker's rounding) for that valuation.
  * - `PE`/`NE` at their extremes: `toString` never falls back to exponential
- *   notation, so serialized amounts are always plain decimal strings (RNF-2).
+ * notation, so serialized amounts are always plain decimal strings.
  */
 Big.strict = true;
 Big.DP = 40;

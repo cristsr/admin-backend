@@ -7,12 +7,21 @@ import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { QueryContext } from '@cqrs/application/query-bus/query-handler';
 import { Nullable } from '@shared';
 import { CloseAccountCommand } from '@ledger/accounts/application/close-account/close-account.command';
+import {
+  BalanceRow,
+  GetAccountBalancesQuery,
+} from '@ledger/accounts/application/get-account-balances/get-account-balances.query';
+import {
+  AccountRow,
+  GetAccountByIdQuery,
+} from '@ledger/accounts/application/get-account-by-id/get-account-by-id.query';
+import {
+  AccountTreeRow,
+  GetAccountTreeQuery,
+} from '@ledger/accounts/application/get-account-tree/get-account-tree.query';
 import { OpenAccountCommand } from '@ledger/accounts/application/open-account/open-account.command';
 import { RecordOpeningBalanceCommand } from '@ledger/accounts/application/record-opening-balance/record-opening-balance.command';
 import { RenameAccountCommand } from '@ledger/accounts/application/rename-account/rename-account.command';
-import { GetAccountBalancesQuery } from '@ledger/read-side/get-account-balances/get-account-balances.query';
-import { GetAccountByIdQuery } from '@ledger/read-side/get-account-by-id/get-account-by-id.query';
-import { GetAccountTreeQuery } from '@ledger/read-side/get-account-tree/get-account-tree.query';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import {
   CommandAcceptedDto,
@@ -32,7 +41,7 @@ import { RenameAccountRequestDto } from './dto/rename-account-request.dto';
 
 /**
  * Account lifecycle and reads. Writes map to a command dispatched with the
- * authenticated {@link AuthContext} carried separately (RNF-10) and return a
+ * authenticated {@link AuthContext} carried separately and return a
  * {@link CommandAcceptedDto}; reads ask the query bus and return the projection
  * unchanged. `rename`/`close` are POST action sub-resources, not PATCH/DELETE:
  * they are event-sourced lifecycle transitions.
@@ -59,18 +68,30 @@ export class AccountsController {
     return this.commandBus.dispatch(command, this.authContext(context, externalRef));
   }
 
+  // FIXME: the three reads below return the read-model rows as they are stored
+  // (snake_case, no envelope), which is not what the `@ApiOkResponse` DTOs
+  // describe. The mismatch predates the typed query bus and was hidden by
+  // `ask<Dto>()` asserting a shape nobody produced; the signatures now state
+  // what actually goes over the wire. Mapping rows to the DTOs is a separate
+  // change — `AccountTreeDto.view` and its envelope have no source yet.
   @Get()
   @ApiOperation({ summary: 'List the account tree.' })
   @ApiOkResponse({ type: AccountTreeDto })
-  list(@Context() context: LedgerContext, @Query() _query: AccountTreeQueryDto): Promise<AccountTreeDto> {
-    return this.queryBus.ask<AccountTreeDto>(new GetAccountTreeQuery(), this.queryContext(context));
+  list(
+    @Context() context: LedgerContext,
+    @Query() _query: AccountTreeQueryDto,
+  ): Promise<readonly AccountTreeRow[]> {
+    return this.queryBus.ask(new GetAccountTreeQuery(), this.queryContext(context));
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a single account.' })
   @ApiOkResponse({ type: AccountDto })
-  getOne(@Context() context: LedgerContext, @Param('id') id: string): Promise<AccountDto> {
-    return this.queryBus.ask<AccountDto>(new GetAccountByIdQuery(id), this.queryContext(context));
+  getOne(
+    @Context() context: LedgerContext,
+    @Param('id') id: string,
+  ): Promise<Nullable<AccountRow>> {
+    return this.queryBus.ask(new GetAccountByIdQuery(id), this.queryContext(context));
   }
 
   @Get(':id/balance')
@@ -80,11 +101,8 @@ export class AccountsController {
     @Context() context: LedgerContext,
     @Param('id') id: string,
     @Query() _query: AccountBalanceQueryDto,
-  ): Promise<AccountBalanceDto[]> {
-    return this.queryBus.ask<AccountBalanceDto[]>(
-      new GetAccountBalancesQuery(id),
-      this.queryContext(context),
-    );
+  ): Promise<readonly BalanceRow[]> {
+    return this.queryBus.ask(new GetAccountBalancesQuery(id), this.queryContext(context));
   }
 
   @Post(':id/rename')
@@ -104,7 +122,7 @@ export class AccountsController {
 
   @Post(':id/opening-balance')
   @ApiOperation({
-    summary: 'Record the balance a pre-existing account already had (RF-27).',
+    summary: 'Record the balance a pre-existing account already had.',
     description:
       'Books a confirmed opening entry between the account and the user\'s ' +
       '`Equity:OpeningBalances`. The counterparty and the system origin are ' +

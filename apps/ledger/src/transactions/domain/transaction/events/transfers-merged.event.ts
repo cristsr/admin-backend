@@ -14,8 +14,8 @@ export type TransfersMergedProps = {
 };
 
 /**
- * Two pending transactions were merged into a single confirmed transfer (§3.4,
- * RF-16): the ids of the two voided pendings plus the resulting transfer's
+ * Two pending transactions were merged into a single confirmed transfer: the
+ * ids of the two voided pendings plus the resulting transfer's
  * postings.
  *
  * It is the *fact of the merge*, not a lifecycle step: the pendings still emit

@@ -43,7 +43,7 @@ function makeTransaction(id: string) {
 }
 
 describe('AmendPendingTransactionHandler', () => {
-  it('should amend postings of a PENDING transaction (AC-8)', async () => {
+  it('should amend postings of a PENDING transaction', async () => {
     const { handler, transactions } = setup();
     const tx = makeTransaction('tx-1');
     transactions.load.mockResolvedValue(tx as any);
@@ -63,7 +63,7 @@ describe('AmendPendingTransactionHandler', () => {
     expect(transactions.save).toHaveBeenCalledTimes(1);
   });
 
-  it('should throw TransactionNotFoundException for non-existent transaction (AC-8)', async () => {
+  it('should throw TransactionNotFoundException for non-existent transaction', async () => {
     const { handler, transactions } = setup();
     transactions.load.mockResolvedValue(null);
 
@@ -72,7 +72,7 @@ describe('AmendPendingTransactionHandler', () => {
     ).rejects.toBeInstanceOf(TransactionNotFoundException);
   });
 
-  it('should propagate IMMUTABLE_TRANSACTION when aggregate rejects (AC-8)', async () => {
+  it('should propagate IMMUTABLE_TRANSACTION when aggregate rejects', async () => {
     const { handler, transactions } = setup();
     const tx = makeTransaction('tx-1');
     tx.amend.mockImplementation(() => {

@@ -1,7 +1,7 @@
 import { Nullable } from '@shared';
 
 /**
- * The annotative attributes of a transaction (§3.4). Editable in any non-VOIDED
+ * The annotative attributes of a transaction. Editable in any non-VOIDED
  * state (INV-6) without touching postings, amounts or the accounting date.
  */
 export type TransactionAnnotations = {

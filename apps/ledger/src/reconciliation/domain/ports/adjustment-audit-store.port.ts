@@ -1,5 +1,5 @@
 /** One resolution detail row behind the audit (proj_adjustment_audit_entries). */
-export interface AdjustmentAuditEntry {
+export type AdjustmentAuditEntry = {
   readonly adjustmentTxnId: string;
   readonly userId: string;
   readonly accountId: string;
@@ -7,23 +7,23 @@ export interface AdjustmentAuditEntry {
   readonly amount: string;
   readonly currencyCode: string;
   readonly resolvedOn: string;
-}
+};
 
 /** Accumulated "unexplained money" per account+currency (proj_adjustment_audit). */
-export interface AdjustmentAuditRow {
+export type AdjustmentAuditRow = {
   readonly userId: string;
   readonly accountId: string;
   readonly currencyCode: string;
   readonly totalAdjusted: string;
   readonly adjustmentCount: number;
   readonly lastAdjustedOn: string;
-}
+};
 
 /**
  * Read port over the `adjustment_audit` projection.
  *
  * Writes are deliberately absent: `AdjustmentAuditProjector` is the only writer
- * and it goes through the shared `ReadModelStore` (RNF-10, Artículo 10).
+ * and it goes through the shared `ReadModelStore` (rules Art. 10).
  */
 export abstract class AdjustmentAuditStore {
   abstract byAccount(userId: string, accountId: string): Promise<readonly AdjustmentAuditRow[]>;

@@ -84,7 +84,7 @@ describe('RenameAccountHandler', () => {
     expect(dispatcher.dispatch).toHaveBeenCalledWith(['ev-1']);
   });
 
-  it('rejects a rename onto an existing name with NAME_COLLISION (§2.1.1)', async () => {
+  it('rejects a rename onto an existing name with NAME_COLLISION', async () => {
     const { handler, accounts } = setup(['Assets:Bank', 'Assets:Cash']);
     accounts.load.mockResolvedValue(anAccount('Assets:Bank'));
 
@@ -103,7 +103,7 @@ describe('RenameAccountHandler', () => {
     ).resolves.toMatchObject({ aggregateId: 'acc-1' });
   });
 
-  it('rejects when a descendant would collide after propagation (§6.3)', async () => {
+  it('rejects when a descendant would collide after propagation', async () => {
     const { handler, accounts } = setup([
       'Assets:Cash',
       'Assets:Cash:Savings',

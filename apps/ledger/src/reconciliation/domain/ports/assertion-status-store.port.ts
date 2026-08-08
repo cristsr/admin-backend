@@ -2,8 +2,8 @@ import { Nullable } from '@shared';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { AssertionStatus } from '../balance-assertion/enums/assertion-status.enum';
 
-/** A materialized `assertion_status` row (proj_assertions, §6.2). */
-export interface AssertionStatusRow {
+/** A materialized `assertion_status` row (proj_assertions). */
+export type AssertionStatusRow = {
   readonly assertionId: string;
   readonly userId: string;
   readonly accountId: string;
@@ -18,16 +18,16 @@ export interface AssertionStatusRow {
   readonly revokeReason: Nullable<string>;
   readonly checkedAt: Nullable<Date>;
   readonly createdAt: Date;
-}
+};
 
 /**
  * Read port over the `assertion_status` projection, serving the query handlers
  * and the reactor lookup.
  *
  * Writes are deliberately absent: `AssertionStatusProjector` is the only writer
- * of the read model and it goes through the shared `ReadModelStore` (RNF-10,
- * Artículo 10). Truncation is not here either — a rebuild truncates by table
- * through that same store.
+ * of the read model and it goes through the shared `ReadModelStore`.
+ * Truncation is not here either — a rebuild truncates by table through that
+ * same store.
  */
 export abstract class AssertionStatusStore {
   abstract byId(userId: string, assertionId: string): Promise<Nullable<AssertionStatusRow>>;
@@ -36,7 +36,7 @@ export abstract class AssertionStatusStore {
 
   /**
    * Non-revoked assertions on an account whose cutoff date is at or after
-   * `from`. Serves the reactor lookup (RF-18): an assertion earlier than an
+   * `from`. Serves the reactor lookup: an assertion earlier than an
    * altered posting is not affected by it.
    */
   abstract nonRevokedOnAccountFrom(

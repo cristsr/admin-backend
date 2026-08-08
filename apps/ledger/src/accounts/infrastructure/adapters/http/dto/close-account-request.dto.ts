@@ -3,7 +3,7 @@ import { IsDateString } from 'class-validator';
 
 /** Body of `POST /accounts/{id}/close`. */
 export class CloseAccountRequestDto {
-  @ApiProperty({ example: '2026-07-20', description: 'Plain accounting date the account closes on (RNF-7).' })
+  @ApiProperty({ example: '2026-07-20', description: 'Plain accounting date the account closes on.' })
   @IsDateString()
   readonly closedOn: string;
 }

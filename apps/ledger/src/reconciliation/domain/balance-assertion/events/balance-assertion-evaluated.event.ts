@@ -4,7 +4,7 @@ import { Money } from '@ledger/shared/domain/money';
 import { CurrencyCatalog, CurrencyCode } from '@ledger/shared/domain/value-objects';
 import { AssertionStatus } from '../enums/assertion-status.enum';
 
-/** Stable event-type name for an evaluation verdict (spec §3.4). */
+/** Stable event-type name for an evaluation verdict. */
 export const BALANCE_ASSERTION_EVALUATED = 'BalanceAssertionEvaluated';
 
 /** Construction shape for {@link BalanceAssertionEvaluated}. */

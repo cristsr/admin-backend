@@ -2,15 +2,7 @@ import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { PostgresReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';
 import { DataSource } from 'typeorm';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
-import {
-  AdjustmentAuditFixture,
-  runAdjustmentAuditStoreContract,
-} from '@ledger/reconciliation/domain/ports/adjustment-audit-store.contract';
 import { AdjustmentAuditEntry } from '@ledger/reconciliation/domain/ports/adjustment-audit-store.port';
-import {
-  AssertionStatusFixture,
-  runAssertionStatusStoreContract,
-} from '@ledger/reconciliation/domain/ports/assertion-status-store.contract';
 import { AssertionStatusRow } from '@ledger/reconciliation/domain/ports/assertion-status-store.port';
 import {
   AdjustmentAuditProjector,
@@ -18,14 +10,22 @@ import {
   PROJ_ADJUSTMENT_AUDIT_ENTRIES,
 } from '@ledger/reconciliation/infrastructure/projections/adjustment-audit.projector';
 import { PROJ_ASSERTIONS } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
+import {
+  AdjustmentAuditFixture,
+  runAdjustmentAuditStoreContract,
+} from '@ledger/reconciliation/infrastructure/testing/adjustment-audit-store.contract';
+import {
+  AssertionStatusFixture,
+  runAssertionStatusStoreContract,
+} from '@ledger/reconciliation/infrastructure/testing/assertion-status-store.contract';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { ReadModelAdjustmentAuditReader } from './read-model-adjustment-audit-reader';
 import { ReadModelAssertionStatusReader } from './read-model-assertion-status-reader';
 
 /**
  * The same two contracts the in-memory specs run, this time over
- * {@link PostgresReadModelStore} (AC-3): both adapters must behave identically
- * (RNF-11). Needs a database with the reconciliation migration applied, so it
+ * {@link PostgresReadModelStore}: both adapters must behave identically
+ *. Needs a database with the reconciliation migration applied, so it
  * only runs with RUN_PG_TESTS=1 — same convention as the other Postgres specs.
  */
 const runPgTests = !!process.env.RUN_PG_TESTS;

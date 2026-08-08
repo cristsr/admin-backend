@@ -5,6 +5,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { AccountsHttpModule } from '@ledger/accounts/infrastructure/adapters/http';
 import { appConfig, databaseConfig } from '@ledger/config/environment';
 import { loadEnvironment } from '@ledger/env';
+import { LedgerHttpModule } from '@ledger/ledger/infrastructure/adapters/http';
 import { LedgerCoreModule } from '@ledger/ledger/ledger-core.module';
 import { ReconciliationModule } from '@ledger/reconciliation/reconciliation.module';
 import { ReferenceModule } from '@ledger/reference/reference.module';
@@ -24,19 +25,17 @@ import { DatabaseModule } from './database/database.module';
       validate: () => loadEnvironment(),
     }),
     LoggerModule.forRoot(buildPinoModuleOptions()),
-    // Drives ReconciliationPump's @Interval: the async projections of §8.1.
+    // Drives the reconciliation pump's @Interval.
     ScheduleModule.forRoot(),
     DatabaseModule,
-    // Global context guard + resolver binding (RF-26) and the write-result interceptor.
+    // Global context guard, resolver binding and the write-result interceptor.
     SharedHttpModule,
-    // EP-1 write/read buses wired into DI (in-memory adapters for now; see the
-    // module's TODO on swapping in the Postgres persistence adapters).
+    // Composition root: the buses every other module resolves.
     LedgerCoreModule,
-    // Global reference data: the currency catalog (hu-0019).
     ReferenceModule,
+    LedgerHttpModule,
     AccountsHttpModule,
     TransactionsHttpModule,
-    // EP-3: reconciliation and the transfer feature, mounted on the real core.
     ReconciliationModule,
     TransactionsModule,
   ],

@@ -49,7 +49,7 @@ describe('AssertionStatusProjector', () => {
     store = new InMemoryReadModelStore();
   });
 
-  it('declares the Projector contract (AC-0)', () => {
+  it('declares the Projector contract', () => {
     expect(projector.name).toBe('assertion_status');
     expect(projector.consumes).toEqual([
       'BalanceAsserted',
@@ -135,7 +135,7 @@ describe('AssertionStatusProjector', () => {
     expect(await rowOf('a-1')).toBeUndefined();
   });
 
-  it('is idempotent: replaying the same events leaves the same row (RNF-4, AC-8)', async () => {
+  it('is idempotent: replaying the same events leaves the same row', async () => {
     const evaluated = anEvent('BalanceAssertionEvaluated', {
       result: AssertionStatus.MATCHED,
       difference: '0',

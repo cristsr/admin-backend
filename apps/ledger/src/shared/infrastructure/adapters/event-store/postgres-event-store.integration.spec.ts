@@ -8,7 +8,7 @@ import { DataSource } from 'typeorm';
  * Runs the shared EventStore contract against a real PostgreSQL, plus the
  * append-only trigger checks. Gated on RUN_PG_TESTS so the suite stays green
  * without a database; provide DB_URI (or the default test URI) and RUN_PG_TESTS=1
- * to exercise it. The adapter must satisfy the identical contract (RNF-11).
+ * to exercise it. The adapter must satisfy the identical contract.
  */
 const runPgTests = !!process.env.RUN_PG_TESTS;
 const testUri =

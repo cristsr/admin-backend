@@ -1,7 +1,8 @@
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria } from '@shared';
-import { LedgerSettingsProjector, PROJ_LEDGER_SETTINGS } from './ledger-settings.projector';
+import { PROJ_LEDGER_SETTINGS } from '@ledger/ledger/application/read-models/ledger-settings.read-model';
+import { LedgerSettingsProjector } from './ledger-settings.projector';
 
 const AT = new Date('2026-07-22T10:00:00.000Z');
 
@@ -46,7 +47,7 @@ describe('LedgerSettingsProjector', () => {
     store = new InMemoryReadModelStore();
   });
 
-  it('consumes the three settings events (AC-9)', () => {
+  it('consumes the three settings events', () => {
     expect(projector.consumes).toEqual([
       'LedgerInitialized',
       'PresentationCurrencyChanged',
@@ -122,7 +123,7 @@ describe('LedgerSettingsProjector', () => {
     expect(await row()).toBeUndefined();
   });
 
-  it('is idempotent: replaying the stream yields the same row (RNF-5)', async () => {
+  it('is idempotent: replaying the stream yields the same row', async () => {
     const change = anEvent('TimezoneChanged', {
       userId: 'user-1',
       timezone: 'Europe/Madrid',

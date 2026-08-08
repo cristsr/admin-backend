@@ -24,7 +24,7 @@ async function bootstrap() {
   app.flushLogs();
 
   // URI versioning under a global `api` prefix: every resource hangs off
-  // `/api/v1/...` (RNF-8). A breaking change opens `/api/v2` alongside v1.
+  // `/api/v1/...`. A breaking change opens `/api/v2` alongside v1.
   app.setGlobalPrefix('api');
   app.enableVersioning({ type: VersioningType.URI, defaultVersion: '1' });
 
@@ -36,7 +36,7 @@ async function bootstrap() {
   );
 
   // Every domain and port failure becomes the standard error body with its
-  // stable RF-14 `code` (EP-2.6).
+  // stable `code`.
   app.useGlobalFilters(new ExceptionFilter());
 
   useContainer(app.select(AppModule), { fallbackOnErrors: true });

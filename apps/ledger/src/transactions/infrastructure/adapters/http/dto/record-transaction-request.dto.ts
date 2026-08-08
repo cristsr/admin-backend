@@ -24,7 +24,7 @@ const RECORDABLE_STATUSES = [TransactionStatus.PENDING, TransactionStatus.CONFIR
  * allowance (INV-4) and account state (INV-3) are the aggregate's authority.
  */
 export class RecordTransactionRequestDto {
-  @ApiProperty({ example: '2026-07-20', description: 'Plain accounting date (RNF-7).' })
+  @ApiProperty({ example: '2026-07-20', description: 'Plain accounting date.' })
   @IsDateString()
   readonly date: string;
 
@@ -34,7 +34,7 @@ export class RecordTransactionRequestDto {
       'UTC instant the movement actually happened, when the source knows it (a bank ' +
       'notification does; a manually entered expense does not). Omit when unknown — ' +
       'an intraday balance assertion then reports INDETERMINATE instead of guessing ' +
-      'the order (§2.4).',
+      'the order.',
   })
   @IsOptional()
   @IsDateString()

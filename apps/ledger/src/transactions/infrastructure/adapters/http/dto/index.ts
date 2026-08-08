@@ -8,3 +8,4 @@ export * from './reverse-transaction-request.dto';
 export * from './transaction-query.dto';
 export * from './transaction.dto';
 export * from './transaction-list.dto';
+export * from './merge-transfers-request.dto';

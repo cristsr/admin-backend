@@ -8,11 +8,11 @@ import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 
 /** A stored posting row keyed by owner, account and transaction. */
-interface StoredPosting extends AssertablePosting {
+type StoredPosting = AssertablePosting & {
   readonly userId: string;
   readonly accountId: string;
   readonly transactionId: Nullable<string>;
-}
+};
 
 /**
  * In-memory double of {@link AssertionPostingReader}: mirrors the real adapter's

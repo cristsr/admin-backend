@@ -1,6 +1,6 @@
 import { Command } from '@cqrs/application/command-bus/command';
 
-/** Renames an account; the root type is immutable and system accounts are protected (RF-1). */
+/** Renames an account; the root type is immutable and system accounts are protected. */
 export class RenameAccountCommand extends Command {
   readonly commandType = 'RenameAccount';
 

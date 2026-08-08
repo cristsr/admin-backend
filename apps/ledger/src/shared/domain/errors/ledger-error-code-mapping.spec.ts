@@ -13,15 +13,15 @@ import {
 import { AccountNotFoundException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
 import { LedgerNotInitializedException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import {
-  InvalidTimeZoneException,
-  InvalidCurrencyCodeException as SettingsInvalidCurrencyCodeException,
-} from '@ledger/settings/domain/ledger-settings/exceptions/settings.exception';
-import {
   CurrencyMismatchException,
   InvalidCurrencyException,
   InvalidMoneyException,
   MoneyScaleException,
 } from '@ledger/shared/domain/money/money.exception';
+import {
+  InvalidCurrencyCodeException,
+  InvalidTimeZoneException,
+} from '@ledger/shared/domain/value-objects';
 import {
   ImmutableTransactionException,
   TransactionNotFoundException,
@@ -30,12 +30,12 @@ import {
 import { LEDGER_ERROR_CODE } from './ledger-error-code';
 
 /**
- * Freezes the RF-14 code → HTTP status contract (EP-2.6): the API's stable error
+ * Freezes the code → HTTP status contract: the API's stable error
  * surface. Adding a code obliges adding a row here; changing a status here is a
  * breaking API change. The mapping is verified end-to-end through the shared
  * exception filter, exactly as a client would observe it.
  */
-describe('Ledger error code → HTTP status contract (RF-14)', () => {
+describe('Ledger error code → HTTP status contract', () => {
   const capture = () => {
     const json = jest.fn();
     const status = jest.fn().mockReturnValue({ json });
@@ -52,7 +52,7 @@ describe('Ledger error code → HTTP status contract (RF-14)', () => {
   const cases: ReadonlyArray<[DomainException, number, string]> = [
     [new UnbalancedTransactionException('unbalanced'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.UNBALANCED_TRANSACTION],
     [new CurrencyNotAllowedException('bad currency'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.CURRENCY_NOT_ALLOWED],
-    // Divergence from EP-2's assumed contract: the real EP-1 `AccountClosedException`
+    // Divergence from the contract the HTTP layer assumed: `AccountClosedException`
     // is an unprocessable-entity (INV-3, posting to a closed account), not a conflict.
     [new AccountClosedException('closed'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.ACCOUNT_CLOSED],
     [new ImmutableTransactionException('immutable'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.IMMUTABLE_TRANSACTION],
@@ -63,8 +63,8 @@ describe('Ledger error code → HTTP status contract (RF-14)', () => {
     [new AccountNotFoundException('no account'), HttpStatus.NOT_FOUND, LEDGER_ERROR_CODE.ACCOUNT_NOT_FOUND],
     [new TransactionNotFoundException('no transaction'), HttpStatus.NOT_FOUND, LEDGER_ERROR_CODE.TRANSACTION_NOT_FOUND],
     [new LedgerNotInitializedException('not initialized'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.LEDGER_NOT_INITIALIZED],
-    [new SettingsInvalidCurrencyCodeException('XX'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.INVALID_CURRENCY_CODE],
-    [new InvalidTimeZoneException('Bogota'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.INVALID_TIME_ZONE],
+    [new InvalidCurrencyCodeException('Invalid currency code: XX'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.INVALID_CURRENCY_CODE],
+    [new InvalidTimeZoneException('Invalid IANA timezone: Bogota'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.INVALID_TIME_ZONE],
     [new InvalidMoneyException('not a decimal'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.INVALID_MONEY],
     [new CurrencyMismatchException('USD vs COP'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.CURRENCY_MISMATCH],
     [new MoneyScaleException('too many decimals'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.MONEY_SCALE],

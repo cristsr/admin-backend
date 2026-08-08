@@ -3,8 +3,8 @@ import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { AssertionLookupPort } from '@ledger/reconciliation/domain/ports/assertion-lookup.port';
 import { AssertionPostingReader } from '@ledger/reconciliation/domain/ports/assertion-posting-reader.port';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
-import { EvaluateAssertionCommand } from '../commands/evaluate-assertion.command';
-import { EvaluateAssertionHandler } from '../commands/evaluate-assertion.handler';
+import { EvaluateAssertionCommand } from '../evaluate-assertion/evaluate-assertion.command';
+import { EvaluateAssertionHandler } from '../evaluate-assertion/evaluate-assertion.handler';
 
 /**
  * Events that can change an assertion's verdict.
@@ -26,21 +26,21 @@ const REEVALUATION_TRIGGERS: ReadonlySet<string> = new Set([
 ]);
 
 /** An account touched by an event and the earliest altered date on it. */
-interface TouchedAccount {
+type TouchedAccount = {
   readonly accountId: string;
   readonly affectedFrom: LedgerDate;
-}
+};
 
 /** The posting shape carried inside a transaction event payload. */
-interface EventPosting {
+type EventPosting = {
   readonly accountId: string;
-}
+};
 
 /**
- * Process manager (RF-18): on a posting-altering event, finds the user's
+ * Process manager: on a posting-altering event, finds the user's
  * non-revoked assertions on the touched accounts whose cutoff is at or after the
  * transaction date, and runs `EvaluateAssertion` for each. It never writes events
- * or projections itself (§3.2, RNF-10). Reprocessing is safe: `EvaluateAssertion`
+ * or projections itself. Reprocessing is safe: `EvaluateAssertion`
  * is idempotent and the aggregate stays silent on an unchanged verdict.
  */
 export class ReevaluateAssertionsReactor {
@@ -76,7 +76,7 @@ export class ReevaluateAssertionsReactor {
    * Accounts the event moved. Events that carry their postings are read
    * straight from the payload; the ones that don't (`TransactionVoided`) are
    * resolved against `proj_postings`, which is written synchronously in the
-   * command transaction (§8.1) and therefore already current by the time the
+   * command transaction and therefore already current by the time the
    * pump reaches the event.
    */
   private async touchedAccounts(event: StoredEvent): Promise<readonly TouchedAccount[]> {

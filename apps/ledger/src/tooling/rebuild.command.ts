@@ -5,12 +5,10 @@ import { InMemoryProjectionCheckpointRepository } from '@cqrs/infrastructure/ada
 import { ProjectionRebuilder } from '@cqrs/infrastructure/adapters/projection/projection-rebuilder';
 import { PostgresReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';
 import { DataSource } from 'typeorm';
-import { AccountTreeProjector, PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
-import { createLedgerEventRegistry } from '@ledger/ledger/application/ledger-event-registry.factory';
-import {
-  LedgerSettingsProjector,
-  PROJ_LEDGER_SETTINGS,
-} from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
+import { AccountTreeProjector } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
+import { PROJ_LEDGER_SETTINGS } from '@ledger/ledger/application/read-models/ledger-settings.read-model';
+import { LedgerSettingsProjector } from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
 import { RECONCILIATION_PROJECTION } from '@ledger/reconciliation/infrastructure/adapters/events/reconciliation.pump';
 import {
   AdjustmentAuditProjector,
@@ -21,25 +19,16 @@ import {
   AssertionStatusProjector,
   PROJ_ASSERTIONS,
 } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
-import {
-  CurrenciesProjector,
-  PROJ_CURRENCIES,
-} from '@ledger/reference/infrastructure/projections/currencies.projector';
-import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
+import { PROJ_CURRENCIES } from '@ledger/reference/application/read-models/currencies.read-model';
+import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
+import { CurrenciesProjector } from '@ledger/reference/infrastructure/projections/currencies.projector';
 import { ConsistencyVerifier } from '@ledger/tooling/consistency-verifier';
-import {
-  AccountBalancesProjector,
-  PROJ_BALANCES,
-} from '@ledger/transactions/infrastructure/projections/account-balances.projector';
-import {
-  PROJ_PENDING_REVIEW,
-  PendingReviewProjector,
-} from '@ledger/transactions/infrastructure/projections/pending-review.projector';
-import {
-  PROJ_POSTINGS,
-  PROJ_TRANSACTIONS,
-  TransactionListProjector,
-} from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
+import { PROJ_BALANCES } from '@ledger/transactions/application/read-models/account-balances.read-model';
+import { PROJ_PENDING_REVIEW } from '@ledger/transactions/application/read-models/pending-review.read-model';
+import { PROJ_POSTINGS, PROJ_TRANSACTIONS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
+import { AccountBalancesProjector } from '@ledger/transactions/infrastructure/projections/account-balances.projector';
+import { PendingReviewProjector } from '@ledger/transactions/infrastructure/projections/pending-review.projector';
+import { TransactionListProjector } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
@@ -61,9 +50,14 @@ async function main(): Promise<void> {
   });
   await dataSource.initialize();
 
-  const catalog = new SeedCurrencyCatalog();
   const eventStore = new PostgresEventStore(dataSource);
   const readModel = new PostgresReadModelStore(dataSource);
+
+  // Read the registered currencies rather than a fixed seed: a ledger holding
+  // any currency beyond COP/USD would otherwise fail to resolve its own
+  // amounts here. Loaded once, before any projection is truncated.
+  const catalog = new ReadModelCurrencyCatalog(readModel);
+  await catalog.refresh();
 
   const registry = new ProjectionRegistry();
   registry.register('account_tree', [new AccountTreeProjector()], [PROJ_ACCOUNTS]);
@@ -140,12 +134,7 @@ async function main(): Promise<void> {
           process.exit(1);
         }
 
-        const eventRegistry = createLedgerEventRegistry(catalog);
-        const verifier = new ConsistencyVerifier(
-          eventStore,
-          readModel,
-          eventRegistry,
-        );
+        const verifier = new ConsistencyVerifier(eventStore, readModel, catalog);
         const report = await verifier.verifyBalances(userId);
 
         if (report.ok) {

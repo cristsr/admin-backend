@@ -1,7 +1,7 @@
 import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
 import { EventPayload } from '@cqrs/domain/event/event-payload.type';
 
-/** A PENDING transaction was confirmed, freezing its postings (§3.4). */
+/** A PENDING transaction was confirmed, freezing its postings. */
 export class TransactionConfirmed extends DomainEvent {
   readonly eventType = 'TransactionConfirmed';
   readonly schemaVersion = 1;

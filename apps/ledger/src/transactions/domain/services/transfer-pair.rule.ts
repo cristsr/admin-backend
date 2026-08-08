@@ -2,21 +2,21 @@ import { Nullable } from '@shared';
 import { Money } from '@ledger/shared/domain/money';
 
 /** The real-account leg of a pending transaction, as the merge rule sees it. */
-export interface TransferLeg {
+export type TransferLeg = {
   readonly transactionId: string;
   readonly accountId: string;
   readonly amount: Money;
-}
+};
 
-/** Two legs that qualify as the two sides of one transfer (RF-16). */
-export interface TransferPair {
+/** Two legs that qualify as the two sides of one transfer. */
+export type TransferPair = {
   readonly outgoingTxnId: string;
   readonly incomingTxnId: string;
   readonly amount: Money;
   readonly currency: string;
   readonly outgoingAccountId: string;
   readonly incomingAccountId: string;
-}
+};
 
 /**
  * Whether two pending legs are the two sides of a single transfer: opposite

@@ -34,7 +34,7 @@ export class TransactionDto {
   @ApiProperty({ enum: TransactionStatus })
   readonly status: TransactionStatus;
 
-  @ApiProperty({ enum: DerivedKind, description: 'Projector-derived classification (RF-4).' })
+  @ApiProperty({ enum: DerivedKind, description: 'Projector-derived classification.' })
   readonly derivedKind: DerivedKind;
 
   @ApiProperty({ type: [TransactionPostingDto] })

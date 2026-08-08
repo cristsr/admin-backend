@@ -13,12 +13,12 @@ import {
   DISCREPANCY_RESOLVED,
 } from '@ledger/reconciliation/domain/balance-assertion/events';
 
-/** Read-model table backing the `assertion_status` projection (§6.2). */
+/** Read-model table backing the `assertion_status` projection. */
 export const PROJ_ASSERTIONS = 'proj_assertions';
 
 /**
  * Materializes `proj_assertions` from the assertion event stream. The only
- * writer of the projection (RNF-10) and fully rebuildable by replay (RNF-5).
+ * writer of the projection and fully rebuildable by replay.
  *
  * Every write is a whole-row upsert: the port's contract defines `upsert` as
  * overwriting the row for a key, and the in-memory adapter implements exactly

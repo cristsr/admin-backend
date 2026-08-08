@@ -8,7 +8,7 @@ export class SystemAccountProtectedException extends DomainConflictException {
   readonly code: string = 'SYSTEM_ACCOUNT_PROTECTED';
 }
 
-/** A real account (ASSETS/LIABILITIES) must declare exactly one currency (§2.1). */
+/** A real account (ASSETS/LIABILITIES) must declare exactly one currency. */
 export class RealAccountCurrencyException extends DomainUnprocessableException {
   readonly code: string = 'REAL_ACCOUNT_SINGLE_CURRENCY';
 }

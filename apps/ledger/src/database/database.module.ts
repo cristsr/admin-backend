@@ -5,7 +5,7 @@ import { databaseConfig } from '@ledger/config/environment';
 /**
  * Ledger's database wiring: delegates to the shared module with this app's
  * `database` config namespace and migration glob. Event store and read
- * projections share one Postgres connection (spec §6).
+ * projections share one Postgres connection.
  */
 @Global()
 @Module({

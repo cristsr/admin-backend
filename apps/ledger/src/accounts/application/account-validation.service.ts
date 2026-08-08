@@ -1,12 +1,12 @@
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { Criteria, Nullable } from '@shared';
 import { PostingOrigin } from '@ledger/accounts/application/posting-origin';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
 import {
   AccountClosedException,
   CurrencyNotAllowedException,
   SystemAccountProtectedException,
 } from '@ledger/accounts/domain/account/exceptions/account.exception';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { AccountNotFoundException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
 import {
   AccountType,
@@ -25,7 +25,7 @@ type AccountRow = {
 };
 
 /**
- * Cross-aggregate validation of postings against `account_tree` (§3.5): each
+ * Cross-aggregate validation of postings against `account_tree`: each
  * referenced account must exist, be open on the transaction date (INV-3),
  * accept the posting currency (INV-4) and — the second half of INV-13 — be a
  * regular account unless the command comes from the ledger itself. Consistency
@@ -36,7 +36,7 @@ export class AccountValidationService {
   constructor(private readonly readModel: ReadModelStore) {}
 
   /**
-   * Validates every posting and returns the touched account types (for RF-4).
+   * Validates every posting and returns the touched account types.
    * `origin` defaults to {@link PostingOrigin.CLIENT} so a caller that forgets
    * to state it is refused the technical accounts rather than granted them.
    */

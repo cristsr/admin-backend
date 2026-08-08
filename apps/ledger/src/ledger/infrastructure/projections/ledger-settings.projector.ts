@@ -2,24 +2,15 @@ import { Projector } from '@cqrs/application/projection/projector';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { Criteria } from '@shared';
-
-/** Read-model table name for the per-user ledger settings. */
-export const PROJ_LEDGER_SETTINGS = 'proj_ledger_settings';
-
-/** One row of `proj_ledger_settings`: the user's presentation settings and system accounts. */
-export type LedgerSettingsRow = {
-  readonly user_id: string;
-  readonly presentation_currency: string;
-  readonly timezone: string;
-  readonly opening_balances_account_id: string;
-  readonly adjustments_account_id: string;
-  readonly is_initialized: boolean;
-};
+import {
+  LedgerSettingsRow,
+  PROJ_LEDGER_SETTINGS,
+} from '@ledger/ledger/application/read-models/ledger-settings.read-model';
 
 /**
- * Maintains `proj_ledger_settings` from `LedgerInitialized` (§6.2). EP-1 did not
- * ship this projector, yet the settings read (EP-2) and the day-boundary resolver
- * (EP-3, via {@link LedgerSettingsReader}) both need the user's timezone — this
+ * Maintains `proj_ledger_settings` from `LedgerInitialized`. Earlier versions did not
+ * ship this projector, yet the settings read and the day-boundary resolver
+ * (via {@link LedgerSettingsReader}) both need the user's timezone — this
  * fills that gap. The stream is keyed by the user id, so one row per user.
  */
 export class LedgerSettingsProjector extends Projector {
