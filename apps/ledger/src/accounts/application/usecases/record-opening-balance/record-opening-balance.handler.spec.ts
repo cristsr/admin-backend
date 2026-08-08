@@ -1,6 +1,7 @@
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
-import { PROJ_LEDGER_SETTINGS } from '@ledger/ledger/application/read-models/ledger-settings.read-model';
+import { ReadModelSystemAccountLookup } from '@ledger/ledger/infrastructure/adapters/persistence/read-model-system-account-lookup';
+import { PROJ_LEDGER_SETTINGS } from '@ledger/ledger/infrastructure/projections/ledger-settings.schema';
 import { LedgerNotInitializedException } from '@ledger/shared/domain/errors/ledger.exception';
 import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
@@ -36,9 +37,13 @@ async function setup(options: { initialized?: boolean } = {}): Promise<Seeded> {
     );
   }
 
+  // The real adapter over an in-memory store, not a fake: resolving the
+  // counterparty is exactly what this handler delegates, and a hand-written
+  // double would be free to answer differently than the adapter does.
+  const accounts = new ReadModelSystemAccountLookup(readModel);
   const bus = new RecordingCommandBus('opening-txn-1');
   const dispatch = jest.spyOn(bus, 'dispatch');
-  const handler = new RecordOpeningBalanceHandler(bus, readModel, new SeedCurrencyCatalog());
+  const handler = new RecordOpeningBalanceHandler(bus, accounts, new SeedCurrencyCatalog());
 
   return { handler, bus, dispatch };
 }

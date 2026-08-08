@@ -1,8 +1,8 @@
-import { LedgerSettingsReader } from '@ledger/reconciliation/application/ports/ledger-settings-reader.port';
-import { SystemAccountLookup } from '@ledger/reconciliation/application/ports/system-account-lookup.port';
+import { LedgerTimezoneReader } from '@ledger/ledger/application/ports/ledger-timezone-reader.port';
+import { SystemAccountLookup } from '@ledger/ledger/application/ports/system-account-lookup.port';
 
 /** Test double: every user resolves to a single pinned timezone. */
-export class FixedSettingsReader extends LedgerSettingsReader {
+export class FixedSettingsReader extends LedgerTimezoneReader {
   constructor(private readonly timezone: string) {
     super();
   }
@@ -19,6 +19,10 @@ export class FixedSystemAccountLookup extends SystemAccountLookup {
   }
 
   adjustmentsAccountId(): Promise<string> {
+    return Promise.resolve(this.accountId);
+  }
+
+  openingBalancesAccountId(): Promise<string> {
     return Promise.resolve(this.accountId);
   }
 }

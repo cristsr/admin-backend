@@ -5,12 +5,12 @@ import { Criteria } from '@shared';
 import {
   LedgerSettingsRow,
   PROJ_LEDGER_SETTINGS,
-} from '@ledger/ledger/application/read-models/ledger-settings.read-model';
+} from '@ledger/ledger/infrastructure/projections/ledger-settings.schema';
 
 /**
  * Maintains `proj_ledger_settings` from `LedgerInitialized`. Earlier versions did not
  * ship this projector, yet the settings read and the day-boundary resolver
- * (via {@link LedgerSettingsReader}) both need the user's timezone — this
+ * (via {@link LedgerTimezoneReader}) both need the user's timezone — this
  * fills that gap. The stream is keyed by the user id, so one row per user.
  */
 export class LedgerSettingsProjector extends Projector {

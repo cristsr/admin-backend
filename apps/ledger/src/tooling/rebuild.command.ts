@@ -7,7 +7,7 @@ import { PostgresReadModelStore } from '@cqrs/infrastructure/adapters/read-model
 import { DataSource } from 'typeorm';
 import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { AccountTreeProjector } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
-import { PROJ_LEDGER_SETTINGS } from '@ledger/ledger/application/read-models/ledger-settings.read-model';
+import { PROJ_LEDGER_SETTINGS } from '@ledger/ledger/infrastructure/projections/ledger-settings.schema';
 import { LedgerSettingsProjector } from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
 import { RECONCILIATION_PROJECTION } from '@ledger/reconciliation/infrastructure/adapters/events/reconciliation.pump';
 import {

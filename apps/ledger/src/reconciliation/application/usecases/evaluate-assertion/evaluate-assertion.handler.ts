@@ -1,6 +1,6 @@
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { Clock } from '@cqrs/domain/ports';
-import { LedgerSettingsReader } from '@ledger/reconciliation/application/ports/ledger-settings-reader.port';
+import { LedgerTimezoneReader } from '@ledger/ledger/application/ports/ledger-timezone-reader.port';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/application/repositories/balance-assertion.repository';
 import { AssertionNotFoundException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { AssertionEvaluator } from '@ledger/reconciliation/domain/services/assertion-evaluator.service';
@@ -16,7 +16,7 @@ export class EvaluateAssertionHandler {
   constructor(
     private readonly repository: BalanceAssertionRepository,
     private readonly evaluator: AssertionEvaluator,
-    private readonly settings: LedgerSettingsReader,
+    private readonly settings: LedgerTimezoneReader,
     private readonly clock: Clock,
   ) {}
 

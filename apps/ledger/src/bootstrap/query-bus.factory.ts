@@ -37,17 +37,17 @@ export function createQueryBus(
 ): RegistryQueryBus {
   const bus = new RegistryQueryBus();
 
-  // Still store-backed: their ports arrive with the `transactions`, `ledger` and
+  // Still store-backed: their ports arrive with the `transactions` and
   // `reference` phases, after which `readModel` leaves this signature.
   bus.register(ListTransactionsQuery, new ListTransactionsHandler(readModel));
   bus.register(ListPendingReviewQuery, new ListPendingReviewHandler(readModel));
   bus.register(GetTransactionByIdQuery, new GetTransactionByIdHandler(readModel));
-  bus.register(GetLedgerSettingsQuery, new GetLedgerSettingsHandler(readModel));
   bus.register(ListCurrenciesQuery, new ListCurrenciesHandler(readModel));
 
   bus.register(GetAccountTreeQuery, new GetAccountTreeHandler(ports.accountTree));
   bus.register(GetAccountByIdQuery, new GetAccountByIdHandler(ports.accountTree));
   bus.register(GetAccountBalancesQuery, new GetAccountBalancesHandler(ports.accountBalances));
+  bus.register(GetLedgerSettingsQuery, new GetLedgerSettingsHandler(ports.ledgerSettings));
 
   return bus;
 }

@@ -10,6 +10,12 @@ import { SystemClock } from '@cqrs/infrastructure/adapters/system-clock';
 import { UuidIdGenerator } from '@cqrs/infrastructure/adapters/uuid-id-generator';
 import { createLedgerApplication } from '@ledger/bootstrap/ledger-application.factory';
 import { createQueryBus } from '@ledger/bootstrap/query-bus.factory';
+import { LedgerSettingsFinder } from '@ledger/ledger/application/ports/ledger-settings-finder.port';
+import { LedgerTimezoneReader } from '@ledger/ledger/application/ports/ledger-timezone-reader.port';
+import { SystemAccountLookup } from '@ledger/ledger/application/ports/system-account-lookup.port';
+import { ReadModelLedgerSettingsFinder } from '@ledger/ledger/infrastructure/adapters/persistence/read-model-ledger-settings-finder';
+import { ReadModelLedgerTimezoneReader } from '@ledger/ledger/infrastructure/adapters/persistence/read-model-ledger-timezone-reader';
+import { ReadModelSystemAccountLookup } from '@ledger/ledger/infrastructure/adapters/persistence/read-model-system-account-lookup';
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-catalog';
 
@@ -34,6 +40,14 @@ import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-ca
     { provide: CurrencyCatalog, useExisting: ReadModelCurrencyCatalog },
     { provide: EventStore, useClass: PostgresEventStore },
     { provide: ReadModelStore, useClass: PostgresReadModelStore },
+    // The ledger's read ports, bound where the module that owns the read model
+    // lives. `LedgerTimezoneReader` is consumed by `ReconciliationModule`, which
+    // injects it from here; the other two also reach the factories through the
+    // store-backed composition, so this binding is what the Nest wiring and the
+    // in-memory one share.
+    { provide: LedgerSettingsFinder, useClass: ReadModelLedgerSettingsFinder },
+    { provide: LedgerTimezoneReader, useClass: ReadModelLedgerTimezoneReader },
+    { provide: SystemAccountLookup, useClass: ReadModelSystemAccountLookup },
     // The concrete bus is the provider; `CommandBus` aliases it. Feature modules
     // composed outside this root inject `PolicyCommandBus` to register
     // their own handlers on the very same policy chain (INV-10).
@@ -79,6 +93,9 @@ import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-ca
     ReadModelCurrencyCatalog,
     Clock,
     IdGenerator,
+    LedgerSettingsFinder,
+    LedgerTimezoneReader,
+    SystemAccountLookup,
   ],
 })
 export class LedgerCoreModule {}

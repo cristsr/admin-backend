@@ -2,13 +2,7 @@ import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { CommandBus } from '@cqrs/application/command-bus/command-bus';
 import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
-import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
-import { Criteria } from '@shared';
-import {
-  LedgerSettingsRow,
-  PROJ_LEDGER_SETTINGS,
-} from '@ledger/ledger/application/read-models/ledger-settings.read-model';
-import { LedgerNotInitializedException } from '@ledger/shared/domain/errors/ledger.exception';
+import { SystemAccountLookup } from '@ledger/ledger/application/ports/system-account-lookup.port';
 import { Money } from '@ledger/shared/domain/money';
 import { CurrencyCatalog, CurrencyCode } from '@ledger/shared/domain/value-objects';
 import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
@@ -36,14 +30,14 @@ const DESCRIPTION = 'Opening balance';
 export class RecordOpeningBalanceHandler extends CommandHandler<RecordOpeningBalanceCommand> {
   constructor(
     private readonly commandBus: CommandBus,
-    private readonly readModel: ReadModelStore,
+    private readonly accounts: SystemAccountLookup,
     private readonly catalog: CurrencyCatalog,
   ) {
     super();
   }
 
   async execute(command: RecordOpeningBalanceCommand, ctx: AuthContext): Promise<CommandResult> {
-    const openingBalancesAccountId = await this.openingBalancesAccountId(ctx.userId);
+    const openingBalancesAccountId = await this.accounts.openingBalancesAccountId(ctx.userId);
     // Built as Money so the counter-posting is negated at the currency's exact
     // scale (Art. 7); the balance rule refuses anything that does not net to zero.
     const amount = Money.of(command.amount, this.catalog.resolve(CurrencyCode.of(command.currency)));
@@ -76,21 +70,5 @@ export class RecordOpeningBalanceHandler extends CommandHandler<RecordOpeningBal
       ),
       ctx,
     );
-  }
-
-  /** The user's `Equity:OpeningBalances`, created when the ledger was initialized. */
-  private async openingBalancesAccountId(userId: string): Promise<string> {
-    const [settings] = await this.readModel.query<LedgerSettingsRow>(
-      PROJ_LEDGER_SETTINGS,
-      Criteria.none().equals('user_id', userId),
-    );
-
-    if (!settings?.opening_balances_account_id) {
-      throw new LedgerNotInitializedException(
-        `Ledger for ${userId} has no Equity:OpeningBalances; initialize it first`,
-      );
-    }
-
-    return settings.opening_balances_account_id;
   }
 }

@@ -151,7 +151,7 @@ export function createLedgerApplication(deps: LedgerApplicationDeps): LedgerAppl
   // bus it dispatches into rather than with a repository of its own.
   commandBus.register(
     RecordOpeningBalanceCommand,
-    new RecordOpeningBalanceHandler(commandBus, readModel, catalog),
+    new RecordOpeningBalanceHandler(commandBus, readPorts.systemAccounts, catalog),
   );
   commandBus.register(
     RecordTransactionCommand,

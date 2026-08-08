@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { LedgerSettingsView } from '@ledger/ledger/application/read-models/ledger-settings.read-model';
+import { LedgerSettingsView } from '@ledger/ledger/application/views/ledger-settings.view';
 
 /**
  * Response of `GET /ledger/settings`.

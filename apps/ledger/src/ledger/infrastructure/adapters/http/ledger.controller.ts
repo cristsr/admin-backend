@@ -5,7 +5,7 @@ import { CommandBus } from '@cqrs/application/command-bus/command-bus';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { Nullable } from '@shared';
-import { LedgerSettingsView } from '@ledger/ledger/application/read-models/ledger-settings.read-model';
+import { LedgerSettingsView } from '@ledger/ledger/application/views/ledger-settings.view';
 import { GetLedgerSettingsQuery } from '@ledger/ledger/application/usecases/get-ledger-settings/get-ledger-settings.query';
 import { InitializeLedgerCommand } from '@ledger/ledger/application/usecases/initialize-ledger/initialize-ledger.command';
 import { ReplaceLedgerSettingsCommand } from '@ledger/ledger/application/usecases/replace-ledger-settings/replace-ledger-settings.command';

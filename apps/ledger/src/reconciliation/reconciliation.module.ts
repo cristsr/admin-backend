@@ -13,8 +13,8 @@ import { createReconciliationEventRegistry } from './application/factories/recon
 import { AdjustmentAuditStore } from './application/ports/adjustment-audit-store.port';
 import { AssertionLookupPort } from './application/ports/assertion-lookup.port';
 import { AssertionStatusStore } from './application/ports/assertion-status-store.port';
-import { LedgerSettingsReader } from './application/ports/ledger-settings-reader.port';
-import { SystemAccountLookup } from './application/ports/system-account-lookup.port';
+import { LedgerTimezoneReader } from '@ledger/ledger/application/ports/ledger-timezone-reader.port';
+import { SystemAccountLookup } from '@ledger/ledger/application/ports/system-account-lookup.port';
 import { ReevaluateAssertionsReactor } from './application/reactors/reevaluate-assertions.reactor';
 import { AssertBalanceCommand } from './application/usecases/assert-balance/assert-balance.command';
 import { AssertBalanceHandler } from './application/usecases/assert-balance/assert-balance.handler';
@@ -36,8 +36,6 @@ import { BalanceAssertionController } from './infrastructure/adapters/http/balan
 import { ReadModelAdjustmentAuditReader } from './infrastructure/adapters/persistence/read-model-adjustment-audit-reader';
 import { ReadModelAssertionPostingReader } from './infrastructure/adapters/persistence/read-model-assertion-posting-reader';
 import { ReadModelAssertionStatusReader } from './infrastructure/adapters/persistence/read-model-assertion-status-reader';
-import { ReadModelLedgerSettingsReader } from './infrastructure/adapters/persistence/read-model-ledger-settings-reader';
-import { ReadModelSystemAccountLookup } from './infrastructure/adapters/persistence/read-model-system-account-lookup';
 import { StoreBackedAssertionLookup } from './infrastructure/adapters/persistence/store-backed-assertion-lookup';
 import { AdjustmentAuditProjector } from './infrastructure/projections/adjustment-audit.projector';
 import { AssertionStatusProjector } from './infrastructure/projections/assertion-status.projector';
@@ -96,8 +94,6 @@ import { AssertionStatusProjector } from './infrastructure/projections/assertion
     { provide: DayBoundaryResolver, useClass: IntlDayBoundaryResolver },
     { provide: AssertionPostingReader, useClass: ReadModelAssertionPostingReader },
     { provide: AssertionLookupPort, useClass: StoreBackedAssertionLookup },
-    { provide: LedgerSettingsReader, useClass: ReadModelLedgerSettingsReader },
-    { provide: SystemAccountLookup, useClass: ReadModelSystemAccountLookup },
     // Domain and application classes carry no Nest decorators (rules
     // Art. 1), so each one states its dependencies here instead of relying on
     // `@Injectable` metadata. The wiring is the adapter's job, not the core's.
@@ -112,11 +108,11 @@ import { AssertionStatusProjector } from './infrastructure/projections/assertion
     { provide: AdjustmentFactory, useFactory: (): AdjustmentFactory => new AdjustmentFactory() },
     {
       provide: EvaluateAssertionHandler,
-      inject: [BalanceAssertionRepository, AssertionEvaluator, LedgerSettingsReader, Clock],
+      inject: [BalanceAssertionRepository, AssertionEvaluator, LedgerTimezoneReader, Clock],
       useFactory: (
         repository: BalanceAssertionRepository,
         evaluator: AssertionEvaluator,
-        settings: LedgerSettingsReader,
+        settings: LedgerTimezoneReader,
         clock: Clock,
       ): EvaluateAssertionHandler =>
         new EvaluateAssertionHandler(repository, evaluator, settings, clock),

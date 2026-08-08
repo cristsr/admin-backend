@@ -7,6 +7,10 @@ import { ReadModelAccountBalanceFinder } from '@ledger/accounts/infrastructure/a
 import { ReadModelAccountConstraintsReader } from '@ledger/accounts/infrastructure/adapters/persistence/read-model-account-constraints-reader';
 import { ReadModelAccountNameReader } from '@ledger/accounts/infrastructure/adapters/persistence/read-model-account-name-reader';
 import { ReadModelAccountTreeFinder } from '@ledger/accounts/infrastructure/adapters/persistence/read-model-account-tree-finder';
+import { LedgerSettingsFinder } from '@ledger/ledger/application/ports/ledger-settings-finder.port';
+import { SystemAccountLookup } from '@ledger/ledger/application/ports/system-account-lookup.port';
+import { ReadModelLedgerSettingsFinder } from '@ledger/ledger/infrastructure/adapters/persistence/read-model-ledger-settings-finder';
+import { ReadModelSystemAccountLookup } from '@ledger/ledger/infrastructure/adapters/persistence/read-model-system-account-lookup';
 
 /**
  * The read ports serving the API, handed to the query bus.
@@ -18,14 +22,17 @@ import { ReadModelAccountTreeFinder } from '@ledger/accounts/infrastructure/adap
 export type QueryPorts = {
   readonly accountTree: AccountTreeFinder;
   readonly accountBalances: AccountBalanceFinder;
-  // Completed by the `transactions`, `ledger` and `reference` phases.
+  readonly ledgerSettings: LedgerSettingsFinder;
+  // Completed by the `transactions` and `reference` phases.
 };
 
 /** The read ports serving command handlers and application services. */
 export type WriteSideReadPorts = {
   readonly accountConstraints: AccountConstraintsReader;
   readonly accountNames: AccountNameReader;
-  // `SystemAccountLookup` joins in the `ledger` phase.
+  readonly systemAccounts: SystemAccountLookup;
+  // `LedgerTimezoneReader` stays out: its only consumer, `EvaluateAssertion`,
+  // is composed by `ReconciliationModule`, which binds the port itself.
 };
 
 /**
@@ -41,6 +48,7 @@ export function createQueryPorts(readModel: ReadModelStore): QueryPorts {
   return {
     accountTree: new ReadModelAccountTreeFinder(readModel),
     accountBalances: new ReadModelAccountBalanceFinder(readModel),
+    ledgerSettings: new ReadModelLedgerSettingsFinder(readModel),
   };
 }
 
@@ -48,5 +56,6 @@ export function createWriteSideReadPorts(readModel: ReadModelStore): WriteSideRe
   return {
     accountConstraints: new ReadModelAccountConstraintsReader(readModel),
     accountNames: new ReadModelAccountNameReader(readModel),
+    systemAccounts: new ReadModelSystemAccountLookup(readModel),
   };
 }

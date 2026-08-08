@@ -1,20 +1,15 @@
-import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import {
   QueryContext,
   QueryHandler,
 } from '@cqrs/application/query-bus/query-handler';
-import { Criteria, Nullable } from '@shared';
-import {
-  LedgerSettingsRow,
-  LedgerSettingsView,
-  PROJ_LEDGER_SETTINGS,
-  toLedgerSettingsView,
-} from '@ledger/ledger/application/read-models/ledger-settings.read-model';
+import { Nullable } from '@shared';
+import { LedgerSettingsFinder } from '@ledger/ledger/application/ports/ledger-settings-finder.port';
+import { LedgerSettingsView } from '@ledger/ledger/application/views/ledger-settings.view';
 import { GetLedgerSettingsQuery } from './get-ledger-settings.query';
 
-/** Serves the user's ledger settings from `proj_ledger_settings` (INV-9). */
+/** Serves the user's ledger settings through the finder (INV-9). */
 export class GetLedgerSettingsHandler extends QueryHandler<GetLedgerSettingsQuery> {
-  constructor(private readonly readModel: ReadModelStore) {
+  constructor(private readonly settings: LedgerSettingsFinder) {
     super();
   }
 
@@ -22,11 +17,6 @@ export class GetLedgerSettingsHandler extends QueryHandler<GetLedgerSettingsQuer
     _query: GetLedgerSettingsQuery,
     ctx: QueryContext,
   ): Promise<Nullable<LedgerSettingsView>> {
-    const [row] = await this.readModel.query<LedgerSettingsRow>(
-      PROJ_LEDGER_SETTINGS,
-      Criteria.none().equals('user_id', ctx.userId),
-    );
-
-    return row ? toLedgerSettingsView(row) : null;
+    return this.settings.byUser(ctx.userId);
   }
 }

@@ -4,7 +4,7 @@ import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { Clock } from '@cqrs/domain/ports';
 import { EventStore } from '@cqrs/domain/ports/event-store';
-import { SystemAccountLookup } from '@ledger/reconciliation/application/ports/system-account-lookup.port';
+import { SystemAccountLookup } from '@ledger/ledger/application/ports/system-account-lookup.port';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/application/repositories/balance-assertion.repository';
 import { AssertionNotFoundException, DiscrepancyNotResolvableException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { AdjustmentFactory } from '@ledger/reconciliation/domain/services/adjustment.factory';
