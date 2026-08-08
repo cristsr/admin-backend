@@ -4,11 +4,13 @@ import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { EventStore } from '@cqrs/domain/ports/event-store';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria } from '@shared';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
 import { AccountTreeProjector } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { Money } from '@ledger/shared/domain/money';
 import { CurrencyCatalog, CurrencyCode } from '@ledger/shared/domain/value-objects';
-import { PROJ_BALANCES } from '@ledger/transactions/application/read-models/account-balances.read-model';
+import {
+  BalanceRow,
+  PROJ_BALANCES,
+} from '@ledger/transactions/infrastructure/projections/account-balances.schema';
 import { AccountBalancesProjector } from '@ledger/transactions/infrastructure/projections/account-balances.projector';
 import { TransactionListProjector } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
 import {
@@ -18,13 +20,6 @@ import {
 
 /** Default number of events one `readAll` page pulls while replaying. */
 const DEFAULT_PAGE_SIZE = 1000;
-
-type BalanceRow = {
-  readonly account_id: string;
-  readonly currency_code: string;
-  readonly confirmed_amount: string;
-  readonly pending_amount: string;
-};
 
 type Balance = {
   readonly confirmed: Money;
@@ -103,44 +98,29 @@ export class ConsistencyVerifier {
       }
     }
 
-    return this.balancesFrom(scratch);
+    // No scope needed: only this user's events were folded into `scratch`.
+    return this.balancesFrom(scratch, Criteria.none());
   }
 
   /**
-   * The stored balances that belong to this user, plus any row whose account
-   * belongs to nobody.
+   * The stored balances that belong to this user, orphans included.
    *
-   * `proj_balances` carries no user id, so ownership has to come from the
-   * account tree — without that filter another user's balance reads as drift
-   * and the report is useless past the first tenant (INV-9). An orphan row is
-   * kept on purpose: an account-less balance is drift by definition, and
-   * dropping it would hide exactly what this tool exists to find.
+   * Ownership is read off the row itself (INV-9); it used to be reconstructed by
+   * crossing against the account tree, which meant fetching every user's
+   * balances and discarding in memory. An orphan row — a balance whose account
+   * is gone — is still reported: an account-less balance is drift by definition,
+   * and dropping it would hide exactly what this tool exists to find. What no
+   * longer happens is somebody else's orphan surfacing in this user's report.
    */
   private async storedBalances(userId: string): Promise<Map<string, Balance>> {
-    const owners = await this.accountOwners();
-    const stored = await this.balancesFrom(this.readModel);
-
-    for (const key of [...stored.keys()]) {
-      const owner = owners.get(key.split('|')[0]);
-
-      if (owner !== undefined && owner !== userId) stored.delete(key);
-    }
-
-    return stored;
+    return this.balancesFrom(this.readModel, Criteria.none().equals('user_id', userId));
   }
 
-  /** Maps every projected account to the user holding it. */
-  private async accountOwners(): Promise<Map<string, string>> {
-    const rows = await this.readModel.query<{ account_id: string; user_id: string }>(
-      PROJ_ACCOUNTS,
-      Criteria.none(),
-    );
-
-    return new Map(rows.map((row) => [row.account_id, row.user_id]));
-  }
-
-  private async balancesFrom(store: ReadModelStore): Promise<Map<string, Balance>> {
-    const rows = await store.query<BalanceRow>(PROJ_BALANCES, Criteria.none());
+  private async balancesFrom(
+    store: ReadModelStore,
+    criteria: Criteria,
+  ): Promise<Map<string, Balance>> {
+    const rows = await store.query<BalanceRow>(PROJ_BALANCES, criteria);
     const balances = new Map<string, Balance>();
 
     for (const row of rows) {

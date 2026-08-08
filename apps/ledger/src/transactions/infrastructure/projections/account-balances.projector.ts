@@ -8,7 +8,7 @@ import {
   CurrencyCode,
 } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
-import { PROJ_BALANCES } from '@ledger/transactions/application/read-models/account-balances.read-model';
+import { PROJ_BALANCES } from '@ledger/transactions/infrastructure/projections/account-balances.schema';
 import { PROJ_POSTINGS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
 
 type PostingRow = {
@@ -43,7 +43,7 @@ export class AccountBalancesProjector extends Projector {
     const affected = await this.affectedPairs(event.aggregateId, store);
 
     for (const { accountId, currencyCode } of affected) {
-      await this.recompute(accountId, currencyCode, store, event.recordedAt);
+      await this.recompute(event.userId, accountId, currencyCode, store, event.recordedAt);
     }
   }
 
@@ -68,7 +68,17 @@ export class AccountBalancesProjector extends Projector {
     return [...unique.values()];
   }
 
+  /**
+   * Rewrites one account+currency balance, stamped with its owning user.
+   *
+   * The owner is taken from the event rather than looked up: every event belongs
+   * to exactly one user (INV-9), and a balance that does not carry its owner can
+   * only be attributed by crossing against `proj_accounts` — a join the read
+   * side cannot express, which is what forced its readers to fetch every user's
+   * balances and discard in memory.
+   */
   private async recompute(
+    userId: string,
     accountId: string,
     currencyCode: string,
     store: ReadModelStore,
@@ -92,8 +102,9 @@ export class AccountBalancesProjector extends Projector {
 
     await store.upsert(
       PROJ_BALANCES,
-      { account_id: accountId, currency_code: currencyCode },
+      { user_id: userId, account_id: accountId, currency_code: currencyCode },
       {
+        user_id: userId,
         account_id: accountId,
         currency_code: currencyCode,
         confirmed_amount: confirmed.toDecimalString(),

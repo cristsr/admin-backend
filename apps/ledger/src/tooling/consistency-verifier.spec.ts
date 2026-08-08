@@ -2,7 +2,7 @@ import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { ProjectionRegistry } from '@cqrs/application/tooling/projection-registry';
 import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { OpenAccountCommand } from '@ledger/accounts/application/usecases/open-account/open-account.command';
 import { AccountTreeProjector } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { createLedgerApplication } from '@ledger/bootstrap/ledger-application.factory';
@@ -10,7 +10,7 @@ import { RegisterCurrencyCommand } from '@ledger/reference/application/usecases/
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
-import { PROJ_BALANCES } from '@ledger/transactions/application/read-models/account-balances.read-model';
+import { PROJ_BALANCES } from '@ledger/transactions/infrastructure/projections/account-balances.schema';
 import { PROJ_POSTINGS, PROJ_TRANSACTIONS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
 import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
@@ -139,8 +139,9 @@ describe('ConsistencyVerifier', () => {
 
     await readModel.upsert(
       PROJ_BALANCES,
-      { account_id: expenses.aggregateId, currency_code: 'COP' },
+      { user_id: ctx.userId, account_id: expenses.aggregateId, currency_code: 'COP' },
       {
+        user_id: ctx.userId,
         account_id: expenses.aggregateId,
         currency_code: 'COP',
         confirmed_amount: '99999',
@@ -207,10 +208,18 @@ describe('ConsistencyVerifier', () => {
     const readModel = new InMemoryReadModelStore();
     const { catalog } = buildRegistryAndCatalog();
 
+    // An orphan: a balance whose account no longer exists in the tree. It is
+    // drift by definition and must still surface — scoping by the row's own
+    // owner must not become a way of hiding what this tool exists to find.
     await readModel.upsert(
       PROJ_BALANCES,
-      { account_id: '00000000-0000-0000-0000-000000000001', currency_code: 'COP' },
       {
+        user_id: ctx.userId,
+        account_id: '00000000-0000-0000-0000-000000000001',
+        currency_code: 'COP',
+      },
+      {
+        user_id: ctx.userId,
         account_id: '00000000-0000-0000-0000-000000000001',
         currency_code: 'COP',
         confirmed_amount: '100',
@@ -290,8 +299,7 @@ describe('ConsistencyVerifier', () => {
     });
 
     // user-2 owns a non-zero balance. Verifying user-1 must not read it as
-    // drift: `proj_balances` carries no user id, so ownership comes from the
-    // account tree.
+    // drift: each row carries its owner, so the scope is a filter on the query.
     const theirExpenses = await app.commandBus.dispatch(
       new OpenAccountCommand('Expenses:Food', [], '2026-01-01', false),
       otherCtx,
@@ -312,6 +320,44 @@ describe('ConsistencyVerifier', () => {
         TransactionStatus.CONFIRMED,
       ),
       otherCtx,
+    );
+
+    const verifier = new ConsistencyVerifier(eventStore, readModel, catalog);
+
+    const report = await verifier.verifyBalances(ctx.userId);
+
+    expect(report.discrepancies).toEqual([]);
+    expect(report.ok).toBe(true);
+  });
+
+  /**
+   * An orphan row belonging to somebody else is somebody else's drift.
+   *
+   * While `proj_balances` carried no owner, an account-less row could not be
+   * attributed to anyone, so every report kept it — including reports of users
+   * who had nothing to do with it. Now the row states its owner and the scope
+   * holds even when the account tree cannot answer.
+   */
+  it('leaves another user orphan balance out of the report', async () => {
+    const eventStore = new InMemoryEventStore();
+    const readModel = new InMemoryReadModelStore();
+    const { catalog } = buildRegistryAndCatalog();
+
+    await readModel.upsert(
+      PROJ_BALANCES,
+      {
+        user_id: otherCtx.userId,
+        account_id: '00000000-0000-0000-0000-000000000002',
+        currency_code: 'COP',
+      },
+      {
+        user_id: otherCtx.userId,
+        account_id: '00000000-0000-0000-0000-000000000002',
+        currency_code: 'COP',
+        confirmed_amount: '100',
+        pending_amount: '0',
+        updated_at: new Date().toISOString(),
+      },
     );
 
     const verifier = new ConsistencyVerifier(eventStore, readModel, catalog);

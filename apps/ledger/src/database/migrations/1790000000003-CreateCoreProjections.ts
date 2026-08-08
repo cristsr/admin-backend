@@ -81,15 +81,26 @@ export class CreateCoreProjections1790000000003 implements MigrationInterface {
     `);
     await queryRunner.query(`CREATE INDEX "idx_proj_postings_account" ON "proj_postings" ("account_id", "date")`);
     await queryRunner.query(`CREATE INDEX "idx_proj_postings_txn" ON "proj_postings" ("transaction_id")`);
+    // Every read of an account's postings is scoped to its owner (INV-9), which
+    // the index above does not cover: it leads with `account_id`, so a query
+    // filtering by user first cannot use it.
+    await queryRunner.query(`CREATE INDEX "idx_proj_postings_user_account" ON "proj_postings" ("user_id", "account_id", "date")`);
 
+    // `user_id` is part of the key, not a convenience column: without it a
+    // balance can only be attributed by crossing against `proj_accounts`, and
+    // that join is not expressible through the read-model store — so every
+    // reader ended up fetching all users' balances and discarding in memory,
+    // putting the per-user scope in a `filter()` instead of in the `WHERE`
+    // (INV-9). The owner comes from the event the projector folds.
     await queryRunner.query(`
       CREATE TABLE "proj_balances" (
+        "user_id"          UUID NOT NULL,
         "account_id"       UUID NOT NULL,
         "currency_code"    TEXT NOT NULL,
         "confirmed_amount" NUMERIC(20, 6) NOT NULL DEFAULT 0,
         "pending_amount"   NUMERIC(20, 6) NOT NULL DEFAULT 0,
         "updated_at"       TIMESTAMPTZ NOT NULL DEFAULT now(),
-        PRIMARY KEY ("account_id", "currency_code")
+        PRIMARY KEY ("user_id", "account_id", "currency_code")
       )
     `);
   }
