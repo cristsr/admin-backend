@@ -2,13 +2,252 @@
 
 **Alcance:** `apps/ledger/src/` (verificado también `libs/cqrs/src/` como kernel de apoyo)
 **Fecha:** 2026-08-07 · **Rama:** `feat/core`
-**Score:** 26/36 → **36/36**
+**Score:** 26/36 → 36/36 (primera pasada) → 35/39 → **39/39** (segunda pasada aplicada)
 
-> **Estado (2026-08-07): cerrado.** Los 14 hallazgos están aplicados, más el `total`
-> de `GET /transactions` que se había dejado como HU aparte. Suites verdes:
-> **482 tests** en `ledger` (25 nuevos) y **110** en `cqrs`; 4 suites skipped en
-> total, las que exigen una Postgres viva. `tsc` limpio en los tres tsconfig.
-> El detalle de cada fix está en la nota `✅ Resuelto` bajo el hallazgo.
+> **Estado (2026-08-07): cerrado en las dos pasadas.** Los 14 hallazgos de la
+> primera pasada siguen aplicados. Un reescaneo con la skill actualizada —que ahora
+> sabe leer la **topología** del árbol— encontró 7 hallazgos que la primera no podía
+> ver, ninguno de ellos consecuencia de los fixes anteriores. La escala pasa de /36
+> a /39 porque la skill ganó la dimensión 13.
+>
+> Los 6 hallazgos válidos de la segunda pasada están aplicados (el séptimo, C-3, se
+> cayó al verificarlo). Suites verdes: **482 tests** en `ledger` y **110** en `cqrs`.
+> Detalle abajo; los hallazgos originales, con su nota `✅ Resuelto`, quedan intactos.
+
+---
+
+# Segunda pasada — topología y acoplamiento
+
+**Fecha:** 2026-08-07 · **Disparador:** el usuario señaló que `accounts/application`
+tenía casos de uso con carpeta y colaboradores sueltos. El hallazgo era real y la
+primera pasada no lo tenía. Se corrigió la skill (dimensión 13 + cuatro detectores
+de topología) y se reescaneó.
+
+## Por qué la primera pasada no los vio
+
+Tres causas distintas, y ninguna es "se me pasó":
+
+1. **No había detector de forma.** Los 17 detectores del scan leían el contenido de
+   los archivos; ninguno la estructura del árbol. Un defecto que no está *en* un
+   archivo sino *entre* archivos era invisible por construcción.
+2. **La regla «respect deliberate exceptions» lo tapó.** Los cinco módulos comparten
+   la misma desviación, y esa regla lee "uniforme" como "decidido". Un defecto
+   presente en todos los módulos es consistente por definición. Ya está corregida en
+   la skill con las dos preguntas que separan una decisión de una costumbre.
+3. **El acoplamiento se midió sólo hacia `domain/` e `infrastructure/`.** Los imports
+   `application → application` los di por legales. Lo son para un comando despachado
+   por el bus; no para inyectar una clase concreta de otro módulo.
+
+## Score por dimensión (escala /39)
+
+| # | Dimensión | Score | Nota |
+|---|---|---|---|
+| 1 | Dependency direction | 3/3 | congelado por `hexagonal-isolation.spec.ts` |
+| 2 | Module boundaries | 3/3 | — |
+| 3 | Domain richness | 3/3 | — |
+| 4 | Ports & bindings | 3/3 | — |
+| 5 | Use case granularity | 3/3 | — |
+| 6 | Adapter thinness | 3/3 | — |
+| 7 | Mapping isolation | 3/3 | — |
+| 8 | Error handling | 3/3 | — |
+| 9 | Naming consistency | 3/3 | sufijo `.e2e.spec.ts` unificado en las cinco suites (T-2) |
+| 10 | Shared kernel hygiene | 2/3 → **3/3** | `posting-origin` movido a `shared/domain/value-objects` (C-1) |
+| 11 | Cross-module coupling | 2/3 → **3/3** | `transactions` depende del puerto `PostingValidator`, no de la clase (C-2) |
+| 12 | Testability | 3/3 | — |
+| 13 | **Layer topology** | 1/3 → **3/3** | cero archivos sueltos en las raíces de capa de los 5 módulos (T-1) |
+
+## Hallazgos
+
+### [MEDIUM] T-1 · 15 archivos huérfanos en la raíz de `application/`
+
+- **Dónde:** los cinco módulos.
+  `accounts/application/`: `account.repository.ts`, `account-name.registry.ts`,
+  `account-validation.service.ts`, `posting-origin.ts` (+2 specs) ·
+  `transactions/application/`: `ledger-transaction.repository.ts`,
+  `posting.factory.ts`, `posting-input.type.ts` ·
+  `reconciliation/application/`: `balance-assertion.repository.ts`,
+  `reconciliation-event-registry.factory.ts` ·
+  `ledger/application/`: `ledger-settings.repository.ts`,
+  `ledger-event-registry.factory.ts` ·
+  `reference/application/`: `currency-catalog.repository.ts`,
+  `currency-catalog.cache.ts`
+- **Regla rota:** *A layer root holds folders, not files* (SKILL.md, topología).
+- **Por qué duele:** los casos de uso tienen carpeta, los read models tienen carpeta,
+  los puertos tienen carpeta — y el repositorio, el registry, el validador y un enum
+  quedaron sin ninguna. No falta una convención: hay una y estos no entraron.
+
+  El costo no es estético. **La raíz de una capa es por donde se filtra un módulo:**
+  un `X.repository.ts` suelto junto a siete carpetas es lo que otro módulo termina
+  importando, porque es lo único con ruta obvia. C-1 y C-2 son exactamente eso ya
+  ocurrido — los tres archivos que otros módulos importan de `accounts` son tres de
+  estos huérfanos.
+- **Fix:** la regla que el proyecto ya casi sigue, dicha entera: *en `application/`,
+  todo es una carpeta; si no es un caso de uso, es su rol.*
+
+  ```
+  application/
+    <use-case>/     ya está así        repositories/   ← *.repository.ts
+    ports/          ya está            services/       ← registry, validator, cache
+    read-models/    ya está            types/          ← *.type.ts
+  ```
+
+  Movimiento de archivos e imports, cero comportamiento. Es terminar lo que el commit
+  `2042d94` empezó: ese movió los casos de uso de `application/commands|queries/` a
+  carpeta por caso de uso, y dejó afuera a los colaboradores.
+- **✅ Resuelto.** Las cinco raíces de `application/` quedan en **cero archivos
+  sueltos**. Roles nuevos, elegidos por el sufijo del archivo para que la ubicación
+  sea predecible sin abrirlo: `repositories/` (los 5 event-sourced),
+  `services/` (registry, validador), `factories/` (los event-registry, `posting.factory`),
+  `types/` (`posting-input.type`). `currency-catalog.cache.ts` fue a `ports/`, no a
+  `services/`: declara un `abstract class`, o sea que era un puerto con nombre de
+  colaborador.
+
+### [MEDIUM] T-2 · Tres suites e2e quedan fuera del type-check
+
+- **Dónde:** `tsconfig.spec.json` incluye `src/**/*.spec.ts`. Estos tres usan guión y
+  no matchean: `transactions/transactions.merge-transfers.e2e-spec.ts`,
+  `reconciliation/reconciliation.discrepancy.e2e-spec.ts`,
+  `shared/infrastructure/adapters/http/ledger-context.e2e-spec.ts`.
+  Los otros dos usan punto (`accounts-api.e2e.spec.ts`,
+  `transactions-api.e2e.spec.ts`) y sí entran.
+- **Regla rota:** *Test config missing coverage* — la variante de sufijo del smell ya
+  catalogado.
+- **Por qué duele:** **verificado, no inferido.** Metiendo un error de tipos
+  deliberado en cada uno: `tsc -p tsconfig.spec.json` reporta el de
+  `transactions-api.e2e.spec.ts` y **no** el de `transactions.merge-transfers.e2e-spec.ts`.
+  Jest sí los corre (su `testMatch` cubre ambos sufijos) y ts-jest los compila
+  aislados, así que un error de tipos ahí sólo aparece al ejecutar el test, nunca en
+  el type-check.
+
+  Pasó en esta misma sesión: al mover los puertos de M-6, `tsc` dio limpio y la suite
+  explotó después con `Cannot find module './domain/ports/account-lookup.port'`.
+- **Fix:** un solo sufijo. `*.e2e.spec.ts` para los cinco es el cambio menor —
+  entran en el `include` actual sin tocar `tsconfig.spec.json`, y el `testMatch` de
+  jest ya los cubre.
+- **✅ Resuelto.** Los tres renombrados a `.e2e.spec.ts`. Las cinco suites e2e entran
+  ahora en `tsconfig.spec.json` sin tocar el config, y jest las sigue corriendo por
+  `**/*.spec.ts`. La superficie que estaba fuera del type-check volvió a estarlo.
+
+### [MEDIUM] C-1 · `posting-origin.ts` es transversal y vive en `accounts`
+
+- **Dónde:** `accounts/application/posting-origin.ts`, importado por
+  `transactions/application/record-transaction/record-transaction.command.ts:3`,
+  `transactions/application/amend-transaction/amend-pending-transaction.handler.ts:6`
+  y `reconciliation/application/resolve-discrepancy/resolve-discrepancy.handler.ts:7`.
+- **Regla rota:** *Shared kernel hygiene* — lo que tres contextos comparten pertenece
+  al kernel, no a uno de ellos.
+- **Por qué duele:** es un enum de dos valores sobre quién puede postear (INV-13), no
+  sobre cuentas. `RecordTransactionCommand` —contrato público del bus— depende de la
+  capa de aplicación de `accounts` por él. `transactions` no puede compilarse sin
+  `accounts` por un enum.
+- **Fix:** a `shared/domain/value-objects/`, junto a `account-type` y compañía.
+- **✅ Resuelto.** En `shared/domain/value-objects/posting-origin.ts` y exportado por
+  el barrel. `transactions` y `reconciliation` ya no importan nada de
+  `accounts/application` por este motivo.
+
+### [MEDIUM] C-2 · Dos módulos inyectan `AccountValidationService` sin capa anticorrupción
+
+- **Dónde:** `transactions/application/record-transaction/record-transaction.handler.ts`
+  y `amend-transaction/amend-pending-transaction.handler.ts`;
+  `reconciliation` lo alcanza por la misma vía.
+- **Regla rota:** *Missing anti-corruption layer* — un caso de uso que inyecta un
+  colaborador concreto de otro módulo.
+- **Por qué duele:** es H-3 en la dirección que la primera pasada no miró. Entonces
+  arreglé que `accounts` construyera agregados de `transactions`; no vi que
+  `transactions` inyecta una clase de `accounts/application`.
+- **Fix:** el patrón **ya existe en el repo**: `transactions` tiene el puerto
+  `AccountLookup` con `ReadModelAccountLookup` detrás, usado para el merge de
+  transferencias. Declarar `AccountPostingValidator` como puerto en
+  `transactions/application/ports/` y bindear el adaptador que envuelve el servicio
+  de `accounts`.
+- **✅ Resuelto.** Puerto `PostingValidator` en `transactions/application/ports/`, y
+  `AccountTreePostingValidator` en `transactions/infrastructure/adapters/accounts/`
+  como capa anticorrupción — **el único archivo de `transactions` que puede nombrar
+  `AccountValidationService`**. Los dos handlers dependen del puerto; el binding vive
+  en `bootstrap/`, que es el único lugar autorizado a conocer ambos módulos.
+
+  `reconciliation` no necesitó puerto: sólo tocaba el servicio desde un doble de test,
+  nunca en producción.
+
+### [LOW] C-3 · `PROJ_ACCOUNTS` / `AccountRow` los leen tres módulos
+
+- **Dónde:** `transactions` (3 imports), `reconciliation` (1), más `tooling` (4).
+- **Por qué duele:** es el nombre de la tabla de `accounts`. Leer una proyección
+  ajena es defendible en CQRS, pero convive con el puerto de C-2, así que hay dos
+  formas de hacer lo mismo según el archivo.
+- **Fix:** que las lecturas ajenas pasen por `AccountLookup`, extendido con lo que
+  hoy resuelven a mano. Se cierra junto con C-2 o se deja anotado.
+- **❌ Retirado: no era un hallazgo.** Al verificar los consumidores uno por uno, los
+  que leen `PROJ_ACCOUNTS` fuera de `accounts` son `transactions/infrastructure`
+  (el projector y `ReadModelAccountLookup`) y `tooling/` (un CLI). Infraestructura
+  puede importar cualquier cosa — es la regla, no una excepción — y `tooling` no es
+  un módulo de negocio. **Ningún `application/` ajeno lo lee.** Lo reporté sin haber
+  separado los consumidores por capa.
+
+### [LOW] T-3 · Dos suites e2e en la raíz del módulo, tres dentro de `adapters/http/`
+
+- **Dónde:** `reconciliation/reconciliation.discrepancy.e2e-spec.ts` y
+  `transactions/transactions.merge-transfers.e2e-spec.ts` cuelgan de la raíz del
+  módulo; las otras tres viven en `infrastructure/adapters/http/`.
+- **Fix:** las dos primeras ejercitan el módulo completo por el bus, no su HTTP, así
+  que `infrastructure/testing/` (donde `reconciliation` ya tiene sus contract suites)
+  es mejor destino que `adapters/http/`. Lo que no puede quedar es una de cada.
+- **✅ Resuelto.** Las dos suites de módulo a `infrastructure/testing/`, junto a
+  `reconciliation.rebuild.spec.ts`, que colgaba de la raíz por lo mismo. Las cinco
+  raíces de módulo quedan con su `.module.ts` y nada más.
+
+### [LOW] T-4 · Cuatro imports relativos `../../../` cruzando módulos
+
+- **Dónde:** `ledger/application/initialize-ledger/initialize-ledger.handler.spec.ts:6`,
+  `transactions/application/amend-transaction/amend-pending-transaction.handler.spec.ts:4`,
+  `transactions/application/record-transaction/record-transaction.handler.spec.ts:5-6`.
+- **Por qué duele:** todos son specs alcanzando `accounts/application` sin el alias —
+  y los cuatro apuntan a los archivos de C-1 y C-2. El síntoma señala la causa.
+- **Fix:** usar `@ledger/*`. Desaparecen solos al resolver C-1 y C-2.
+- **✅ Resuelto — se cayó solo,** como estaba previsto: los cuatro apuntaban a
+  archivos que C-1 y C-2 movieron. No queda ningún `../../../` en el app.
+
+## Falsos positivos confirmados (no volver a reportarlos)
+
+El scan los marca; los cinco se leyeron y ninguno es defecto:
+
+| Sección | Por qué no aplica |
+|---|---|
+| `domain file importing its own module barrel` | los 32 hits son `@cqrs/domain/*`, el kernel compartido. El detector excluye `@shared` pero no un segundo kernel con otro alias |
+| `suffix drift .event.ts` | son eventos de dominio de event sourcing, no event handlers; el detector asume lo segundo |
+| `raw Error thrown` | los 8 están en dobles de test y helpers de spec |
+| `console.log` | `tooling/rebuild.command.ts` es un CLI; ahí es su salida |
+| `files at a module root` | `bootstrap/`, `database/` y `tooling/` no son módulos de negocio — la guía ya avisa que el script no puede distinguirlos |
+
+## Plan — ejecutado
+
+1. ~~**T-2** — un solo sufijo para las cinco suites e2e.~~ ✅
+2. ~~**T-1** — carpetas de rol en los cinco módulos.~~ ✅
+3. ~~**C-1** — `posting-origin` a `shared/`.~~ ✅
+4. ~~**C-2** — puerto `PostingValidator` + adaptador anticorrupción.~~ ✅
+   (**C-3** retirado: no era un hallazgo.)
+5. ~~**T-3, T-4**~~ ✅ — T-4 cayó solo con C-1 y C-2, como estaba previsto.
+
+## Verificación
+
+```
+npx tsc -p apps/ledger/tsconfig.app.json  --noEmit    # limpio
+npx tsc -p apps/ledger/tsconfig.spec.json --noEmit    # limpio, ahora con las 5 e2e dentro
+npx jest --config apps/ledger/jest.config.ts  --rootDir apps/ledger   # 482 passed, 2 skipped
+npx jest --config libs/cqrs/jest.config.ts    --rootDir libs/cqrs     # 110 passed, 2 skipped
+bash scripts/audit-scan.sh apps/ledger/src            # topología: 0 hallazgos
+```
+
+`eslint` queda en lo preexistente: los `no-console` de `tooling/rebuild.command.ts`
+(es un CLI) y tres warnings de non-null en specs. Ninguno introducido aquí.
+
+---
+
+# Primera pasada (2026-08-07) — cerrada
+
+> Los 14 hallazgos de abajo están aplicados. Suites verdes: **482 tests** en `ledger`
+> y **110** en `cqrs`; 4 suites skipped, las que exigen una Postgres viva.
+> Se conservan con su diagnóstico y su nota `✅ Resuelto` como registro.
 
 ## Resumen
 
