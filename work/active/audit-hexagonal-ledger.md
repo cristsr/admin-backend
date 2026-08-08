@@ -1,0 +1,384 @@
+# Auditoría de Arquitectura Hexagonal — `apps/ledger`
+
+**Alcance:** `apps/ledger/src/` (verificado también `libs/cqrs/src/` como kernel de apoyo)
+**Fecha:** 2026-08-07 · **Rama:** `feat/core`
+**Score:** 26/36 → **30/36** tras aplicar los HIGH
+
+> **Estado (2026-08-07):** los tres hallazgos HIGH y M-1 están **aplicados**, más la
+> mitad de M-6. Suite verde: 457 tests pasan, 2 suites skipped (las que exigen
+> Postgres). `tsc` limpio en `tsconfig.app.json` y `tsconfig.spec.json`.
+> El detalle de cada fix está en la nota `✅ Resuelto` bajo el hallazgo.
+> Pendientes: M-2, M-3, M-4, M-5, la otra mitad de M-6, y los cinco LOW.
+
+## Resumen
+
+El núcleo está bien construido: los agregados son ricos y protegen sus propios
+invariantes, **ningún** archivo de `domain/` o `application/` importa NestJS, TypeORM
+o un driver — y hay un test (`hexagonal-isolation.spec.ts`) que lo congela —, todos
+los puertos son `abstract class`, el cableado vive en los módulos con factories
+explícitas, y `app.wiring.spec.ts` verifica que cada comando del catálogo tenga
+handler registrado. Es una base sólida y poco común.
+
+La debilidad dominante es una sola, y es sistemática: **`application/` importa
+`infrastructure/`**. Doce archivos de producción leen constantes `PROJ_*` y tipos
+`*Row` directamente de los projectors. De ahí se derivan dos consecuencias más: el
+composition root del núcleo (`ledger-application.factory.ts`) vive dentro de la capa
+de aplicación de un módulo de negocio y arrastra los projectors de los otros cuatro,
+y el módulo `accounts` orquesta el `application/` y el `domain/` de `transactions`
+sin capa anticorrupción. El test de aislamiento no lo detectó porque sólo prohíbe
+paquetes externos (`@nestjs/`, `typeorm`, `pg`, `express`), no la dirección de
+dependencias entre capas.
+
+La segunda debilidad es el aislamiento de mapeo: los controllers declaran DTOs en
+Swagger y devuelven las filas `snake_case` del read model. Ya está reconocido con
+`FIXME` en el código, así que se reporta como deuda conocida, no como sorpresa.
+
+## Scores por dimensión
+
+| # | Dimensión | Antes | Ahora | Nota |
+|---|---|---|---|---|
+| 1 | Dependency direction | 1/3 | **3/3** | ningún archivo de `domain/`/`application/` alcanza `infrastructure/`; congelado por test |
+| 2 | Module boundaries | 2/3 | **3/3** | composition root fuera de los módulos de negocio; queda L-3 (hygiene) |
+| 3 | Domain richness | 3/3 | 3/3 | agregados con invariantes, VOs, `Money` sin float; una duplicación de INV-3/INV-4 |
+| 4 | Ports & bindings | 2/3 | 2/3 | los 4 repositorios ya están alineados; los puertos de `reconciliation` siguen mal ubicados |
+| 5 | Use case granularity | 3/3 | 3/3 | un handler = un `execute()`, sin excepción |
+| 6 | Adapter thinness | 3/3 | 3/3 | controllers y pump sólo adaptan; el pump además maneja error y reentrada |
+| 7 | Mapping isolation | 1/3 | 1/3 | los controllers siguen devolviendo filas del read model (M-2, pendiente) |
+| 8 | Error handling | 3/3 | 3/3 | jerarquía tipada, catálogo de códigos congelado por test de contrato |
+| 9 | Naming consistency | 2/3 | 2/3 | uniforme salvo el módulo `reference`; barrels casi ausentes |
+| 10 | Shared kernel hygiene | 2/3 | 2/3 | `shared/` limpio, pero `AccountNotFoundException` vive en el módulo equivocado |
+| 11 | Cross-module coupling | 1/3 | **2/3** | `accounts` ya no construye agregados de `transactions`; queda el import de un `PROJ_*` ajeno |
+| 12 | Testability | 3/3 | 3/3 | handlers construibles con dobles, contract tests, wiring test, isolation test |
+
+---
+
+## Hallazgos
+
+### [HIGH] H-1 · `application/` importa `infrastructure/` en 12 archivos de producción
+
+- **Dónde:**
+  - `apps/ledger/src/accounts/application/account-name.registry.ts:4`
+  - `apps/ledger/src/accounts/application/account-validation.service.ts:9`
+  - `apps/ledger/src/accounts/application/get-account-tree/get-account-tree.handler.ts:7`
+  - `apps/ledger/src/accounts/application/get-account-by-id/get-account-by-id.handler.ts:7`
+  - `apps/ledger/src/accounts/application/get-account-balances/get-account-balances.handler.ts:7-8`
+  - `apps/ledger/src/accounts/application/record-opening-balance/record-opening-balance.handler.ts:11-14`
+  - `apps/ledger/src/transactions/application/list-transactions/list-transactions.handler.ts:10`
+  - `apps/ledger/src/transactions/application/list-pending-review/list-pending-review.handler.ts:7`
+  - `apps/ledger/src/transactions/application/get-transaction-by-id/get-transaction-by-id.handler.ts:7`
+  - `apps/ledger/src/ledger/application/get-ledger-settings/get-ledger-settings.handler.ts:10`
+  - `apps/ledger/src/ledger/application/get-ledger-settings/get-ledger-settings.query.ts:3`
+  - `apps/ledger/src/reference/application/list-currencies.query.ts:5`
+- **Regla rota:** *Dependencies point inward only* — `application` MUST NOT import
+  `infrastructure/*`. También `docs/rules.md` Artículo 1 en espíritu: "todo acceso a
+  infraestructura entra por puertos".
+- **Por qué duele:** las constantes `PROJ_ACCOUNTS`, `PROJ_TRANSACTIONS`,
+  `PROJ_LEDGER_SETTINGS`… y los tipos `AccountTreeRow`, `LedgerSettingsRow`,
+  `TransactionListRow` son el **nombre físico de una tabla y su forma
+  `snake_case`**. Hoy el read side de la aplicación no puede compilarse ni testearse
+  sin el paquete de projectors, y renombrar una proyección o mover un projector
+  rompe la capa de aplicación de tres módulos. Es exactamente el acoplamiento que el
+  Artículo 1 declara no negociable, sólo que hacia adentro del propio código en vez
+  de hacia un driver.
+- **Fix:** mover los identificadores de proyección y sus tipos de fila a la capa que
+  los consume — p. ej. `<module>/application/read-models/<name>.read-model.ts`
+  exportando `PROJ_X` y `XRow` — y que el projector de infraestructura **importe de
+  ahí** en vez de exportarlos. Es una inversión de import: ~12 archivos tocados, cero
+  cambio de comportamiento, y el projector sigue siendo el único escritor (Art. 10
+  intacto).
+- **✅ Resuelto.** Seis módulos de read-model nuevos en `application/read-models/`:
+  `accounts/…/account-tree`, `transactions/…/{transaction-list, account-balances,
+  pending-review}`, `ledger/…/ledger-settings` (con `LedgerSettingsRow`, el único
+  tipo que cruzaba) y `reference/…/currencies`. Los seis projectors ya no declaran
+  su nombre de tabla: lo importan. 34 archivos con imports reescritos, ningún cambio
+  de comportamiento.
+
+### [HIGH] H-2 · El composition root del núcleo vive dentro de `ledger/application/`
+
+- **Dónde:** `apps/ledger/src/ledger/application/ledger-application.factory.ts:11,23,29,37,53-55`
+  (y `query-bus.factory.ts:3-18` con el mismo patrón, sin el problema de infraestructura).
+- **Regla rota:** *Bindings live only in the composition root* + *dependency
+  direction*. `ledger` es un módulo de negocio (settings del libro), no la raíz de
+  composición de la app.
+- **Por qué duele:** el archivo instancia `SynchronousProjectionDispatcher`
+  (`@cqrs/infrastructure`) y los seis projectors de `accounts`, `transactions`,
+  `ledger` y `reference` desde dentro de una capa de aplicación. Efecto práctico:
+  `ledger/application/` no se puede compilar sin la infraestructura de los otros
+  cuatro módulos, y cualquier módulo nuevo obliga a editar la capa de aplicación de
+  `ledger`. `LedgerCoreModule` ya es el composition root real (`ledger-core.module.ts`)
+  y sólo delega en este factory.
+- **Fix:** mover ambos factories fuera del módulo `ledger`, a una raíz neutral
+  (`apps/ledger/src/bootstrap/` o junto a `LedgerCoreModule`). Es un movimiento de
+  archivo más el ajuste de imports; H-1 resuelto reduce además lo que el factory
+  necesita conocer.
+- **✅ Resuelto.** `ledger-application.factory.ts` y `query-bus.factory.ts` (con sus
+  specs) movidos con `git mv` a `apps/ledger/src/bootstrap/`. `ledger/application/`
+  queda con lo que le pertenece: sus casos de uso, su repositorio y el registro de
+  eventos. `createLedgerEventRegistry` se dejó en `ledger/application/` a propósito:
+  no importa infraestructura, y moverlo no arreglaba nada (Simplicity Gate).
+
+### [HIGH] H-3 · `accounts` orquesta el `application/` y el `domain/` de `transactions` sin ACL
+
+- **Dónde:** `apps/ledger/src/accounts/application/record-opening-balance/record-opening-balance.handler.ts:10-25`
+  — importa `LedgerTransactionRepository` y `toPostingLines` de
+  `transactions/application`, `BalanceRule`, `LedgerTransaction` y
+  `TransactionStatus` de `transactions/domain`, `LedgerNotInitializedException` de
+  `ledger/domain` y `PROJ_LEDGER_SETTINGS` de `ledger/infrastructure`.
+  Secundario: `accounts/application/get-account-balances/get-account-balances.handler.ts:8`
+  lee `PROJ_BALANCES` de `transactions/infrastructure`.
+- **Regla rota:** *Cross-module access goes through the other module's exported use
+  cases or through events — never its domain entities, repositories or adapters.*
+- **Por qué duele:** el contexto `accounts` construye agregados de `transactions` a
+  mano y los persiste con el repositorio ajeno. Los dos módulos ya no se pueden
+  separar, y cualquier cambio de invariante en `LedgerTransaction.record` tiene un
+  segundo llamador fuera de su módulo que nadie recuerda al modificarlo.
+- **Fix:** el handler ya tiene el `CommandBus` disponible en la composición —
+  `MergePendingTransfersHandler` y `ResolveDiscrepancyHandler` **ya resuelven esto
+  bien**, despachando `RecordTransactionCommand` por el bus. Alinear
+  `RecordOpeningBalance` con ese patrón: despachar el comando con
+  `PostingOrigin.SYSTEM` en vez de instanciar el agregado. Elimina de un golpe seis
+  imports cross-module y unifica el camino de escritura.
+- **✅ Resuelto.** `RecordOpeningBalanceHandler` pasó de siete dependencias
+  (repositorio, validación, balance, `IdGenerator`, dispatcher…) a tres
+  (`CommandBus`, `ReadModelStore`, `CurrencyCatalog`), y despacha
+  `RecordTransactionCommand` con `PostingOrigin.SYSTEM`. Balanceo, precisión y las
+  validaciones INV-3/INV-4 quedan en un solo sitio. Efecto colateral bueno: ahora
+  propaga el `CommandResult` real del comando interno en vez de forzar
+  `idempotentReplay: false`. El spec se reescribió contra el comando despachado
+  (usando el `RecordingCommandBus` que ya existía) y suma un caso que antes no
+  estaba: que el origen sea `SYSTEM` (INV-13).
+
+### [MEDIUM] M-1 · El test de aislamiento no cubre la dirección entre capas
+
+- **Dónde:** `apps/ledger/src/hexagonal-isolation.spec.ts:8`
+- **Regla rota:** ninguna por sí mismo — es la razón por la que H-1 lleva 12
+  archivos sin que nadie lo note.
+- **Por qué duele:** `FORBIDDEN_IMPORTS` lista sólo `@nestjs/`, `typeorm`, `pg`,
+  `express`. Un import a `infrastructure/` pasa verde. El test da una sensación de
+  frontera vigilada que hoy no corresponde a lo que verifica.
+- **Fix:** agregar un segundo caso al mismo `describe` que recorra los archivos de
+  `application/` y falle ante cualquier import que contenga `/infrastructure/`; y
+  otro para `domain/` que además prohíba `/application/`. Son ~15 líneas reusando
+  `sourceFiles()` e `IMPORT_SOURCE` que ya están escritos. **Hacer esto primero, en
+  rojo, antes de H-1** (Artículo 4: TDD estricto).
+- **✅ Resuelto.** Segundo caso en el mismo `describe`: `domain/` no puede alcanzar
+  `application/` ni `infrastructure/`, y `application/` no puede alcanzar
+  `infrastructure/`. La comparación es **por segmento de ruta**, no por substring,
+  para que `@cqrs/application/...` cuente y un archivo llamado `application.ts` no.
+  Se escribió primero y falló con 22 violaciones — los tres HIGH exactos más el
+  repositorio de M-6. Hoy está en verde.
+
+### [MEDIUM] M-2 · Los controllers devuelven filas del read model, no los DTOs que documentan
+
+- **Dónde:** `apps/ledger/src/accounts/infrastructure/adapters/http/accounts.controller.ts:71-106`
+  (`FIXME` presente), `apps/ledger/src/transactions/infrastructure/adapters/http/transactions.controller.ts:89-140`
+  (dos `FIXME`).
+- **Regla rota:** *Outputs are output DTOs from an application mapper — never
+  internal shapes to HTTP.*
+- **Por qué duele:** `@ApiOkResponse({ type: AccountTreeDto })` promete un envelope
+  camelCase y sale `account_id`/`opened_on`. El contrato OpenAPI publicado miente:
+  todo cliente generado desde `api.yaml` falla en runtime, y `total` de
+  `TransactionListDto` no tiene fuente. Además es la vía por la que los tipos `*Row`
+  de infraestructura llegan a la firma pública.
+- **Fix:** un mapper de aplicación por lectura (`toDTO(row): XDto`) y que el handler
+  de query devuelva el DTO. Se resuelve naturalmente junto con H-1, porque el tipo
+  de fila ya habrá bajado a `application/`. Los `FIXME` documentan que `total` exige
+  una count query — esa parte es trabajo aparte y conviene dejarla explícita en la
+  HU correspondiente.
+
+### [MEDIUM] M-3 · `BalanceAssertionController` inyecta los query handlers en vez del `QueryBus`
+
+- **Dónde:** `apps/ledger/src/reconciliation/infrastructure/adapters/http/balance-assertion.controller.ts:44-45,90-98`
+- **Regla rota:** consistencia del composition root — los otros tres controllers
+  (`accounts`, `transactions`, `currencies`) resuelven lecturas por `QueryBus`.
+- **Por qué duele:** `GetAssertionStatusQuery` y `ListAssertionsQuery` reciben
+  `context.userId` como **argumento de la query**, mientras el resto lo pasa por
+  `QueryContext`. Son dos contratos de lectura distintos en la misma API: el
+  aislamiento por usuario (Artículo 5) se garantiza de dos formas diferentes, y una
+  de ellas depende de que el controller no se olvide de pasarlo. Estos dos métodos
+  tampoco declaran tipo de retorno ni decoradores Swagger, a diferencia de todos los
+  demás.
+- **Fix:** registrar ambos handlers en `createQueryBus` y hacer que el controller
+  despache por el bus con `QueryContext`, moviendo `userId` fuera de la query.
+
+### [MEDIUM] M-4 · `LedgerNotInitializedException` existe dos veces con el mismo `code`
+
+- **Dónde:** `apps/ledger/src/ledger/domain/settings/exceptions/ledger.exception.ts:17`
+  y `apps/ledger/src/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception.ts:46`
+  — ambas `DomainUnprocessableException` con `code = 'LEDGER_NOT_INITIALIZED'`.
+- **Regla rota:** DRY sobre la jerarquía de excepciones; el código de error es un
+  contrato público único (`shared/domain/errors/ledger-error-code.ts`).
+- **Por qué duele:** `ledger-error-code-mapping.spec.ts:14` importa la de
+  `reconciliation` para congelar el status HTTP; la de `ledger` no está cubierta por
+  ese contrato. Si alguna vez divergen en clase base, el mismo `code` devolverá dos
+  status distintos según qué módulo lo lance, y el test seguirá verde.
+- **Fix:** dejar una sola, en `shared/domain/errors/`, y que ambos módulos la
+  importen. Es la excepción de una condición transversal ("el ledger del usuario no
+  existe"), no de un agregado.
+
+### [MEDIUM] M-5 · INV-3 e INV-4 están implementados dos veces
+
+- **Dónde:** `apps/ledger/src/accounts/domain/account/account.aggregate.ts:137-160`
+  (`ensureOpenOn`, `ensureAcceptsCurrency`) y
+  `apps/ledger/src/accounts/application/account-validation.service.ts:93-113`
+  (`ensureOpenOn`, `ensureAcceptsCurrency`) — misma lógica, mismas excepciones,
+  distinta fuente de datos (agregado vs. proyección).
+- **Regla rota:** *Entity owns its behavior* — la regla vive en dos capas.
+- **Por qué duele:** el comentario del agregado (líneas 32-38) explica bien por qué
+  la validación cross-aggregate no puede cargar N agregados, y esa decisión es
+  correcta. Lo que no es correcto es reescribir el predicado: si mañana INV-4 admite
+  multi-moneda con lista, hay que acordarse de tocar los dos, y sólo uno tiene
+  cobertura del agregado. Nótese que `Account.ensureOpenOn`/`ensureAcceptsCurrency`
+  hoy **no tienen ningún llamador** — el camino real es siempre el service.
+- **Fix (el más chico):** extraer los dos predicados a funciones puras en
+  `accounts/domain/` que reciban los datos ya leídos (`{ openedOn, closedOn }`,
+  `{ currencies }`) y que tanto el agregado como el service las invoquen. Si se
+  confirma que los métodos del agregado son código muerto, borrarlos también es una
+  opción válida — pero decidirlo, no dejarlo.
+  *(Análisis de duplicación: ver skill `design-principles`.)*
+
+### [MEDIUM] M-6 · El placement de puertos y repositorios difiere entre módulos
+
+- **Dónde:**
+  - Repositorios: `reconciliation/domain/balance-assertion/balance-assertion.repository.ts`
+    vs. `accounts/application/account.repository.ts`,
+    `transactions/application/ledger-transaction.repository.ts`,
+    `ledger/application/ledger-settings.repository.ts`.
+  - Puertos: `reconciliation/domain/ports/` contiene siete puertos, pero sólo
+    `assertion-posting-reader.port.ts` y `day-boundary.resolver.ts` son invocados por
+    un domain service (`AssertionEvaluator`). `adjustment-audit-store.port.ts`,
+    `assertion-status-store.port.ts`, `assertion-lookup.port.ts`,
+    `ledger-settings-reader.port.ts` y `system-account-lookup.port.ts` sólo los
+    consumen handlers y el reactor de `application/`. Mismo caso en
+    `transactions/domain/ports/account-lookup.port.ts`, consumido únicamente por
+    `MergePendingTransfersHandler`.
+- **Regla rota:** *Where does a port live* — 1) lo llama un domain service →
+  `domain/`; 2) sólo casos de uso → `application/ports/`. Y *within one module,
+  apply the same rule to every aggregate*.
+- **Por qué duele:** no rompe nada hoy, pero borra la señal. Un lector ya no puede
+  deducir de la ubicación si un puerto pertenece a una invariante del dominio o es
+  una necesidad de orquestación, que es justamente para lo que sirve la separación.
+- **Fix:** mover a `application/ports/` los seis puertos sin consumidor de dominio, y
+  elegir un solo lado para los repositorios (los cuatro son `EventSourcedRepository`;
+  `application/` es donde están tres de cuatro, así que mover el de `reconciliation`
+  es el diff menor).
+- **✅ Resuelto a medias — repositorios sí, puertos no.**
+  `balance-assertion.repository.ts` movido a `reconciliation/application/` y quitado
+  del barrel de `domain/balance-assertion/`. No fue opcional: extendía
+  `EventSourcedRepository` de `@cqrs/application`, así que era también una violación
+  `domain → application` que el guard de M-1 marcaba en rojo. Los cuatro
+  repositorios viven ahora en `application/`. **Los seis puertos siguen pendientes**
+  — es un movimiento de archivos sin riesgo, pero no lo exigía ningún test en rojo.
+
+### [LOW] L-1 · `AccountNotFoundException` vive en el módulo `ledger`
+
+- **Dónde:** `apps/ledger/src/ledger/domain/settings/exceptions/ledger.exception.ts:22`,
+  usada desde `accounts/application/account-validation.service.ts:10`,
+  `rename-account.handler.ts`, `close-account.handler.ts`.
+- **Regla rota:** cohesión de módulo — la excepción de un agregado vive con el agregado.
+- **Por qué duele:** obliga a `accounts` a importar `ledger/domain` para lanzar su
+  propia excepción, e infla artificialmente el acoplamiento medido en H-3.
+- **Fix:** moverla a `accounts/domain/account/exceptions/account.exception.ts`, junto
+  a las otras siete de cuenta.
+
+### [LOW] L-2 · El módulo `reference` no sigue el layout de los otros cuatro
+
+- **Dónde:** `apps/ledger/src/reference/application/` — sin subcarpeta por caso de
+  uso; `list-currencies.query.ts` contiene la query, el tipo de fila **y** el handler
+  en un archivo; `reference/infrastructure/adapters/http/currencies.controller.ts:23-40`
+  define `RegisterCurrencyRequestDto` dentro del archivo del controller, mientras los
+  otros módulos tienen `dto/` con barrel.
+- **Regla rota:** *Naming consistency* y layout canónico.
+- **Fix:** `application/register-currency/` y `application/list-currencies/` con
+  `.command.ts`/`.query.ts`/`.handler.ts` separados, y `infrastructure/adapters/http/dto/`.
+
+### [LOW] L-3 · `accounts` no tiene módulo raíz
+
+- **Dónde:** existe `accounts/infrastructure/adapters/http/accounts-http.module.ts`
+  pero no `accounts/accounts.module.ts`. El cableado del módulo está repartido entre
+  `ledger-application.factory.ts` (escritura), `query-bus.factory.ts` (lectura) y ese
+  http module.
+- **Regla rota:** *`<module>.module.ts` at the module ROOT*.
+- **Por qué duele:** para saber qué compone `accounts` hay que leer tres archivos, dos
+  de ellos en otro módulo. Se resuelve en gran parte con H-2.
+- **Fix:** una vez movidos los factories (H-2), dar a `accounts` su módulo raíz que
+  importe el http module y registre sus handlers, como ya hacen `transactions` y
+  `reconciliation` con `onModuleInit`.
+
+### [LOW] L-4 · Barrels prácticamente ausentes; los imports son deep paths
+
+- **Dónde:** 24 `index.ts` en todo `apps/ledger/src`, contra ~70 carpetas con
+  contenido. Todos los imports usan la ruta completa
+  (`@ledger/accounts/application/open-account/open-account.command`).
+- **Regla rota:** *Every folder with content ships an `index.ts`; import through the
+  barrel.*
+- **Nota:** es una desviación **consistente** en todo el proyecto y no compromete la
+  dirección de dependencias — se reporta como convención a documentar, no como
+  defecto. La ruta profunda además es legible con el alias `@ledger/*`.
+- **Fix:** decidir explícitamente y anotarlo en `docs/rules.md` o en el README del
+  app. Si se adopta barrels, hacerlo por módulo y de una sola vez; si no, dejar
+  constancia para que el criterio no se reabra en cada review.
+
+### [LOW] L-5 · Un spec de contrato HTTP vive en `shared/domain/errors/`
+
+- **Dónde:** `apps/ledger/src/shared/domain/errors/ledger-error-code-mapping.spec.ts:1`
+  — importa `@nestjs/common` y ejercita el `ExceptionFilter`.
+- **Regla rota:** placement. El test es valioso y correcto; su ubicación no.
+  `isCoreFile()` de `hexagonal-isolation.spec.ts` lo excluye por ser `.spec.ts`, así
+  que no rompe el guard, pero es la única aparición de `@nestjs` bajo `domain/`.
+- **Fix:** moverlo junto al filtro que prueba, en
+  `shared/infrastructure/adapters/http/`. El catálogo puro
+  (`ledger-error-code-catalogue.spec.ts`) sí pertenece a `domain/`.
+
+---
+
+## Plan priorizado
+
+Orden pensado para que cada paso deje el siguiente más barato, respetando el
+Artículo 4 (test primero).
+
+1. ~~**M-1 — extender `hexagonal-isolation.spec.ts`**~~ ✅
+2. ~~**H-1 — invertir el import de los read models.**~~ ✅
+3. ~~**H-3 — `RecordOpeningBalance` despacha por el `CommandBus`.**~~ ✅
+4. ~~**H-2 — mover los factories a una raíz de composición neutral.**~~ ✅
+   (+ la mitad de M-6: los repositorios, que el guard exigía.)
+5. **M-2 — mappers de salida por lectura** en los handlers de query, para que el
+   contrato OpenAPI publicado deje de mentir. La paginación (`total`) es trabajo
+   aparte y merece su propia HU. **← siguiente**
+
+### Pendiente después de M-2
+
+Ninguno bloquea a otro; se pueden tomar de a uno al tocar el módulo:
+
+- **M-3** — registrar los query handlers de `reconciliation` en el `QueryBus` y
+  sacar `userId` de la query.
+- **M-4** — unificar `LedgerNotInitializedException` en `shared/domain/errors/`.
+- **M-6 (resto)** — mover a `application/ports/` los seis puertos sin consumidor
+  de dominio.
+- **M-5** — resolver la doble implementación de INV-3/INV-4 (o borrar los métodos
+  del agregado si se confirma que están muertos).
+- **L-1 … L-5** — hygiene; L-3 (`accounts` sin módulo raíz) ya es barato ahora que
+  el composition root salió de `ledger/application/`.
+
+## Verificación de los cambios aplicados
+
+```
+npx tsc -p apps/ledger/tsconfig.app.json  --noEmit    # limpio
+npx tsc -p apps/ledger/tsconfig.spec.json --noEmit    # limpio
+npx jest --config apps/ledger/jest.config.ts --rootDir apps/ledger
+#   Test Suites: 2 skipped, 76 passed, 78 total
+#   Tests:       2 skipped, 457 passed, 459 total
+```
+
+Las 2 suites skipped son las que exigen una Postgres viva
+(`postgres-event-store.integration`, `read-model-readers.postgres`) y ya lo estaban
+antes. `npx eslint apps/ledger/src --fix` deja sólo los `no-console` preexistentes de
+`tooling/rebuild.command.ts`, que es un CLI — ninguno introducido aquí.
+
+## Fuera de alcance de esta skill
+
+- Duplicación lógica y responsabilidades (M-5) → skill `design-principles`.
+- Sintaxis y tipos (`string | null` vs `Nullable<T>` en cuatro projectors) → skill
+  `typescript`.
+- `strict: false` en `tsconfig.base.json` — ya está documentado en el propio archivo
+  como cambio pendiente y deliberado; no es un defecto de arquitectura.
