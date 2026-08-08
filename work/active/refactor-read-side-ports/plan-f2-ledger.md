@@ -26,13 +26,13 @@ la factory acá).
 
 ---
 
-### Tarea 0: Rama de trabajo
+### Tarea 0: Rama de trabajo [X]
 
 Se continúa en `feat/core`. Working tree limpio antes de empezar.
 
 ---
 
-### Tarea 1: Esquema de `proj_ledger_settings`
+### Tarea 1: Esquema de `proj_ledger_settings` [X]
 
 **Archivos:**
 - Crear: `apps/ledger/src/ledger/infrastructure/projections/ledger-settings.schema.ts`
@@ -47,7 +47,7 @@ que la tabla necesite un `Finder` *y* un `Lookup` distintos.
 
 ---
 
-### Tarea 2: `LedgerSettingsView` a `application/views/`
+### Tarea 2: `LedgerSettingsView` a `application/views/` [X]
 
 **Archivos:**
 - Crear: `apps/ledger/src/ledger/application/views/ledger-settings.view.ts`
@@ -56,7 +56,7 @@ Sólo el tipo `LedgerSettingsView` (3 campos).
 
 ---
 
-### Tarea 3: `LedgerSettingsFinder` + adapter
+### Tarea 3: `LedgerSettingsFinder` + adapter [X]
 
 **Archivos:**
 - Crear: `apps/ledger/src/ledger/application/ports/ledger-settings-finder.port.ts`
@@ -96,7 +96,7 @@ Migrar en el mismo ciclo `GetLedgerSettingsHandler`, que queda en una línea.
 
 ---
 
-### Tarea 4: `LedgerTimezoneReader` + adapter (reubica)
+### Tarea 4: `LedgerTimezoneReader` + adapter (reubica) [X]
 
 **Archivos:**
 - Crear: `apps/ledger/src/ledger/application/ports/ledger-timezone-reader.port.ts`
@@ -133,7 +133,7 @@ Esperado: PASS.
 
 ---
 
-### Tarea 5: `SystemAccountLookup` + adapter (reubica y extiende)
+### Tarea 5: `SystemAccountLookup` + adapter (reubica y extiende) [X]
 
 **Archivos:**
 - Crear: `apps/ledger/src/ledger/application/ports/system-account-lookup.port.ts`
@@ -176,7 +176,7 @@ Esperado: PASS.
 
 ---
 
-### Tarea 6: Migrar `RecordOpeningBalanceHandler` — AC-7
+### Tarea 6: Migrar `RecordOpeningBalanceHandler` — AC-7 [X]
 
 **Archivos:**
 - Modificar: `apps/ledger/src/accounts/application/usecases/record-opening-balance/record-opening-balance.handler.ts`
@@ -208,7 +208,7 @@ Con esto **ningún command handler del ledger depende de `ReadModelStore`**.
 
 ---
 
-### Tarea 7: Retirar los puertos de `reconciliation` — AC-8
+### Tarea 7: Retirar los puertos de `reconciliation` — AC-8 [X]
 
 **Archivos:**
 - Borrar: `apps/ledger/src/reconciliation/application/ports/ledger-settings-reader.port.ts`
@@ -238,7 +238,7 @@ Esperado: PASS — incluidos `reconciliation.discrepancy.e2e.spec.ts` y
 
 ---
 
-### Tarea 8: Wiring y limpieza — AC-1, AC-5
+### Tarea 8: Wiring y limpieza — AC-1, AC-5 [X]
 
 **Archivos:**
 - Modificar: `apps/ledger/src/ledger/ledger-core.module.ts` (3 bindings)
@@ -258,7 +258,7 @@ Esperado: sin resultados.
 
 ---
 
-### Tarea 9: Suite completa — AC-9
+### Tarea 9: Suite completa — AC-9 [X]
 
 ```bash
 npx jest apps/ledger --no-coverage
