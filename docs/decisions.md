@@ -8,6 +8,30 @@
 > entrada nueva que la referencia. Orden cronológico inverso (más reciente
 > primero).
 
+## refactor-module-boundaries — fronteras reales entre los bounded contexts (2026-08-08)
+
+- **Creación de las cuentas técnicas en `InitializeLedger`:** `OpenSystemAccountCommand` propio
+  del módulo `accounts`, despachado por el `CommandBus` dentro del `withTransaction` existente —
+  no toca el contrato HTTP de `OpenAccount`, deja INV-13 explícito y permite que el handler no
+  despache proyecciones. Ver [`docs/research.md`](./docs/research.md#decisión-1).
+- **Raíz única de composición:** la factory de `bootstrap/`. Es la que ya corre y la única que
+  sirve a las composiciones in-memory y a los cinco e2e, que montan el ledger sin Nest. Se borran
+  los seis providers muertos. Ver [`docs/research.md`](./docs/research.md#decisión-2).
+- **Esquemas compartidos:** puerto para el adapter de `transactions`, JSDoc de contrato para el
+  projector y para el adapter de `reconciliation` — con el ajuste justificado en
+  [`docs/research.md`](./docs/research.md#decisión-3), donde la verificación mostró que los dos
+  adapters no son simétricos.
+- **Barrels (AC-11): resuelto por la constitución, no por este diseño.** El Artículo 13 ya decidió
+  imports por ruta completa, con barrels permitidos solo en cuatro conjuntos cerrados —uno de
+  ellos "puertos de un módulo"—, y lo documenta como desviación deliberada de la skill
+  `hexagonal-architecture` "para que no se reabra en cada review". AC-11 se reinterpreta en
+  consecuencia: **no** se eliminan los barrels ni se agregan nuevos; lo único que se corrige es
+  que `transactions/application/ports/index.ts` exporte los 4 puertos y no 2, porque un conjunto
+  cerrado incompleto es lo que el Artículo describe como no-cerrado. Que
+  `transactions.module.ts` importe por ruta completa es correcto bajo Art. 13 y se deja como está.
+
+---
+
 ## refactor-read-side-ports — puertos de lectura tipados para el read side (2026-08-08)
 
 ### Los read models no se modelan como entidades de dominio

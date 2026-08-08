@@ -1,0 +1,129 @@
+// Delta C4 Nivel 3 — refactor-module-boundaries.
+// Fronteras reales entre bounded contexts: kernel compartido, composition root
+// fuera del modulo de negocio, y el cruce ledger -> accounts por CommandBus.
+//
+// NOTA PARA /sync: la vista `initializeLedgerDelta` de abajo es TEMPORAL. Al
+// reconciliar, reemplazar el cuerpo de la vista `initializeLedger` vigente en
+// apps/ledger/docs/accounts/accounts.c4 con estos pasos, quitar el prefijo
+// [CHANGED] del title, y borrar la vista temporal. No puede llevar el id real
+// mientras vive en work/active/ porque likec4.config.json no excluye esa ruta y
+// el id duplicado rompe el modelo.
+
+model {
+
+  // --- accounts: el cruce desde `ledger` pasa a entrar por el CommandBus ---
+
+  extend admin.ledger.accounts {
+
+    initializeHandler = component 'InitializeLedgerHandler' {
+      #delta-new
+      technology 'Application · CommandHandler'
+      description 'Inicializa el ledger: settings + las dos cuentas tecnicas, los tres appends en un unico withTransaction (INV-7). Deja de construir el agregado Account: despacha OpenSystemAccountCommand.'
+      metadata {
+        introducedIn 'refactor-module-boundaries'
+      }
+    }
+
+    openSystemHandler = component 'OpenSystemAccountHandler' {
+      #delta-new
+      technology 'Application · CommandHandler'
+      description 'Abre una cuenta de sistema (isSystem: true, INV-13). No despacha proyecciones: las despacha el caller, que es quien abre el scope transaccional.'
+      metadata {
+        introducedIn 'refactor-module-boundaries'
+      }
+    }
+
+    accountFactsReader = component 'AccountFactsReader' {
+      #delta-new
+      technology 'Application · Port'
+      description 'Puerto de lectura de accounts: factsOf(userId, accountId) -> { type, currency, isBankMirror }. Lo consume transactions en vez de leer proj_accounts directo.'
+      metadata {
+        introducedIn 'refactor-module-boundaries'
+      }
+    }
+
+    // Relaciones dentro del extend: LikeC4 no resuelve referencias a elementos
+    // extend-ed desde fuera del bloque.
+    admin.ledger.accounts.initializeHandler -> admin.ledger.shared.commandBus 'dispatch(OpenSystemAccountCommand) x2, dentro de withTransaction'
+    admin.ledger.accounts.openSystemHandler -> admin.ledger.accounts.account 'Account.open({ isSystem: true })'
+    admin.ledger.accounts.openSystemHandler -> admin.ledger.accounts.accountRepository 'save(account)'
+    admin.ledger.accounts.ledgerController -> admin.ledger.accounts.initializeHandler 'via CommandBus'
+  }
+
+  // --- shared kernel: los tipos que tres modulos ya compartian de facto ---
+
+  extend admin.ledger.shared {
+
+    postingLine = component 'PostingLine' {
+      #delta-new
+      technology 'Domain · Value Object'
+      description 'Linea de asiento (accountId + Money + metadata). Movido desde transactions/domain: lo consumen accounts (validacion cruzada) y reconciliation (factory de ajustes), junto a PostingOrigin que ya vivia aca.'
+      metadata {
+        introducedIn 'refactor-module-boundaries'
+      }
+    }
+
+    transactionStatus = component 'TransactionStatus' {
+      #delta-new
+      technology 'Domain · Enum'
+      description 'PENDING | CONFIRMED | VOIDED. Movido desde transactions/domain: lo consumen accounts, reconciliation y sus adaptadores de lectura.'
+      metadata {
+        introducedIn 'refactor-module-boundaries'
+      }
+    }
+
+    ledgerCoreModule = component 'LedgerCoreModule' {
+      #delta-new
+      technology 'Infrastructure · Composition Root'
+      description 'Raiz de composicion global (buses, Clock, IdGenerator, EventStore, ReadModelStore, CurrencyCatalog). Movido desde src/ledger/ a src/bootstrap/: estando dentro de un modulo de negocio generaba el ciclo ledger <-> reference.'
+      metadata {
+        introducedIn 'refactor-module-boundaries'
+      }
+    }
+
+    admin.ledger.shared.ledgerCoreModule -> admin.ledger.shared.commandBus 'compone'
+    admin.ledger.shared.ledgerCoreModule -> admin.ledger.shared.queryBus 'compone'
+    admin.ledger.shared.ledgerCoreModule -> admin.ledger.shared.readModel 'bindea los puertos de lectura (raiz unica)'
+  }
+
+  // --- transactions: PostingLine se va al kernel; el lookup pasa por puerto ---
+
+  extend admin.ledger.transactions.posting {
+    #delta-changed
+    metadata {
+      changedIn 'refactor-module-boundaries'
+    }
+  }
+
+  extend admin.ledger.transactions {
+
+    accountLookupAdapter = component 'ReadModelAccountLookup' {
+      #delta-new
+      technology 'Infrastructure · Adapter (ACL)'
+      description 'Adaptador anti-corrupcion de AccountLookup. Deja de leer proj_accounts directo: delega en AccountFactsReader, el puerto que expone accounts.'
+      metadata {
+        introducedIn 'refactor-module-boundaries'
+      }
+    }
+
+    admin.ledger.transactions.accountLookupAdapter -> admin.ledger.accounts.accountFactsReader 'factsOf(userId, accountId)'
+  }
+}
+
+views 'Accounts' {
+
+  // TEMPORAL — ver la nota de cabecera. /sync la fusiona en `initializeLedger`.
+  dynamic view initializeLedgerDelta {
+    title '[CHANGED] Inicializar ledger · trigger REST'
+    description 'Las cuentas tecnicas dejan de construirse desde el modulo ledger: entran por el CommandBus como OpenSystemAccountCommand. Los tres appends siguen en un unico withTransaction (INV-7) y el dispatch de proyecciones sigue fuera del scope.'
+
+    user -> admin.ledger.accounts.ledgerController 'POST /ledger/initialize (InitializeLedgerRequestDto)'
+    admin.ledger.accounts.ledgerController -> admin.ledger.shared.commandBus 'dispatch(InitializeLedgerCommand)'
+    admin.ledger.shared.commandBus -> admin.ledger.accounts.initializeHandler 'handle — abre withTransaction'
+    admin.ledger.accounts.initializeHandler -> admin.ledger.shared.commandBus 'dispatch(OpenSystemAccountCommand: Equity:OpeningBalances)'
+    admin.ledger.shared.commandBus -> admin.ledger.accounts.openSystemHandler 'handle'
+    admin.ledger.accounts.openSystemHandler -> admin.ledger.accounts.accountRepository 'save — append(AccountOpened)'
+    admin.ledger.accounts.initializeHandler -> admin.ledger.shared.commandBus 'dispatch(OpenSystemAccountCommand: Equity:Adjustments)'
+    admin.ledger.accounts.initializeHandler -> admin.ledger.shared.eventStore 'append(LedgerInitialized) con los dos accountId'
+  }
+}

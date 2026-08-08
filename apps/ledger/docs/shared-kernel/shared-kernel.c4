@@ -114,7 +114,36 @@ model {
       }
     }
 
+    // --- refactor-module-boundaries: kernel compartido y raiz de composicion ---
+
+    postingLine = component 'PostingLine' {
+      technology 'Domain · Value Object'
+      description 'Linea de asiento (accountId + Money + metadata). Movido desde transactions/domain: lo consumen accounts (validacion cruzada) y reconciliation (factory de ajustes), junto a PostingOrigin que ya vivia aca.'
+      metadata {
+        introducedIn 'refactor-module-boundaries'
+      }
+    }
+
+    transactionStatus = component 'TransactionStatus' {
+      technology 'Domain · Enum'
+      description 'PENDING | CONFIRMED | VOIDED. Movido desde transactions/domain: lo consumen accounts, reconciliation y sus adaptadores de lectura.'
+      metadata {
+        introducedIn 'refactor-module-boundaries'
+      }
+    }
+
+    ledgerCoreModule = component 'LedgerCoreModule' {
+      technology 'Infrastructure · Composition Root'
+      description 'Raiz de composicion global (buses, Clock, IdGenerator, EventStore, ReadModelStore, CurrencyCatalog). Movido desde src/ledger/ a src/bootstrap/: estando dentro de un modulo de negocio generaba el ciclo ledger <-> reference. Unica raiz que ata los puertos de lectura a sus adapters.'
+      metadata {
+        introducedIn 'refactor-module-boundaries'
+      }
+    }
+
     admin.ledger.shared.authenticatedContextPolicy -> admin.ledger.shared.commandBus 'policy registrada en PolicyCommandBus'
+    admin.ledger.shared.ledgerCoreModule -> admin.ledger.shared.commandBus 'compone'
+    admin.ledger.shared.ledgerCoreModule -> admin.ledger.shared.queryBus 'compone'
+    admin.ledger.shared.ledgerCoreModule -> admin.ledger.shared.readModel 'bindea los puertos de lectura (raiz unica)'
   }
 }
 

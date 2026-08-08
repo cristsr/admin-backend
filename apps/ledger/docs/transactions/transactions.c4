@@ -19,9 +19,19 @@ model {
         technology 'Domain · Policy'
         description 'ZeroSumBalanceRule: balanceo a cero por moneda (INV-1 / INV-11).'
       }
-      posting = component 'PostingLine' {
-        technology 'Domain · Value Object'
-        description 'Linea de asiento; PostingSerializer para persistencia.'
+      posting = component 'PostingSerializer' {
+        technology 'Domain · Serializer'
+        description 'Serializacion de PostingLine para los eventos. El value object PostingLine se movio al kernel compartido (admin.ledger.shared.postingLine): lo usaban tres modulos.'
+        metadata {
+          changedIn 'refactor-module-boundaries'
+        }
+      }
+      accountLookupAdapter = component 'ReadModelAccountLookup' {
+        technology 'Infrastructure · Adapter (ACL)'
+        description 'Adaptador anti-corrupcion de AccountLookup. Deja de leer proj_accounts directo: delega en AccountFactsReader, el puerto que expone accounts.'
+        metadata {
+          introducedIn 'refactor-module-boundaries'
+        }
       }
       kindDeriver = component 'TransactionKindDeriver' {
         technology 'Domain · Service'
@@ -107,6 +117,7 @@ model {
   admin.ledger.transactions.balancesProjector -> admin.ledger.shared.eventStore 'consume eventos'
   admin.ledger.transactions.balancesProjector -> admin.ledger.shared.readModel 'upsert proj_balances'
   admin.ledger.transactions.kindDeriver -> admin.ledger.transactions.posting 'clasifica'
+  admin.ledger.transactions.accountLookupAdapter -> admin.ledger.accounts.accountFactsReader 'factsOf(userId, accountId)'
 }
 
 views 'Transactions' {

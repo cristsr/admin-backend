@@ -38,6 +38,27 @@ model {
       closeHandler = component 'CloseAccountHandler' {
         technology 'Application · CommandHandler'
       }
+      initializeHandler = component 'InitializeLedgerHandler' {
+        technology 'Application · CommandHandler'
+        description 'Inicializa el ledger: settings + las dos cuentas tecnicas, los tres appends en un unico withTransaction (INV-7). No construye el agregado Account: despacha OpenSystemAccountCommand.'
+        metadata {
+          introducedIn 'refactor-module-boundaries'
+        }
+      }
+      openSystemHandler = component 'OpenSystemAccountHandler' {
+        technology 'Application · CommandHandler'
+        description 'Abre una cuenta de sistema (isSystem: true, INV-13). No despacha proyecciones ni valida unicidad de nombre: las despacha el caller, que es quien abre el scope transaccional.'
+        metadata {
+          introducedIn 'refactor-module-boundaries'
+        }
+      }
+      accountFactsReader = component 'AccountFactsReader' {
+        technology 'Application · Port'
+        description 'Puerto de lectura: factsOf(userId, accountId) -> { type, currency, isBankMirror }. Lo consume transactions en vez de leer proj_accounts directo.'
+        metadata {
+          introducedIn 'refactor-module-boundaries'
+        }
+      }
 
       // --- Infrastructure ---
       controller = component 'AccountsController' {
@@ -72,6 +93,9 @@ model {
   admin.ledger.accounts.ledgerController -> admin.ledger.shared.queryBus 'ask(GetLedgerSettingsQuery)'
   admin.ledger.accounts.ledgerController -> admin.ledger.shared.commandBus 'dispatch(ReplaceLedgerSettingsCommand)'
   admin.ledger.accounts.treeProjector -> admin.ledger.shared.eventStore 'consume eventos'
+  admin.ledger.accounts.initializeHandler -> admin.ledger.shared.commandBus 'dispatch(OpenSystemAccountCommand) x2, dentro de withTransaction'
+  admin.ledger.accounts.openSystemHandler -> admin.ledger.accounts.account 'Account.open({ isSystem: true })'
+  admin.ledger.accounts.openSystemHandler -> admin.ledger.accounts.accountRepository 'save(account)'
 }
 
 views 'Accounts' {
@@ -156,10 +180,15 @@ views 'Accounts' {
 
   dynamic view initializeLedger {
     title 'Inicializar ledger · trigger REST'
-    description 'Crea las cuentas tecnicas del sistema y fija la moneda de presentacion y la timezone.'
+    description 'Crea las cuentas tecnicas del sistema y fija la moneda de presentacion y la timezone. Las cuentas entran por el CommandBus como OpenSystemAccountCommand: el agregado Account pertenece a este modulo y no se construye desde otro. Los tres appends comparten un unico withTransaction (INV-7) y el dispatch de proyecciones queda fuera del scope.'
     user -> admin.ledger.accounts.ledgerController 'POST /ledger/initialize (InitializeLedgerRequestDto)'
     admin.ledger.accounts.ledgerController -> admin.ledger.shared.commandBus 'dispatch(InitializeLedgerCommand)'
-    admin.ledger.shared.commandBus -> admin.ledger.shared.eventStore 'append(LedgerInitialized)'
+    admin.ledger.shared.commandBus -> admin.ledger.accounts.initializeHandler 'handle — abre withTransaction'
+    admin.ledger.accounts.initializeHandler -> admin.ledger.shared.commandBus 'dispatch(OpenSystemAccountCommand: Equity:OpeningBalances)'
+    admin.ledger.shared.commandBus -> admin.ledger.accounts.openSystemHandler 'handle'
+    admin.ledger.accounts.openSystemHandler -> admin.ledger.accounts.accountRepository 'save — append(AccountOpened)'
+    admin.ledger.accounts.initializeHandler -> admin.ledger.shared.commandBus 'dispatch(OpenSystemAccountCommand: Equity:Adjustments)'
+    admin.ledger.accounts.initializeHandler -> admin.ledger.shared.eventStore 'append(LedgerInitialized) con los dos accountId'
   }
 
   dynamic view getLedgerSettings {
