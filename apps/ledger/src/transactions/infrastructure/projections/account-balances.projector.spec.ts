@@ -2,7 +2,7 @@ import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria } from '@shared';
 import { PROJ_BALANCES } from '@ledger/transactions/infrastructure/projections/account-balances.schema';
-import { PROJ_POSTINGS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
+import { PROJ_POSTINGS } from '@ledger/transactions/infrastructure/projections/transaction-list.schema';
 import { AccountBalancesProjector } from './account-balances.projector';
 
 function postingRow(

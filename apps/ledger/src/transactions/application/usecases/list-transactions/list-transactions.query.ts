@@ -1,6 +1,6 @@
 import { Query } from '@cqrs/application/query-bus/query';
 import { Nullable } from '@shared';
-import { TransactionListItemView } from '@ledger/transactions/application/read-models/transaction-list.read-model';
+import { TransactionListItemView } from '@ledger/transactions/application/views/transaction.view';
 
 /** Page size applied when the caller does not ask for one, so reads stay bounded. */
 export const DEFAULT_TRANSACTION_PAGE_SIZE = 50;

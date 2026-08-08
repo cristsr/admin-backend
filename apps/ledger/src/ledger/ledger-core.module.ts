@@ -1,4 +1,5 @@
 import { Global, Module } from '@nestjs/common';
+import { getDataSourceToken } from '@nestjs/typeorm';
 import { CommandBus, PolicyCommandBus } from '@cqrs/application/command-bus/command-bus';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { QueryBus, RegistryQueryBus } from '@cqrs/application/query-bus/query-bus';
@@ -10,6 +11,7 @@ import { SystemClock } from '@cqrs/infrastructure/adapters/system-clock';
 import { UuidIdGenerator } from '@cqrs/infrastructure/adapters/uuid-id-generator';
 import { createLedgerApplication } from '@ledger/bootstrap/ledger-application.factory';
 import { createQueryBus } from '@ledger/bootstrap/query-bus.factory';
+import { createQueryPorts, withSqlTransactionFinder } from '@ledger/bootstrap/read-side-ports.factory';
 import { LedgerSettingsFinder } from '@ledger/ledger/application/ports/ledger-settings-finder.port';
 import { LedgerTimezoneReader } from '@ledger/ledger/application/ports/ledger-timezone-reader.port';
 import { SystemAccountLookup } from '@ledger/ledger/application/ports/system-account-lookup.port';
@@ -18,6 +20,7 @@ import { ReadModelLedgerTimezoneReader } from '@ledger/ledger/infrastructure/ada
 import { ReadModelSystemAccountLookup } from '@ledger/ledger/infrastructure/adapters/persistence/read-model-system-account-lookup';
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-catalog';
+import { DataSource } from 'typeorm';
 
 /**
  * Composition root that mounts the real write and read buses into Nest DI, so
@@ -74,11 +77,19 @@ import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-ca
     { provide: CommandBus, useExisting: PolicyCommandBus },
     // Same shape as the command side: the concrete bus is the provider and
     // `QueryBus` aliases it, so a module that binds its own read port can
-    // register its handlers on the one bus the controllers ask through.
+    // register its handlers on the one bus the controllers ask through. The
+    // SQL transaction finder is the substitution the real wiring needs (R7);
+    // compositions without a DataSource — the e2e and in-memory ones — fall
+    // back to the store-backed twin, proven identical by the shared contract.
     {
       provide: RegistryQueryBus,
-      inject: [ReadModelStore],
-      useFactory: (readModel: ReadModelStore): RegistryQueryBus => createQueryBus(readModel),
+      inject: [ReadModelStore, { token: getDataSourceToken(), optional: true }],
+      useFactory: (readModel: ReadModelStore, dataSource: DataSource | undefined): RegistryQueryBus => {
+        const ports = createQueryPorts(readModel);
+        const composed = dataSource ? withSqlTransactionFinder(ports, dataSource) : ports;
+
+        return createQueryBus(readModel, composed);
+      },
     },
     { provide: QueryBus, useExisting: RegistryQueryBus },
   ],

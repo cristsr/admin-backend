@@ -4,7 +4,7 @@ import {
   PostingView,
   TransactionListItemView,
   TransactionView,
-} from '@ledger/transactions/application/read-models/transaction-list.read-model';
+} from '@ledger/transactions/application/views/transaction.view';
 import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 

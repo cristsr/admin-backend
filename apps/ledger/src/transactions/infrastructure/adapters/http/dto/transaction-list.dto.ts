@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { TransactionListItemView } from '@ledger/transactions/application/read-models/transaction-list.read-model';
+import { TransactionListItemView } from '@ledger/transactions/application/views/transaction.view';
 import {
   TransactionPage,
 } from '@ledger/transactions/application/usecases/list-transactions/list-transactions.query';

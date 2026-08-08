@@ -24,8 +24,8 @@ import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapt
 import { CurrenciesProjector } from '@ledger/reference/infrastructure/projections/currencies.projector';
 import { ConsistencyVerifier } from '@ledger/tooling/consistency-verifier';
 import { PROJ_BALANCES } from '@ledger/transactions/infrastructure/projections/account-balances.schema';
-import { PROJ_PENDING_REVIEW } from '@ledger/transactions/application/read-models/pending-review.read-model';
-import { PROJ_POSTINGS, PROJ_TRANSACTIONS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
+import { PROJ_PENDING_REVIEW } from '@ledger/transactions/infrastructure/projections/pending-review.schema';
+import { PROJ_POSTINGS, PROJ_TRANSACTIONS } from '@ledger/transactions/infrastructure/projections/transaction-list.schema';
 import { AccountBalancesProjector } from '@ledger/transactions/infrastructure/projections/account-balances.projector';
 import { PendingReviewProjector } from '@ledger/transactions/infrastructure/projections/pending-review.projector';
 import { TransactionListProjector } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';

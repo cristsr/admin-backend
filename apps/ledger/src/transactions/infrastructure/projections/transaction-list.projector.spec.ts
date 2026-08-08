@@ -3,7 +3,7 @@ import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model
 import { Criteria, Nullable } from '@shared';
 import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { AccountType } from '@ledger/shared/domain/value-objects';
-import { PROJ_POSTINGS, PROJ_TRANSACTIONS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
+import { PROJ_POSTINGS, PROJ_TRANSACTIONS } from '@ledger/transactions/infrastructure/projections/transaction-list.schema';
 import { TransactionKindDeriver } from '@ledger/transactions/domain/derivation/transaction-kind.deriver';
 import { TransactionListProjector } from './transaction-list.projector';
 

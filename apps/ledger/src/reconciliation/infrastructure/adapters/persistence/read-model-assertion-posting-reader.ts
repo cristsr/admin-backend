@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
-import { Criteria, Nullable } from '@shared';
+import { Criteria } from '@shared';
 import {
   AssertablePosting,
   AssertionPostingReader,
@@ -8,18 +8,8 @@ import {
 } from '@ledger/reconciliation/domain/ports/assertion-posting-reader.port';
 import { Money } from '@ledger/shared/domain/money';
 import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared/domain/value-objects';
-import { PROJ_POSTINGS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
+import { PROJ_POSTINGS, PostingRow } from '@ledger/transactions/infrastructure/projections/transaction-list.schema';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
-
-type PostingRow = {
-  readonly transaction_id: string;
-  readonly account_id: string;
-  readonly amount: string;
-  readonly currency_code: string;
-  readonly status: string;
-  readonly date: string;
-  readonly occurred_at: Nullable<string>;
-};
 
 /**
  * Reads an account's `CONFIRMED`+`PENDING` postings up to a cutoff from

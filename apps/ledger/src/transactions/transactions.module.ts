@@ -7,11 +7,13 @@ import { EventStore } from '@cqrs/domain/ports/event-store';
 import { createLedgerEventRegistry } from '@ledger/ledger/application/factories/ledger-event-registry.factory';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import { AccountLookup } from './application/ports/account-lookup.port';
+import { TransactionFinder } from './application/ports/transaction-finder.port';
 import { LedgerTransactionRepository } from './application/repositories/ledger-transaction.repository';
 import { MergePendingTransfersCommand } from './application/usecases/merge-transfers/merge-pending-transfers.command';
 import { MergePendingTransfersHandler } from './application/usecases/merge-transfers/merge-pending-transfers.handler';
 import { TransferPairRule } from './domain/services/transfer-pair.rule';
 import { TransferController } from './infrastructure/adapters/http/transfer.controller';
+import { PostgresTransactionFinder } from './infrastructure/adapters/persistence/postgres-transaction-finder';
 import { ReadModelAccountLookup } from './infrastructure/adapters/persistence/read-model-account-lookup';
 
 /**
@@ -33,6 +35,11 @@ import { ReadModelAccountLookup } from './infrastructure/adapters/persistence/re
     // dependencies are stated here rather than read off `@Injectable` metadata.
     { provide: TransferPairRule, useFactory: (): TransferPairRule => new TransferPairRule() },
     { provide: AccountLookup, useClass: ReadModelAccountLookup },
+    // The finder the API serves: `TransactionsModule` binds the SQL adapter
+    // because the account filter needs an `EXISTS` the shared store cannot
+    // express (R7). Test compositions use the in-memory twin through
+    // `createQueryPorts`, proven identical by the shared contract.
+    { provide: TransactionFinder, useClass: PostgresTransactionFinder },
     {
       provide: EventRegistry,
       inject: [CurrencyCatalog],

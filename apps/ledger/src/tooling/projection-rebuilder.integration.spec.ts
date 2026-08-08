@@ -12,7 +12,7 @@ import { createLedgerApplication } from '@ledger/bootstrap/ledger-application.fa
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
 import { PROJ_BALANCES } from '@ledger/transactions/infrastructure/projections/account-balances.schema';
-import { PROJ_POSTINGS, PROJ_TRANSACTIONS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
+import { PROJ_POSTINGS, PROJ_TRANSACTIONS } from '@ledger/transactions/infrastructure/projections/transaction-list.schema';
 import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';
 import { AccountBalancesProjector } from '@ledger/transactions/infrastructure/projections/account-balances.projector';

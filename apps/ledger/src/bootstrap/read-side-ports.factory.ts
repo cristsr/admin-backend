@@ -11,6 +11,12 @@ import { LedgerSettingsFinder } from '@ledger/ledger/application/ports/ledger-se
 import { SystemAccountLookup } from '@ledger/ledger/application/ports/system-account-lookup.port';
 import { ReadModelLedgerSettingsFinder } from '@ledger/ledger/infrastructure/adapters/persistence/read-model-ledger-settings-finder';
 import { ReadModelSystemAccountLookup } from '@ledger/ledger/infrastructure/adapters/persistence/read-model-system-account-lookup';
+import { PendingReviewFinder } from '@ledger/transactions/application/ports/pending-review-finder.port';
+import { TransactionFinder } from '@ledger/transactions/application/ports/transaction-finder.port';
+import { PostgresTransactionFinder } from '@ledger/transactions/infrastructure/adapters/persistence/postgres-transaction-finder';
+import { ReadModelPendingReviewFinder } from '@ledger/transactions/infrastructure/adapters/persistence/read-model-pending-review-finder';
+import { ReadModelTransactionFinder } from '@ledger/transactions/infrastructure/adapters/persistence/read-model-transaction-finder';
+import { DataSource } from 'typeorm';
 
 /**
  * The read ports serving the API, handed to the query bus.
@@ -23,7 +29,9 @@ export type QueryPorts = {
   readonly accountTree: AccountTreeFinder;
   readonly accountBalances: AccountBalanceFinder;
   readonly ledgerSettings: LedgerSettingsFinder;
-  // Completed by the `transactions` and `reference` phases.
+  readonly transactions: TransactionFinder;
+  readonly pendingReview: PendingReviewFinder;
+  // Completed by the `reference` phase.
 };
 
 /** The read ports serving command handlers and application services. */
@@ -49,7 +57,23 @@ export function createQueryPorts(readModel: ReadModelStore): QueryPorts {
     accountTree: new ReadModelAccountTreeFinder(readModel),
     accountBalances: new ReadModelAccountBalanceFinder(readModel),
     ledgerSettings: new ReadModelLedgerSettingsFinder(readModel),
+    transactions: new ReadModelTransactionFinder(readModel),
+    pendingReview: new ReadModelPendingReviewFinder(readModel),
   };
+}
+
+/**
+ * The real composition's substitution: `TransactionFinder` becomes the SQL
+ * adapter, because the account filter needs an `EXISTS` the shared store
+ * cannot express (R7). Everything else keeps the store-backed twin. Test
+ * compositions call {@link createQueryPorts} as-is and run the twin, which
+ * the shared contract proves identical.
+ */
+export function withSqlTransactionFinder(
+  base: QueryPorts,
+  dataSource: DataSource,
+): QueryPorts {
+  return { ...base, transactions: new PostgresTransactionFinder(dataSource) };
 }
 
 export function createWriteSideReadPorts(readModel: ReadModelStore): WriteSideReadPorts {

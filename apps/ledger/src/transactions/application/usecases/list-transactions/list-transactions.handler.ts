@@ -1,71 +1,44 @@
-import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import {
   QueryContext,
   QueryHandler,
 } from '@cqrs/application/query-bus/query-handler';
-import { Criteria, OrderType } from '@shared';
 import {
-  PROJ_POSTINGS,
-  PROJ_TRANSACTIONS,
-  TransactionRow,
-  toTransactionListItemView,
-} from '@ledger/transactions/application/read-models/transaction-list.read-model';
+  TransactionFinder,
+  TransactionPage,
+} from '@ledger/transactions/application/ports/transaction-finder.port';
 import {
   DEFAULT_TRANSACTION_PAGE_SIZE,
   ListTransactionsQuery,
-  TransactionPage,
 } from './list-transactions.query';
 
 /**
- * Serves the filtered, paginated transaction list from `proj_transactions`,
- * scoped to the user (INV-9). The optional account filter narrows by the
- * transactions that have a posting on that account.
+ * Serves the filtered, paginated transaction list through the finder, scoped
+ * to the user (INV-9). The account filter narrows before pagination — a page
+ * drawn from every account and then thinned down would hide matches, which is
+ * why the finder takes the account into its own query rather than leaving the
+ * handler to filter afterwards.
  */
 export class ListTransactionsHandler extends QueryHandler<ListTransactionsQuery> {
-  constructor(private readonly readModel: ReadModelStore) {
+  constructor(private readonly transactions: TransactionFinder) {
     super();
   }
 
   async execute(query: ListTransactionsQuery, ctx: QueryContext): Promise<TransactionPage> {
-    const limit = query.limit ?? DEFAULT_TRANSACTION_PAGE_SIZE;
-    const offset = query.offset ?? 0;
-
-    let criteria = Criteria.none()
-      .equals('user_id', ctx.userId)
-      .equals('status', query.status)
-      .equals('derived_kind', query.derivedKind)
-      .equalsIgnoreCase('payee', query.payee)
-      .equals('client_id', query.clientId)
-      .between('date', query.fromDate, query.toDate)
-      .orderBy('date', OrderType.DESC);
-
-    // The account filter must narrow the set *before* pagination, otherwise a
-    // page is drawn from every account and then thinned down, hiding matches.
-    if (query.accountId) {
-      const accountTxIds = await this.transactionIdsForAccount(query.accountId);
-
-      if (accountTxIds.size === 0) return { items: [], total: 0, limit, offset };
-
-      criteria = criteria.oneOf('transaction_id', [...accountTxIds]);
-    }
-
-    // Counted before paginating and from the same criteria, so the total always
-    // describes the very filters the page was drawn with.
-    const total = await this.readModel.count(PROJ_TRANSACTIONS, criteria);
-    const rows = await this.readModel.query<TransactionRow>(
-      PROJ_TRANSACTIONS,
-      criteria.paginate({ offset, limit }),
+    return this.transactions.list(
+      ctx.userId,
+      {
+        accountId: query.accountId,
+        status: query.status,
+        derivedKind: query.derivedKind,
+        payee: query.payee,
+        clientId: query.clientId,
+        fromDate: query.fromDate,
+        toDate: query.toDate,
+      },
+      {
+        limit: query.limit ?? DEFAULT_TRANSACTION_PAGE_SIZE,
+        offset: query.offset ?? 0,
+      },
     );
-
-    return { items: rows.map(toTransactionListItemView), total, limit, offset };
-  }
-
-  private async transactionIdsForAccount(accountId: string): Promise<Set<string>> {
-    const postings = await this.readModel.query<{ transaction_id: string }>(
-      PROJ_POSTINGS,
-      Criteria.none().equals('account_id', accountId),
-    );
-
-    return new Set(postings.map((posting) => posting.transaction_id));
   }
 }

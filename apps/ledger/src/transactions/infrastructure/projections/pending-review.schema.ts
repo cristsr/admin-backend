@@ -1,6 +1,10 @@
 import { Nullable } from '@shared';
+import { PendingReviewView } from '@ledger/transactions/application/views/pending-review.view';
 
-/** Read-model table backing the review inbox. */
+/**
+ * Physical shape of `proj_pending_review`, declared next to the projector that
+ * writes it. `PendingReviewProjector` remains its only writer (rules Art. 10).
+ */
 export const PROJ_PENDING_REVIEW = 'proj_pending_review';
 
 /** One row of `proj_pending_review`, exactly as stored. */
@@ -14,19 +18,6 @@ export type PendingReviewRow = {
   readonly posting_count: number;
   readonly client_id: string;
   readonly external_ref: Nullable<string>;
-};
-
-/** One inbox entry as the API exposes it. */
-export type PendingReviewView = {
-  readonly id: string;
-  readonly date: string;
-  readonly occurredAt: Nullable<string>;
-  readonly payee: Nullable<string>;
-  readonly description: string;
-  /** How many legs the pending transaction has, so a client can flag compounds. */
-  readonly postingCount: number;
-  readonly clientId: string;
-  readonly externalRef: Nullable<string>;
 };
 
 /** Maps a stored row to what goes over the wire. */

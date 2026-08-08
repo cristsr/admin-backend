@@ -14,8 +14,8 @@ import {
   Context,
   ExternalRef,
 } from '@ledger/shared/infrastructure/adapters/http';
-import { PendingReviewView } from '@ledger/transactions/application/read-models/pending-review.read-model';
-import { TransactionView } from '@ledger/transactions/application/read-models/transaction-list.read-model';
+import { PendingReviewView } from '@ledger/transactions/application/views/pending-review.view';
+import { TransactionView } from '@ledger/transactions/application/views/transaction.view';
 import { PostingInput } from '@ledger/transactions/application/types/posting-input.type';
 import { AmendPendingTransactionCommand } from '@ledger/transactions/application/usecases/amend-transaction/amend-pending-transaction.command';
 import { AnnotateTransactionCommand } from '@ledger/transactions/application/usecases/annotate-transaction/annotate-transaction.command';

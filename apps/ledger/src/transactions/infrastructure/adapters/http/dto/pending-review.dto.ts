@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Nullable } from '@shared';
-import { PendingReviewView } from '@ledger/transactions/application/read-models/pending-review.read-model';
+import { PendingReviewView } from '@ledger/transactions/application/views/pending-review.view';
 
 /**
  * One entry of the review inbox, from the `pending_review` projection.

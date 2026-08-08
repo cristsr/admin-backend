@@ -10,7 +10,7 @@ import { AccountType } from '@ledger/shared/domain/value-objects';
 import {
   PROJ_POSTINGS,
   PROJ_TRANSACTIONS,
-} from '@ledger/transactions/application/read-models/transaction-list.read-model';
+} from '@ledger/transactions/infrastructure/projections/transaction-list.schema';
 import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
 import { TransactionKindDeriver } from '@ledger/transactions/domain/derivation/transaction-kind.deriver';
 import { PostingPayload } from '@ledger/transactions/domain/posting/posting.serializer';
