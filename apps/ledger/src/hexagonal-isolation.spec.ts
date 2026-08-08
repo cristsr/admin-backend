@@ -4,19 +4,40 @@ import { join, relative, sep } from 'node:path';
 /** Root of the ledger sources. */
 const SOURCE_ROOT = __dirname;
 
-/** Packages the core must never reach for (RNF-11, rules Art. 1). */
+/** Packages the core must never reach for (rules Art. 1). */
 const FORBIDDEN_IMPORTS = ['@nestjs/', 'typeorm', 'pg', 'express'];
+
+/** The two inner layers, and the layers each one is forbidden to import. */
+const FORBIDDEN_LAYERS: Readonly<Record<Layer, readonly string[]>> = {
+  domain: ['application', 'infrastructure'],
+  application: ['infrastructure'],
+};
 
 const IMPORT_SOURCE = /(?:from|require\()\s*'([^']+)'/g;
 
-const isCoreFile = (path: string): boolean => {
+/** The inner layers whose imports are policed. */
+type Layer = 'domain' | 'application';
+
+const isSpec = (path: string): boolean =>
+  path.endsWith('.spec.ts') || path.endsWith('.contract.ts');
+
+/** The inner layer a file belongs to, or null when it is infrastructure or wiring. */
+const layerOf = (path: string): Layer | null => {
   const segments = relative(SOURCE_ROOT, path).split(sep);
 
-  return (
-    (segments.includes('domain') || segments.includes('application')) &&
-    !path.endsWith('.spec.ts')
-  );
+  if (isSpec(path)) return null;
+  if (segments.includes('domain')) return 'domain';
+  if (segments.includes('application')) return 'application';
+
+  return null;
 };
+
+/**
+ * Whether an import path crosses into a layer, by segment rather than substring:
+ * `@cqrs/application/event/envelope.factory` and `../../infrastructure/x` both
+ * count, a file named `application.ts` does not.
+ */
+const reaches = (source: string, layer: string): boolean => source.split('/').includes(layer);
 
 const sourceFiles = (directory: string): readonly string[] =>
   readdirSync(directory).flatMap((entry) => {
@@ -27,19 +48,35 @@ const sourceFiles = (directory: string): readonly string[] =>
     return path.endsWith('.ts') ? [path] : [];
   });
 
-const violations = (): readonly string[] =>
-  sourceFiles(SOURCE_ROOT)
-    .filter(isCoreFile)
-    .flatMap((file) =>
-      [...readFileSync(file, 'utf8').matchAll(IMPORT_SOURCE)]
-        .map(([, source]) => source)
-        .filter((source) => FORBIDDEN_IMPORTS.some((banned) => source.startsWith(banned)))
-        .map((source) => `${relative(SOURCE_ROOT, file)} -> ${source}`),
-    );
+const importsOf = (file: string): readonly string[] =>
+  [...readFileSync(file, 'utf8').matchAll(IMPORT_SOURCE)].map(([, source]) => source);
+
+const coreFiles = (): readonly { file: string; layer: Layer }[] =>
+  sourceFiles(SOURCE_ROOT).flatMap((file) => {
+    const layer = layerOf(file);
+
+    return layer ? [{ file, layer }] : [];
+  });
+
+/** Core files importing a banned package. */
+const frameworkViolations = (): readonly string[] =>
+  coreFiles().flatMap(({ file }) =>
+    importsOf(file)
+      .filter((source) => FORBIDDEN_IMPORTS.some((banned) => source.startsWith(banned)))
+      .map((source) => `${relative(SOURCE_ROOT, file)} -> ${source}`),
+  );
+
+/** Core files importing a layer further out than their own. */
+const layerViolations = (): readonly string[] =>
+  coreFiles().flatMap(({ file, layer }) =>
+    importsOf(file)
+      .filter((source) => FORBIDDEN_LAYERS[layer].some((banned) => reaches(source, banned)))
+      .map((source) => `${layer}: ${relative(SOURCE_ROOT, file)} -> ${source}`),
+  );
 
 /**
- * RNF-11: Domain and Application own no technology. Every external access goes
- * through a port (§3.8), and the adapters do the wiring — which is why the
+ * Domain and Application own no technology. Every external access goes
+ * through a port, and the adapters do the wiring — which is why the
  * modules declare their providers with explicit factories instead of leaning on
  * `@Injectable` metadata inside the core.
  *
@@ -47,8 +84,19 @@ const violations = (): readonly string[] =>
  * Harmless-looking, and exactly how a boundary erodes: nothing fails, so nobody
  * notices until real infrastructure follows the same path.
  */
-describe('Hexagonal isolation (RNF-11)', () => {
+describe('Hexagonal isolation', () => {
   it('keeps framework and driver imports out of domain and application', () => {
-    expect(violations()).toEqual([]);
+    expect(frameworkViolations()).toEqual([]);
+  });
+
+  /**
+   * The package ban above says nothing about the codebase's own layers, so
+   * `application` had drifted into importing `infrastructure` for the projection
+   * table names — the physical name and `snake_case` shape of a read model,
+   * reaching the use cases. Same erosion, different direction: dependencies
+   * point inward only.
+   */
+  it('keeps dependencies pointing inward across the codebase layers', () => {
+    expect(layerViolations()).toEqual([]);
   });
 });
