@@ -2,19 +2,13 @@
 
 **Alcance:** `apps/ledger/src/` (verificado también `libs/cqrs/src/` como kernel de apoyo)
 **Fecha:** 2026-08-07 · **Rama:** `feat/core`
-**Score:** 26/36 → **32/36** tras aplicar los HIGH, M-1, M-2 y M-3
+**Score:** 26/36 → **36/36**
 
-> M-3 no mueve el puntaje: su ganancia es de consistencia de wiring, que las doce
-> dimensiones ya contaban en «Ports & bindings», y esa sigue en 2/3 hasta que se
-> muevan los seis puertos de M-6. Que el número no suba no lo hace menos valioso —
-> era la última lectura que no pasaba por el bus tipado.
-
-> **Estado (2026-08-07):** los tres hallazgos HIGH, M-1, M-2 y M-3 están
-> **aplicados**, más la mitad de M-6. Suite verde: 480 tests pasan (23 nuevos),
-> 2 suites skipped (las que exigen Postgres). `tsc` limpio en `tsconfig.app.json` y
-> `tsconfig.spec.json`. El detalle de cada fix está en la nota `✅ Resuelto` bajo el
-> hallazgo. Pendientes: M-4, M-5, la otra mitad de M-6, los cinco LOW, y `total`
-> en `GET /transactions`.
+> **Estado (2026-08-07): cerrado.** Los 14 hallazgos están aplicados, más el `total`
+> de `GET /transactions` que se había dejado como HU aparte. Suites verdes:
+> **482 tests** en `ledger` (25 nuevos) y **110** en `cqrs`; 4 suites skipped en
+> total, las que exigen una Postgres viva. `tsc` limpio en los tres tsconfig.
+> El detalle de cada fix está en la nota `✅ Resuelto` bajo el hallazgo.
 
 ## Resumen
 
@@ -46,14 +40,14 @@ Swagger y devuelven las filas `snake_case` del read model. Ya está reconocido c
 | 1 | Dependency direction | 1/3 | **3/3** | ningún archivo de `domain/`/`application/` alcanza `infrastructure/`; congelado por test |
 | 2 | Module boundaries | 2/3 | **3/3** | composition root fuera de los módulos de negocio; queda L-3 (hygiene) |
 | 3 | Domain richness | 3/3 | 3/3 | agregados con invariantes, VOs, `Money` sin float; una duplicación de INV-3/INV-4 |
-| 4 | Ports & bindings | 2/3 | 2/3 | los 4 repositorios ya están alineados; los puertos de `reconciliation` siguen mal ubicados |
+| 4 | Ports & bindings | 2/3 | **3/3** | repositorios y puertos alineados; buses simétricos en lectura y escritura |
 | 5 | Use case granularity | 3/3 | 3/3 | un handler = un `execute()`, sin excepción |
 | 6 | Adapter thinness | 3/3 | 3/3 | controllers y pump sólo adaptan; el pump además maneja error y reentrada |
 | 7 | Mapping isolation | 1/3 | **3/3** | fila ≠ vista ≠ DTO, unidas por mappers; el DTO `implements` la vista |
 | 8 | Error handling | 3/3 | 3/3 | jerarquía tipada, catálogo de códigos congelado por test de contrato |
-| 9 | Naming consistency | 2/3 | 2/3 | uniforme salvo el módulo `reference`; barrels casi ausentes |
-| 10 | Shared kernel hygiene | 2/3 | 2/3 | `shared/` limpio, pero `AccountNotFoundException` vive en el módulo equivocado |
-| 11 | Cross-module coupling | 1/3 | **2/3** | `accounts` ya no construye agregados de `transactions`; queda el import de un `PROJ_*` ajeno |
+| 9 | Naming consistency | 2/3 | **3/3** | `reference` alineado con los otros cuatro; la convención de imports queda en el Art. 13 |
+| 10 | Shared kernel hygiene | 2/3 | **3/3** | cada excepción con su agregado; la transversal, una sola vez en `shared/` |
+| 11 | Cross-module coupling | 1/3 | **3/3** | la colaboración entre módulos pasa por comandos y read models de `application/` |
 | 12 | Testability | 3/3 | 3/3 | handlers construibles con dobles, contract tests, wiring test, isolation test |
 
 ---
@@ -277,6 +271,11 @@ Swagger y devuelven las filas `snake_case` del read model. Ya está reconocido c
 - **Fix:** dejar una sola, en `shared/domain/errors/`, y que ambos módulos la
   importen. Es la excepción de una condición transversal ("el ledger del usuario no
   existe"), no de un agregado.
+- **✅ Resuelto.** Declarada una sola vez en `shared/domain/errors/ledger.exception.ts`,
+  tomando su `code` de `LEDGER_ERROR_CODE` en vez de repetir el literal. Los tres
+  módulos que reportan la condición la importan de ahí. El `ledger.exception.ts` del
+  módulo `ledger` queda sólo con `LedgerAlreadyInitializedException`, y el de
+  `reconciliation` lleva un comentario que explica por qué la suya ya no está.
 
 ### [MEDIUM] M-5 · INV-3 e INV-4 están implementados dos veces
 
@@ -298,6 +297,16 @@ Swagger y devuelven las filas `snake_case` del read model. Ya está reconocido c
   confirma que los métodos del agregado son código muerto, borrarlos también es una
   opción válida — pero decidirlo, no dejarlo.
   *(Análisis de duplicación: ver skill `design-principles`.)*
+- **✅ Resuelto extrayendo, no borrando.** Los métodos del agregado no tenían ningún
+  llamador de producción — sólo su propio spec —, así que borrarlos era tentador. Pero
+  el service **sí** necesita la regla, y borrarlos habría dejado la única
+  implementación en la capa de aplicación: peor que la duplicación.
+
+  Las dos reglas viven ahora en `accounts/domain/account/account-availability.ts` como
+  funciones puras, y las llaman tanto el agregado (con sus VOs) como el service (con
+  una fila de proyección). Dos fuentes de estado, una implementación. Al unificarlas
+  quedó a la vista que los mensajes diferían: el agregado nombraba la cuenta y el
+  service no.
 
 ### [MEDIUM] M-6 · El placement de puertos y repositorios difiere entre módulos
 
@@ -342,6 +351,8 @@ Swagger y devuelven las filas `snake_case` del read model. Ya está reconocido c
   propia excepción, e infla artificialmente el acoplamiento medido en H-3.
 - **Fix:** moverla a `accounts/domain/account/exceptions/account.exception.ts`, junto
   a las otras siete de cuenta.
+- **✅ Resuelto.** Movida junto a las otras siete excepciones de cuenta. `accounts` ya
+  no importa `ledger/domain` para lanzar su propia excepción.
 
 ### [LOW] L-2 · El módulo `reference` no sigue el layout de los otros cuatro
 
@@ -353,6 +364,10 @@ Swagger y devuelven las filas `snake_case` del read model. Ya está reconocido c
 - **Regla rota:** *Naming consistency* y layout canónico.
 - **Fix:** `application/register-currency/` y `application/list-currencies/` con
   `.command.ts`/`.query.ts`/`.handler.ts` separados, y `infrastructure/adapters/http/dto/`.
+- **✅ Resuelto.** Una carpeta por caso de uso, la query separada de su handler, y
+  `dto/` con barrel: `RegisterCurrencyRequestDto` sale del archivo del controller y
+  aparece `CurrencyDto`, que documenta el `CurrencyView` que ya existía sin contrato
+  declarado. `reference` deja de ser el módulo distinto.
 
 ### [LOW] L-3 · `accounts` no tiene módulo raíz
 
@@ -366,6 +381,10 @@ Swagger y devuelven las filas `snake_case` del read model. Ya está reconocido c
 - **Fix:** una vez movidos los factories (H-2), dar a `accounts` su módulo raíz que
   importe el http module y registre sus handlers, como ya hacen `transactions` y
   `reconciliation` con `onModuleInit`.
+- **✅ Resuelto.** `accounts/accounts.module.ts` importa su módulo HTTP y es el punto
+  de entrada del contexto. No declara providers: los handlers de cuentas se componen
+  en `bootstrap/` y se alcanzan por los buses. El JSDoc lo dice, para que un módulo
+  vacío no se lea como un olvido.
 
 ### [LOW] L-4 · Barrels prácticamente ausentes; los imports son deep paths
 
@@ -380,6 +399,12 @@ Swagger y devuelven las filas `snake_case` del read model. Ya está reconocido c
 - **Fix:** decidir explícitamente y anotarlo en `docs/rules.md` o en el README del
   app. Si se adopta barrels, hacerlo por módulo y de una sola vez; si no, dejar
   constancia para que el criterio no se reabra en cada review.
+- **✅ Resuelto documentando, que era el fix.** `docs/rules.md` gana el **Artículo 13**
+  (constitución a 1.1.0): imports por ruta completa, con las cuatro excepciones donde
+  el barrel sí aplica. La razón registrada es concreta y no estética: la ruta dice en
+  qué capa y en qué caso de uso vive lo importado — que es lo que una revisión de
+  fronteras necesita ver — y el guard de `hexagonal-isolation.spec.ts` compara
+  segmentos de ruta, así que un barrel intermedio le quitaría precisión.
 
 ### [LOW] L-5 · Un spec de contrato HTTP vive en `shared/domain/errors/`
 
@@ -391,56 +416,72 @@ Swagger y devuelven las filas `snake_case` del read model. Ya está reconocido c
 - **Fix:** moverlo junto al filtro que prueba, en
   `shared/infrastructure/adapters/http/`. El catálogo puro
   (`ledger-error-code-catalogue.spec.ts`) sí pertenece a `domain/`.
+- **✅ Resuelto.** Movido a `shared/infrastructure/adapters/http/`. `domain/errors/`
+  queda sin una sola referencia a `@nestjs`.
 
 ---
 
 ## Plan priorizado
 
-Orden pensado para que cada paso deje el siguiente más barato, respetando el
-Artículo 4 (test primero).
+Ejecutado completo, en este orden. Cada paso dejó el siguiente más barato, y el
+primero fue el test que define a los demás (Artículo 4).
 
-1. ~~**M-1 — extender `hexagonal-isolation.spec.ts`**~~ ✅
-2. ~~**H-1 — invertir el import de los read models.**~~ ✅
-3. ~~**H-3 — `RecordOpeningBalance` despacha por el `CommandBus`.**~~ ✅
-4. ~~**H-2 — mover los factories a una raíz de composición neutral.**~~ ✅
-   (+ la mitad de M-6: los repositorios, que el guard exigía.)
-5. ~~**M-2 — mappers de salida por lectura.**~~ ✅
-6. ~~**M-3 — las lecturas de `reconciliation` por el `QueryBus`.**~~ ✅
+1. ~~**M-1** — el guard de dirección entre capas.~~ ✅ *(rojo con 22 violaciones)*
+2. ~~**H-1** — invertir el import de los read models.~~ ✅
+3. ~~**H-3** — `RecordOpeningBalance` despacha por el `CommandBus`.~~ ✅
+4. ~~**H-2** — los factories a una raíz de composición neutral.~~ ✅
+5. ~~**M-2** — mappers de salida por lectura.~~ ✅
+6. ~~**M-3** — las lecturas de `reconciliation` por el `QueryBus`.~~ ✅
+7. ~~**M-6** — puertos y repositorios donde manda su consumidor.~~ ✅
+8. ~~**M-4, M-5, L-1 … L-5**~~ ✅
+9. ~~**`total` en `GET /transactions`**~~ ✅ — no era un fix de arquitectura y se
+   había dejado como HU aparte; entró al cerrar porque el resto ya estaba.
 
-### Pendiente
+### `total`: lo que costó de verdad
 
-Ninguno bloquea a otro; se pueden tomar de a uno al tocar el módulo:
+`ReadModelStore` gana `count(table, criteria)`, implementado en los dos adaptadores
+y **fijado por el contract test**, que es donde estaba el riesgo: el caso que
+importa es que `count` ignore la paginación, porque un total sacado de la criteria
+paginada sería el tamaño de página y el cliente nunca sabría que hay una segunda.
+Hay test para eso en el contrato y otro en el handler.
 
-- **`total` en `GET /transactions`** — el único pedazo de M-2 que quedó fuera:
-  necesita un `count` en el puerto `ReadModelStore` y en sus dos adaptadores, más
-  el contract test. Es una HU chica, no un fix de arquitectura.
-- **M-6 (resto)** — mover a `application/ports/` los seis puertos sin consumidor de
-  dominio. Es lo único que separa «Ports & bindings» de 3/3.
-- **M-4** — unificar `LedgerNotInitializedException` en `shared/domain/errors/`.
-- **M-5** — resolver la doble implementación de INV-3/INV-4 (o borrar los métodos
-  del agregado si se confirma que están muertos).
-- **L-1 … L-5** — hygiene; L-3 (`accounts` sin módulo raíz) ya es barato ahora que
-  el composition root salió de `ledger/application/`.
+Postgres devuelve `COUNT` como bigint y el driver lo entrega como string; el
+adaptador lo convierte y el contrato lo exige (`typeof === 'number'`). Es el mismo
+error que ya había aparecido con `posting_count` en M-2 — dos veces la misma clase
+de bug es señal de que el contrato tenía que cubrirlo.
 
-## Verificación de los cambios aplicados
+`GET /transactions` vuelve a tener su envelope `{ items, total, limit, offset }`,
+ahora con fuente real.
+
+## Verificación
 
 ```
 npx tsc -p apps/ledger/tsconfig.app.json  --noEmit    # limpio
 npx tsc -p apps/ledger/tsconfig.spec.json --noEmit    # limpio
 npx jest --config apps/ledger/jest.config.ts --rootDir apps/ledger
 #   Test Suites: 2 skipped, 80 passed, 82 total
-#   Tests:       2 skipped, 480 passed, 482 total
+#   Tests:       2 skipped, 482 passed, 484 total
+npx jest --config libs/cqrs/jest.config.ts --rootDir libs/cqrs
+#   Test Suites: 2 skipped, 21 passed, 23 total
+#   Tests:       2 skipped, 110 passed, 112 total
 ```
 
-Las 2 suites skipped son las que exigen una Postgres viva
-(`postgres-event-store.integration`, `read-model-readers.postgres`) y ya lo estaban
-antes. `npx eslint apps/ledger/src --fix` deja sólo los `no-console` preexistentes de
-`tooling/rebuild.command.ts`, que es un CLI — ninguno introducido aquí.
+Las 4 suites skipped exigen una Postgres viva y ya lo estaban antes. `eslint` deja
+sólo lo preexistente: los `no-console` de `tooling/rebuild.command.ts` (es un CLI) y
+tres `no-empty-function` en specs de `libs/cqrs`. Ninguno introducido aquí.
+
+## Sigue abierto
+
+Nada de la auditoría. Dos cosas quedaron anotadas al pasar, ninguna es un defecto
+de arquitectura:
+
+- **`AccountTreeView` (`?view=tree|flat`)** — se retiró del contrato porque el
+  controller lo ignoraba. Si el árbol anidado se quiere de verdad, es una HU con su
+  propio diseño (forma recursiva en OpenAPI incluida), no un fix.
+- **`strict: false` en `tsconfig.base.json`** — ya documentado en el propio archivo
+  como cambio pendiente y deliberado.
 
 ## Fuera de alcance de esta skill
 
-- Duplicación lógica y responsabilidades (M-5) → skill `design-principles`.
 - Sintaxis y tipos (`string | null` vs `Nullable<T>` en cuatro projectors) → skill
   `typescript`.
-- `strict: false` en `tsconfig.base.json` — ya está documentado en el propio archivo
-  como cambio pendiente y deliberado; no es un defecto de arquitectura.
