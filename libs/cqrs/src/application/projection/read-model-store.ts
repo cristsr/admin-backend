@@ -18,5 +18,14 @@ export abstract class ReadModelStore {
 
   abstract query<TRow>(table: string, criteria: Criteria): Promise<TRow[]>;
 
+  /**
+   * How many rows match, ignoring the criteria's pagination.
+   *
+   * Separate from `query` because a page and its total are two different
+   * questions: returning the total would otherwise force every read to fetch
+   * the whole match just to count it.
+   */
+  abstract count(table: string, criteria: Criteria): Promise<number>;
+
   abstract truncate(table: string): Promise<void>;
 }

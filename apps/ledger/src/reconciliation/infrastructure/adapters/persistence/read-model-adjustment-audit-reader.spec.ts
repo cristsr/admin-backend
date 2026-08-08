@@ -1,7 +1,7 @@
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
+import { AdjustmentAuditEntry } from '@ledger/reconciliation/application/ports/adjustment-audit-store.port';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
-import { AdjustmentAuditEntry } from '@ledger/reconciliation/domain/ports/adjustment-audit-store.port';
 import { AdjustmentAuditProjector } from '@ledger/reconciliation/infrastructure/projections/adjustment-audit.projector';
 import { PROJ_ASSERTIONS } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
 import {

@@ -2,6 +2,7 @@ import { AggregateRoot } from '@cqrs/domain/aggregate/aggregate-root';
 import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
 import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { Nullable } from '@shared';
+import { AssertionAlreadyRevokedException, DiscrepancyNotResolvableException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { Money } from '@ledger/shared/domain/money';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { AssertionStatus } from './enums/assertion-status.enum';
@@ -11,10 +12,6 @@ import {
   BalanceAssertionEvaluated,
   DiscrepancyResolved,
 } from './events';
-import {
-  AssertionAlreadyRevokedException,
-  DiscrepancyNotResolvableException,
-} from './exceptions/balance-assertion.exception';
 import { AssertionEvaluation } from './types/assertion-evaluation.type';
 
 /** Aggregate type name in the event envelope. */

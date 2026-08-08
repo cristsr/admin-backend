@@ -1,5 +1,5 @@
-import { AsyncLocalStorage } from 'node:async_hooks';
 import { Injectable } from '@nestjs/common';
+import { AsyncLocalStorage } from 'node:async_hooks';
 import { AppendResult } from '@cqrs/domain/event/append-result.type';
 import { EventEnvelope } from '@cqrs/domain/event/event-envelope.type';
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';

@@ -10,8 +10,9 @@ import {
   NameCollisionException,
   SystemAccountProtectedException,
 } from '@ledger/accounts/domain/account/exceptions/account.exception';
-import { AccountNotFoundException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
-import { LedgerNotInitializedException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
+import { AccountNotFoundException } from '@ledger/accounts/domain/account/exceptions/account.exception';
+import { LEDGER_ERROR_CODE } from '@ledger/shared/domain/errors/ledger-error-code';
+import { LedgerNotInitializedException } from '@ledger/shared/domain/errors/ledger.exception';
 import {
   CurrencyMismatchException,
   InvalidCurrencyException,
@@ -27,7 +28,6 @@ import {
   TransactionNotFoundException,
   UnbalancedTransactionException,
 } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
-import { LEDGER_ERROR_CODE } from './ledger-error-code';
 
 /**
  * Freezes the code → HTTP status contract: the API's stable error

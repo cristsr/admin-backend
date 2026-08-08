@@ -5,8 +5,17 @@ import { TransactionListItemView } from '@ledger/transactions/application/read-m
 /** Page size applied when the caller does not ask for one, so reads stay bounded. */
 export const DEFAULT_TRANSACTION_PAGE_SIZE = 50;
 
+/** One page of the transaction list, plus how many rows the filters match. */
+export type TransactionPage = {
+  readonly items: readonly TransactionListItemView[];
+  /** Rows matching the filters, ignoring pagination. */
+  readonly total: number;
+  readonly limit: number;
+  readonly offset: number;
+};
+
 /** Filters for the transaction list; absent fields are not applied. */
-export class ListTransactionsQuery extends Query<readonly TransactionListItemView[]> {
+export class ListTransactionsQuery extends Query<TransactionPage> {
   readonly queryType = 'ListTransactions';
 
   constructor(

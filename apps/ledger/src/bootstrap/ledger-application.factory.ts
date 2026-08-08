@@ -33,8 +33,8 @@ import {
   StaticCurrencyCatalogCache,
 } from '@ledger/reference/application/currency-catalog.cache';
 import { CurrencyCatalogRepository } from '@ledger/reference/application/currency-catalog.repository';
-import { RegisterCurrencyCommand } from '@ledger/reference/application/register-currency.command';
-import { RegisterCurrencyHandler } from '@ledger/reference/application/register-currency.handler';
+import { RegisterCurrencyCommand } from '@ledger/reference/application/register-currency/register-currency.command';
+import { RegisterCurrencyHandler } from '@ledger/reference/application/register-currency/register-currency.handler';
 import { CurrenciesProjector } from '@ledger/reference/infrastructure/projections/currencies.projector';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import { AmendPendingTransactionCommand } from '@ledger/transactions/application/amend-transaction/amend-pending-transaction.command';

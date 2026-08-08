@@ -7,29 +7,29 @@ import { Criteria, OrderType } from '@shared';
 import {
   PROJ_POSTINGS,
   PROJ_TRANSACTIONS,
-  TransactionListItemView,
   TransactionRow,
   toTransactionListItemView,
 } from '@ledger/transactions/application/read-models/transaction-list.read-model';
 import {
   DEFAULT_TRANSACTION_PAGE_SIZE,
   ListTransactionsQuery,
+  TransactionPage,
 } from './list-transactions.query';
 
 /**
- * Serves the filtered, paginated transaction list from `proj_transactions`
- *, scoped to the user (INV-9). The optional account filter narrows by
- * the transactions that have a posting on that account.
+ * Serves the filtered, paginated transaction list from `proj_transactions`,
+ * scoped to the user (INV-9). The optional account filter narrows by the
+ * transactions that have a posting on that account.
  */
 export class ListTransactionsHandler extends QueryHandler<ListTransactionsQuery> {
   constructor(private readonly readModel: ReadModelStore) {
     super();
   }
 
-  async execute(
-    query: ListTransactionsQuery,
-    ctx: QueryContext,
-  ): Promise<readonly TransactionListItemView[]> {
+  async execute(query: ListTransactionsQuery, ctx: QueryContext): Promise<TransactionPage> {
+    const limit = query.limit ?? DEFAULT_TRANSACTION_PAGE_SIZE;
+    const offset = query.offset ?? 0;
+
     let criteria = Criteria.none()
       .equals('user_id', ctx.userId)
       .equals('status', query.status)
@@ -44,19 +44,20 @@ export class ListTransactionsHandler extends QueryHandler<ListTransactionsQuery>
     if (query.accountId) {
       const accountTxIds = await this.transactionIdsForAccount(query.accountId);
 
-      if (accountTxIds.size === 0) return [];
+      if (accountTxIds.size === 0) return { items: [], total: 0, limit, offset };
 
       criteria = criteria.oneOf('transaction_id', [...accountTxIds]);
     }
 
-    criteria = criteria.paginate({
-      offset: query.offset ?? 0,
-      limit: query.limit ?? DEFAULT_TRANSACTION_PAGE_SIZE,
-    });
+    // Counted before paginating and from the same criteria, so the total always
+    // describes the very filters the page was drawn with.
+    const total = await this.readModel.count(PROJ_TRANSACTIONS, criteria);
+    const rows = await this.readModel.query<TransactionRow>(
+      PROJ_TRANSACTIONS,
+      criteria.paginate({ offset, limit }),
+    );
 
-    const rows = await this.readModel.query<TransactionRow>(PROJ_TRANSACTIONS, criteria);
-
-    return rows.map(toTransactionListItemView);
+    return { items: rows.map(toTransactionListItemView), total, limit, offset };
   }
 
   private async transactionIdsForAccount(accountId: string): Promise<Set<string>> {

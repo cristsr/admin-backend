@@ -3,12 +3,12 @@ import { ProjectionDispatcher } from '@cqrs/application/projection/projection-di
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { IdGenerator } from '@cqrs/domain/ports';
 import { Criteria } from '@shared';
+import { AccountNotFoundException } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import {
   AccountName,
   CurrencyCode,
   LedgerDate,
 } from '@ledger/shared/domain/value-objects';
-import { AccountNotFoundException } from '../../../ledger/domain/settings/exceptions/ledger.exception';
 import { Account } from '../../domain/account/account.aggregate';
 import {
   NameCollisionException,

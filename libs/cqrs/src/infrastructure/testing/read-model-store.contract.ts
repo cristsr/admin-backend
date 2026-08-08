@@ -174,6 +174,42 @@ export function describeReadModelStoreContract(
       expect(await store.query('t', Criteria.none())).toHaveLength(3);
     });
 
+    it('counts every row matching the filters', async () => {
+      await store.upsert('t', { id: 'a' }, { id: 'a', kind: 'x' });
+      await store.upsert('t', { id: 'b' }, { id: 'b', kind: 'x' });
+      await store.upsert('t', { id: 'c' }, { id: 'c', kind: 'y' });
+
+      expect(await store.count('t', Criteria.none())).toBe(3);
+      expect(await store.count('t', Criteria.none().equals('kind', 'x'))).toBe(2);
+    });
+
+    /**
+     * The point of having `count` at all: a caller asks for one page and still
+     * needs to know how many rows the filters match.
+     */
+    it('ignores pagination, so a page and its total can be asked for together', async () => {
+      await store.upsert('t', { id: 'a' }, { id: 'a', n: 1 });
+      await store.upsert('t', { id: 'b' }, { id: 'b', n: 2 });
+      await store.upsert('t', { id: 'c' }, { id: 'c', n: 3 });
+
+      const paged = Criteria.none()
+        .orderBy('n', OrderType.ASC)
+        .paginate({ offset: 0, limit: 2 });
+
+      expect(await store.query('t', paged)).toHaveLength(2);
+      expect(await store.count('t', paged)).toBe(3);
+    });
+
+    it('counts zero on an empty table rather than failing', async () => {
+      expect(await store.count('t', Criteria.none())).toBe(0);
+    });
+
+    it('answers count as a number, never as a driver-stringified bigint', async () => {
+      await store.upsert('t', { id: 'a' }, { id: 'a' });
+
+      expect(typeof (await store.count('t', Criteria.none()))).toBe('number');
+    });
+
     it('truncates all rows from a table', async () => {
       await store.upsert('t', { id: '1' }, { id: '1' });
       await store.upsert('t', { id: '2' }, { id: '2' });

@@ -5,10 +5,7 @@ import { BalanceAssertionRepository } from '@ledger/reconciliation/application/b
 import { createReconciliationEventRegistry } from '@ledger/reconciliation/application/reconciliation-event-registry.factory';
 import { BalanceAssertion } from '@ledger/reconciliation/domain/balance-assertion/balance-assertion.aggregate';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
-import {
-  AssertionAlreadyRevokedException,
-  AssertionNotFoundException,
-} from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
+import { AssertionAlreadyRevokedException, AssertionNotFoundException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { Money } from '@ledger/shared/domain/money';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';

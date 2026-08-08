@@ -2,11 +2,11 @@ import {
   QueryContext,
   QueryHandler,
 } from '@cqrs/application/query-bus/query-handler';
+import { AssertionStatusStore } from '@ledger/reconciliation/application/ports/assertion-status-store.port';
 import {
   AssertionStatusView,
   toAssertionStatusView,
 } from '@ledger/reconciliation/application/read-models/assertion-status.read-model';
-import { AssertionStatusStore } from '@ledger/reconciliation/domain/ports/assertion-status-store.port';
 import { ListAssertionsQuery } from './list-assertions.query';
 
 /** Serves every assertion on one account, scoped to the user (INV-9). */

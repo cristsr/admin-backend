@@ -4,13 +4,13 @@ import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { aMoney } from '@ledger/shared/testing';
 import { RecordingCommandBus } from '@ledger/shared/testing';
 import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
+import { AccountFacts, AccountLookup } from '@ledger/transactions/application/ports/account-lookup.port';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';
 import {
   NotATransferPairException,
   PendingLegNotFoundException,
 } from '@ledger/transactions/domain/exceptions/transfer.exception';
-import { AccountFacts, AccountLookup } from '@ledger/transactions/domain/ports/account-lookup.port';
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
 import { TransferPairRule } from '@ledger/transactions/domain/services/transfer-pair.rule';
 import { TransactionStatus } from '@ledger/transactions/domain/transaction/transaction-status';

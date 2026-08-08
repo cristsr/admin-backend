@@ -19,13 +19,13 @@ import { AnnotateTransactionCommand } from '@ledger/transactions/application/ann
 import { ConfirmTransactionCommand } from '@ledger/transactions/application/confirm-transaction/confirm-transaction.command';
 import { GetTransactionByIdQuery } from '@ledger/transactions/application/get-transaction-by-id/get-transaction-by-id.query';
 import { ListPendingReviewQuery } from '@ledger/transactions/application/list-pending-review/list-pending-review.query';
-import { ListTransactionsQuery } from '@ledger/transactions/application/list-transactions/list-transactions.query';
+import {
+  ListTransactionsQuery,
+  TransactionPage,
+} from '@ledger/transactions/application/list-transactions/list-transactions.query';
 import { PostingInput } from '@ledger/transactions/application/posting-input.type';
 import { PendingReviewView } from '@ledger/transactions/application/read-models/pending-review.read-model';
-import {
-  TransactionListItemView,
-  TransactionView,
-} from '@ledger/transactions/application/read-models/transaction-list.read-model';
+import { TransactionView } from '@ledger/transactions/application/read-models/transaction-list.read-model';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { ReverseConfirmedTransactionCommand } from '@ledger/transactions/application/reverse-transaction/reverse-confirmed-transaction.command';
 import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';
@@ -37,8 +37,9 @@ import { PendingReviewDto } from './dto/pending-review.dto';
 import { PostingDto } from './dto/posting.dto';
 import { RecordTransactionRequestDto } from './dto/record-transaction-request.dto';
 import { ReverseTransactionRequestDto } from './dto/reverse-transaction-request.dto';
+import { TransactionListDto } from './dto/transaction-list.dto';
 import { TransactionQueryDto } from './dto/transaction-query.dto';
-import { TransactionDto, TransactionListItemDto } from './dto/transaction.dto';
+import { TransactionDto } from './dto/transaction.dto';
 import { VoidTransactionRequestDto } from './dto/void-transaction-request.dto';
 
 /**
@@ -82,19 +83,14 @@ export class TransactionsController {
     return this.dispatch(command, context, externalRef);
   }
 
-  /**
-   * A page of the list, newest first. Paging is by `limit`/`offset`; there is
-   * deliberately no `total` — counting matching rows needs a `count` the read
-   * model port does not expose, and inventing one per request would scan the
-   * whole projection.
-   */
+  /** A page of the list, newest first, with the total the filters match. */
   @Get()
   @ApiOperation({ summary: 'List and filter transactions.' })
-  @ApiOkResponse({ type: [TransactionListItemDto] })
+  @ApiOkResponse({ type: TransactionListDto })
   list(
     @Context() context: LedgerContext,
     @Query() query: TransactionQueryDto,
-  ): Promise<readonly TransactionListItemView[]> {
+  ): Promise<TransactionPage> {
     return this.queryBus.ask(
       new ListTransactionsQuery(
         query.account ?? null,

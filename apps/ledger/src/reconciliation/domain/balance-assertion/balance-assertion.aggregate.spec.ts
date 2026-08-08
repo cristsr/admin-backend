@@ -1,6 +1,7 @@
 import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
 import { FixedClock } from '@cqrs/testing';
 import { SequentialIdGenerator } from '@cqrs/testing';
+import { AssertionAlreadyRevokedException, DiscrepancyNotResolvableException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { Money } from '@ledger/shared/domain/money';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { aMoney } from '@ledger/shared/testing';
@@ -11,10 +12,6 @@ import {
   BALANCE_ASSERTION_EVALUATED,
   DISCREPANCY_RESOLVED,
 } from './events';
-import {
-  AssertionAlreadyRevokedException,
-  DiscrepancyNotResolvableException,
-} from './exceptions/balance-assertion.exception';
 import { AssertionEvaluation } from './types/assertion-evaluation.type';
 
 describe('BalanceAssertion', () => {

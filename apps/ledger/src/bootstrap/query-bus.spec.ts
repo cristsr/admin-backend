@@ -56,9 +56,10 @@ describe('Query bus (read side)', () => {
   it('lists transactions scoped to the user', async () => {
     const { queryBus } = await seed();
 
-    const rows = await queryBus.ask(new ListTransactionsQuery(), ctx);
+    const page = await queryBus.ask(new ListTransactionsQuery(), ctx);
 
-    expect(rows).toHaveLength(1);
+    expect(page.items).toHaveLength(1);
+    expect(page.total).toBe(1);
   });
 
   it('returns the account tree ordered by name', async () => {
@@ -82,21 +83,23 @@ describe('Query bus (read side)', () => {
   it('lists transactions filtered by clientId', async () => {
     const { queryBus } = await seed();
 
-    const rows = await queryBus.ask(new ListTransactionsQuery(null, null, null, null, 'c'), ctx);
+    const page = await queryBus.ask(new ListTransactionsQuery(null, null, null, null, 'c'), ctx);
 
-    expect(rows).toHaveLength(1);
-    expect(rows[0].id).toBeDefined();
+    expect(page.items).toHaveLength(1);
+    expect(page.total).toBe(1);
+    expect(page.items[0].id).toBeDefined();
   });
 
   it('returns empty list when clientId does not match', async () => {
     const { queryBus } = await seed();
 
-    const rows = await queryBus.ask(
+    const page = await queryBus.ask(
       new ListTransactionsQuery(null, null, null, null, 'other-client'),
       ctx,
     );
 
-    expect(rows).toHaveLength(0);
+    expect(page.items).toHaveLength(0);
+    expect(page.total).toBe(0);
   });
 
   it('paginates transactions with offset and limit', async () => {
@@ -128,15 +131,18 @@ describe('Query bus (read side)', () => {
       new ListTransactionsQuery(null, null, null, null, null, null, null, 1, 0),
       ctx,
     );
-    expect(page1).toHaveLength(1);
+    expect(page1.items).toHaveLength(1);
 
     const page2 = await queryBus.ask(
       new ListTransactionsQuery(null, null, null, null, null, null, null, 1, 1),
       ctx,
     );
-    expect(page2).toHaveLength(1);
+    expect(page2.items).toHaveLength(1);
 
-    expect(page1[0].id).not.toBe(page2[0].id);
+    // The total describes the filters, not the page: both pages report it.
+    expect(page1.total).toBe(2);
+    expect(page2.total).toBe(2);
+    expect(page1.items[0].id).not.toBe(page2.items[0].id);
   });
 
   it('does not leak data across users (INV-9)', async () => {
@@ -144,8 +150,9 @@ describe('Query bus (read side)', () => {
 
     const otherCtx = { ...ctx, userId: 'user-2' };
 
-    const txRows = await queryBus.ask(new ListTransactionsQuery(), otherCtx);
-    expect(txRows).toHaveLength(0);
+    const txPage = await queryBus.ask(new ListTransactionsQuery(), otherCtx);
+    expect(txPage.items).toHaveLength(0);
+    expect(txPage.total).toBe(0);
 
     const treeRows = await queryBus.ask(new GetAccountTreeQuery(), otherCtx);
     expect(treeRows).toHaveLength(0);
@@ -154,11 +161,11 @@ describe('Query bus (read side)', () => {
   it('query handlers never access EventStore', async () => {
     const { queryBus } = await seed();
 
-    const txRows = await queryBus.ask(new ListTransactionsQuery(), ctx);
+    const txPage = await queryBus.ask(new ListTransactionsQuery(), ctx);
     const treeRows = await queryBus.ask(new GetAccountTreeQuery(), ctx);
     const balanceRows = await queryBus.ask(new GetAccountBalancesQuery(), ctx);
 
-    expect(txRows.length).toBeGreaterThanOrEqual(0);
+    expect(txPage.items.length).toBeGreaterThanOrEqual(0);
     expect(treeRows.length).toBeGreaterThanOrEqual(0);
     expect(balanceRows.length).toBeGreaterThanOrEqual(0);
   });

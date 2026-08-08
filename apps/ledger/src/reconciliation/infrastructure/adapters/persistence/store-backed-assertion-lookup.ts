@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
-import { AssertionLookupPort } from '@ledger/reconciliation/domain/ports/assertion-lookup.port';
-import { AssertionStatusStore } from '@ledger/reconciliation/domain/ports/assertion-status-store.port';
+import { AssertionLookupPort } from '@ledger/reconciliation/application/ports/assertion-lookup.port';
+import { AssertionStatusStore } from '@ledger/reconciliation/application/ports/assertion-status-store.port';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 
 /**

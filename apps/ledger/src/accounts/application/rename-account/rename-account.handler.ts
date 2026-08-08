@@ -4,7 +4,7 @@ import { CommandResult } from '@cqrs/application/command-bus/command-result.type
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
 import { AccountNameRegistry } from '@ledger/accounts/application/account-name.registry';
 import { AccountRepository } from '@ledger/accounts/application/account.repository';
-import { AccountNotFoundException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
+import { AccountNotFoundException } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { AccountName } from '@ledger/shared/domain/value-objects';
 import { RenameAccountCommand } from './rename-account.command';
 

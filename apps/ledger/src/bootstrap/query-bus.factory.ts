@@ -8,10 +8,8 @@ import { GetAccountTreeHandler } from '@ledger/accounts/application/get-account-
 import { GetAccountTreeQuery } from '@ledger/accounts/application/get-account-tree/get-account-tree.query';
 import { GetLedgerSettingsHandler } from '@ledger/ledger/application/get-ledger-settings/get-ledger-settings.handler';
 import { GetLedgerSettingsQuery } from '@ledger/ledger/application/get-ledger-settings/get-ledger-settings.query';
-import {
-  ListCurrenciesHandler,
-  ListCurrenciesQuery,
-} from '@ledger/reference/application/list-currencies.query';
+import { ListCurrenciesHandler } from '@ledger/reference/application/list-currencies/list-currencies.handler';
+import { ListCurrenciesQuery } from '@ledger/reference/application/list-currencies/list-currencies.query';
 import { GetTransactionByIdHandler } from '@ledger/transactions/application/get-transaction-by-id/get-transaction-by-id.handler';
 import { GetTransactionByIdQuery } from '@ledger/transactions/application/get-transaction-by-id/get-transaction-by-id.query';
 import { ListPendingReviewHandler } from '@ledger/transactions/application/list-pending-review/list-pending-review.handler';

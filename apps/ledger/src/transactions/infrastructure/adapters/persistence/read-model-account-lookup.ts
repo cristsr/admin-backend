@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { Criteria, Nullable } from '@shared';
 import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
-import { AccountFacts, AccountLookup } from '@ledger/transactions/domain/ports/account-lookup.port';
+import { AccountFacts, AccountLookup } from '@ledger/transactions/application/ports/account-lookup.port';
 
 type AccountRow = {
   readonly account_id: string;

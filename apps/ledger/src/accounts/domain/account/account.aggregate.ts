@@ -10,11 +10,10 @@ import {
   REAL_ACCOUNT_TYPES,
   RootTypeImmutableException,
 } from '@ledger/shared/domain/value-objects';
+import { ensureAcceptsCurrency, ensureOpenOn } from './account-availability';
 import { AccountClosed, AccountOpened, AccountRenamed } from './events';
 import {
   AccountAlreadyClosedException,
-  AccountClosedException,
-  CurrencyNotAllowedException,
   InvalidCloseDateException,
   RealAccountCurrencyException,
   SystemAccountProtectedException,
@@ -135,28 +134,16 @@ export class Account extends AggregateRoot<string> {
 
   /** INV-3 (partial): the account must be open on the posting date. */
   ensureOpenOn(date: LedgerDate): void {
-    if (date.isBefore(this.openedOn)) {
-      throw new AccountClosedException(
-        `Account "${this.accountName.value}" was not open on ${date.value}`,
-      );
-    }
-
-    if (this.closedOn && date.isAfter(this.closedOn)) {
-      throw new AccountClosedException(
-        `Account "${this.accountName.value}" was closed on ${this.closedOn.value}`,
-      );
-    }
+    ensureOpenOn(
+      { openedOn: this.openedOn, closedOn: this.closedOn },
+      date,
+      this.accountName.value,
+    );
   }
 
   /** INV-4: the currency must be allowed. Empty allow-list means multi-currency. */
   ensureAcceptsCurrency(code: CurrencyCode): void {
-    if (!this.currencies.length) return;
-
-    if (!this.currencies.some((allowed) => allowed.equals(code))) {
-      throw new CurrencyNotAllowedException(
-        `Account "${this.accountName.value}" does not accept ${code.value}`,
-      );
-    }
+    ensureAcceptsCurrency(this.currencies, code, this.accountName.value);
   }
 
   protected apply(event: DomainEvent): void {

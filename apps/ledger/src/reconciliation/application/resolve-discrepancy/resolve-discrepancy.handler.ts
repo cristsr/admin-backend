@@ -6,11 +6,8 @@ import { Clock } from '@cqrs/domain/ports';
 import { EventStore } from '@cqrs/domain/ports/event-store';
 import { PostingOrigin } from '@ledger/accounts/application/posting-origin';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/application/balance-assertion.repository';
-import {
-  AssertionNotFoundException,
-  DiscrepancyNotResolvableException,
-} from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
-import { SystemAccountLookup } from '@ledger/reconciliation/domain/ports/system-account-lookup.port';
+import { SystemAccountLookup } from '@ledger/reconciliation/application/ports/system-account-lookup.port';
+import { AssertionNotFoundException, DiscrepancyNotResolvableException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { AdjustmentFactory } from '@ledger/reconciliation/domain/services/adjustment.factory';
 import { PostingInput } from '@ledger/transactions/application/posting-input.type';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';

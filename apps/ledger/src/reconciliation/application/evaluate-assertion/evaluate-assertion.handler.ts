@@ -1,8 +1,8 @@
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { Clock } from '@cqrs/domain/ports';
 import { BalanceAssertionRepository } from '@ledger/reconciliation/application/balance-assertion.repository';
+import { LedgerSettingsReader } from '@ledger/reconciliation/application/ports/ledger-settings-reader.port';
 import { AssertionNotFoundException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
-import { LedgerSettingsReader } from '@ledger/reconciliation/domain/ports/ledger-settings-reader.port';
 import { AssertionEvaluator } from '@ledger/reconciliation/domain/services/assertion-evaluator.service';
 import { EvaluateAssertionCommand } from './evaluate-assertion.command';
 

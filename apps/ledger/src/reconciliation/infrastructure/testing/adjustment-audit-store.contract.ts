@@ -1,4 +1,4 @@
-import { AdjustmentAuditEntry, AdjustmentAuditStore } from '@ledger/reconciliation/domain/ports/adjustment-audit-store.port';
+import { AdjustmentAuditEntry, AdjustmentAuditStore } from '@ledger/reconciliation/application/ports/adjustment-audit-store.port';
 import { defineContract } from '@ledger/shared/testing';
 
 /**

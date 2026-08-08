@@ -1,5 +1,5 @@
+import { DiscrepancyNotResolvableException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { aMoney } from '@ledger/shared/testing';
-import { DiscrepancyNotResolvableException } from '../balance-assertion/exceptions/balance-assertion.exception';
 import { AdjustmentFactory } from './adjustment.factory';
 
 describe('AdjustmentFactory', () => {

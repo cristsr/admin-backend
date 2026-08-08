@@ -13,11 +13,11 @@ import { FixedClock, SequentialIdGenerator, aMoney } from '@ledger/shared/testin
 import { LedgerTransactionRepository } from './application/ledger-transaction.repository';
 import { MergePendingTransfersCommand } from './application/merge-transfers/merge-pending-transfers.command';
 import { MergePendingTransfersHandler } from './application/merge-transfers/merge-pending-transfers.handler';
+import { AccountFacts, AccountLookup } from './application/ports/account-lookup.port';
 import { RecordTransactionCommand } from './application/record-transaction/record-transaction.command';
 import { VoidPendingTransactionCommand } from './application/void-transaction/void-pending-transaction.command';
 import { BalanceRule } from './domain/balance/balance-rule';
 import { ZeroSumBalanceRule } from './domain/balance/zero-sum-balance-rule';
-import { AccountFacts, AccountLookup } from './domain/ports/account-lookup.port';
 import { PostingLine } from './domain/posting/posting-line';
 import { TransferPairRule } from './domain/services/transfer-pair.rule';
 import { LedgerTransaction } from './domain/transaction/ledger-transaction.aggregate';

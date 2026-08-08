@@ -1,9 +1,9 @@
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { PostgresReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';
 import { DataSource } from 'typeorm';
+import { AdjustmentAuditEntry } from '@ledger/reconciliation/application/ports/adjustment-audit-store.port';
+import { AssertionStatusRow } from '@ledger/reconciliation/application/ports/assertion-status-store.port';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
-import { AdjustmentAuditEntry } from '@ledger/reconciliation/domain/ports/adjustment-audit-store.port';
-import { AssertionStatusRow } from '@ledger/reconciliation/domain/ports/assertion-status-store.port';
 import {
   AdjustmentAuditProjector,
   PROJ_ADJUSTMENT_AUDIT,

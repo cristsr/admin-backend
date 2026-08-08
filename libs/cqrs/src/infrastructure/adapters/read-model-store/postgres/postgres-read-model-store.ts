@@ -75,6 +75,33 @@ export class PostgresReadModelStore extends ReadModelStore {
     return this.dataSource.query(sql, params);
   }
 
+  async count(table: string, criteria: Criteria): Promise<number> {
+    const conditions: string[] = [];
+    const params: unknown[] = [];
+    let paramIndex = 1;
+
+    for (const filter of criteria.filters) {
+      const { sql, value } = this.buildFilterSql(filter, paramIndex);
+      conditions.push(sql);
+      if (value !== undefined) {
+        params.push(value);
+        paramIndex++;
+      }
+    }
+
+    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    // Ordering and pagination are deliberately dropped: the total is what
+    // matches, not what one page shows.
+    const [row] = await this.dataSource.query(
+      `SELECT COUNT(*) AS total FROM ${table} ${whereClause}`,
+      params,
+    );
+
+    // Postgres returns COUNT as bigint, which the driver hands back as a string.
+    return Number(row?.total ?? 0);
+  }
+
   async truncate(table: string): Promise<void> {
     await this.dataSource.query(`TRUNCATE TABLE ${table} CASCADE`);
   }

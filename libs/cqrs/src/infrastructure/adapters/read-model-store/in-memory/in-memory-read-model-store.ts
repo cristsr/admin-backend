@@ -35,6 +35,14 @@ export class InMemoryReadModelStore extends ReadModelStore {
     return this.applyPagination(ordered, criteria) as TRow[];
   }
 
+  async count(table: string, criteria: Criteria): Promise<number> {
+    // Same filters as `query`, without ordering or pagination: the total is
+    // what matches, not what one page shows.
+    return [...this.tableOf(table).values()].filter((row) =>
+      criteria.filters.every((filter) => this.matches(row, filter)),
+    ).length;
+  }
+
   private tableOf(table: string): Map<string, ReadModelRow> {
     const existing = this.tables.get(table);
 

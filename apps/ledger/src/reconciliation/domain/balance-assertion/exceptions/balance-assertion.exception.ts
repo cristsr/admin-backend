@@ -39,10 +39,6 @@ export class AssertionCurrencyMismatchException extends DomainUnprocessableExcep
   readonly code = 'ASSERTION_CURRENCY_MISMATCH';
 }
 
-/**
- * The user's ledger has not been initialized, so its settings (timezone, system
- * accounts) are missing — reconciliation cannot resolve a day boundary yet.
- */
-export class LedgerNotInitializedException extends DomainUnprocessableException {
-  readonly code = 'LEDGER_NOT_INITIALIZED';
-}
+// `LedgerNotInitializedException` is not declared here: reconciliation raises
+// the shared one from `shared/domain/errors`, because three modules report the
+// same condition under the same client-facing code.

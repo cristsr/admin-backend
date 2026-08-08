@@ -7,7 +7,7 @@ import { Criteria } from '@shared';
 import {
   AdjustmentAuditRow,
   AdjustmentAuditStore,
-} from '@ledger/reconciliation/domain/ports/adjustment-audit-store.port';
+} from '@ledger/reconciliation/application/ports/adjustment-audit-store.port';
 import { PROJ_ADJUSTMENT_AUDIT } from '@ledger/reconciliation/infrastructure/projections/adjustment-audit.projector';
 
 /**

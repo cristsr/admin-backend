@@ -1,28 +1,24 @@
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
-import { Criteria, Nullable } from '@shared';
+import { Criteria } from '@shared';
 import { PostingOrigin } from '@ledger/accounts/application/posting-origin';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
 import {
-  AccountClosedException,
-  CurrencyNotAllowedException,
+  AccountRow,
+  PROJ_ACCOUNTS,
+} from '@ledger/accounts/application/read-models/account-tree.read-model';
+import {
+  ensureAcceptsCurrency,
+  ensureOpenOn,
+} from '@ledger/accounts/domain/account/account-availability';
+import {
+  AccountNotFoundException,
   SystemAccountProtectedException,
 } from '@ledger/accounts/domain/account/exceptions/account.exception';
-import { AccountNotFoundException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
 import {
   AccountType,
   CurrencyCode,
   LedgerDate,
 } from '@ledger/shared/domain/value-objects';
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
-
-type AccountRow = {
-  readonly account_id: string;
-  readonly type: string;
-  readonly currency_code: Nullable<string>;
-  readonly opened_on: string;
-  readonly closed_on: Nullable<string>;
-  readonly is_system: boolean;
-};
 
 /**
  * Cross-aggregate validation of postings against `account_tree`: each
@@ -68,8 +64,24 @@ export class AccountValidationService {
     }
 
     this.ensureReachableFrom(account, origin);
-    this.ensureOpenOn(account, date);
-    this.ensureAcceptsCurrency(account, posting.currencyCode);
+    // The rule itself lives in the domain, applied here to a projection row
+    // instead of to a loaded aggregate: one implementation, two sources of state.
+    ensureOpenOn(
+      {
+        openedOn: LedgerDate.of(account.opened_on),
+        closedOn: account.closed_on ? LedgerDate.of(account.closed_on) : null,
+      },
+      date,
+      account.name,
+    );
+    ensureAcceptsCurrency(
+      // The projection stores one column: a single allowed currency, or null
+      // for an account that takes any — which the domain models as an empty
+      // allow-list.
+      account.currency_code ? [CurrencyCode.of(account.currency_code)] : [],
+      CurrencyCode.of(posting.currencyCode),
+      account.name,
+    );
 
     return account.type as AccountType;
   }
@@ -90,25 +102,4 @@ export class AccountValidationService {
     );
   }
 
-  private ensureOpenOn(account: AccountRow, date: LedgerDate): void {
-    const openedOn = LedgerDate.of(account.opened_on);
-
-    if (date.isBefore(openedOn)) {
-      throw new AccountClosedException(`Account was not open on ${date.value}`);
-    }
-
-    if (account.closed_on && date.isAfter(LedgerDate.of(account.closed_on))) {
-      throw new AccountClosedException(`Account was closed on ${account.closed_on}`);
-    }
-  }
-
-  private ensureAcceptsCurrency(account: AccountRow, currencyCode: string): void {
-    if (!account.currency_code) return;
-
-    if (account.currency_code !== CurrencyCode.of(currencyCode).value) {
-      throw new CurrencyNotAllowedException(
-        `Account does not accept ${currencyCode}; expected ${account.currency_code}`,
-      );
-    }
-  }
 }

@@ -1,6 +1,6 @@
 import { Nullable } from '@shared';
+import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
-import { AssertionStatus } from '../balance-assertion/enums/assertion-status.enum';
 
 /** A materialized `assertion_status` row (proj_assertions). */
 export type AssertionStatusRow = {

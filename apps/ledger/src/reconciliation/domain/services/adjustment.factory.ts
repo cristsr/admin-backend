@@ -1,6 +1,6 @@
+import { DiscrepancyNotResolvableException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { Money } from '@ledger/shared/domain/money';
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
-import { DiscrepancyNotResolvableException } from '../balance-assertion/exceptions/balance-assertion.exception';
 
 /**
  * Builds the balanced adjustment postings that close a reconciliation gap

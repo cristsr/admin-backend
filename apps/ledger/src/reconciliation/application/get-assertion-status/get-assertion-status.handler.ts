@@ -3,11 +3,11 @@ import {
   QueryHandler,
 } from '@cqrs/application/query-bus/query-handler';
 import { Nullable } from '@shared';
+import { AssertionStatusStore } from '@ledger/reconciliation/application/ports/assertion-status-store.port';
 import {
   AssertionStatusView,
   toAssertionStatusView,
 } from '@ledger/reconciliation/application/read-models/assertion-status.read-model';
-import { AssertionStatusStore } from '@ledger/reconciliation/domain/ports/assertion-status-store.port';
 import { GetAssertionStatusQuery } from './get-assertion-status.query';
 
 /** Serves one assertion from `proj_assertions`, scoped to the user (INV-9). */

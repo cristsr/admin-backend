@@ -10,7 +10,7 @@ import { NameCollisionException } from '@ledger/accounts/domain/account/exceptio
 import { InitializeLedgerCommand } from '@ledger/ledger/application/initialize-ledger/initialize-ledger.command';
 import { LedgerAlreadyInitializedException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
 import { PROJ_CURRENCIES } from '@ledger/reference/application/read-models/currencies.read-model';
-import { RegisterCurrencyCommand } from '@ledger/reference/application/register-currency.command';
+import { RegisterCurrencyCommand } from '@ledger/reference/application/register-currency/register-currency.command';
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
 import { CurrencyCode } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';

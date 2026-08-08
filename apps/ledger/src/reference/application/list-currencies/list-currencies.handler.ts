@@ -1,28 +1,23 @@
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
-import { Query } from '@cqrs/application/query-bus/query';
 import { QueryHandler } from '@cqrs/application/query-bus/query-handler';
 import { Criteria } from '@shared';
 import { PROJ_CURRENCIES } from '@ledger/reference/application/read-models/currencies.read-model';
-// The catalog is global, so QueryContext is accepted and deliberately unused.
+import { CurrencyView, ListCurrenciesQuery } from './list-currencies.query';
 
-/** One currency as the API exposes it. */
-export type CurrencyView = {
-  readonly code: string;
-  readonly minorUnits: number;
-  readonly name: string;
-};
-
-/** Lists the reference currency catalog. Global: not scoped by user. */
-export class ListCurrenciesQuery extends Query<CurrencyView[]> {
-  readonly queryType = 'ListCurrencies';
-}
-
+/** One row of `proj_currencies`, exactly as stored. */
 type CurrencyRow = {
   readonly code: string;
   readonly minor_units: number;
   readonly name: string;
 };
 
+/**
+ * Serves the reference catalog, ordered by code.
+ *
+ * The `QueryContext` is accepted and deliberately unused: a currency's
+ * precision is universal, so this is the one read that is not partitioned by
+ * user (INV-9 does not apply to reference data).
+ */
 export class ListCurrenciesHandler extends QueryHandler<ListCurrenciesQuery> {
   constructor(private readonly store: ReadModelStore) {
     super();

@@ -1,9 +1,9 @@
 import { Nullable } from '@shared';
+import { AssertionCurrencyMismatchException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { Money } from '@ledger/shared/domain/money';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { BalanceAssertion } from '../balance-assertion/balance-assertion.aggregate';
 import { AssertionStatus } from '../balance-assertion/enums/assertion-status.enum';
-import { AssertionCurrencyMismatchException } from '../balance-assertion/exceptions/balance-assertion.exception';
 import { AssertionEvaluation } from '../balance-assertion/types/assertion-evaluation.type';
 import { AssertablePosting, AssertionPostingReader } from '../ports/assertion-posting-reader.port';
 import { DayBoundaryResolver } from './day-boundary.resolver';

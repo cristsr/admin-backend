@@ -2,8 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { Criteria } from '@shared';
 import { LedgerSettingsRow, PROJ_LEDGER_SETTINGS } from '@ledger/ledger/application/read-models/ledger-settings.read-model';
-import { LedgerNotInitializedException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
-import { SystemAccountLookup } from '@ledger/reconciliation/domain/ports/system-account-lookup.port';
+import { SystemAccountLookup } from '@ledger/reconciliation/application/ports/system-account-lookup.port';
+import { LedgerNotInitializedException } from '@ledger/shared/domain/errors/ledger.exception';
 
 /** Resolves `Equity:Adjustments` from the `proj_ledger_settings` read model. */
 @Injectable()

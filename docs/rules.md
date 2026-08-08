@@ -1,7 +1,7 @@
 ---
-version: 1.0.0
+version: 1.1.0
 ratified: 2026-07-23
-last_amended: 2026-07-23
+last_amended: 2026-08-07
 ---
 
 # Constitución del Proyecto — admin-back
@@ -196,6 +196,30 @@ introducir una inconsistencia contable no detectada (INV-11).
 suma-a-cero fuera del componente designado.
 
 *Alcance: `apps/ledger`.*
+
+### Artículo 13: Imports por ruta completa, no por barrel
+
+**Principio:** Los imports entre carpetas usan la ruta completa del archivo con
+el alias del app (`@ledger/accounts/application/open-account/open-account.command`).
+No se agregan `index.ts` de reexportación salvo donde ya existen: eventos de un
+agregado, DTOs de un adaptador HTTP, value objects compartidos y puertos de un
+módulo — conjuntos cerrados que se consumen como una unidad.
+
+**Razón:** el alias ya hace la ruta legible, y la ruta dice en qué capa y en qué
+caso de uso vive lo importado, que es exactamente lo que una revisión de
+fronteras necesita ver. Un barrel por carpeta lo esconde: `import { X } from
+'@ledger/accounts'` no delata si `X` es un agregado, un handler o un adaptador.
+El guard de `hexagonal-isolation.spec.ts` compara **segmentos de ruta**, así que
+un barrel intermedio también le quitaría precisión.
+
+Esta es una desviación deliberada de la convención "un barrel por carpeta" de la
+skill `hexagonal-architecture`; se documenta acá para que no se reabra en cada
+review.
+
+**Cómo se verifica:** review. Un `index.ts` nuevo fuera de los cuatro casos
+listados se justifica o se rechaza.
+
+*Alcance: `apps/ledger`, `libs/cqrs`.*
 
 ---
 

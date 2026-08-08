@@ -9,7 +9,7 @@ import {
   LedgerSettingsRow,
   PROJ_LEDGER_SETTINGS,
 } from '@ledger/ledger/application/read-models/ledger-settings.read-model';
-import { LedgerNotInitializedException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
+import { LedgerNotInitializedException } from '@ledger/shared/domain/errors/ledger.exception';
 import { Money } from '@ledger/shared/domain/money';
 import { CurrencyCatalog, CurrencyCode } from '@ledger/shared/domain/value-objects';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';

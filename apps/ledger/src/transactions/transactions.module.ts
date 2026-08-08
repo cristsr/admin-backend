@@ -9,7 +9,7 @@ import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import { LedgerTransactionRepository } from './application/ledger-transaction.repository';
 import { MergePendingTransfersCommand } from './application/merge-transfers/merge-pending-transfers.command';
 import { MergePendingTransfersHandler } from './application/merge-transfers/merge-pending-transfers.handler';
-import { AccountLookup } from './domain/ports/account-lookup.port';
+import { AccountLookup } from './application/ports/account-lookup.port';
 import { TransferPairRule } from './domain/services/transfer-pair.rule';
 import { TransferController } from './infrastructure/adapters/http/transfer.controller';
 import { ReadModelAccountLookup } from './infrastructure/adapters/persistence/read-model-account-lookup';

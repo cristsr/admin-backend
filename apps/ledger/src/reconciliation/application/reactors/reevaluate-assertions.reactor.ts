@@ -1,6 +1,6 @@
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
-import { AssertionLookupPort } from '@ledger/reconciliation/domain/ports/assertion-lookup.port';
+import { AssertionLookupPort } from '@ledger/reconciliation/application/ports/assertion-lookup.port';
 import { AssertionPostingReader } from '@ledger/reconciliation/domain/ports/assertion-posting-reader.port';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { EvaluateAssertionCommand } from '../evaluate-assertion/evaluate-assertion.command';

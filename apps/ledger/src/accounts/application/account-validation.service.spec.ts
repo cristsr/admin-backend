@@ -6,7 +6,7 @@ import {
   CurrencyNotAllowedException,
   SystemAccountProtectedException,
 } from '@ledger/accounts/domain/account/exceptions/account.exception';
-import { AccountNotFoundException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
+import { AccountNotFoundException } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { aMoney } from '@ledger/shared/testing';
 import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';

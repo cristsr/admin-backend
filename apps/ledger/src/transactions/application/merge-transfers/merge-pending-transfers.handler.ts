@@ -6,13 +6,13 @@ import { EventStore } from '@cqrs/domain/ports/event-store';
 import { Nullable } from '@shared';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/ledger-transaction.repository';
+import { AccountLookup } from '@ledger/transactions/application/ports/account-lookup.port';
 import { RecordTransactionCommand } from '@ledger/transactions/application/record-transaction/record-transaction.command';
 import { VoidPendingTransactionCommand } from '@ledger/transactions/application/void-transaction/void-pending-transaction.command';
 import {
   NotATransferPairException,
   PendingLegNotFoundException,
 } from '@ledger/transactions/domain/exceptions/transfer.exception';
-import { AccountLookup } from '@ledger/transactions/domain/ports/account-lookup.port';
 import { TransferLeg, TransferPairRule } from '@ledger/transactions/domain/services/transfer-pair.rule';
 import { TransactionNotFoundException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
 import { LedgerTransaction } from '@ledger/transactions/domain/transaction/ledger-transaction.aggregate';

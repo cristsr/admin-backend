@@ -1,4 +1,13 @@
-import { DomainConflictException, DomainUnprocessableException } from '@shared';
+import {
+  DomainConflictException,
+  DomainNotFoundException,
+  DomainUnprocessableException,
+} from '@shared';
+
+/** An operation referenced an account that does not exist. */
+export class AccountNotFoundException extends DomainNotFoundException {
+  readonly code: string = 'ACCOUNT_NOT_FOUND';
+}
 
 /**
  * A system account (`Equity:OpeningBalances`, `Equity:Adjustments`) cannot be

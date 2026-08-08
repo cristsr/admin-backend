@@ -6,7 +6,7 @@ import { OpenAccountCommand } from '@ledger/accounts/application/open-account/op
 import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
 import { AccountTreeProjector } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { createLedgerApplication } from '@ledger/bootstrap/ledger-application.factory';
-import { RegisterCurrencyCommand } from '@ledger/reference/application/register-currency.command';
+import { RegisterCurrencyCommand } from '@ledger/reference/application/register-currency/register-currency.command';
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';

@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
 import { LoggerModule } from 'nestjs-pino';
-import { AccountsHttpModule } from '@ledger/accounts/infrastructure/adapters/http';
+import { AccountsModule } from '@ledger/accounts/accounts.module';
 import { appConfig, databaseConfig } from '@ledger/config/environment';
 import { loadEnvironment } from '@ledger/env';
 import { LedgerHttpModule } from '@ledger/ledger/infrastructure/adapters/http';
@@ -34,7 +34,7 @@ import { DatabaseModule } from './database/database.module';
     LedgerCoreModule,
     ReferenceModule,
     LedgerHttpModule,
-    AccountsHttpModule,
+    AccountsModule,
     TransactionsHttpModule,
     ReconciliationModule,
     TransactionsModule,
