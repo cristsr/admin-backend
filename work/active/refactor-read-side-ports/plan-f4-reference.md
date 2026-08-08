@@ -22,13 +22,13 @@ cierra.
 
 ---
 
-### Tarea 0: Rama de trabajo
+### Tarea 0: Rama de trabajo [X]
 
 Se continúa en `feat/core`. Working tree limpio.
 
 ---
 
-### Tarea 1: Esquema y `View`
+### Tarea 1: Esquema y `View` [X]
 
 **Archivos:**
 - Crear: `apps/ledger/src/reference/infrastructure/projections/currencies.schema.ts`
@@ -53,7 +53,7 @@ devuelve como string. Esa conversión se muda a `toCurrencyView`, en el borde.
 
 ---
 
-### Tarea 2: `CurrencyCatalogFinder` + adapter
+### Tarea 2: `CurrencyCatalogFinder` + adapter [X]
 
 **Archivos:**
 - Crear: `apps/ledger/src/reference/application/ports/currency-catalog-finder.port.ts`
@@ -99,7 +99,7 @@ decir por qué — para que no se lea como un descuido en review.
 
 ---
 
-### Tarea 3: Migrar `ListCurrenciesHandler`
+### Tarea 3: Migrar `ListCurrenciesHandler` [X]
 
 **Archivos:**
 - Modificar: `apps/ledger/src/reference/application/usecases/list-currencies/list-currencies.handler.ts`
@@ -116,7 +116,7 @@ Esperado: PASS.
 
 ---
 
-### Tarea 4: Cerrar el wiring — AC-1
+### Tarea 4: Cerrar el wiring — AC-1 [X]
 
 **Archivos:**
 - Modificar: `apps/ledger/src/reference/reference.module.ts` (1 binding)
@@ -158,7 +158,7 @@ Esperado: PASS.
 
 ---
 
-### Tarea 5: Suite completa — AC-9
+### Tarea 5: Suite completa — AC-9 [X]
 
 ```bash
 npx jest apps/ledger --no-coverage
