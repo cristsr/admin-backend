@@ -4,8 +4,11 @@ import { TransactionStatus } from '@ledger/transactions/domain/transaction/trans
 
 /**
  * Read-model tables written by `TransactionListProjector`, named here because
- * the use cases are what query them — see the note in
- * `accounts/application/read-models/account-tree.read-model.ts`.
+ * the use cases are what query them.
+ *
+ * TODO(F3): these move to `infrastructure/projections/transaction-list.schema.ts`,
+ * the way `accounts` already did — the table name and the row shape are storage,
+ * and declaring them here is what let the physical schema reach the use cases.
  */
 export const PROJ_TRANSACTIONS = 'proj_transactions';
 export const PROJ_POSTINGS = 'proj_postings';

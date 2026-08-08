@@ -2,7 +2,7 @@ import { EventPayload } from '@cqrs/domain/event/event-payload.type';
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria } from '@shared';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { AccountTreeProjector } from './account-tree.projector';
 
 let position = 0n;

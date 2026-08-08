@@ -6,7 +6,7 @@ import { CommandResult } from '@cqrs/application/command-bus/command-result.type
 import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { QueryContext } from '@cqrs/application/query-bus/query-handler';
 import { Nullable } from '@shared';
-import { AccountView } from '@ledger/accounts/application/read-models/account-tree.read-model';
+import { AccountView } from '@ledger/accounts/application/views/account.view';
 import { CloseAccountCommand } from '@ledger/accounts/application/usecases/close-account/close-account.command';
 import { GetAccountBalancesQuery } from '@ledger/accounts/application/usecases/get-account-balances/get-account-balances.query';
 import { GetAccountByIdQuery } from '@ledger/accounts/application/usecases/get-account-by-id/get-account-by-id.query';
@@ -21,7 +21,7 @@ import {
   Context,
   ExternalRef,
 } from '@ledger/shared/infrastructure/adapters/http';
-import { BalanceView } from '@ledger/transactions/application/read-models/account-balances.read-model';
+import { BalanceView } from '@ledger/accounts/application/views/balance.view';
 import { AccountBalanceQueryDto } from './dto/account-balance-query.dto';
 import { AccountBalanceDto } from './dto/account-balance.dto';
 import { AccountDto } from './dto/account.dto';

@@ -1,6 +1,7 @@
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Nullable } from '@shared';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
+import { ReadModelAccountConstraintsReader } from '@ledger/accounts/infrastructure/adapters/persistence/read-model-account-constraints-reader';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import {
   AccountClosedException,
   CurrencyNotAllowedException,
@@ -44,7 +45,10 @@ async function serviceWith(seeds: readonly AccountSeed[]): Promise<AccountValida
     );
   }
 
-  return new AccountValidationService(store);
+  // The real adapter over an in-memory store, not a fake: a hand-written double
+  // is free to filter differently than the adapter does, and this service is
+  // what stands between a command and the cross-aggregate invariants.
+  return new AccountValidationService(new ReadModelAccountConstraintsReader(store));
 }
 
 const posting = (accountId: string): PostingLine =>

@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { BalanceView } from '@ledger/transactions/application/read-models/account-balances.read-model';
+import { BalanceView } from '@ledger/accounts/application/views/balance.view';
 
 /**
  * Confirmed and pending balance for one account+currency, from the

@@ -1,8 +1,7 @@
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
-import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
+import { AccountNameReader } from '@ledger/accounts/application/ports/account-name-reader.port';
 import { IdGenerator } from '@cqrs/domain/ports';
-import { Criteria } from '@shared';
 import { AccountRepository } from '@ledger/accounts/application/repositories/account.repository';
 import { AccountNameRegistry } from '@ledger/accounts/application/services/account-name.registry';
 import { Account } from '@ledger/accounts/domain/account/account.aggregate';
@@ -41,14 +40,16 @@ function anAccount(name: string, isSystem = false): Account {
 }
 
 function setup(names: readonly string[]) {
-  const rows = names.map((name, index) => ({ account_id: `acc-${index}`, name }));
-  const readModel = {
-    query: jest.fn(async (_table: string, criteria: Criteria) => {
-      const byName = criteria.filters.find((filter) => filter.field === 'name');
+  /** A reader holding exactly the names the test declares, for one user. */
+  const reader = new (class extends AccountNameReader {
+    async isTaken(_userId: string, name: string): Promise<boolean> {
+      return names.includes(name);
+    }
 
-      return byName ? rows.filter((row) => row.name === byName.value) : rows;
-    }),
-  } as unknown as jest.Mocked<ReadModelStore>;
+    async namesOf(): Promise<readonly string[]> {
+      return names;
+    }
+  })();
 
   const accounts = {
     load: jest.fn(),
@@ -61,7 +62,7 @@ function setup(names: readonly string[]) {
 
   const handler = new RenameAccountHandler(
     accounts,
-    new AccountNameRegistry(readModel),
+    new AccountNameRegistry(reader),
     dispatcher,
   );
 

@@ -2,21 +2,11 @@ import { Projector } from '@cqrs/application/projection/projector';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { Criteria, Nullable } from '@shared';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
+import {
+  AccountRow,
+  PROJ_ACCOUNTS,
+} from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { AccountName } from '@ledger/shared/domain/value-objects';
-
-type AccountRow = {
-  readonly account_id: string;
-  readonly user_id: string;
-  readonly type: string;
-  readonly name: string;
-  readonly parent_id: Nullable<string>;
-  readonly currency_code: Nullable<string>;
-  readonly opened_on: string;
-  readonly closed_on: Nullable<string>;
-  readonly is_bank_mirror: boolean;
-  readonly is_system: boolean;
-};
 
 /**
  * Maintains `proj_accounts` from account events. A rename updates the

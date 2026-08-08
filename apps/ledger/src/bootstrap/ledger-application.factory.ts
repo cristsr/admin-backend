@@ -55,6 +55,7 @@ import { AccountTreePostingValidator } from '@ledger/transactions/infrastructure
 import { AccountBalancesProjector } from '@ledger/transactions/infrastructure/projections/account-balances.projector';
 import { PendingReviewProjector } from '@ledger/transactions/infrastructure/projections/pending-review.projector';
 import { TransactionListProjector } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
+import { WriteSideReadPorts, createWriteSideReadPorts } from './read-side-ports.factory';
 
 /**
  * The wired write side: the command bus plus the projector set for the read
@@ -81,6 +82,11 @@ export type LedgerApplicationDeps = {
    * to reload after a registration.
    */
   readonly catalogCache?: CurrencyCatalogCache;
+  /**
+   * Read ports the write side needs. Defaults to the store-backed composition
+   * over `readModel`, so a caller states them only to substitute one.
+   */
+  readonly readPorts?: WriteSideReadPorts;
 };
 
 /**
@@ -111,10 +117,15 @@ export function createLedgerApplication(deps: LedgerApplicationDeps): LedgerAppl
   const transactions = new LedgerTransactionRepository(eventStore, registry, envelopes);
   const settings = new LedgerSettingsRepository(eventStore, registry, envelopes);
   const currencies = new CurrencyCatalogRepository(eventStore, registry, envelopes);
+  // The write side reads the account tree through ports, so the projection's
+  // physical shape stops at this root and never reaches a use case.
+  const readPorts = deps.readPorts ?? createWriteSideReadPorts(readModel);
   // `transactions` asks for a PostingValidator; `accounts` is what answers it.
   // Binding the two is this root's job — it is the only place that may know both.
-  const validation = new AccountTreePostingValidator(new AccountValidationService(readModel));
-  const names = new AccountNameRegistry(readModel);
+  const validation = new AccountTreePostingValidator(
+    new AccountValidationService(readPorts.accountConstraints),
+  );
+  const names = new AccountNameRegistry(readPorts.accountNames);
 
   const commandBus = new PolicyCommandBus([
     new AuthenticatedContextPolicy(),

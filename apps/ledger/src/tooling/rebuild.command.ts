@@ -5,7 +5,7 @@ import { InMemoryProjectionCheckpointRepository } from '@cqrs/infrastructure/ada
 import { ProjectionRebuilder } from '@cqrs/infrastructure/adapters/projection/projection-rebuilder';
 import { PostgresReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';
 import { DataSource } from 'typeorm';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { AccountTreeProjector } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { PROJ_LEDGER_SETTINGS } from '@ledger/ledger/application/read-models/ledger-settings.read-model';
 import { LedgerSettingsProjector } from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
@@ -23,7 +23,7 @@ import { PROJ_CURRENCIES } from '@ledger/reference/application/read-models/curre
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/read-model-currency-catalog';
 import { CurrenciesProjector } from '@ledger/reference/infrastructure/projections/currencies.projector';
 import { ConsistencyVerifier } from '@ledger/tooling/consistency-verifier';
-import { PROJ_BALANCES } from '@ledger/transactions/application/read-models/account-balances.read-model';
+import { PROJ_BALANCES } from '@ledger/transactions/infrastructure/projections/account-balances.schema';
 import { PROJ_PENDING_REVIEW } from '@ledger/transactions/application/read-models/pending-review.read-model';
 import { PROJ_POSTINGS, PROJ_TRANSACTIONS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
 import { AccountBalancesProjector } from '@ledger/transactions/infrastructure/projections/account-balances.projector';

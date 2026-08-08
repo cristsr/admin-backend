@@ -1,5 +1,5 @@
 import { AccountType } from '@ledger/shared/domain/value-objects';
-import { AccountRow, toAccountView } from './account-tree.read-model';
+import { AccountRow, toAccountView } from './account-tree.schema';
 
 const aRow = (overrides: Partial<AccountRow> = {}): AccountRow => ({
   account_id: 'acc-1',

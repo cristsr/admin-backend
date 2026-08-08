@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Nullable } from '@shared';
-import { AccountView } from '@ledger/accounts/application/read-models/account-tree.read-model';
+import { AccountView } from '@ledger/accounts/application/views/account.view';
 import { AccountType } from '@ledger/shared/domain/value-objects';
 
 /**

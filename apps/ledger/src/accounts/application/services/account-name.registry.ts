@@ -1,14 +1,6 @@
-import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
-import { Criteria } from '@shared';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
+import { AccountNameReader } from '@ledger/accounts/application/ports/account-name-reader.port';
 import { NameCollisionException } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { AccountName } from '@ledger/shared/domain/value-objects';
-
-/** The only two columns name uniqueness needs from `account_tree`. */
-type NamedAccountRow = {
-  readonly account_id: string;
-  readonly name: string;
-};
 
 /**
  * Single point of truth for "one hierarchical name per user". Both
@@ -21,16 +13,11 @@ type NamedAccountRow = {
  * never as accounting corruption.
  */
 export class AccountNameRegistry {
-  constructor(private readonly readModel: ReadModelStore) {}
+  constructor(private readonly names: AccountNameReader) {}
 
   /** The name a newly opened account claims must be free. */
   async ensureAvailable(userId: string, name: AccountName): Promise<void> {
-    const clash = await this.readModel.query<NamedAccountRow>(
-      PROJ_ACCOUNTS,
-      Criteria.none().equals('user_id', userId).equals('name', name.value),
-    );
-
-    if (clash.length) {
+    if (await this.names.isTaken(userId, name.value)) {
       throw new NameCollisionException(`Account "${name.value}" already exists`);
     }
   }
@@ -51,16 +38,13 @@ export class AccountNameRegistry {
     // it; reparenting names across root types here would only muddy the error.
     if (next.rootType !== previous.rootType) return;
 
-    const rows = await this.readModel.query<NamedAccountRow>(
-      PROJ_ACCOUNTS,
-      Criteria.none().equals('user_id', userId),
-    );
+    const held = await this.names.namesOf(userId);
 
     const staying = new Set<string>();
     const moving: AccountName[] = [];
 
-    for (const row of rows) {
-      const current = AccountName.of(row.name);
+    for (const name of held) {
+      const current = AccountName.of(name);
 
       if (current.equals(previous) || current.isDescendantOf(previous)) {
         moving.push(current);

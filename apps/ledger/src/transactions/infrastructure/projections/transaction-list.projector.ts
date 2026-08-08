@@ -2,7 +2,10 @@ import { Projector } from '@cqrs/application/projection/projector';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { Criteria, Nullable } from '@shared';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
+import {
+  AccountRow,
+  PROJ_ACCOUNTS,
+} from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { AccountType } from '@ledger/shared/domain/value-objects';
 import {
   PROJ_POSTINGS,
@@ -270,7 +273,7 @@ export class TransactionListProjector extends Projector {
     postings: readonly PostingPayload[],
     store: ReadModelStore,
   ): Promise<string> {
-    const accounts = await store.query<{ account_id: string; type: string }>(
+    const accounts = await store.query<AccountRow>(
       PROJ_ACCOUNTS,
       Criteria.none().equals('user_id', userId),
     );

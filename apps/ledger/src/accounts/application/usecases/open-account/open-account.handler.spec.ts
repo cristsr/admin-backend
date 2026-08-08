@@ -1,6 +1,6 @@
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
-import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
+import { AccountNameReader } from '@ledger/accounts/application/ports/account-name-reader.port';
 import { IdGenerator } from '@cqrs/domain/ports';
 import { AccountRepository } from '@ledger/accounts/application/repositories/account.repository';
 import { AccountNameRegistry } from '@ledger/accounts/application/services/account-name.registry';
@@ -15,27 +15,29 @@ function setup() {
     save: jest.fn(),
   } as unknown as jest.Mocked<AccountRepository>;
 
-  const readModel = {
-    query: jest.fn(),
-  } as unknown as jest.Mocked<ReadModelStore>;
+  // Nothing is taken, so every name this handler claims is free.
+  const names = {
+    isTaken: jest.fn().mockResolvedValue(false),
+    namesOf: jest.fn().mockResolvedValue([]),
+  } as unknown as jest.Mocked<AccountNameReader>;
 
   const idGenerator: jest.Mocked<IdGenerator> = { next: jest.fn().mockReturnValue('gen-1') };
   const dispatcher: jest.Mocked<ProjectionDispatcher> = { dispatch: jest.fn().mockResolvedValue(undefined) };
 
   const handler = new OpenAccountHandler(
     accounts,
-    new AccountNameRegistry(readModel),
+    new AccountNameRegistry(names),
     idGenerator,
     dispatcher,
   );
 
-  return { handler, accounts, readModel, dispatcher };
+  return { handler, accounts, names, dispatcher };
 }
 
 describe('OpenAccountHandler', () => {
   it('should open a new account and return its id', async () => {
-    const { handler, accounts, readModel } = setup();
-    readModel.query.mockResolvedValue([]);
+    const { handler, accounts, names } = setup();
+    names.isTaken.mockResolvedValue(false);
     const savedAccount = { id: 'account-1', pullChanges: () => [] } as any;
     (savedAccount as any).id = 'account-1';
     accounts.save.mockResolvedValue({ events: [], version: 1, lastPosition: 5n });
@@ -47,13 +49,13 @@ describe('OpenAccountHandler', () => {
 
     expect(result.aggregateId).toBeTruthy();
     expect(result.idempotentReplay).toBe(false);
-    expect(readModel.query).toHaveBeenCalledTimes(1);
+    expect(names.isTaken).toHaveBeenCalledTimes(1);
     expect(accounts.save).toHaveBeenCalledTimes(1);
   });
 
   it('should reject a duplicate name with NAME_COLLISION', async () => {
-    const { handler, readModel } = setup();
-    readModel.query.mockResolvedValue([{ name: 'Assets:Duplicate' }]);
+    const { handler, names } = setup();
+    names.isTaken.mockResolvedValue(true);
 
     await expect(
       handler.execute(new OpenAccountCommand('Assets:Duplicate', ['COP'], '2026-01-01', false), ctx),
@@ -61,8 +63,8 @@ describe('OpenAccountHandler', () => {
   });
 
   it('should allow same name for different users (rules Art. 5)', async () => {
-    const { handler, accounts, readModel } = setup();
-    readModel.query.mockResolvedValue([]);
+    const { handler, accounts, names } = setup();
+    names.isTaken.mockResolvedValue(false);
     accounts.save.mockResolvedValue({ events: [], version: 1, lastPosition: 1n });
 
     await handler.execute(
@@ -76,8 +78,8 @@ describe('OpenAccountHandler', () => {
   });
 
   it('should dispatch events after save', async () => {
-    const { handler, accounts, readModel, dispatcher } = setup();
-    readModel.query.mockResolvedValue([]);
+    const { handler, accounts, names, dispatcher } = setup();
+    names.isTaken.mockResolvedValue(false);
     accounts.save.mockResolvedValue({ events: ['ev-1', 'ev-2'] as any, version: 1, lastPosition: 2n });
     dispatcher.dispatch.mockResolvedValue(undefined);
 

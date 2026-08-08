@@ -10,8 +10,9 @@ import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { SynchronousProjectionDispatcher } from '@cqrs/infrastructure/adapters/projection/synchronous-dispatcher';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { AccountValidationService } from '@ledger/accounts/application/services/account-validation.service';
+import { ReadModelAccountConstraintsReader } from '@ledger/accounts/infrastructure/adapters/persistence/read-model-account-constraints-reader';
 import { SystemAccountProtectedException } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { createLedgerEventRegistry } from '@ledger/ledger/application/factories/ledger-event-registry.factory';
 import { createReconciliationEventRegistry } from '@ledger/reconciliation/application/factories/reconciliation-event-registry.factory';
@@ -297,7 +298,7 @@ describe('Discrepancy resolution over the real RecordTransaction path (INV-13)',
       RecordTransactionCommand,
       new RecordTransactionHandler(
         new LedgerTransactionRepository(eventStore, createLedgerEventRegistry(catalog), envelopes),
-        new AccountValidationService(readModel),
+        new AccountValidationService(new ReadModelAccountConstraintsReader(readModel)),
         catalog,
         new ZeroSumBalanceRule(),
         ids,

@@ -4,7 +4,7 @@ import { MissingAuthContextException } from '@cqrs/application/command-bus/polic
 import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria } from '@shared';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { OpenAccountCommand } from '@ledger/accounts/application/usecases/open-account/open-account.command';
 import { NameCollisionException } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { InitializeLedgerCommand } from '@ledger/ledger/application/usecases/initialize-ledger/initialize-ledger.command';
@@ -15,7 +15,7 @@ import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapt
 import { CurrencyCode } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
-import { PROJ_BALANCES } from '@ledger/transactions/application/read-models/account-balances.read-model';
+import { PROJ_BALANCES } from '@ledger/transactions/infrastructure/projections/account-balances.schema';
 import { PROJ_TRANSACTIONS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
 import { ConfirmTransactionCommand } from '@ledger/transactions/application/usecases/confirm-transaction/confirm-transaction.command';
 import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';

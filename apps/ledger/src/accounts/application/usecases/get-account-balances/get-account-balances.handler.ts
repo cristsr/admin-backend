@@ -1,50 +1,28 @@
-import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import {
   QueryContext,
   QueryHandler,
 } from '@cqrs/application/query-bus/query-handler';
-import { Criteria } from '@shared';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
-import {
-  BalanceRow,
-  BalanceView,
-  PROJ_BALANCES,
-  toBalanceView,
-} from '@ledger/transactions/application/read-models/account-balances.read-model';
+import { AccountBalanceFinder } from '@ledger/accounts/application/ports/account-balance-finder.port';
+import { BalanceView } from '@ledger/accounts/application/views/balance.view';
 import { GetAccountBalancesQuery } from './get-account-balances.query';
 
 /**
- * Serves balances from `proj_balances`, scoped to the user's own accounts
- * (INV-9) by intersecting with `account_tree`, since balances carry no user id.
+ * Serves the user's balances (INV-9), optionally narrowed to one account or one
+ * currency.
+ *
+ * The scope no longer has to be reconstructed here: balances carry their owner,
+ * so the port answers with what belongs to the user instead of handing over
+ * everyone's rows for this handler to sift through.
  */
 export class GetAccountBalancesHandler extends QueryHandler<GetAccountBalancesQuery> {
-  constructor(private readonly readModel: ReadModelStore) {
+  constructor(private readonly balances: AccountBalanceFinder) {
     super();
   }
 
-  async execute(
-    query: GetAccountBalancesQuery,
-    ctx: QueryContext,
-  ): Promise<readonly BalanceView[]> {
-    const owned = await this.ownedAccountIds(ctx.userId);
-    const balances = await this.readModel.query<BalanceRow>(PROJ_BALANCES, Criteria.none());
-
-    return balances
-      .filter(
-        (balance) =>
-          owned.has(balance.account_id) &&
-          (!query.accountId || balance.account_id === query.accountId) &&
-          (!query.currency || balance.currency_code === query.currency),
-      )
-      .map(toBalanceView);
-  }
-
-  private async ownedAccountIds(userId: string): Promise<Set<string>> {
-    const accounts = await this.readModel.query<{ account_id: string }>(
-      PROJ_ACCOUNTS,
-      Criteria.none().equals('user_id', userId),
-    );
-
-    return new Set(accounts.map((account) => account.account_id));
+  execute(query: GetAccountBalancesQuery, ctx: QueryContext): Promise<readonly BalanceView[]> {
+    return this.balances.byUser(ctx.userId, {
+      accountId: query.accountId ?? null,
+      currency: query.currency ?? null,
+    });
   }
 }

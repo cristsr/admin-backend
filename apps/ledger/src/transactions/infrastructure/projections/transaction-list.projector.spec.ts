@@ -1,7 +1,7 @@
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Criteria, Nullable } from '@shared';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { AccountType } from '@ledger/shared/domain/value-objects';
 import { PROJ_POSTINGS, PROJ_TRANSACTIONS } from '@ledger/transactions/application/read-models/transaction-list.read-model';
 import { TransactionKindDeriver } from '@ledger/transactions/domain/derivation/transaction-kind.deriver';

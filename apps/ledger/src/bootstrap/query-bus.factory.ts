@@ -16,27 +16,38 @@ import { ListPendingReviewHandler } from '@ledger/transactions/application/useca
 import { ListPendingReviewQuery } from '@ledger/transactions/application/usecases/list-pending-review/list-pending-review.query';
 import { ListTransactionsHandler } from '@ledger/transactions/application/usecases/list-transactions/list-transactions.handler';
 import { ListTransactionsQuery } from '@ledger/transactions/application/usecases/list-transactions/list-transactions.query';
+import { QueryPorts, createQueryPorts } from './read-side-ports.factory';
 
 /**
  * Composition point where every module's query handlers meet on one bus; each
  * handler lives with the module that owns the read model it serves.
+ *
+ * `ports` defaults to the store-backed composition, so every caller keeps
+ * working while the migration proceeds module by module. Passing it explicitly
+ * is how a module substitutes an adapter the shared store cannot serve.
  *
  * Returns the concrete bus, not the `QueryBus` abstraction: feature modules
  * composed outside this root — `reconciliation`, whose read port is bound in its
  * own module — register their handlers on this very instance at init, the same
  * way they do on `PolicyCommandBus` for writes.
  */
-export function createQueryBus(readModel: ReadModelStore): RegistryQueryBus {
+export function createQueryBus(
+  readModel: ReadModelStore,
+  ports: QueryPorts = createQueryPorts(readModel),
+): RegistryQueryBus {
   const bus = new RegistryQueryBus();
 
+  // Still store-backed: their ports arrive with the `transactions`, `ledger` and
+  // `reference` phases, after which `readModel` leaves this signature.
   bus.register(ListTransactionsQuery, new ListTransactionsHandler(readModel));
   bus.register(ListPendingReviewQuery, new ListPendingReviewHandler(readModel));
   bus.register(GetTransactionByIdQuery, new GetTransactionByIdHandler(readModel));
-  bus.register(GetAccountTreeQuery, new GetAccountTreeHandler(readModel));
-  bus.register(GetAccountByIdQuery, new GetAccountByIdHandler(readModel));
-  bus.register(GetAccountBalancesQuery, new GetAccountBalancesHandler(readModel));
   bus.register(GetLedgerSettingsQuery, new GetLedgerSettingsHandler(readModel));
   bus.register(ListCurrenciesQuery, new ListCurrenciesHandler(readModel));
+
+  bus.register(GetAccountTreeQuery, new GetAccountTreeHandler(ports.accountTree));
+  bus.register(GetAccountByIdQuery, new GetAccountByIdHandler(ports.accountTree));
+  bus.register(GetAccountBalancesQuery, new GetAccountBalancesHandler(ports.accountBalances));
 
   return bus;
 }

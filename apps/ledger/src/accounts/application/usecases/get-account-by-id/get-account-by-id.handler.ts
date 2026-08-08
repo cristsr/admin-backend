@@ -1,29 +1,19 @@
-import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import {
   QueryContext,
   QueryHandler,
 } from '@cqrs/application/query-bus/query-handler';
-import { Criteria, Nullable } from '@shared';
-import {
-  AccountRow,
-  AccountView,
-  PROJ_ACCOUNTS,
-  toAccountView,
-} from '@ledger/accounts/application/read-models/account-tree.read-model';
+import { Nullable } from '@shared';
+import { AccountTreeFinder } from '@ledger/accounts/application/ports/account-tree-finder.port';
+import { AccountView } from '@ledger/accounts/application/views/account.view';
 import { GetAccountByIdQuery } from './get-account-by-id.query';
 
-/** Serves one account node from `proj_accounts`, scoped to the user (INV-9). */
+/** Serves one account node, scoped to the user (INV-9). */
 export class GetAccountByIdHandler extends QueryHandler<GetAccountByIdQuery> {
-  constructor(private readonly readModel: ReadModelStore) {
+  constructor(private readonly accounts: AccountTreeFinder) {
     super();
   }
 
-  async execute(query: GetAccountByIdQuery, ctx: QueryContext): Promise<Nullable<AccountView>> {
-    const [row] = await this.readModel.query<AccountRow>(
-      PROJ_ACCOUNTS,
-      Criteria.none().equals('user_id', ctx.userId).equals('account_id', query.accountId),
-    );
-
-    return row ? toAccountView(row) : null;
+  execute(query: GetAccountByIdQuery, ctx: QueryContext): Promise<Nullable<AccountView>> {
+    return this.accounts.byId(ctx.userId, query.accountId);
   }
 }

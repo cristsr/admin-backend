@@ -1,15 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { Criteria, Nullable } from '@shared';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/application/read-models/account-tree.read-model';
+import {
+  AccountRow,
+  PROJ_ACCOUNTS,
+} from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { AccountFacts, AccountLookup } from '@ledger/transactions/application/ports/account-lookup.port';
-
-type AccountRow = {
-  readonly account_id: string;
-  readonly type: string;
-  readonly currency_code: Nullable<string>;
-  readonly is_bank_mirror: boolean;
-};
 
 /** Reads account facts from the `proj_accounts` read model for transfer detection. */
 @Injectable()

@@ -1,9 +1,7 @@
-import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
-import { Criteria } from '@shared';
 import {
-  AccountRow,
-  PROJ_ACCOUNTS,
-} from '@ledger/accounts/application/read-models/account-tree.read-model';
+  AccountConstraints,
+  AccountConstraintsReader,
+} from '@ledger/accounts/application/ports/account-constraints-reader.port';
 import {
   ensureAcceptsCurrency,
   ensureOpenOn,
@@ -29,7 +27,7 @@ import { PostingLine } from '@ledger/transactions/domain/posting/posting-line';
  * never corruption.
  */
 export class AccountValidationService {
-  constructor(private readonly readModel: ReadModelStore) {}
+  constructor(private readonly accounts: AccountConstraintsReader) {}
 
   /**
    * Validates every posting and returns the touched account types.
@@ -42,11 +40,10 @@ export class AccountValidationService {
     postings: readonly PostingLine[],
     origin: PostingOrigin = PostingOrigin.CLIENT,
   ): Promise<readonly AccountType[]> {
-    const accounts = await this.readModel.query<AccountRow>(
-      PROJ_ACCOUNTS,
-      Criteria.none().equals('user_id', userId),
+    const byId = await this.accounts.byIds(
+      userId,
+      postings.map((posting) => posting.accountId),
     );
-    const byId = new Map(accounts.map((account) => [account.account_id, account]));
 
     return postings.map((posting) => this.validatePosting(posting, date, byId, origin));
   }
@@ -54,7 +51,7 @@ export class AccountValidationService {
   private validatePosting(
     posting: PostingLine,
     date: LedgerDate,
-    byId: Map<string, AccountRow>,
+    byId: ReadonlyMap<string, AccountConstraints>,
     origin: PostingOrigin,
   ): AccountType {
     const account = byId.get(posting.accountId);
@@ -64,21 +61,20 @@ export class AccountValidationService {
     }
 
     this.ensureReachableFrom(account, origin);
-    // The rule itself lives in the domain, applied here to a projection row
+    // The rule itself lives in the domain, applied here to projected facts
     // instead of to a loaded aggregate: one implementation, two sources of state.
     ensureOpenOn(
       {
-        openedOn: LedgerDate.of(account.opened_on),
-        closedOn: account.closed_on ? LedgerDate.of(account.closed_on) : null,
+        openedOn: LedgerDate.of(account.openedOn),
+        closedOn: account.closedOn ? LedgerDate.of(account.closedOn) : null,
       },
       date,
       account.name,
     );
     ensureAcceptsCurrency(
-      // The projection stores one column: a single allowed currency, or null
-      // for an account that takes any — which the domain models as an empty
-      // allow-list.
-      account.currency_code ? [CurrencyCode.of(account.currency_code)] : [],
+      // The projection states one currency, or null for an account that takes
+      // any — which the domain models as an empty allow-list.
+      account.currency ? [CurrencyCode.of(account.currency)] : [],
       CurrencyCode.of(posting.currencyCode),
       account.name,
     );
@@ -92,13 +88,13 @@ export class AccountValidationService {
    * authenticated caller could book straight against them and manufacture
    * balance out of nothing.
    */
-  private ensureReachableFrom(account: AccountRow, origin: PostingOrigin): void {
-    if (!account.is_system) return;
+  private ensureReachableFrom(account: AccountConstraints, origin: PostingOrigin): void {
+    if (!account.isSystem) return;
 
     if (origin === PostingOrigin.SYSTEM) return;
 
     throw new SystemAccountProtectedException(
-      `Account "${account.account_id}" is a system account and only accepts system postings`,
+      `Account "${account.accountId}" is a system account and only accepts system postings`,
     );
   }
 
