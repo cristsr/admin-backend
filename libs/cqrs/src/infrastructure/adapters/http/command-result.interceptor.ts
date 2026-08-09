@@ -8,6 +8,9 @@ import { CommandAcceptedDto } from './dto/command-accepted.dto';
 /** Response header exposing the stream position a write reached. */
 export const STREAM_POSITION_HEADER = 'X-Ledger-Stream-Position';
 
+/** Response header present, and only present, when the write was an idempotent replay (AC-7). */
+export const IDEMPOTENCY_HIT_HEADER = 'Idempotency-Hit';
+
 /**
  * Structural guard: a value is a command result when it carries a `bigint`
  * stream position and the replay flag. `streamPosition` is a `bigint` in the
@@ -39,6 +42,7 @@ export class CommandResultInterceptor implements NestInterceptor {
     response.setHeader(STREAM_POSITION_HEADER, String(value.streamPosition));
 
     if (value.idempotentReplay) {
+      response.setHeader(IDEMPOTENCY_HIT_HEADER, 'true');
       response.status(HttpStatus.OK);
     }
 

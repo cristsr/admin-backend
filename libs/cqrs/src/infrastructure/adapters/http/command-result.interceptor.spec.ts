@@ -55,4 +55,17 @@ describe('CommandResultInterceptor', () => {
     expect(result).toBe(projection);
     expect(setHeader).not.toHaveBeenCalled();
   });
+
+  it('stamps Idempotency-Hit: true only on a replay', async () => {
+    const { setHeader } = await run(commandResult({ idempotentReplay: true }));
+
+    expect(setHeader).toHaveBeenCalledWith('Idempotency-Hit', 'true');
+  });
+
+  it('never stamps Idempotency-Hit when the operation actually ran', async () => {
+    const { setHeader } = await run(commandResult({ idempotentReplay: false }));
+
+    const calls = setHeader.mock.calls.map(([name]) => name);
+    expect(calls).not.toContain('Idempotency-Hit');
+  });
 });

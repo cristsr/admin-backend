@@ -35,6 +35,7 @@ export class EnvelopeFactory {
       schemaVersion: event.schemaVersion,
       clientId: ctx.clientId,
       externalRef: index === 0 ? ctx.externalRef : null,
+      externalRefHash: index === 0 ? (ctx.externalRefHash ?? null) : null,
       payload: event.toPayload(),
       // The fact's own instant when it carries one (a bank notification is not
       // simultaneous with the request that reports it); otherwise both coincide.

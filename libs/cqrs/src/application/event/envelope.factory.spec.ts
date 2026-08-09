@@ -54,6 +54,7 @@ const ctx: AuthContext = {
   userId: 'user-1',
   clientId: 'client-x',
   externalRef: 'ref-123',
+  externalRefHash: 'hash-abc',
 };
 
 describe('EnvelopeFactory', () => {
@@ -113,6 +114,26 @@ describe('EnvelopeFactory', () => {
 
     expect(envelopes[0].externalRef).toBe('ref-123');
     expect(envelopes[1].externalRef).toBeNull();
+  });
+
+  it('stamps external_ref_hash on the anchor event only, mirroring external_ref', () => {
+    const envelopes = build().build(
+      stream,
+      0,
+      [new Priced('1', '1'), new Priced('2', '2')],
+      ctx,
+    );
+
+    expect(envelopes[0].externalRefHash).toBe('hash-abc');
+    expect(envelopes[1].externalRefHash).toBeNull();
+  });
+
+  it('stamps a null external_ref_hash when the context carries none', () => {
+    const bareCtx: AuthContext = { userId: 'user-1', clientId: 'client-x', externalRef: null };
+
+    const [envelope] = build().build(stream, 0, [new Priced('1', '1')], bareCtx);
+
+    expect(envelope.externalRefHash).toBeNull();
   });
 
   it('propagates userId/clientId and deterministic ids and timestamps', () => {
