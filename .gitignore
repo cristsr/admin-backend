@@ -55,3 +55,6 @@ docs/.likec4-export/
 
 # Ledger epic plans (personal working notes, not shared)
 work/ledger/
+
+# code graph index (codegraph)
+/.codegraph
