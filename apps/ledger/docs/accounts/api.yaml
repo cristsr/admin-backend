@@ -48,11 +48,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/CommandAccepted'
         '200':
-          description: Replay idempotente del mismo external_ref.
+          description: >
+            Replay idempotente: la misma `external_ref` con los **mismos** inputs.
+            No se emitieron eventos nuevos; el cuerpo y la posición de stream son
+            los de la ejecución original (hu-0024).
+          headers:
+            Idempotency-Hit:
+              $ref: '../shared/api.yaml#/components/headers/IdempotencyHit'
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandAccepted'
         '401':
           description: Sin contexto autenticado (RF-26).
         '409':
-          description: LEDGER_ALREADY_INITIALIZED.
+          description: >
+            LEDGER_ALREADY_INITIALIZED. `IDEMPOTENCY_INPUT_MISMATCH` — la
+            `external_ref` ya fue usada por este usuario con inputs distintos (hu-0024).
+          content:
+            application/json:
+              schema:
+                $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
         '422':
           description: INVALID_CURRENCY_CODE o INVALID_TIME_ZONE.
 
@@ -102,11 +120,30 @@ paths:
               schema:
                 $ref: '#/components/schemas/CommandAccepted'
         '200':
-          description: Replay idempotente del mismo external_ref.
+          description: >
+            Replay idempotente: la misma `external_ref` con los **mismos** inputs.
+            No se emitieron eventos nuevos; el cuerpo y la posición de stream son
+            los de la ejecución original (hu-0024).
+          headers:
+            Idempotency-Hit:
+              $ref: '../shared/api.yaml#/components/headers/IdempotencyHit'
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandAccepted'
         '401':
           description: Sin contexto autenticado (RF-26).
         '409':
-          description: NAME_COLLISION — el nombre jerárquico ya existe para el usuario.
+          description: >
+            NAME_COLLISION — el nombre jerárquico ya existe para el usuario.
+            `IDEMPOTENCY_INPUT_MISMATCH` — la `external_ref` ya fue usada por este
+            usuario con inputs distintos (hu-0024).
+          content:
+            application/json:
+              schema:
+                $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
         '422':
           description: >
             REAL_ACCOUNT_SINGLE_CURRENCY (cuenta real con ≠1 moneda, AC-2),
@@ -223,12 +260,24 @@ paths:
       responses:
         '200':
           description: Account renamed successfully.
+          headers:
+            Idempotency-Hit:
+              $ref: '../shared/api.yaml#/components/headers/IdempotencyHit'
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommandAccepted'
         '409':
-          description: Root type immutable (INV-14) or system account protected (INV-13).
+          description: >
+            Root type immutable (INV-14) or system account protected (INV-13).
+            `IDEMPOTENCY_INPUT_MISMATCH` — la `external_ref` ya fue usada por este
+            usuario con inputs distintos (hu-0024).
+          content:
+            application/json:
+              schema:
+                $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
 
   /accounts/{id}/close:
     post:
@@ -251,12 +300,23 @@ paths:
       responses:
         '200':
           description: Account closed successfully.
+          headers:
+            Idempotency-Hit:
+              $ref: '../shared/api.yaml#/components/headers/IdempotencyHit'
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommandAccepted'
         '409':
-          description: System account protected (INV-13).
+          description: >
+            System account protected (INV-13). `IDEMPOTENCY_INPUT_MISMATCH` — la
+            `external_ref` ya fue usada por este usuario con inputs distintos (hu-0024).
+          content:
+            application/json:
+              schema:
+                $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
 
 components:
   schemas:

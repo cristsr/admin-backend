@@ -35,7 +35,19 @@ paths:
               schema:
                 $ref: '#/components/schemas/CommandAccepted'
         '200':
-          description: Replay idempotente del mismo external_ref.
+          description: >
+            Replay idempotente: la misma `external_ref` con los **mismos** inputs.
+            No se emitieron eventos nuevos; el cuerpo y la posición de stream son
+            los de la ejecución original (hu-0024).
+          headers:
+            Idempotency-Hit:
+              $ref: '../shared/api.yaml#/components/headers/IdempotencyHit'
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandAccepted'
         '400':
           description: >
             Menos de 2 postings — lo rechaza el ArrayMinSize(2) del DTO en el
@@ -44,6 +56,20 @@ paths:
             gana la malla de forma (hu-0014, AC-4).
         '401':
           description: Sin contexto autenticado (RF-26).
+        '409':
+          description: >
+            `IDEMPOTENCY_INPUT_MISMATCH` — la `external_ref` ya fue usada por este
+            usuario con inputs distintos (hu-0024). Antes devolvía `200` con el
+            resultado de la operación anterior y la transacción nueva se perdía en
+            silencio.
+
+            Los códigos de conflicto propios de la operación (`INVALID_TRANSACTION_STATE`,
+            `IMMUTABLE_TRANSACTION`, `CONCURRENCY_CONFLICT`, …) siguen vigentes en el
+            mismo `409`.
+          content:
+            application/json:
+              schema:
+                $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
         '422':
           description: >
             UNBALANCED_TRANSACTION (INV-1, lo verifica el agregado), ACCOUNT_CLOSED
@@ -184,6 +210,8 @@ paths:
         '200':
           description: Transaction amended.
           headers:
+            Idempotency-Hit:
+              $ref: '../shared/api.yaml#/components/headers/IdempotencyHit'
             X-Ledger-Stream-Position:
               $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
           content:
@@ -197,7 +225,14 @@ paths:
         '404':
           description: TRANSACTION_NOT_FOUND.
         '409':
-          description: IMMUTABLE_TRANSACTION — la transacción ya está CONFIRMED (INV-6).
+          description: >
+            IMMUTABLE_TRANSACTION — la transacción ya está CONFIRMED (INV-6).
+            `IDEMPOTENCY_INPUT_MISMATCH` — la `external_ref` ya fue usada por este
+            usuario con inputs distintos (hu-0024).
+          content:
+            application/json:
+              schema:
+                $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
         '422':
           description: UNBALANCED_TRANSACTION, ACCOUNT_CLOSED, CURRENCY_NOT_ALLOWED o INVALID_LEDGER_DATE.
 
@@ -222,12 +257,23 @@ paths:
       responses:
         '200':
           description: Transaction annotated.
+          headers:
+            Idempotency-Hit:
+              $ref: '../shared/api.yaml#/components/headers/IdempotencyHit'
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommandAccepted'
         '409':
-          description: Transaction is VOIDED (INV-6).
+          description: >
+            Transaction is VOIDED (INV-6). `IDEMPOTENCY_INPUT_MISMATCH` — la
+            `external_ref` ya fue usada por este usuario con inputs distintos (hu-0024).
+          content:
+            application/json:
+              schema:
+                $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
 
   /transactions/{id}/confirm:
     post:
@@ -257,6 +303,8 @@ paths:
         '200':
           description: Transaction confirmed.
           headers:
+            Idempotency-Hit:
+              $ref: '../shared/api.yaml#/components/headers/IdempotencyHit'
             X-Ledger-Stream-Position:
               $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
           content:
@@ -268,7 +316,14 @@ paths:
         '404':
           description: TRANSACTION_NOT_FOUND.
         '409':
-          description: INVALID_TRANSACTION_STATE — la transacción no está PENDING.
+          description: >
+            INVALID_TRANSACTION_STATE — la transacción no está PENDING.
+            `IDEMPOTENCY_INPUT_MISMATCH` — la `external_ref` ya fue usada por este
+            usuario con inputs distintos (hu-0024).
+          content:
+            application/json:
+              schema:
+                $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
 
   /transactions/{id}/void:
     post:
@@ -291,12 +346,23 @@ paths:
       responses:
         '200':
           description: Transaction voided.
+          headers:
+            Idempotency-Hit:
+              $ref: '../shared/api.yaml#/components/headers/IdempotencyHit'
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/CommandAccepted'
         '409':
-          description: Transaction not in PENDING state (AC-7).
+          description: >
+            Transaction not in PENDING state (AC-7). `IDEMPOTENCY_INPUT_MISMATCH` — la
+            `external_ref` ya fue usada por este usuario con inputs distintos (hu-0024).
+          content:
+            application/json:
+              schema:
+                $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
 
   /transactions/{id}/reverse:
     post:
@@ -341,7 +407,15 @@ paths:
         '404':
           description: TRANSACTION_NOT_FOUND.
         '409':
-          description: INVALID_TRANSACTION_STATE — la transacción no está CONFIRMED.
+          description: >
+            INVALID_TRANSACTION_STATE — la transacción no está CONFIRMED.
+            `IDEMPOTENCY_INPUT_MISMATCH` — la `external_ref` ya fue usada por este
+            usuario con inputs distintos (hu-0024). (El `200` de replay de esta
+            operación no está documentado — gap preexistente de hu-0014.)
+          content:
+            application/json:
+              schema:
+                $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
 
 components:
   schemas:

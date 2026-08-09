@@ -43,10 +43,22 @@ components:
         el header falta, `@ExternalRef()` cae al campo `external_ref` del body.
         Ambos se recortan con `trim()` y un header repetido (array) se ignora.
 
-        Reenviar el mismo valor **replaya** el resultado original con `200` y sin
-        emitir eventos nuevos, incluso si el command es distinto: es una clave de
-        reintento, no un detector de colisiones. Opcional hoy — sin registro de
-        clientes (§2.10) no se exige por `client_id`.
+        **Semántica desde hu-0024.** Al recibir la clave, el servidor hashea los
+        inputs del command (el `Command` completo más el `userId`, **excluyendo**
+        la propia `external_ref`, el `client_id` y cualquier id de correlación o
+        timestamp del request) y lo compara contra el hash guardado con la
+        operación original:
+
+        - **Mismos inputs** → replay: `200`, cabecera `Idempotency-Hit: true`,
+          mismo `id` y `streamPosition`, sin emitir eventos nuevos.
+        - **Inputs distintos** → `409 IDEMPOTENCY_INPUT_MISMATCH`. La clave deja
+          de ser un simple detector de reintentos y pasa a proteger contra el
+          reuso accidental de una referencia por un cliente automatizado.
+
+        Reenviar la misma clave **desde otro cliente o con otro trace id** sigue
+        siendo un replay: esos campos no entran al hash.
+
+        Opcional hoy — sin registro de clientes (§2.10) no se exige por `client_id`.
       schema:
         type: string
         minLength: 1
@@ -63,6 +75,22 @@ components:
       schema:
         type: string
       example: "42"
+
+    IdempotencyHit:
+      description: |
+        Presente y con valor `"true"` **solo** cuando la respuesta proviene de un
+        acierto de idempotencia (misma `external_ref`, mismos inputs). Cuando la
+        operación se ejecutó de verdad, la cabecera **no está presente** — su
+        ausencia es la señal, no un valor `false`.
+
+        La estampa `CommandResultInterceptor` a partir de
+        `CommandResult.idempotentReplay`, junto al downgrade a `200`. Como el
+        interceptor es opt-in por controller, los endpoints de `reconciliation` no
+        la emiten hoy.
+      schema:
+        type: string
+        enum: ["true"]
+      example: "true"
 
   schemas:
     CommandAcceptedDto:
@@ -103,14 +131,22 @@ components:
         LEDGER_NOT_INITIALIZED, INVALID_CURRENCY_CODE, INVALID_TIME_ZONE,
         INVALID_MONEY, CURRENCY_MISMATCH, MONEY_SCALE, INVALID_CURRENCY ·
         409 → IMMUTABLE_TRANSACTION, NAME_COLLISION, SYSTEM_ACCOUNT_PROTECTED,
-        CONCURRENCY_CONFLICT, DUPLICATE_EXTERNAL_REF ·
+        CONCURRENCY_CONFLICT, DUPLICATE_EXTERNAL_REF, IDEMPOTENCY_INPUT_MISMATCH ·
         404 → TRANSACTION_NOT_FOUND, ACCOUNT_NOT_FOUND.
 
-        Nota (hu-0012): `DUPLICATE_EXTERNAL_REF` **no es alcanzable por el API
-        HTTP**. `IdempotencyPolicy` replaya en vez de rechazar, y atrapa la
-        `DuplicateExternalRefException` del índice único. El código permanece
-        porque es contrato del puerto `EventStore` para callers que lo usen sin
-        la política.
+        **Delta hu-0024 — un código nuevo, y un reparto por capa.**
+
+        - `IDEMPOTENCY_INPUT_MISMATCH` (409) es el contrato de
+          `IdempotencyPolicy` y **sí** es alcanzable por el API HTTP: lo emite
+          toda escritura que reciba una `external_ref` ya usada con otros inputs.
+        - `DUPLICATE_EXTERNAL_REF` (409) se queda como contrato del **puerto**
+          `EventStore` ante la violación del índice único `(user_id, external_ref)`,
+          alcanzable por cualquier caller que use el store sin la política. **Sigue
+          sin ser emitido por el API HTTP.**
+
+        Queda **obsoleta** la nota de hu-0012 que atribuía a `DUPLICATE_EXTERNAL_REF`
+        el caso «mismo `external_ref` con un command distinto»: ese caso ahora es
+        `IDEMPOTENCY_INPUT_MISMATCH`.
       enum:
         - UNBALANCED_TRANSACTION
         - CURRENCY_NOT_ALLOWED
@@ -120,6 +156,7 @@ components:
         - SYSTEM_ACCOUNT_PROTECTED
         - CONCURRENCY_CONFLICT
         - DUPLICATE_EXTERNAL_REF
+        - IDEMPOTENCY_INPUT_MISMATCH
         - TRANSACTION_NOT_FOUND
         - ACCOUNT_NOT_FOUND
         - LEDGER_NOT_INITIALIZED

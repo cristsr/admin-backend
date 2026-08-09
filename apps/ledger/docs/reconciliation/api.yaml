@@ -43,6 +43,8 @@ paths:
                 $ref: '#/components/schemas/AssertBalanceResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
+        '409':
+          $ref: '#/components/responses/IdempotencyMismatch'
         '422':
           $ref: '#/components/responses/AssertionUnprocessable'
 
@@ -120,6 +122,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/AssertionNotFound'
+        '409':
+          $ref: '#/components/responses/IdempotencyMismatch'
         '422':
           $ref: '#/components/responses/AssertionUnprocessable'
 
@@ -149,6 +153,8 @@ paths:
           $ref: '#/components/responses/Unauthorized'
         '404':
           $ref: '#/components/responses/AssertionNotFound'
+        '409':
+          $ref: '#/components/responses/IdempotencyMismatch'
         '422':
           $ref: '#/components/responses/AssertionUnprocessable'
 
@@ -186,6 +192,18 @@ components:
         `ASSERTION_ALREADY_REVOKED`, `ASSERTION_CURRENCY_MISMATCH`,
         `ASSERTION_NOT_EVALUABLE`, `DISCREPANCY_NOT_RESOLVABLE`,
         `LEDGER_NOT_INITIALIZED`.
+      content:
+        application/json:
+          schema:
+            $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
+
+    IdempotencyMismatch:
+      description: >
+        `IDEMPOTENCY_INPUT_MISMATCH` (409, hu-0024) — la `external_ref` ya fue
+        usada por este usuario con inputs distintos. La lanza `IdempotencyPolicy`,
+        que corre para todos los commands. Este módulo no recibe la cabecera
+        `Idempotency-Hit` en su `200`: `CommandResultInterceptor` es opt-in por
+        controller y estos controllers no lo declaran (limitación preexistente).
       content:
         application/json:
           schema:

@@ -1,6 +1,7 @@
 // C4 Nivel 3 — shared (apps/ledger) — HTTP adapter infrastructure.
 // Extiende admin.ledger.shared definido en docs/architecture/landscape.c4.
 // hu-0009: documenta el patrón controller->bus, Swagger/OpenAPI, y el kernel HTTP.
+// hu-0024: idempotencia estricta (IDEMPOTENCY_INPUT_MISMATCH) y ctx contextual en el chain.
 
 model {
   extend admin.ledger.shared {
@@ -25,9 +26,10 @@ model {
 
     commandResultInterceptor = component 'CommandResultInterceptor' {
       technology 'Infrastructure · NestInterceptor'
-      description 'Intercepta la respuesta de toda escritura: CommandResult → CommandAcceptedDto, agrega header X-Ledger-Stream-Position, downgradea replays idempotentes a 200.'
+      description 'Intercepta la respuesta de toda escritura: CommandResult → CommandAcceptedDto, agrega header X-Ledger-Stream-Position, downgradea replays idempotentes a 200. Desde hu-0024 agrega Idempotency-Hit: true en el replay (AC-7).'
       metadata {
         introducedIn 'hu-0009'
+        changedIn 'hu-0024'
       }
     }
 
@@ -75,9 +77,18 @@ model {
 
     idempotencyPolicy = component 'IdempotencyPolicy' {
       technology 'Application · CommandPolicy (chain)'
-      description 'Segunda política del command bus. Con externalRef presente busca el evento ancla por (user_id, external_ref); si existe replaya el CommandResult original sin ejecutar el handler. NO compara el command: el external_ref es clave de reintento, no detector de colisiones.'
+      description 'Segunda política del command bus. Con externalRef presente busca el evento ancla por (user_id, external_ref); si existe replaya el CommandResult original sin ejecutar el handler. Desde hu-0024 compara el hash canónico de los inputs del command contra el external_ref_hash del ancla: coincide → replay; difiere → IDEMPOTENCY_INPUT_MISMATCH (409, AC-6).'
       metadata {
         introducedIn 'hu-0012'
+        changedIn 'hu-0024'
+      }
+    }
+
+    idempotencyInputMismatchException = component 'IdempotencyInputMismatchException' {
+      technology 'Domain · Exception'
+      description 'Extiende DomainConflictException, code IDEMPOTENCY_INPUT_MISMATCH (409). La lanza IdempotencyPolicy cuando una external_ref ya vista llega con inputs distintos. Convive con DUPLICATE_EXTERNAL_REF, que sigue siendo el contrato del puerto ante la violación del índice único.'
+      metadata {
+        introducedIn 'hu-0024'
       }
     }
 
@@ -116,11 +127,22 @@ model {
     admin.ledger.shared.commandBus -> admin.ledger.shared.idempotencyPolicy 'delega el chain de políticas'
     admin.ledger.shared.idempotencyPolicy -> admin.ledger.shared.commandResultInterceptor 'CommandResult (idempotentReplay) → 200 + header'
 
+    // --- Relaciones de idempotencia estricta (hu-0024) ---
+
+    admin.ledger.shared.idempotencyPolicy -> admin.ledger.shared.canonicalHash 'hashea los inputs del command (sin metadatos de transporte)'
+    admin.ledger.shared.idempotencyPolicy -> admin.ledger.shared.idempotencyInputMismatchException 'lanza si el hash almacenado difiere'
+
     // --- Relaciones del contrato de errores (hu-0011) ---
 
     admin.ledger.shared.commandBus -> admin.ledger.shared.exceptionFilter 'DomainException burbujea desde handlers/policies'
     admin.ledger.shared.queryBus -> admin.ledger.shared.exceptionFilter 'DomainException burbujea desde queries'
     admin.ledger.shared.exceptionFilter -> admin.ledger.shared.ledgerErrorCode 'expone exception.code verbatim (RF-14)'
+  }
+
+  extend admin.ledger.shared.commandBus {
+    metadata {
+      changedIn 'hu-0024'
+    }
   }
 }
 
@@ -167,27 +189,27 @@ views 'Shared · HTTP adapter' {
     autoLayout TopBottom
   }
 
-  // Escritura idempotente por external_ref + read-your-writes (hu-0012)
+  // Escritura idempotente por external_ref + read-your-writes (hu-0012, hu-0024)
   dynamic view shared_http_idempotent_write {
-    title 'POST /api/v1/* con X-External-Ref → replay idempotente · trigger: rest'
-    description 'RF-11 / INV-10 / RNF-9: @ExternalRef extrae el idempotency key (header preferido, fallback al body) y lo transporta en el AuthContext. IdempotencyPolicy busca el evento ancla por (user_id, external_ref) y, si existe, replaya el CommandResult original sin emitir eventos nuevos — sin comparar el command. CommandResultInterceptor estampa X-Ledger-Stream-Position y degrada el replay a 200.'
+    title 'POST /api/v1/* con X-External-Ref → replay o 409 · trigger: rest'
+    description 'AC-5, AC-6, AC-7: IdempotencyPolicy hashea los inputs del command (Command + userId, sin external_ref, client_id ni metadatos de transporte) y lo compara contra el external_ref_hash del evento ancla. Coincide → replay del CommandResult original con 200 y cabecera Idempotency-Hit: true. No coincide → IDEMPOTENCY_INPUT_MISMATCH (409). El hash viaja al ancla por el AuthContext, que ahora atraviesa el chain de políticas.'
 
     admin.ledger.shared.externalRefDecorator -> admin.ledger.shared.commandBus 'externalRef en AuthContext'
-    admin.ledger.shared.commandBus -> admin.ledger.shared.idempotencyPolicy 'dispatch atraviesa el chain'
-    admin.ledger.shared.idempotencyPolicy -> admin.ledger.shared.commandResultInterceptor 'CommandResult (replay o nuevo)'
-    admin.ledger.shared.commandResultInterceptor -> admin.ledger.shared.commandAcceptedDto 'maps to { id, streamPosition } + header'
+    admin.ledger.shared.commandBus -> admin.ledger.shared.idempotencyPolicy 'dispatch atraviesa el chain (ctx contextual)'
+    admin.ledger.shared.idempotencyPolicy -> admin.ledger.shared.canonicalHash 'hash de los inputs del command'
+    admin.ledger.shared.idempotencyPolicy -> admin.ledger.shared.idempotencyInputMismatchException 'inputs distintos → 409'
+    admin.ledger.shared.idempotencyPolicy -> admin.ledger.shared.commandResultInterceptor 'inputs iguales → CommandResult del ancla'
+    admin.ledger.shared.commandResultInterceptor -> admin.ledger.shared.commandAcceptedDto '200 + Idempotency-Hit: true + X-Ledger-Stream-Position'
 
-    autoLayout LeftRight
+    autoLayout TopBottom
   }
 
-  // Mapeo de errores de dominio/puerto al cuerpo de error uniforme (RF-14)
+  // Mapeo de errores de dominio/puerto al cuerpo de error uniforme (RF-14, hu-0024)
   dynamic view shared_http_map_domain_error {
     title 'Fallo de dominio/puerto → ErrorResponseBody con code estable · trigger: rest'
-    description 'RF-14: cualquier DomainException (agregado, puerto EventStore, VO, settings, Money) lanzada durante el dispatch burbujea hasta el ExceptionFilter global, que responde { statusCode, error, message, code, path, timestamp } con el status de la familia (404/409/422) y el code estable de LEDGER_ERROR_CODE. Un error no tipado → 500 sin code ni detalles internos.'
+    description 'RF-14 + AC-6 de hu-0024: se suma IDEMPOTENCY_INPUT_MISMATCH (409) a la tabla congelada de códigos. Reparto por capa: el código nuevo es el contrato de IdempotencyPolicy y el único de los dos que el API HTTP emite; DUPLICATE_EXTERNAL_REF se queda como contrato del puerto EventStore ante la violación del índice único.'
 
-    admin.ledger.shared.commandBus -> admin.ledger.shared.exceptionFilter 'throw DomainException (code, status)'
-    admin.ledger.shared.queryBus -> admin.ledger.shared.exceptionFilter 'throw DomainException (code, status)'
-    admin.ledger.shared.exceptionFilter -> admin.ledger.shared.ledgerErrorCode 'code estable (fuente única)'
+    admin.ledger.shared.idempotencyPolicy -> admin.ledger.shared.idempotencyInputMismatchException 'throws IDEMPOTENCY_INPUT_MISMATCH'
 
     autoLayout TopBottom
   }
