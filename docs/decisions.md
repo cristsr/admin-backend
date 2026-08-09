@@ -8,6 +8,33 @@
 > entrada nueva que la referencia. Orden cronológico inverso (más reciente
 > primero).
 
+## hu-0024 — Integridad verificable del event store (2026-08-08)
+
+- **Ruta de `external_ref_hash` (G-2):** `AuthContext` y `EventEnvelope` ganan `externalRefHash`,
+  simétrico a cómo viaja hoy `externalRef` — la política lo calcula, `EnvelopeFactory` lo estampa
+  en el ancla, el store lo persiste verbatim. No cambia la firma del puerto y mantiene una sola
+  escritura atómica.
+- **Serialización por usuario (G-3):** `pg_advisory_xact_lock(hashtext(user_id))` al inicio del
+  append. Una línea, sin tabla nueva, liberado por Postgres en el commit, y re-entrante para el
+  caso cross-stream de `withTransaction`.
+- **Artículo 6 de la constitución (G-1):** se **reescribe**. La redacción actual no es un
+  principio que hu-0024 viole sino una definición incompleta de idempotencia: la clave correcta
+  es «misma referencia **y mismos inputs**».
+- **Lectura del hash por el verificador (G-5):** puerto propio `EventChainReader` con adaptador
+  Postgres. `StoredEvent` queda intacto y el verificador es testeable sin base.
+- **Definición de "verde" (G-6):** la historia exige `RUN_PG_TESTS=1`. El advisory lock y el
+  CHECK — el mecanismo central de la historia — solo existen en Postgres.
+- **Librería JCS:** `canonicalize@3.0.0` (Apache-2.0, tipos propios, maintainer Samuel Erdtman,
+  co-autor del RFC 8785). Ver [`docs/research.md`](./docs/research.md), decisión 1.
+- **Convivencia de códigos de error (G-7, resuelta por el diseño):** reparto por capa —
+  `IDEMPOTENCY_INPUT_MISMATCH` es el contrato de la política y el único que el API emite;
+  `DUPLICATE_EXTERNAL_REF` se queda como contrato del puerto.
+
+> Las seis decisiones no triviales, con opciones evaluadas y descartes, están en
+> [`docs/research.md`](./docs/research.md).
+
+---
+
 ## refactor-module-boundaries — fronteras reales entre los bounded contexts (2026-08-08)
 
 - **Creación de las cuentas técnicas en `InitializeLedger`:** `OpenSystemAccountCommand` propio
