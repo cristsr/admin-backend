@@ -16,3 +16,14 @@ export class ConcurrencyConflictException extends DomainConflictException {
 export class DuplicateExternalRefException extends DomainConflictException {
   readonly code: string = 'DUPLICATE_EXTERNAL_REF';
 }
+
+/**
+ * A command reused an `external_ref` already anchored to different inputs
+ * (AC-6). Unlike {@link DuplicateExternalRefException} — the port's defense
+ * against a concurrent race on the same inputs — this is the policy's
+ * intentional rejection of an accidental reference reuse by an automated
+ * client: the original operation is never lost silently.
+ */
+export class IdempotencyInputMismatchException extends DomainConflictException {
+  readonly code: string = 'IDEMPOTENCY_INPUT_MISMATCH';
+}
