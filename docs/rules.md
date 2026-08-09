@@ -1,7 +1,7 @@
 ---
-version: 1.1.0
+version: 1.2.0
 ratified: 2026-07-23
-last_amended: 2026-08-07
+last_amended: 2026-08-08
 ---
 
 # Constitución del Proyecto — admin-back
@@ -99,14 +99,19 @@ variado + review de queries.
 
 ### Artículo 6: Idempotencia por referencia externa
 
-**Principio:** Todo command que acepte `external_ref` es idempotente:
-repetirlo con la misma referencia para el mismo usuario nunca emite eventos
-nuevos, y retorna el resultado original.
+**Principio:** Todo command que acepte `external_ref` es idempotente: repetirlo con la
+misma referencia **y los mismos inputs** para el mismo usuario nunca emite eventos
+nuevos y retorna el resultado original. Repetirlo con la misma referencia e **inputs
+distintos** se rechaza de forma explícita (`IDEMPOTENCY_INPUT_MISMATCH`, 409): devolver
+el resultado viejo perdería la operación nueva en silencio.
 
-**Razón:** los clientes automatizados (integraciones bancarias) reintentan;
-sin esta garantía se duplicarían transacciones reales (INV-10, RNF-4).
+**Razón:** los clientes automatizados (integraciones bancarias) reintentan; sin la
+primera mitad de la garantía se duplicarían transacciones reales (INV-10, RNF-4). Sin
+la segunda, un reuso accidental de la referencia con datos distintos se resolvía
+silenciosamente contra el resultado viejo — el fallo que hu-0024 cierra.
 
-**Cómo se verifica:** tests de idempotencia por handler.
+**Cómo se verifica:** tests de idempotencia por handler + el contract test de
+`IdempotencyPolicy` que cubre los dos caminos (pre-check y carrera concurrente).
 
 *Alcance: `apps/ledger`.*
 
