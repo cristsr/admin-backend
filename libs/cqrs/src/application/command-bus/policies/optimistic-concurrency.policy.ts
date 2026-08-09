@@ -14,10 +14,10 @@ const MAX_RETRIES = 1;
  * `CONCURRENCY_CONFLICT` error propagates.
  */
 export class OptimisticConcurrencyPolicy extends CommandPolicy {
-  async handle(_command: Command, _ctx: AuthContext, next: CommandNext): Promise<CommandResult> {
+  async handle(_command: Command, ctx: AuthContext, next: CommandNext): Promise<CommandResult> {
     for (let attempt = 0; ; attempt += 1) {
       try {
-        return await next();
+        return await next(ctx);
       } catch (error) {
         if (error instanceof ConcurrencyConflictException && attempt < MAX_RETRIES) continue;
 

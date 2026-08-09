@@ -58,12 +58,12 @@ export class PolicyCommandBus extends CommandBus {
       );
     }
 
-    const terminal: CommandNext = () => handler.execute(command, ctx);
+    const terminal: CommandNext = (finalCtx) => handler.execute(command, finalCtx);
     const chain = this.policies.reduceRight<CommandNext>(
-      (next, policy) => () => policy.handle(command, ctx, next),
+      (next, policy) => (currentCtx) => policy.handle(command, currentCtx, next),
       terminal,
     );
 
-    return chain();
+    return chain(ctx);
   }
 }

@@ -15,6 +15,6 @@ export class AuthenticatedContextPolicy extends CommandPolicy {
       throw new MissingAuthContextException('userId and clientId are required');
     }
 
-    return next();
+    return next(ctx);
   }
 }

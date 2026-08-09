@@ -23,8 +23,8 @@ class HelloHandler extends CommandHandler<HelloCommand> {
 const ctx: AuthContext = { userId: 'user-1', clientId: 'client-x', externalRef: null };
 
 class NoOpPolicy extends CommandPolicy {
-  async handle(_command: Command, _ctx: AuthContext, next: CommandNext): Promise<CommandResult> {
-    return next();
+  async handle(_command: Command, ctx: AuthContext, next: CommandNext): Promise<CommandResult> {
+    return next(ctx);
   }
 }
 
@@ -57,15 +57,15 @@ describe('PolicyCommandBus', () => {
   it('should execute policies in registered order', async () => {
     const callOrder: string[] = [];
     class FirstPolicy extends CommandPolicy {
-      async handle(_c: Command, _ctx: AuthContext, next: CommandNext): Promise<CommandResult> {
+      async handle(_c: Command, ctx: AuthContext, next: CommandNext): Promise<CommandResult> {
         callOrder.push('first');
-        return next();
+        return next(ctx);
       }
     }
     class SecondPolicy extends CommandPolicy {
-      async handle(_c: Command, _ctx: AuthContext, next: CommandNext): Promise<CommandResult> {
+      async handle(_c: Command, ctx: AuthContext, next: CommandNext): Promise<CommandResult> {
         callOrder.push('second');
-        return next();
+        return next(ctx);
       }
     }
 
@@ -110,5 +110,29 @@ describe('PolicyCommandBus', () => {
   it('should reject a handler that does not accept the registered command', () => {
     // @ts-expect-error -- HelloHandler does not handle AnotherCommand.
     (bus as PolicyCommandBus).register(AnotherCommand, new HelloHandler());
+  });
+
+  it('lets a policy replace the ctx seen by downstream policies and the handler', async () => {
+    class EnrichingPolicy extends CommandPolicy {
+      async handle(_c: Command, ctx: AuthContext, next: CommandNext): Promise<CommandResult> {
+        return next({ ...ctx, clientId: 'enriched' });
+      }
+    }
+    class AssertingHandler extends CommandHandler<HelloCommand> {
+      async execute(_command: HelloCommand, ctx: AuthContext): Promise<CommandResult> {
+        return {
+          aggregateId: ctx.clientId,
+          streamPosition: 0n,
+          idempotentReplay: false,
+        };
+      }
+    }
+
+    const enrichedBus = new PolicyCommandBus([new EnrichingPolicy()]);
+    enrichedBus.register(HelloCommand, new AssertingHandler());
+
+    const result = await enrichedBus.dispatch(new HelloCommand('x'), ctx);
+
+    expect(result.aggregateId).toBe('enriched');
   });
 });
