@@ -1,4 +1,5 @@
 import { AppendResult } from '@cqrs/domain/event/append-result.type';
+import { ChainHashInput, chainHashInput } from '@cqrs/domain/event/chain-hash-input.type';
 import { EventEnvelope } from '@cqrs/domain/event/event-envelope.type';
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { StreamId } from '@cqrs/domain/event/stream-id.type';
@@ -7,16 +8,29 @@ import {
   DuplicateExternalRefException,
 } from '@cqrs/domain/exceptions/event-store.exception';
 import { EventStore } from '@cqrs/domain/ports/event-store';
-import { Nullable } from '@shared';
+import { Nullable, canonicalJson, sha256Hex } from '@shared';
+
+const GENESIS_HASH = '';
+
+type Chained = { readonly hash: string; readonly chainInput: ChainHashInput };
 
 /**
  * In-memory reference implementation of {@link EventStore}. A single
  * monotonic counter models `global_position`; all invariants are enforced in
  * process, mirroring the PostgreSQL adapter so both pass one contract suite.
- * Node's single thread makes the append read-check-write step atomic.
+ *
+ * Chaining (AC-1, AC-2, AC-3) is serialized per user with an async mutex
+ * (`userLocks`) rather than Node's single-threadedness alone: `canonicalJson`
+ * yields to the event loop (it awaits a dynamic `import()`), so two
+ * concurrent `append` calls to the same user's different aggregates could
+ * otherwise both read the same "current head" before either commits —
+ * exactly the race G-3 exists to close, mirrored here for the in-memory
+ * adapter since PostgreSQL closes it with `pg_advisory_xact_lock`.
  */
 export class InMemoryEventStore extends EventStore {
   private readonly events: StoredEvent[] = [];
+  private readonly chains = new Map<string, Chained>();
+  private readonly userLocks = new Map<string, Promise<void>>();
   private nextPosition = 1n;
   private depth = 0;
 
@@ -32,6 +46,7 @@ export class InMemoryEventStore extends EventStore {
     if (this.depth > 0) return work(); // guard: an inner call joins the outer scope
 
     const snapshot = [...this.events];
+    const chainsSnapshot = new Map(this.chains);
     const positionBefore = this.nextPosition;
     this.depth += 1;
 
@@ -40,6 +55,8 @@ export class InMemoryEventStore extends EventStore {
     } catch (error) {
       this.events.length = 0;
       this.events.push(...snapshot);
+      this.chains.clear();
+      for (const [id, chained] of chainsSnapshot) this.chains.set(id, chained);
       this.nextPosition = positionBefore;
 
       throw error;
@@ -53,32 +70,43 @@ export class InMemoryEventStore extends EventStore {
     expectedVersion: number,
     events: readonly EventEnvelope[],
   ): Promise<AppendResult> {
-    const current = this.streamEvents(stream);
-
     if (events.length === 0) {
       return { events: [], version: expectedVersion, lastPosition: 0n };
     }
 
-    if (current.length !== expectedVersion) {
-      throw new ConcurrencyConflictException(
-        `Expected version ${expectedVersion} for ${stream.aggregateId}, found ${current.length}`,
-      );
-    }
+    return this.withUserLock(stream.userId, async () => {
+      const current = this.streamEvents(stream);
 
-    this.ensureConsecutiveSequences(expectedVersion, events);
-    this.ensureExternalRefsAreFresh(stream.userId, events);
+      if (current.length !== expectedVersion) {
+        throw new ConcurrencyConflictException(
+          `Expected version ${expectedVersion} for ${stream.aggregateId}, found ${current.length}`,
+        );
+      }
 
-    const stored = events.map<StoredEvent>((envelope) => ({
-      ...envelope,
-      globalPosition: this.nextPosition++,
-    }));
-    this.events.push(...stored);
+      this.ensureConsecutiveSequences(expectedVersion, events);
+      this.ensureExternalRefsAreFresh(stream.userId, events);
 
-    return {
-      events: stored,
-      version: expectedVersion + stored.length,
-      lastPosition: stored[stored.length - 1].globalPosition,
-    };
+      let prevHash = this.headHash(stream.userId);
+      const stored: StoredEvent[] = [];
+
+      for (const envelope of events) {
+        const input = chainHashInput(envelope);
+        const hash = sha256Hex(prevHash + (await canonicalJson(input)));
+        const record: StoredEvent = { ...envelope, globalPosition: this.nextPosition++ };
+
+        this.chains.set(record.eventId, { hash, chainInput: input });
+        stored.push(record);
+        prevHash = hash;
+      }
+
+      this.events.push(...stored);
+
+      return {
+        events: stored,
+        version: expectedVersion + stored.length,
+        lastPosition: stored[stored.length - 1].globalPosition,
+      };
+    });
   }
 
   async load(stream: StreamId): Promise<readonly StoredEvent[]> {
@@ -101,6 +129,61 @@ export class InMemoryEventStore extends EventStore {
         (event) => event.userId === userId && event.externalRef === externalRef,
       ) ?? null
     );
+  }
+
+  /** Chain-only accessor for {@link InMemoryEventChainReader} — not part of the EventStore port. */
+  readChainRows(
+    userId: string,
+    fromPosition: bigint,
+    limit: number,
+  ): ReadonlyArray<{ globalPosition: bigint; eventId: string; hash: string; chainInput: ChainHashInput }> {
+    return this.events
+      .filter((event) => event.userId === userId && event.globalPosition > fromPosition)
+      .sort((a, b) => Number(a.globalPosition - b.globalPosition))
+      .slice(0, limit)
+      .map((event) => {
+        const chained = this.chains.get(event.eventId);
+        if (!chained) throw new Error(`Missing chain entry for event ${event.eventId}`);
+        return {
+          globalPosition: event.globalPosition,
+          eventId: event.eventId,
+          hash: chained.hash,
+          chainInput: chained.chainInput,
+        };
+      });
+  }
+
+  /** Chain-only accessor for {@link InMemoryEventChainReader} — not part of the EventStore port. */
+  chainedUserIds(): readonly string[] {
+    return [...new Set(this.events.map((event) => event.userId))].sort();
+  }
+
+  private headHash(userId: string): string {
+    const userEvents = this.events
+      .filter((event) => event.userId === userId)
+      .sort((a, b) => Number(b.globalPosition - a.globalPosition));
+
+    const head = userEvents[0];
+    if (!head) return GENESIS_HASH;
+
+    const chained = this.chains.get(head.eventId);
+    return chained?.hash ?? GENESIS_HASH;
+  }
+
+  /** Async mutex per user, so chain computation never interleaves across concurrent appends. */
+  private async withUserLock<T>(userId: string, work: () => Promise<T>): Promise<T> {
+    const previous = this.userLocks.get(userId) ?? Promise.resolve();
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => { release = resolve; });
+
+    this.userLocks.set(userId, previous.then(() => gate));
+    await previous;
+
+    try {
+      return await work();
+    } finally {
+      release();
+    }
   }
 
   private streamEvents(stream: StreamId): StoredEvent[] {

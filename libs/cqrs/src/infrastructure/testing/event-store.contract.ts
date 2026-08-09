@@ -46,6 +46,7 @@ function anEnvelope(stream: StreamId, overrides: EnvelopeOverrides): EventEnvelo
     schemaVersion: 1,
     clientId: 'client-x',
     externalRef: null,
+    externalRefHash: null,
     payload: { amount: '31900' },
     occurredAt: now,
     recordedAt: now,
@@ -147,12 +148,16 @@ export function describeEventStoreContract(
     it('is idempotent per external_ref and exposes the anchor via findByExternalRef', async () => {
       const stream = streamFor('user-1', 'agg-1');
       await store.append(stream, 0, [
-        anEnvelope(stream, { sequence: 1, externalRef: 'ref-1' }),
+        anEnvelope(stream, { sequence: 1, externalRef: 'ref-1', externalRefHash: 'hash-1' }),
       ]);
 
       await expect(
         store.append(streamFor('user-1', 'agg-2'), 0, [
-          anEnvelope(streamFor('user-1', 'agg-2'), { sequence: 1, externalRef: 'ref-1' }),
+          anEnvelope(streamFor('user-1', 'agg-2'), {
+            sequence: 1,
+            externalRef: 'ref-1',
+            externalRefHash: 'hash-1',
+          }),
         ]),
       ).rejects.toBeInstanceOf(DuplicateExternalRefException);
 
@@ -163,13 +168,42 @@ export function describeEventStoreContract(
       expect(anchor?.aggregateId).toBe(uuidFor('agg-1'));
     });
 
+    it('persists external_ref_hash on the anchor and returns it via findByExternalRef', async () => {
+      // A real hash is always 64 hex chars — `external_ref_hash` is CHAR(64)
+      // in Postgres, which blank-pads shorter values on read. Using a
+      // realistic full-length value here avoids that padding surprise.
+      const fakeHash = 'a'.repeat(64);
+      const stream = streamFor('user-1', 'agg-1');
+      await store.append(stream, 0, [
+        anEnvelope(stream, { sequence: 1, externalRef: 'ref-1', externalRefHash: fakeHash }),
+      ]);
+
+      const anchor = await store.findByExternalRef(uuidFor('user-1'), 'ref-1');
+
+      expect(anchor?.externalRefHash).toBe(fakeHash);
+    });
+
+    it('persists a null external_ref_hash when no external_ref is present', async () => {
+      const stream = streamFor('user-1', 'agg-1');
+      await store.append(stream, 0, [anEnvelope(stream, { sequence: 1 })]);
+
+      const [event] = await store.load(stream);
+
+      expect(event.externalRef).toBeNull();
+      expect(event.externalRefHash).toBeNull();
+    });
+
     it('isolates external_ref per user (INV-9)', async () => {
       const a = streamFor('user-1', 'agg-1');
       const b = streamFor('user-2', 'agg-1-b');
-      await store.append(a, 0, [anEnvelope(a, { sequence: 1, externalRef: 'ref-1' })]);
+      await store.append(a, 0, [
+        anEnvelope(a, { sequence: 1, externalRef: 'ref-1', externalRefHash: 'hash-1' }),
+      ]);
 
       await expect(
-        store.append(b, 0, [anEnvelope(b, { sequence: 1, externalRef: 'ref-1' })]),
+        store.append(b, 0, [
+          anEnvelope(b, { sequence: 1, externalRef: 'ref-1', externalRefHash: 'hash-1' }),
+        ]),
       ).resolves.toBeDefined();
 
       expect(await store.findByExternalRef(uuidFor('user-2'), 'ref-9')).toBeNull();

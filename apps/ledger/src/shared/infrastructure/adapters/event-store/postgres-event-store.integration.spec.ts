@@ -1,6 +1,8 @@
 import { EventStore } from '@cqrs/domain/ports/event-store';
+import { PostgresEventChainReader } from '@cqrs/infrastructure/adapters/event-store/postgres/postgres-event-chain-reader';
 import { PostgresEventStore } from '@cqrs/infrastructure/adapters/event-store/postgres/postgres-event-store';
 import { CreateEventStore1790000000001 } from '@cqrs/infrastructure/adapters/migrations/1790000000001-CreateEventStore';
+import { describeEventChainReaderContract } from '@cqrs/infrastructure/testing/event-chain-reader.contract';
 import { describeEventStoreContract } from '@cqrs/infrastructure/testing/event-store.contract';
 import { DataSource } from 'typeorm';
 
@@ -40,15 +42,22 @@ if (runPgTests) {
 
   describeEventStoreContract(makeStore);
 
+  describeEventChainReaderContract(async () => {
+    const store = await makeStore();
+    return { store, reader: new PostgresEventChainReader(dataSource) };
+  });
+
   describe('PostgresEventStore append-only trigger (INV-12)', () => {
     it('rejects UPDATE and DELETE on event_store', async () => {
       await makeStore();
       await dataSource.query(
         `INSERT INTO event_store
            (event_id, user_id, aggregate_type, aggregate_id, sequence, event_type,
-            client_id, payload, occurred_at, recorded_at)
+            client_id, payload, hash, occurred_at, recorded_at)
          VALUES (gen_random_uuid(), gen_random_uuid(), 'Thing', gen_random_uuid(), 1,
-            'ThingHappened', 'c', '{}', now(), now())`,
+            'ThingHappened', 'c', '{}',
+            '0000000000000000000000000000000000000000000000000000000000000000',
+            now(), now())`,
       );
 
       await expect(dataSource.query('UPDATE event_store SET client_id = $1', ['x'])).rejects.toThrow(

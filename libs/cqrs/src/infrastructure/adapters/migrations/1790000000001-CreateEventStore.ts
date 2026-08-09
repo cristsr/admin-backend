@@ -4,7 +4,10 @@ import { MigrationInterface, QueryRunner } from 'typeorm';
  * The append-only event store: the source of truth for any application built on
  * this library. Optimistic concurrency via UNIQUE (aggregate_id, sequence);
  * idempotency via the partial UNIQUE (user_id, external_ref); immutability
- * enforced by a trigger.
+ * enforced by a trigger. Since hu-0024, every event also carries a chain hash
+ * (`hash`, AC-2) and, on the anchor event, the hash of its command's inputs
+ * (`external_ref_hash`, AC-5) — both `NOT NULL`/CHECK-enforced (AC-8), no
+ * legacy row without them can exist.
  *
  * Ships with the library rather than with a consumer because it is the schema
  * `PostgresEventStore` requires to work at all — an app that owned it could
@@ -16,20 +19,24 @@ export class CreateEventStore1790000000001 implements MigrationInterface {
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
       CREATE TABLE "event_store" (
-        "global_position" BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-        "event_id"        UUID NOT NULL UNIQUE,
-        "user_id"         UUID NOT NULL,
-        "aggregate_type"  TEXT NOT NULL,
-        "aggregate_id"    UUID NOT NULL,
-        "sequence"        BIGINT NOT NULL,
-        "event_type"      TEXT NOT NULL,
-        "schema_version"  SMALLINT NOT NULL DEFAULT 1,
-        "client_id"       TEXT NOT NULL,
-        "external_ref"    TEXT,
-        "payload"         JSONB NOT NULL,
-        "occurred_at"     TIMESTAMPTZ NOT NULL,
-        "recorded_at"     TIMESTAMPTZ NOT NULL DEFAULT now(),
-        CONSTRAINT "uq_event_aggregate_sequence" UNIQUE ("aggregate_id", "sequence")
+        "global_position"   BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+        "event_id"          UUID NOT NULL UNIQUE,
+        "user_id"           UUID NOT NULL,
+        "aggregate_type"    TEXT NOT NULL,
+        "aggregate_id"      UUID NOT NULL,
+        "sequence"          BIGINT NOT NULL,
+        "event_type"        TEXT NOT NULL,
+        "schema_version"    SMALLINT NOT NULL DEFAULT 1,
+        "client_id"         TEXT NOT NULL,
+        "external_ref"      TEXT,
+        "external_ref_hash" CHAR(64),
+        "payload"           JSONB NOT NULL,
+        "hash"              CHAR(64) NOT NULL,
+        "occurred_at"       TIMESTAMPTZ NOT NULL,
+        "recorded_at"       TIMESTAMPTZ NOT NULL DEFAULT now(),
+        CONSTRAINT "uq_event_aggregate_sequence" UNIQUE ("aggregate_id", "sequence"),
+        CONSTRAINT "ck_event_external_ref_hash"
+          CHECK (("external_ref" IS NULL) = ("external_ref_hash" IS NULL))
       )
     `);
 

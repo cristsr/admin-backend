@@ -12,12 +12,13 @@ export type EventStoreRow = {
   readonly schema_version: number;
   readonly client_id: string;
   readonly external_ref: string | null;
+  readonly external_ref_hash: string | null;
   readonly payload: Record<string, unknown>;
   readonly occurred_at: Date;
   readonly recorded_at: Date;
 };
 
-/** Maps a raw row to a {@link StoredEvent}, keeping positions as `bigint`. */
+/** Maps a raw row to a {@link StoredEvent}, keeping positions as `bigint`. Never maps `hash` — that column is invisible to the domain (see `EventChainReader`). */
 export function toStoredEvent(row: EventStoreRow): StoredEvent {
   return {
     globalPosition: BigInt(row.global_position),
@@ -30,6 +31,7 @@ export function toStoredEvent(row: EventStoreRow): StoredEvent {
     schemaVersion: row.schema_version,
     clientId: row.client_id,
     externalRef: row.external_ref,
+    externalRefHash: row.external_ref_hash,
     payload: row.payload,
     occurredAt: new Date(row.occurred_at),
     recordedAt: new Date(row.recorded_at),
