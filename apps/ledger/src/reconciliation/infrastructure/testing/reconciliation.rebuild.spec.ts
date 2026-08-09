@@ -55,6 +55,7 @@ describe('Reconciliation projections rebuild', () => {
       schemaVersion: 1,
       clientId: 'client-1',
       externalRef: null,
+      externalRefHash: null,
       payload,
       occurredAt: AT,
       recordedAt: AT,

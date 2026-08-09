@@ -21,7 +21,7 @@ function storedEvent(overrides: Partial<StoredEvent> = {}): StoredEvent {
   return {
     eventId: 'evt-1', userId: 'user-1', aggregateType: 'LedgerTransaction',
     aggregateId: 'tx-1', sequence: 1, eventType: 'TransactionRecorded',
-    schemaVersion: 1, clientId: 'client-a', externalRef: null,
+    schemaVersion: 1, clientId: 'client-a', externalRef: null, externalRefHash: null,
     payload: { date: '2026-07-20', status: 'PENDING' },
     occurredAt, recordedAt: occurredAt, globalPosition: 1n,
     ...overrides,

@@ -32,6 +32,7 @@ function storedEvent(overrides: Partial<StoredEvent> = {}): StoredEvent {
     schemaVersion: 1,
     clientId: 'client-a',
     externalRef: null,
+    externalRefHash: null,
     payload: {
       date: '2026-07-20',
       payee: 'Bakery',

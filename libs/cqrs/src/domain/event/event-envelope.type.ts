@@ -17,6 +17,12 @@ export type EventEnvelope = {
   readonly schemaVersion: number;
   readonly clientId: string;
   readonly externalRef: Nullable<string>;
+  /**
+   * Canonical hash of the command's inputs (AC-5), stamped on the anchor
+   * event only — mirrors `externalRef`. Persisted so a later idempotency
+   * check can compare against it without recomputing history.
+   */
+  readonly externalRefHash: Nullable<string>;
   readonly payload: EventPayload;
   readonly occurredAt: Date;
   readonly recordedAt: Date;

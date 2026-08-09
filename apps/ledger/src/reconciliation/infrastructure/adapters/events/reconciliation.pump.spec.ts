@@ -38,6 +38,7 @@ describe('ReconciliationPump', () => {
       schemaVersion: 1,
       clientId: 'client-1',
       externalRef: null,
+      externalRefHash: null,
       payload: {
         accountId: 'acc-1',
         date: '2026-07-22',

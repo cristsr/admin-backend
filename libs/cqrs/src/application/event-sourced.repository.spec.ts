@@ -72,7 +72,7 @@ describe('EventSourcedRepository', () => {
       const mockEvent = { eventType: 'X', schemaVersion: 1, toPayload: () => ({}) } as DomainEvent;
       aggregate.raise(mockEvent);
 
-      const envelopes = [{ eventId: 'a', userId: 'u', aggregateType: 'Test', aggregateId: 'agg-1', sequence: 1, eventType: 'X', schemaVersion: 1, clientId: 'c', externalRef: null, payload: {}, occurredAt: new Date(), recordedAt: new Date() }];
+      const envelopes = [{ eventId: 'a', userId: 'u', aggregateType: 'Test', aggregateId: 'agg-1', sequence: 1, eventType: 'X', schemaVersion: 1, clientId: 'c', externalRef: null, externalRefHash: null, payload: {}, occurredAt: new Date(), recordedAt: new Date() }];
       mockEnvelopes.build.mockReturnValue(envelopes);
       mockStore.append.mockResolvedValue({ events: [], version: 1, lastPosition: 1n });
 

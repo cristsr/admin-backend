@@ -23,6 +23,7 @@ const resolvedEvent = (assertionId: string, adjustmentTxnId: string): StoredEven
     schemaVersion: 1,
     clientId: 'client-1',
     externalRef: null,
+    externalRefHash: null,
     payload: { assertionId, adjustmentTransactionId: adjustmentTxnId },
     occurredAt: AT,
     recordedAt: AT,

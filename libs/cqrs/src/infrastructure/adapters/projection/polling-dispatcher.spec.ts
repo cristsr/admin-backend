@@ -33,6 +33,7 @@ function envelope(sequence: number, key: string): EventEnvelope {
     schemaVersion: 1,
     clientId: 'c',
     externalRef: null,
+    externalRefHash: null,
     payload: { key },
     occurredAt: now,
     recordedAt: now,

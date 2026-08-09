@@ -25,6 +25,7 @@ function storedEvent(
     schemaVersion: 1,
     clientId: 'c',
     externalRef: null,
+    externalRefHash: null,
     payload,
     occurredAt: now,
     recordedAt: now,

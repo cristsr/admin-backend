@@ -95,6 +95,7 @@ class TransactionRecordingBus extends CommandBus {
           schemaVersion: 1,
           clientId: ctx.clientId,
           externalRef: ctx.externalRef,
+          externalRefHash: null,
           payload: {
             transactionId,
             date: command.date,

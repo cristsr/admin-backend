@@ -55,6 +55,7 @@ const makeFixture = (): AdjustmentAuditFixture => {
         schemaVersion: 1,
         clientId: 'client-1',
         externalRef: null,
+        externalRefHash: null,
         payload: {
           assertionId: entry.assertionId,
           adjustmentTransactionId: entry.adjustmentTxnId,
