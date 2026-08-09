@@ -1,0 +1,216 @@
+openapi: 3.1.0
+info:
+  title: hu-0024 — Integridad verificable del event store
+  version: "1.0.0"
+  description: |
+    Delta del contrato HTTP. La historia **no agrega endpoints**: cambia el
+    comportamiento observable de toda escritura que lleve `X-External-Ref`.
+
+    Dos cambios, con alcances distintos:
+
+    1. **`IDEMPOTENCY_INPUT_MISMATCH` (409)** — lo lanza `IdempotencyPolicy`, que
+       corre en el chain del `CommandBus` para **todos** los commands. Alcanza a
+       las 13 operaciones de escritura del API.
+    2. **Cabecera `Idempotency-Hit: true`** — la estampa
+       `CommandResultInterceptor`, que es **opt-in por controller**
+       (`@UseInterceptors`). Hoy lo declaran `AccountsController`,
+       `LedgerController` y `TransactionsController`; los controllers de EP-3
+       (`BalanceAssertionController`, `TransferController`) **no**. La cabecera
+       alcanza a 10 de las 13 operaciones — la misma limitación que ya afecta a
+       `X-Ledger-Stream-Position` y al downgrade a 200 (ver AC-4 de
+       `idempotent-write.md`). No es alcance de esta historia corregirlo.
+
+    Cambio **breaking de comportamiento, no de forma**: un cliente que hoy
+    reenvía una `external_ref` con datos distintos recibe `200` con el resultado
+    viejo; a partir de esta historia recibe `409`. Ningún schema pierde campos.
+
+tags:
+  - name: shared
+    description: Componentes transversales del kernel HTTP del ledger.
+  - name: accounts
+    description: Escrituras de cuentas y settings del ledger.
+  - name: transactions
+    description: Escrituras de transacciones.
+  - name: reconciliation
+    description: Escrituras de assertions y discrepancias (sin interceptor).
+
+paths:
+  # ---------------------------------------------------------------------
+  # Fragmentos que cambian en cada operación de escritura ya publicada.
+  # Solo se listan las respuestas afectadas: el resto de cada operación
+  # (parameters, requestBody, 201, 401, 422) queda intacto y /sync lo
+  # conserva verbatim.
+  # ---------------------------------------------------------------------
+
+  /transactions:
+    post:
+      tags: [transactions]
+      operationId: recordTransaction
+      summary: Record a transaction (representative write — same delta on every operation below).
+      responses:
+        '200':
+          description: |
+            Replay idempotente: la misma `external_ref` con los **mismos** inputs.
+            No se emitieron eventos nuevos; el cuerpo y la posición de stream son
+            los de la ejecución original.
+          headers:
+            Idempotency-Hit:
+              $ref: '#/components/headers/IdempotencyHit'
+            X-Ledger-Stream-Position:
+              $ref: '#/components/headers/LedgerStreamPosition'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandAcceptedDto'
+        '409':
+          description: |
+            `IDEMPOTENCY_INPUT_MISMATCH` — la `external_ref` ya fue usada por este
+            usuario con inputs distintos. Antes de hu-0024 este caso devolvía `200`
+            con el resultado de la operación anterior y la transacción nueva se
+            perdía en silencio.
+
+            Los códigos de conflicto propios de cada operación
+            (`IMMUTABLE_TRANSACTION`, `NAME_COLLISION`, `LEDGER_ALREADY_INITIALIZED`,
+            `CONCURRENCY_CONFLICT`, …) siguen vigentes en el mismo `409`.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseBody'
+
+components:
+  headers:
+    IdempotencyHit:
+      description: |
+        Presente y con valor `"true"` **solo** cuando la respuesta proviene de un
+        acierto de idempotencia (misma `external_ref`, mismos inputs). Cuando la
+        operación se ejecutó de verdad, la cabecera **no está presente** — su
+        ausencia es la señal, no un valor `false`.
+
+        La estampa `CommandResultInterceptor` a partir de
+        `CommandResult.idempotentReplay`, junto al downgrade a `200`. Como el
+        interceptor es opt-in por controller, los endpoints de `reconciliation` no
+        la emiten hoy.
+      schema:
+        type: string
+        enum: ["true"]
+      example: "true"
+
+    # Sin cambios respecto del vivo — se repite acá solo para que los $ref del
+    # fragmento de arriba resuelvan dentro de este archivo.
+    LedgerStreamPosition:
+      description: |
+        Posición global en el stream alcanzada por la escritura (RNF-9), como
+        string decimal (`bigint` serializado).
+      schema:
+        type: string
+      example: "42"
+
+  parameters:
+    ExternalRefHeader:
+      name: X-External-Ref
+      in: header
+      required: false
+      description: |
+        Clave de idempotencia del cliente (RF-11 / INV-10). Fuente preferida; si
+        el header falta, `@ExternalRef()` cae al campo `external_ref` del body.
+        Ambos se recortan con `trim()` y un header repetido (array) se ignora.
+
+        **Semántica desde hu-0024.** Al recibir la clave, el servidor hashea los
+        inputs del command (el `Command` completo más el `userId`, **excluyendo**
+        la propia `external_ref`, el `client_id` y cualquier id de correlación o
+        timestamp del request) y lo compara contra el hash guardado con la
+        operación original:
+
+        - **Mismos inputs** → replay: `200`, cabecera `Idempotency-Hit: true`,
+          mismo `id` y `streamPosition`, sin emitir eventos nuevos.
+        - **Inputs distintos** → `409 IDEMPOTENCY_INPUT_MISMATCH`. La clave deja
+          de ser un simple detector de reintentos y pasa a proteger contra el
+          reuso accidental de una referencia por un cliente automatizado.
+
+        Reenviar la misma clave **desde otro cliente o con otro trace id** sigue
+        siendo un replay: esos campos no entran al hash.
+
+        Opcional hoy — sin registro de clientes (§2.10) no se exige por `client_id`.
+      schema:
+        type: string
+        minLength: 1
+      example: "order-4711-retry-2"
+
+  schemas:
+    LedgerErrorCode:
+      description: |
+        Código de error de dominio estable (RF-14). El consumidor hace branching
+        sobre este valor, nunca sobre `message`.
+
+        **Delta hu-0024 — un código nuevo, y un reparto por capa.**
+
+        - `IDEMPOTENCY_INPUT_MISMATCH` (409) es el contrato de
+          `IdempotencyPolicy` y **sí** es alcanzable por el API HTTP: lo emite
+          toda escritura que reciba una `external_ref` ya usada con otros inputs.
+        - `DUPLICATE_EXTERNAL_REF` (409) se queda como contrato del **puerto**
+          `EventStore` ante la violación del índice único `(user_id, external_ref)`,
+          alcanzable por cualquier caller que use el store sin la política. **Sigue
+          sin ser emitido por el API HTTP.**
+
+        Queda **obsoleta** la nota de hu-0012 que atribuía a `DUPLICATE_EXTERNAL_REF`
+        el caso «mismo `external_ref` con un command distinto»: ese caso ahora es
+        `IDEMPOTENCY_INPUT_MISMATCH`.
+
+        Solo se listan acá los dos códigos que el delta toca; `/sync` inserta el
+        nuevo en el enum vivo conservando el resto.
+      enum:
+        - IDEMPOTENCY_INPUT_MISMATCH   # 409 — NUEVO (hu-0024)
+        - DUPLICATE_EXTERNAL_REF       # 409 — sin cambios; nota reescrita
+
+    # Sin cambios — repetidos para que los $ref de este archivo resuelvan.
+    CommandAcceptedDto:
+      type: object
+      description: |
+        Cuerpo estándar de toda respuesta de escritura (RNF-10). Sin cambios en
+        hu-0024: el acierto de idempotencia se señala por cabecera y por status,
+        nunca por el cuerpo.
+      required: [id, streamPosition]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador del agregado afectado (`CommandResult.aggregateId`).
+        streamPosition:
+          type: string
+          description: Posición global en el stream como string decimal (`bigint` serializado).
+      example:
+        id: "550e8400-e29b-41d4-a716-446655440000"
+        streamPosition: "42"
+
+    ErrorResponseBody:
+      type: object
+      description: |
+        Cuerpo uniforme de toda respuesta de error del ledger. Sin cambios de forma
+        en hu-0024.
+      required: [statusCode, error, message, path, timestamp]
+      properties:
+        statusCode:
+          type: integer
+          description: HTTP status del fallo (404, 409, 422 o 500).
+        error:
+          type: string
+          description: Nombre de la clase de excepción.
+        message:
+          type: string
+          description: Mensaje legible para humanos; no es contrato estable — usar `code`.
+        code:
+          $ref: '#/components/schemas/LedgerErrorCode'
+        path:
+          type: string
+          description: URL del request que falló.
+        timestamp:
+          type: string
+          format: date-time
+          description: Instante del fallo (ISO 8601).
+      example:
+        statusCode: 409
+        error: IdempotencyInputMismatchException
+        message: 'external_ref "order-4711" was already used with different inputs'
+        code: IDEMPOTENCY_INPUT_MISMATCH
+        path: /api/v1/transactions
+        timestamp: "2026-08-08T06:30:00.000Z"
