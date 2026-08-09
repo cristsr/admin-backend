@@ -2,6 +2,7 @@ import { ArgumentsHost, HttpStatus } from '@nestjs/common';
 import {
   ConcurrencyConflictException,
   DuplicateExternalRefException,
+  IdempotencyInputMismatchException,
 } from '@cqrs/domain/exceptions/event-store.exception';
 import { DomainException, ExceptionFilter } from '@shared';
 import {
@@ -60,6 +61,7 @@ describe('Ledger error code → HTTP status contract', () => {
     [new SystemAccountProtectedException('protected'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.SYSTEM_ACCOUNT_PROTECTED],
     [new ConcurrencyConflictException('conflict'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.CONCURRENCY_CONFLICT],
     [new DuplicateExternalRefException('duplicate'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.DUPLICATE_EXTERNAL_REF],
+    [new IdempotencyInputMismatchException('mismatch'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.IDEMPOTENCY_INPUT_MISMATCH],
     [new AccountNotFoundException('no account'), HttpStatus.NOT_FOUND, LEDGER_ERROR_CODE.ACCOUNT_NOT_FOUND],
     [new TransactionNotFoundException('no transaction'), HttpStatus.NOT_FOUND, LEDGER_ERROR_CODE.TRANSACTION_NOT_FOUND],
     [new LedgerNotInitializedException('not initialized'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.LEDGER_NOT_INITIALIZED],
