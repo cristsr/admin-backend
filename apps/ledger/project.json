@@ -79,6 +79,12 @@
       "options": {
         "command": "npx ts-node -r tsconfig-paths/register apps/ledger/src/tooling/rebuild.command.ts verify-balances"
       }
+    },
+    "verify-chain": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx ts-node -r tsconfig-paths/register apps/ledger/src/tooling/rebuild.command.ts verify-chain"
+      }
     }
   }
 }

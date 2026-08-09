@@ -1,5 +1,6 @@
 import 'reflect-metadata';
 import { ProjectionRegistry } from '@cqrs/application/tooling/projection-registry';
+import { PostgresEventChainReader } from '@cqrs/infrastructure/adapters/event-store/postgres/postgres-event-chain-reader';
 import { PostgresEventStore } from '@cqrs/infrastructure/adapters/event-store/postgres/postgres-event-store';
 import { InMemoryProjectionCheckpointRepository } from '@cqrs/infrastructure/adapters/projection/in-memory-projection-checkpoint.repository';
 import { ProjectionRebuilder } from '@cqrs/infrastructure/adapters/projection/projection-rebuilder';
@@ -22,6 +23,7 @@ import {
 import { PROJ_CURRENCIES } from '@ledger/reference/infrastructure/projections/currencies.schema';
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/persistence/read-model-currency-catalog';
 import { CurrenciesProjector } from '@ledger/reference/infrastructure/projections/currencies.projector';
+import { ChainVerifier } from '@ledger/tooling/chain-verifier';
 import { ConsistencyVerifier } from '@ledger/tooling/consistency-verifier';
 import { PROJ_BALANCES } from '@ledger/transactions/infrastructure/projections/account-balances.schema';
 import { PROJ_PENDING_REVIEW } from '@ledger/transactions/infrastructure/projections/pending-review.schema';
@@ -36,7 +38,7 @@ async function main(): Promise<void> {
 
   if (!command) {
     console.error(
-      'Usage: ts-node rebuild.command.ts <rebuild|rebuildAll|verify-balances> [--projection <name>] [--userId <uuid>]',
+      'Usage: ts-node rebuild.command.ts <rebuild|rebuildAll|verify-balances|verify-chain> [--projection <name>] [--userId <uuid>]',
     );
     process.exit(1);
   }
@@ -158,6 +160,25 @@ async function main(): Promise<void> {
             );
           }
         }
+        break;
+      }
+      case 'verify-chain': {
+        const userId = parseArg(args, '--userId');
+        const chainReader = new PostgresEventChainReader(dataSource);
+        const verifier = new ChainVerifier(chainReader);
+        const report = await verifier.verifyChain(userId);
+
+        for (const b of report.breaks) {
+          console.log(`BROKEN  user=${b.userId}  pos=${b.globalPosition}  evt=${b.eventId}`);
+          console.log(`  expected ${b.expectedHash}  got ${b.actualHash}`);
+        }
+
+        const status = report.ok ? 'verified' : 'FAILED';
+        console.log(
+          `Chain ${status}: ${report.usersChecked} users, ${report.eventsChecked} events, ${report.breaks.length} breaks.`,
+        );
+
+        if (!report.ok) process.exitCode = 1;
         break;
       }
       default:
