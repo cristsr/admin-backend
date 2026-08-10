@@ -8,6 +8,36 @@
 > entrada nueva que la referencia. Orden cronológico inverso (más reciente
 > primero).
 
+## hu-0025 — Políticas transversales del command bus (2026-08-10)
+
+- **AC-6 — retry-once de `OptimisticConcurrencyPolicy`:** se **mantiene** como hoy
+  (`MAX_RETRIES = 1` con reload del agregado contra el head fresco). "Se sigue propagando
+  al cliente como hoy" es literal; AC-6 solo prohíbe que la **nueva** `RetryPolicy`
+  capture `CONCURRENCY_CONFLICT`, y no lo captura porque solo maneja
+  `TransientPersistenceException`.
+- **AC-8 — métrica de reintentos:** puerto mínimo `RetryCounter` (application) + adapter
+  `OtelRetryCounter` (infra, `@opentelemetry/api`) cableado en `ledger-core.module.ts` —
+  la cuarta métrica de RNF-12 se implementa sin arrastrar hu-0022 (backlog).
+- **Transporte de `dryRun`:** campo del body (AC-4, resuelto en `/clarify`) que el
+  controller transporta en el **`AuthContext`**, no en el `Command` — queda excluido del
+  hash de idempotencia por construcción (patrón `externalRef`/`externalRefHash`). Ver
+  rationale completo en `docs/research.md`.
+- **Primitiva de rollback:** `EventStore.withTransaction(work, { rollback: true })` +
+  `PostgresReadModelStore` pasando a escribir por el mismo `AsyncLocalStorage` del scope
+  (hoy escribe fuera de la transacción — gap del scan). In-memory: snapshot/restore.
+- **Detección de transitorios:** `PostgresEventStore.translate()` traduce `40P01`/`40001`
+  → `TransientPersistenceException` (patrón existente de `23505`); la policy solo conoce
+  tipos de dominio (Artículo 1).
+- **Orden de la cadena:** `[Authenticated, Retry, Idempotency, OptimisticConcurrency,
+  DryRun]` — Retry fuera de idempotencia (re-corre el pre-check) y fuera de la
+  transacción del dry-run (una transacción PG queda aborted tras un error); DryRun como
+  la más interna (su transacción envuelve el handler; los appends se unen al scope).
+- **Ids en dry-run (AC-3):** sin cambio de código — `UuidIdGenerator` (UUID v4) no es
+  secuencial; los huecos de `global_position` tras rollback son inocuos para el catch-up
+  (`>` sobre posiciones).
+
+---
+
 ## hu-0024 — Integridad verificable del event store (2026-08-08)
 
 - **Ruta de `external_ref_hash` (G-2):** `AuthContext` y `EventEnvelope` ganan `externalRefHash`,
