@@ -139,6 +139,15 @@ paths:
       parameters:
         - $ref: '#/components/parameters/AssertionId'
         - $ref: '../shared/api.yaml#/components/parameters/ExternalRefHeader'
+      requestBody:
+        required: false
+        description: >
+          Body opcional introducido en hu-0025 para el modo preview (`dryRun`).
+          Un body vacío se comporta como antes de la historia.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResolveDiscrepancyRequest'
       responses:
         '200':
           description: Discrepancy resolved; the adjustment transaction was recorded.
@@ -210,6 +219,9 @@ components:
             $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
 
   schemas:
+    DryRun:
+      $ref: '../shared/api.yaml#/components/schemas/DryRun'
+
     AssertBalanceRequest:
       type: object
       required: [accountId, date, expectedAmount, currency]
@@ -242,6 +254,8 @@ components:
             Margin within which a difference is not a discrepancy. Defaults to `0`
             — exact match.
           default: '0'
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
 
     AssertBalanceResponse:
       type: object
@@ -264,6 +278,18 @@ components:
         reason:
           type: string
           description: Audited motive for the revocation (RF-19).
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    ResolveDiscrepancyRequest:
+      type: object
+      description: >
+        Body de `POST /balance-assertions/{id}/resolve`, nuevo en hu-0025: el
+        endpoint no tenía body (AC-4 exige `dryRun` en todas las escrituras).
+        Con body vacío se comporta exactamente como antes — `dryRun` es opcional.
+      properties:
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
 
     RevokeAssertionResponse:
       type: object

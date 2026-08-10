@@ -1,0 +1,600 @@
+openapi: 3.1.0
+info:
+  title: hu-0025 — Políticas transversales del command bus
+  version: "1.0.0"
+  description: |
+    Delta del contrato HTTP. Dos cambios transversales, sin endpoints nuevos:
+
+    1. **`dryRun: boolean` en el body de TODAS las escrituras** (AC-2, AC-3, AC-4) —
+       modo preview: el comando se ejecuta completo dentro de la transacción y se
+       hace rollback, devolviendo el resultado que la ejecución real habría
+       producido. Ningún evento se persiste, ningún reactor se despacha. Default
+       `false` (sin cambio de comportamiento). El campo es metadata de transporte:
+       no entra al hash de idempotencia (`X-External-Ref` no interactúa con él).
+    2. **`PERSISTENCE_CONFLICT` (409)** — nuevo código de error (AC-5): al agotar
+       los 3 intentos por deadlock (`40P01`) o serialization failure (`40001`),
+       toda escritura responde con este código estable en vez del error crudo del
+       motor (hoy eso burbujearía como 500 sin `code`). Es aditivo sobre la tabla
+       de códigos de RF-14.
+
+    La respuesta de las escrituras **no cambia de forma**: mismo
+    `CommandAcceptedDto`, mismos headers (`X-Ledger-Stream-Position`,
+    `Idempotency-Hit`), mismos status 201/200. Un preview exitoso devuelve el
+    `CommandAcceptedDto` del resultado real (AC-4: mismo esquema de respuesta).
+
+    **Operaciones modificadas (12) — mismo delta en cada una:** `initializeLedger`,
+    `openAccount`, `renameAccount`, `closeAccount`, `recordTransaction`,
+    `confirmTransaction`, `amendTransaction`, `annotateTransaction`,
+    `voidTransaction`, `reverseTransaction`, `assertBalance`, `revokeAssertion`,
+    `resolveDiscrepancy`, `registerCurrency`.
+
+    **Operaciones que entran por primera vez al contrato (3, endpoints ya vivos en
+    código, hoy sin api.yaml ni flow):** `recordOpeningBalance`,
+    `mergeTransfers`, `registerCurrency` (este último ya tenía flow).
+
+tags:
+  - name: shared
+    description: Componentes transversales del kernel HTTP del ledger.
+  - name: accounts
+    description: Escrituras de cuentas y settings del ledger.
+  - name: transactions
+    description: Escrituras de transacciones y transfers.
+  - name: reconciliation
+    description: Escrituras de assertions y discrepancias.
+  - name: reference
+    description: Escrituras del catálogo de monedas.
+
+paths:
+  # ---------------------------------------------------------------------------
+  # Fragmento representativo del cambio sobre una escritura ya publicada.
+  # El requestBody $ref no cambia (mismo nombre de schema); el cambio vive en la
+  # definición del schema (ver components.schemas). El 409 nuevo se suma al 409
+  # de conflictos ya documentado en cada operación. /sync conserva el resto de
+  # cada operación verbatim.
+  # ---------------------------------------------------------------------------
+  /transactions:
+    post:
+      tags: [transactions]
+      operationId: recordTransaction
+      summary: Record a transaction (representative write — same dryRun delta on every write operation).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordTransactionRequest'
+      responses:
+        '201':
+          description: |
+            Transaction recorded. Con `dryRun: true` el 201 es un preview: el
+            comando se ejecutó completo y se revirtió; el cuerpo es el resultado
+            que la ejecución real habría producido (AC-2, AC-4).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandAcceptedDto'
+        '409':
+          description: |
+            Conflictos de estado vigentes (IMMUTABLE_TRANSACTION, etc.) **y** el
+            nuevo `PERSISTENCE_CONFLICT` (hu-0025): se agotaron los 3 intentos por
+            deadlock/serialization transitorio del motor (AC-5).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseBody'
+
+  # ---------------------------------------------------------------------------
+  # Operación nueva en el contrato: endpoint ya vivo, primero documentado (hu-0025).
+  # ---------------------------------------------------------------------------
+  /accounts/{id}/opening-balance:
+    post:
+      tags: [accounts]
+      operationId: recordOpeningBalance
+      summary: Record the balance an account already had at ledger initialization.
+      description: >
+        Endpoint vivo desde hu-0003, primero documentado en hu-0025 (gap de docs
+        del scan). El handler resuelve `Equity:OpeningBalances` de los settings
+        del usuario y estampa el origin: el request no puede nombrar cuentas de
+        sistema (INV-13). Acepta `dryRun` como todas las escrituras (AC-4).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordOpeningBalanceRequest'
+      responses:
+        '201':
+          description: "Opening balance recorded (o preview revertido si `dryRun: true`)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandAcceptedDto'
+        '200':
+          description: Replay idempotente — misma `external_ref` con los mismos inputs (hu-0024).
+        '401':
+          description: Sin contexto autenticado (RF-26).
+        '409':
+          description: PERSISTENCE_CONFLICT (reintentos agotados, hu-0025) u otro conflicto de estado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseBody'
+        '422':
+          description: LEDGER_NOT_INITIALIZED, ACCOUNT_NOT_FOUND o INVALID_MONEY.
+
+  /transfers/merge:
+    post:
+      tags: [transactions]
+      operationId: mergeTransfers
+      summary: Merge two pending transfer legs into a single transaction.
+      description: >
+        Endpoint vivo (TransferController), primero documentado en hu-0025 (gap
+        de docs del scan). Acepta `dryRun` como todas las escrituras (AC-4).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MergeTransfersRequest'
+      responses:
+        '201':
+          description: "Transfers merged (o preview revertido si `dryRun: true`)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandAcceptedDto'
+        '200':
+          description: Replay idempotente — misma `external_ref` con los mismos inputs (hu-0024).
+        '401':
+          description: Sin contexto autenticado (RF-26).
+        '409':
+          description: PERSISTENCE_CONFLICT (reintentos agotados, hu-0025) u otro conflicto de estado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseBody'
+        '422':
+          description: NOT_A_TRANSFER_PAIR o PENDING_LEG_NOT_FOUND.
+
+  /v1/currencies:
+    post:
+      tags: [reference]
+      operationId: registerCurrency
+      summary: Register a currency in the catalog.
+      description: >
+        Endpoint vivo (CurrenciesController), primero documentado en hu-0025 — el
+        módulo reference no tenía api.yaml. Acepta `dryRun` como todas las
+        escrituras (AC-4).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterCurrencyRequest'
+      responses:
+        '201':
+          description: "Currency registered (o preview revertido si `dryRun: true`)."
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandAcceptedDto'
+        '200':
+          description: Replay idempotente — misma `external_ref` con los mismos inputs (hu-0024).
+        '401':
+          description: Sin contexto autenticado (RF-26).
+        '409':
+          description: PERSISTENCE_CONFLICT (reintentos agotados, hu-0025) u otro conflicto de estado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponseBody'
+        '422':
+          description: CURRENCY_ALREADY_REGISTERED o INVALID_CURRENCY_CODE.
+
+components:
+  schemas:
+    # -------------------------------------------------------------------------
+    # Schemas modificados — se repiten completos con `dryRun` agregado; /sync
+    # reemplaza la definición viva conservando el resto.
+    # -------------------------------------------------------------------------
+
+    DryRun:
+      type: boolean
+      default: false
+      description: |
+        Modo preview (hu-0025, F-12): ejecuta el comando completo —validaciones,
+        invariantes del agregado, generación de eventos y proyecciones síncronas—
+        dentro de la transacción y hace rollback, devolviendo el resultado que la
+        ejecución real habría producido. No persiste eventos, no despacha reactors
+        (§3.2), no quema ids (UUID v4). Metadata de transporte: no entra al hash
+        de idempotencia. Aplicable en todas las operaciones de escritura (AC-4).
+
+    RecordTransactionRequest:
+      type: object
+      required: [date, description, status, postings]
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2026-07-20"
+          description: Plain accounting date (RNF-7).
+        payee:
+          type: string
+          example: Netflix
+        description:
+          type: string
+          example: Monthly subscription
+        status:
+          $ref: '#/components/schemas/TransactionStatus'
+          description: PENDING or CONFIRMED (VOIDED is never a creation target).
+        postings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Posting'
+          minItems: 2
+        invoiceUrl:
+          type: string
+          format: url
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    AmendTransactionRequest:
+      type: object
+      properties:
+        postings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Posting'
+          minItems: 2
+        date:
+          type: string
+          format: date
+          example: "2026-07-20"
+          description: Plain accounting date (RNF-7).
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    AnnotateTransactionRequest:
+      type: object
+      properties:
+        payee:
+          type: string
+          example: Netflix
+        description:
+          type: string
+          example: Corrected description
+        invoiceUrl:
+          type: string
+          format: url
+        tags:
+          type: array
+          items:
+            type: string
+        metadata:
+          type: object
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    ConfirmTransactionRequest:
+      type: object
+      properties:
+        postings:
+          type: array
+          items:
+            $ref: '#/components/schemas/Posting'
+          minItems: 2
+          description: Final postings; omit to confirm as-is.
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    VoidTransactionRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          example: Duplicated capture
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    ReverseTransactionRequest:
+      type: object
+      properties:
+        reason:
+          type: string
+          example: Refunded by the merchant
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    MergeTransfersRequest:
+      type: object
+      required: [pendingIds]
+      properties:
+        pendingIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+          maxItems: 2
+          description: Exactly the two pending transfer legs to merge (INV-16).
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    OpenAccountRequest:
+      type: object
+      required: [type, name, currencies, openedOn, isBankMirror]
+      properties:
+        type:
+          $ref: '#/components/schemas/AccountType'
+        name:
+          type: string
+          example: Assets:Bancolombia:Savings
+          description: Hierarchical account name.
+        parentId:
+          type: string
+          format: uuid
+          description: Parent node; omitted for a root account.
+        currencies:
+          type: array
+          items:
+            type: string
+          example: [COP]
+          minItems: 1
+        openedOn:
+          type: string
+          format: date
+          example: "2026-07-20"
+          description: Plain accounting date, no timezone (RNF-7).
+        isBankMirror:
+          type: boolean
+          description: True when this account mirrors a real bank account or wallet.
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    RenameAccountRequest:
+      type: object
+      required: [newName]
+      properties:
+        newName:
+          type: string
+          example: Assets:Bancolombia:Checking
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    CloseAccountRequest:
+      type: object
+      required: [closedOn]
+      properties:
+        closedOn:
+          type: string
+          format: date
+          example: "2026-07-20"
+          description: Plain accounting date the account closes on (RNF-7).
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    RecordOpeningBalanceRequest:
+      type: object
+      required: [amount, currency, date]
+      properties:
+        amount:
+          type: string
+          example: "1500000.00"
+          description: Exact decimal string; scale is the currency's business (INV-8).
+        currency:
+          type: string
+          example: COP
+          description: ISO-4217 code.
+        date:
+          type: string
+          format: date
+          example: "2026-01-01"
+          description: Accounting date of the opening entry; on or after ledger initialization.
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    InitializeLedgerRequest:
+      type: object
+      description: Body de `POST /ledger/initialize`. Valida solo forma.
+      required: [presentationCurrency, timezone]
+      properties:
+        presentationCurrency:
+          type: string
+          example: COP
+          description: Moneda de presentación del ledger (ISO 4217).
+        timezone:
+          type: string
+          example: America/Bogota
+          description: Timezone IANA usada para derivar límites de día (RNF-7).
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    AssertBalanceRequest:
+      type: object
+      required: [accountId, date, expectedAmount, currency]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+          description: Account being asserted. Exactly this account, never its subtree (§2.4).
+        date:
+          type: string
+          format: date
+          description: Accounting cutoff date of the assertion.
+        occurredAt:
+          type: [string, 'null']
+          format: date-time
+          description: >
+            Intraday instant of the cutoff, in UTC. When absent, the assertion is
+            evaluated against the close of day in the ledger's timezone (§2.4).
+        expectedAmount:
+          type: string
+          description: Exact decimal string. Never a float (INV-8, RNF-2).
+          examples: ['1250000', '-340.75']
+        currency:
+          type: string
+          description: ISO-4217 code. Must match the account's currency.
+          examples: ['COP', 'USD']
+        tolerance:
+          type: string
+          description: >
+            Margin within which a difference is not a discrepancy. Defaults to `0`
+            — exact match.
+          default: '0'
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    RevokeAssertionRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+          description: Audited motive for the revocation (RF-19).
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    ResolveDiscrepancyRequest:
+      type: object
+      description: |
+        Body de `POST /balance-assertions/{id}/resolve`, nuevo en hu-0025: el
+        endpoint no tenía body (AC-4 exige `dryRun` en todas las escrituras).
+        Con body vacío se comporta exactamente como antes — `dryRun` es opcional.
+      properties:
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    RegisterCurrencyRequest:
+      type: object
+      required: [code, minorUnits, name]
+      properties:
+        code:
+          type: string
+          example: CLF
+          description: ISO-4217 code (3 uppercase letters).
+        minorUnits:
+          type: integer
+          minimum: 0
+          maximum: 4
+          example: 4
+          description: Decimal places (ISO-4217).
+        name:
+          type: string
+          example: Unidad de Fomento
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    # -------------------------------------------------------------------------
+    # Código de error nuevo (AC-5). /sync inserta el value en el enum vivo
+    # conservando el resto de la lista.
+    # -------------------------------------------------------------------------
+
+    LedgerErrorCode:
+      description: |
+        Código de error de dominio estable (RF-14). El consumidor hace branching
+        sobre este valor, nunca sobre `message`.
+
+        **Delta hu-0025 — un código nuevo.**
+
+        - `PERSISTENCE_CONFLICT` (409) es el contrato de `RetryPolicy`: al agotar
+          los 3 intentos por fallo transitorio del motor (deadlock `40P01` o
+          serialization `40001`), toda escritura responde con este código. Antes
+          de hu-0025 ese fallo llegaba al `ExceptionFilter` como `QueryFailedError`
+          no tipado → `500` sin `code`.
+        - `TransientPersistenceException` **no** se lista: es transitoria por
+          diseño, nunca llega al API (o se reintenta o se convierte en
+          `PERSISTENCE_CONFLICT`).
+        - `CONCURRENCY_CONFLICT` (409) sigue vigente sin cambios: el conflicto de
+          agregado nunca entra al reintento automático (AC-6) y sigue propagándose
+          al cliente como hoy.
+      enum:
+        - PERSISTENCE_CONFLICT         # 409 — NUEVO (hu-0025)
+        - CONCURRENCY_CONFLICT         # 409 — sin cambios (AC-6)
+        - IDEMPOTENCY_INPUT_MISMATCH   # 409 — sin cambios (hu-0024)
+
+    # --- Sin cambios — repetidos para que los $ref de este archivo resuelvan ---
+
+    TransactionStatus:
+      type: string
+      enum: [PENDING, CONFIRMED, VOIDED]
+
+    Posting:
+      type: object
+      required: [accountId, amount, currency]
+      properties:
+        accountId:
+          type: string
+          format: uuid
+        amount:
+          type: string
+          example: "-31900"
+          description: Exact decimal string; positive debits, negative credits.
+        currency:
+          type: string
+          example: COP
+        metadata:
+          type: object
+          description: Free-form per-posting metadata.
+
+    AccountType:
+      type: string
+      enum: [ASSETS, LIABILITIES, INCOME, EXPENSES, EQUITY]
+
+    CommandAcceptedDto:
+      type: object
+      description: |
+        Cuerpo estándar de toda respuesta de escritura (RNF-10). Sin cambios de
+        forma en hu-0025: un preview exitoso devuelve el mismo cuerpo que la
+        ejecución real (AC-4).
+      required: [id, streamPosition]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Identificador del agregado afectado (`CommandResult.aggregateId`).
+        streamPosition:
+          type: string
+          description: Posición global en el stream como string decimal (`bigint` serializado).
+      example:
+        id: "550e8400-e29b-41d4-a716-446655440000"
+        streamPosition: "42"
+
+    ErrorResponseBody:
+      type: object
+      description: |
+        Cuerpo uniforme de toda respuesta de error del ledger. Sin cambios de
+        forma en hu-0025.
+      required: [statusCode, error, message, path, timestamp]
+      properties:
+        statusCode:
+          type: integer
+          description: HTTP status del fallo (404, 409, 422 o 500).
+        error:
+          type: string
+          description: Nombre de la clase de excepción.
+        message:
+          type: string
+          description: Mensaje legible para humanos; no es contrato estable — usar `code`.
+        code:
+          $ref: '#/components/schemas/LedgerErrorCode'
+        path:
+          type: string
+          description: URL del request que falló.
+        timestamp:
+          type: string
+          format: date-time
+          description: Instante del fallo (ISO 8601).
+      example:
+        statusCode: 409
+        error: PersistenceConflictException
+        message: Transient persistence failure exhausted after 3 attempts
+        code: PERSISTENCE_CONFLICT
+        path: /api/v1/transactions
+        timestamp: "2026-08-09T06:30:00.000Z"

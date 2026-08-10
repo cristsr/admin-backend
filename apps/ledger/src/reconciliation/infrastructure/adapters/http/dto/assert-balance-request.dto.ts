@@ -1,6 +1,14 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
 import { Nullable } from '@shared';
-import { IsISO8601, IsOptional, IsString, IsUUID } from 'class-validator';
+import {  IsBoolean,
+  IsISO8601,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 
 /**
  * Body of `POST /balance-assertions`. Declares what the account's balance is
@@ -32,4 +40,8 @@ export class AssertBalanceRequestDto {
   @IsOptional()
   @IsString()
   readonly tolerance?: string;
+  @ApiPropertyOptional({ default: false, description: 'Preview mode (hu-0025): execute the command fully inside the transaction and roll back, returning the result the real run would have produced.' })
+  @IsOptional()
+  @IsBoolean()
+  readonly dryRun?: boolean;
 }

@@ -1,7 +1,10 @@
 import { PolicyCommandBus } from '@cqrs/application/command-bus/command-bus';
 import { AuthenticatedContextPolicy } from '@cqrs/application/command-bus/policies/authenticated-context.policy';
+import { DryRunPolicy } from '@cqrs/application/command-bus/policies/dry-run.policy';
 import { IdempotencyPolicy } from '@cqrs/application/command-bus/policies/idempotency.policy';
 import { OptimisticConcurrencyPolicy } from '@cqrs/application/command-bus/policies/optimistic-concurrency.policy';
+import { NoopRetryCounter, RetryCounter } from '@cqrs/application/command-bus/policies/retry-counter';
+import { RetryPolicy } from '@cqrs/application/command-bus/policies/retry.policy';
 import { EnvelopeFactory } from '@cqrs/application/event/envelope.factory';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
 import { Projector } from '@cqrs/application/projection/projector';
@@ -31,7 +34,6 @@ import { ReplaceLedgerSettingsCommand } from '@ledger/ledger/application/usecase
 import { ReplaceLedgerSettingsHandler } from '@ledger/ledger/application/usecases/replace-ledger-settings/replace-ledger-settings.handler';
 import { LedgerSettingsProjector } from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
 import { CurrencyCatalogCache } from '@ledger/reference/application/ports/currency-catalog-cache.port';
-import { StaticCurrencyCatalogCache } from './static-currency-catalog.cache';
 import { CurrencyCatalogRepository } from '@ledger/reference/application/repositories/currency-catalog.repository';
 import { RegisterCurrencyCommand } from '@ledger/reference/application/usecases/register-currency/register-currency.command';
 import { RegisterCurrencyHandler } from '@ledger/reference/application/usecases/register-currency/register-currency.handler';
@@ -56,6 +58,7 @@ import { AccountBalancesProjector } from '@ledger/transactions/infrastructure/pr
 import { PendingReviewProjector } from '@ledger/transactions/infrastructure/projections/pending-review.projector';
 import { TransactionListProjector } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
 import { WriteSideReadPorts, createWriteSideReadPorts } from './read-side-ports.factory';
+import { StaticCurrencyCatalogCache } from './static-currency-catalog.cache';
 
 /**
  * The wired write side: the command bus plus the projector set for the read
@@ -87,6 +90,17 @@ export type LedgerApplicationDeps = {
    * over `readModel`, so a caller states them only to substitute one.
    */
   readonly readPorts?: WriteSideReadPorts;
+  /**
+   * Metric sink for transient retries (AC-8). Defaults to a no-op for
+   * compositions that do not observe (tests); the Nest wiring provides the
+   * OTel-backed counter.
+   */
+  readonly retryCounter?: RetryCounter;
+  /**
+   * Delay between retry attempts. Defaults to the real exponential backoff
+   * with jitter; tests inject a no-op to keep the suite fast.
+   */
+  readonly retryWait?: (ms: number) => Promise<void>;
 };
 
 /**
@@ -129,8 +143,10 @@ export function createLedgerApplication(deps: LedgerApplicationDeps): LedgerAppl
 
   const commandBus = new PolicyCommandBus([
     new AuthenticatedContextPolicy(),
+    new RetryPolicy(deps.retryCounter ?? new NoopRetryCounter(), deps.retryWait),
     new IdempotencyPolicy(eventStore),
     new OptimisticConcurrencyPolicy(),
+    new DryRunPolicy(eventStore),
   ]);
 
   commandBus.register(

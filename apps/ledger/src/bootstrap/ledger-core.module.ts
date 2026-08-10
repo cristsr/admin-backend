@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { getDataSourceToken } from '@nestjs/typeorm';
 import { CommandBus, PolicyCommandBus } from '@cqrs/application/command-bus/command-bus';
+import { RetryCounter } from '@cqrs/application/command-bus/policies/retry-counter';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { QueryBus, RegistryQueryBus } from '@cqrs/application/query-bus/query-bus';
 import { Clock, IdGenerator } from '@cqrs/domain/ports';
@@ -8,7 +9,10 @@ import { EventStore } from '@cqrs/domain/ports/event-store';
 import { PostgresEventStore } from '@cqrs/infrastructure/adapters/event-store/postgres/postgres-event-store';
 import { PostgresReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';
 import { SystemClock } from '@cqrs/infrastructure/adapters/system-clock';
+import { OtelRetryCounter } from '@cqrs/infrastructure/adapters/telemetry/otel-retry-counter';
+import { PostgresTransactionScope } from '@cqrs/infrastructure/adapters/transaction/postgres-transaction.scope';
 import { UuidIdGenerator } from '@cqrs/infrastructure/adapters/uuid-id-generator';
+import { DataSource } from 'typeorm';
 import { createLedgerApplication } from '@ledger/bootstrap/ledger-application.factory';
 import { createQueryBus } from '@ledger/bootstrap/query-bus.factory';
 import {
@@ -22,7 +26,6 @@ import { ReadModelLedgerTimezoneReader } from '@ledger/ledger/infrastructure/ada
 import { CurrencyCatalogCache } from '@ledger/reference/application/ports/currency-catalog-cache.port';
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/persistence/read-model-currency-catalog';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects/currency-catalog';
-import { DataSource } from 'typeorm';
 
 /**
  * Composition root that mounts the real write and read buses into Nest DI, so
@@ -47,8 +50,13 @@ import { DataSource } from 'typeorm';
     // of the concrete adapter, so it no longer depends on a class another module
     // owns.
     { provide: CurrencyCatalogCache, useExisting: ReadModelCurrencyCatalog },
+    // One shared transaction carrier for the event store and the read model
+    // store: synchronous projections join the command's unit of work (AC-2).
+    { provide: PostgresTransactionScope, useClass: PostgresTransactionScope },
     { provide: EventStore, useClass: PostgresEventStore },
     { provide: ReadModelStore, useClass: PostgresReadModelStore },
+    // Transient-retry metric sink (AC-8): the OTel counter behind the port.
+    { provide: RetryCounter, useClass: OtelRetryCounter },
     // Only the read ports Nest genuinely injects are bound here, and they come
     // from the same factory that composes the buses — binding them with
     // `useClass` would build a second adapter for a port that already has one,
@@ -71,7 +79,7 @@ import { DataSource } from 'typeorm';
     // their own handlers on the very same policy chain (INV-10).
     {
       provide: PolicyCommandBus,
-      inject: [EventStore, ReadModelStore, Clock, IdGenerator, CurrencyCatalog, ReadModelCurrencyCatalog],
+      inject: [EventStore, ReadModelStore, Clock, IdGenerator, CurrencyCatalog, ReadModelCurrencyCatalog, RetryCounter],
       useFactory: (
         eventStore: EventStore,
         readModel: ReadModelStore,
@@ -79,6 +87,7 @@ import { DataSource } from 'typeorm';
         idGenerator: IdGenerator,
         catalog: CurrencyCatalog,
         catalogCache: ReadModelCurrencyCatalog,
+        retryCounter: RetryCounter,
       ): PolicyCommandBus =>
         createLedgerApplication({
           eventStore,
@@ -87,6 +96,7 @@ import { DataSource } from 'typeorm';
           idGenerator,
           catalog,
           catalogCache,
+          retryCounter,
         }).commandBus,
     },
     { provide: CommandBus, useExisting: PolicyCommandBus },

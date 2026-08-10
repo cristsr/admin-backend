@@ -1,0 +1,1016 @@
+{
+    "item": [
+        {
+            "name": "transactions",
+            "description": "",
+            "item": [
+                {
+                    "id": "342eb07b-0a33-45d7-8a3d-eb55c72b1db4",
+                    "name": "Record a transaction (representative write — same dryRun delta on every write operation).",
+                    "request": {
+                        "name": "Record a transaction (representative write — same dryRun delta on every write operation).",
+                        "description": {},
+                        "url": {
+                            "path": [
+                                "transactions"
+                            ],
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "query": [],
+                            "variable": []
+                        },
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "method": "POST",
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"date\": \"<date>\",\n  \"description\": \"<string>\",\n  \"status\": \"CONFIRMED\",\n  \"postings\": [\n    {\n      \"accountId\": \"<uuid>\",\n      \"amount\": \"<string>\",\n      \"currency\": \"<string>\",\n      \"metadata\": {}\n    },\n    {\n      \"accountId\": \"<uuid>\",\n      \"amount\": \"<string>\",\n      \"currency\": \"<string>\",\n      \"metadata\": {}\n    }\n  ],\n  \"payee\": \"<string>\",\n  \"invoiceUrl\": \"<url>\",\n  \"tags\": [\n    \"<string>\",\n    \"<string>\"\n  ],\n  \"metadata\": {},\n  \"dryRun\": false\n}",
+                            "options": {
+                                "raw": {
+                                    "headerFamily": "json",
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "auth": null
+                    },
+                    "response": [
+                        {
+                            "id": "92567efd-d1dc-4d8c-916b-9065272623b3",
+                            "name": "Transaction recorded. Con `dryRun: true` el 201 es un preview: el\ncomando se ejecutó completo y se revirtió; el cuerpo es el resultado\nque la ejecución real habría producido (AC-2, AC-4).",
+                            "originalRequest": {
+                                "url": {
+                                    "path": [
+                                        "transactions"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "method": "POST",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"date\": \"<date>\",\n  \"description\": \"<string>\",\n  \"status\": \"CONFIRMED\",\n  \"postings\": [\n    {\n      \"accountId\": \"<uuid>\",\n      \"amount\": \"<string>\",\n      \"currency\": \"<string>\",\n      \"metadata\": {}\n    },\n    {\n      \"accountId\": \"<uuid>\",\n      \"amount\": \"<string>\",\n      \"currency\": \"<string>\",\n      \"metadata\": {}\n    }\n  ],\n  \"payee\": \"<string>\",\n  \"invoiceUrl\": \"<url>\",\n  \"tags\": [\n    \"<string>\",\n    \"<string>\"\n  ],\n  \"metadata\": {},\n  \"dryRun\": false\n}",
+                                    "options": {
+                                        "raw": {
+                                            "headerFamily": "json",
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "status": "Created",
+                            "code": 201,
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n  \"id\": \"<uuid>\",\n  \"streamPosition\": \"<string>\"\n}",
+                            "cookie": [],
+                            "_postman_previewlanguage": "json"
+                        },
+                        {
+                            "id": "9c16c94f-cfaa-4388-b5d3-1aebd1936e3d",
+                            "name": "Conflictos de estado vigentes (IMMUTABLE_TRANSACTION, etc.) **y** el\nnuevo `PERSISTENCE_CONFLICT` (hu-0025): se agotaron los 3 intentos por\ndeadlock/serialization transitorio del motor (AC-5).",
+                            "originalRequest": {
+                                "url": {
+                                    "path": [
+                                        "transactions"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "method": "POST",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"date\": \"<date>\",\n  \"description\": \"<string>\",\n  \"status\": \"CONFIRMED\",\n  \"postings\": [\n    {\n      \"accountId\": \"<uuid>\",\n      \"amount\": \"<string>\",\n      \"currency\": \"<string>\",\n      \"metadata\": {}\n    },\n    {\n      \"accountId\": \"<uuid>\",\n      \"amount\": \"<string>\",\n      \"currency\": \"<string>\",\n      \"metadata\": {}\n    }\n  ],\n  \"payee\": \"<string>\",\n  \"invoiceUrl\": \"<url>\",\n  \"tags\": [\n    \"<string>\",\n    \"<string>\"\n  ],\n  \"metadata\": {},\n  \"dryRun\": false\n}",
+                                    "options": {
+                                        "raw": {
+                                            "headerFamily": "json",
+                                            "language": "json"
+                                        }
+                                    }
+                                }
+                            },
+                            "status": "Conflict",
+                            "code": 409,
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "body": "{\n  \"statusCode\": \"<integer>\",\n  \"error\": \"<string>\",\n  \"message\": \"<string>\",\n  \"path\": \"<string>\",\n  \"timestamp\": \"<dateTime>\",\n  \"code\": \"IDEMPOTENCY_INPUT_MISMATCH\"\n}",
+                            "cookie": [],
+                            "_postman_previewlanguage": "json"
+                        }
+                    ],
+                    "event": [],
+                    "protocolProfileBehavior": {
+                        "disableBodyPruning": true
+                    }
+                }
+            ]
+        },
+        {
+            "name": "accounts",
+            "description": "",
+            "item": [
+                {
+                    "name": "{id}",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "opening-balance",
+                            "description": "",
+                            "item": [
+                                {
+                                    "id": "d320af1d-af1f-4002-8258-426e6f11f13b",
+                                    "name": "Record the balance an account already had at ledger initialization.",
+                                    "request": {
+                                        "name": "Record the balance an account already had at ledger initialization.",
+                                        "description": {
+                                            "content": "Endpoint vivo desde hu-0003, primero documentado en hu-0025 (gap de docs del scan). El handler resuelve `Equity:OpeningBalances` de los settings del usuario y estampa el origin: el request no puede nombrar cuentas de sistema (INV-13). Acepta `dryRun` como todas las escrituras (AC-4).\n",
+                                            "type": "text/plain"
+                                        },
+                                        "url": {
+                                            "path": [
+                                                "accounts",
+                                                ":id",
+                                                "opening-balance"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": [
+                                                {
+                                                    "type": "any",
+                                                    "key": "id"
+                                                }
+                                            ]
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            },
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"amount\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"date\": \"<date>\",\n  \"dryRun\": false\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        },
+                                        "auth": null
+                                    },
+                                    "response": [
+                                        {
+                                            "id": "b07ddfd5-c288-4428-826b-2c3dcfc10258",
+                                            "name": "Replay idempotente — misma `external_ref` con los mismos inputs (hu-0024).",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "accounts",
+                                                        ":id",
+                                                        "opening-balance"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": []
+                                                },
+                                                "header": [
+                                                    {
+                                                        "key": "Content-Type",
+                                                        "value": "application/json"
+                                                    }
+                                                ],
+                                                "method": "POST",
+                                                "body": {
+                                                    "mode": "raw",
+                                                    "raw": "{\n  \"amount\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"date\": \"<date>\",\n  \"dryRun\": false\n}",
+                                                    "options": {
+                                                        "raw": {
+                                                            "headerFamily": "json",
+                                                            "language": "json"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "status": "OK",
+                                            "code": 200,
+                                            "header": [],
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "text"
+                                        },
+                                        {
+                                            "id": "09e59666-c751-4171-af52-2aea085ea68e",
+                                            "name": "Opening balance recorded (o preview revertido si `dryRun: true`).",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "accounts",
+                                                        ":id",
+                                                        "opening-balance"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": []
+                                                },
+                                                "header": [
+                                                    {
+                                                        "key": "Content-Type",
+                                                        "value": "application/json"
+                                                    },
+                                                    {
+                                                        "key": "Accept",
+                                                        "value": "application/json"
+                                                    }
+                                                ],
+                                                "method": "POST",
+                                                "body": {
+                                                    "mode": "raw",
+                                                    "raw": "{\n  \"amount\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"date\": \"<date>\",\n  \"dryRun\": false\n}",
+                                                    "options": {
+                                                        "raw": {
+                                                            "headerFamily": "json",
+                                                            "language": "json"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "status": "Created",
+                                            "code": 201,
+                                            "header": [
+                                                {
+                                                    "key": "Content-Type",
+                                                    "value": "application/json"
+                                                }
+                                            ],
+                                            "body": "{\n  \"id\": \"<uuid>\",\n  \"streamPosition\": \"<string>\"\n}",
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "json"
+                                        },
+                                        {
+                                            "id": "a2442759-7e0f-464a-8ece-fbf9515fc318",
+                                            "name": "Sin contexto autenticado (RF-26).",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "accounts",
+                                                        ":id",
+                                                        "opening-balance"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": []
+                                                },
+                                                "header": [
+                                                    {
+                                                        "key": "Content-Type",
+                                                        "value": "application/json"
+                                                    }
+                                                ],
+                                                "method": "POST",
+                                                "body": {
+                                                    "mode": "raw",
+                                                    "raw": "{\n  \"amount\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"date\": \"<date>\",\n  \"dryRun\": false\n}",
+                                                    "options": {
+                                                        "raw": {
+                                                            "headerFamily": "json",
+                                                            "language": "json"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "status": "Unauthorized",
+                                            "code": 401,
+                                            "header": [],
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "text"
+                                        },
+                                        {
+                                            "id": "6891e218-9ac3-471f-a959-6360fc047eec",
+                                            "name": "PERSISTENCE_CONFLICT (reintentos agotados, hu-0025) u otro conflicto de estado.",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "accounts",
+                                                        ":id",
+                                                        "opening-balance"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": []
+                                                },
+                                                "header": [
+                                                    {
+                                                        "key": "Content-Type",
+                                                        "value": "application/json"
+                                                    },
+                                                    {
+                                                        "key": "Accept",
+                                                        "value": "application/json"
+                                                    }
+                                                ],
+                                                "method": "POST",
+                                                "body": {
+                                                    "mode": "raw",
+                                                    "raw": "{\n  \"amount\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"date\": \"<date>\",\n  \"dryRun\": false\n}",
+                                                    "options": {
+                                                        "raw": {
+                                                            "headerFamily": "json",
+                                                            "language": "json"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "status": "Conflict",
+                                            "code": 409,
+                                            "header": [
+                                                {
+                                                    "key": "Content-Type",
+                                                    "value": "application/json"
+                                                }
+                                            ],
+                                            "body": "{\n  \"statusCode\": \"<integer>\",\n  \"error\": \"<string>\",\n  \"message\": \"<string>\",\n  \"path\": \"<string>\",\n  \"timestamp\": \"<dateTime>\",\n  \"code\": \"IDEMPOTENCY_INPUT_MISMATCH\"\n}",
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "json"
+                                        },
+                                        {
+                                            "id": "193d5031-70b4-4a44-9658-ff6b9b7765aa",
+                                            "name": "LEDGER_NOT_INITIALIZED, ACCOUNT_NOT_FOUND o INVALID_MONEY.",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "accounts",
+                                                        ":id",
+                                                        "opening-balance"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": []
+                                                },
+                                                "header": [
+                                                    {
+                                                        "key": "Content-Type",
+                                                        "value": "application/json"
+                                                    }
+                                                ],
+                                                "method": "POST",
+                                                "body": {
+                                                    "mode": "raw",
+                                                    "raw": "{\n  \"amount\": \"<string>\",\n  \"currency\": \"<string>\",\n  \"date\": \"<date>\",\n  \"dryRun\": false\n}",
+                                                    "options": {
+                                                        "raw": {
+                                                            "headerFamily": "json",
+                                                            "language": "json"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+                                            "code": 422,
+                                            "header": [],
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "text"
+                                        }
+                                    ],
+                                    "event": [],
+                                    "protocolProfileBehavior": {
+                                        "disableBodyPruning": true
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "transfers",
+            "description": "",
+            "item": [
+                {
+                    "name": "merge",
+                    "description": "",
+                    "item": [
+                        {
+                            "id": "925d3ba3-6844-47e1-8d26-e9ecd0363b25",
+                            "name": "Merge two pending transfer legs into a single transaction.",
+                            "request": {
+                                "name": "Merge two pending transfer legs into a single transaction.",
+                                "description": {
+                                    "content": "Endpoint vivo (TransferController), primero documentado en hu-0025 (gap de docs del scan). Acepta `dryRun` como todas las escrituras (AC-4).\n",
+                                    "type": "text/plain"
+                                },
+                                "url": {
+                                    "path": [
+                                        "transfers",
+                                        "merge"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "method": "POST",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"pendingIds\": [\n    \"<uuid>\",\n    \"<uuid>\"\n  ],\n  \"dryRun\": false\n}",
+                                    "options": {
+                                        "raw": {
+                                            "headerFamily": "json",
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "auth": null
+                            },
+                            "response": [
+                                {
+                                    "id": "e9ee25ad-fe3c-4f6c-b1ab-a0ee525a6335",
+                                    "name": "Replay idempotente — misma `external_ref` con los mismos inputs (hu-0024).",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "transfers",
+                                                "merge"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"pendingIds\": [\n    \"<uuid>\",\n    \"<uuid>\"\n  ],\n  \"dryRun\": false\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "status": "OK",
+                                    "code": 200,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                },
+                                {
+                                    "id": "2bf2c5e6-c156-476d-a1ef-0435d8adb90e",
+                                    "name": "Transfers merged (o preview revertido si `dryRun: true`).",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "transfers",
+                                                "merge"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            },
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"pendingIds\": [\n    \"<uuid>\",\n    \"<uuid>\"\n  ],\n  \"dryRun\": false\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "status": "Created",
+                                    "code": 201,
+                                    "header": [
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "body": "{\n  \"id\": \"<uuid>\",\n  \"streamPosition\": \"<string>\"\n}",
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "json"
+                                },
+                                {
+                                    "id": "113add3f-43f7-4ca6-b441-3a3afee2192e",
+                                    "name": "Sin contexto autenticado (RF-26).",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "transfers",
+                                                "merge"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"pendingIds\": [\n    \"<uuid>\",\n    \"<uuid>\"\n  ],\n  \"dryRun\": false\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "status": "Unauthorized",
+                                    "code": 401,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                },
+                                {
+                                    "id": "9ec1377a-d7b0-444a-b848-76e83a389b6e",
+                                    "name": "PERSISTENCE_CONFLICT (reintentos agotados, hu-0025) u otro conflicto de estado.",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "transfers",
+                                                "merge"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            },
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"pendingIds\": [\n    \"<uuid>\",\n    \"<uuid>\"\n  ],\n  \"dryRun\": false\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "status": "Conflict",
+                                    "code": 409,
+                                    "header": [
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "body": "{\n  \"statusCode\": \"<integer>\",\n  \"error\": \"<string>\",\n  \"message\": \"<string>\",\n  \"path\": \"<string>\",\n  \"timestamp\": \"<dateTime>\",\n  \"code\": \"IDEMPOTENCY_INPUT_MISMATCH\"\n}",
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "json"
+                                },
+                                {
+                                    "id": "dd9059c5-a42d-44c8-866d-8178df5ebe30",
+                                    "name": "NOT_A_TRANSFER_PAIR o PENDING_LEG_NOT_FOUND.",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "transfers",
+                                                "merge"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"pendingIds\": [\n    \"<uuid>\",\n    \"<uuid>\"\n  ],\n  \"dryRun\": false\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+                                    "code": 422,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "v1",
+            "description": "",
+            "item": [
+                {
+                    "name": "currencies",
+                    "description": "",
+                    "item": [
+                        {
+                            "id": "01c2e992-185c-4701-951a-de8e6f57f6b3",
+                            "name": "Register a currency in the catalog.",
+                            "request": {
+                                "name": "Register a currency in the catalog.",
+                                "description": {
+                                    "content": "Endpoint vivo (CurrenciesController), primero documentado en hu-0025 — el módulo reference no tenía api.yaml. Acepta `dryRun` como todas las escrituras (AC-4).\n",
+                                    "type": "text/plain"
+                                },
+                                "url": {
+                                    "path": [
+                                        "v1",
+                                        "currencies"
+                                    ],
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "query": [],
+                                    "variable": []
+                                },
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    },
+                                    {
+                                        "key": "Accept",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "method": "POST",
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"code\": \"<string>\",\n  \"minorUnits\": \"<integer>\",\n  \"name\": \"<string>\",\n  \"dryRun\": false\n}",
+                                    "options": {
+                                        "raw": {
+                                            "headerFamily": "json",
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "auth": null
+                            },
+                            "response": [
+                                {
+                                    "id": "503ad030-a06a-44a5-835d-6a22e071af07",
+                                    "name": "Replay idempotente — misma `external_ref` con los mismos inputs (hu-0024).",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "v1",
+                                                "currencies"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"code\": \"<string>\",\n  \"minorUnits\": \"<integer>\",\n  \"name\": \"<string>\",\n  \"dryRun\": false\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "status": "OK",
+                                    "code": 200,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                },
+                                {
+                                    "id": "a31175e3-cd79-47ec-adc7-7d05da043cfb",
+                                    "name": "Currency registered (o preview revertido si `dryRun: true`).",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "v1",
+                                                "currencies"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            },
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"code\": \"<string>\",\n  \"minorUnits\": \"<integer>\",\n  \"name\": \"<string>\",\n  \"dryRun\": false\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "status": "Created",
+                                    "code": 201,
+                                    "header": [
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "body": "{\n  \"id\": \"<uuid>\",\n  \"streamPosition\": \"<string>\"\n}",
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "json"
+                                },
+                                {
+                                    "id": "00716c78-30f4-4288-8ae3-85f77668c0b8",
+                                    "name": "Sin contexto autenticado (RF-26).",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "v1",
+                                                "currencies"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"code\": \"<string>\",\n  \"minorUnits\": \"<integer>\",\n  \"name\": \"<string>\",\n  \"dryRun\": false\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "status": "Unauthorized",
+                                    "code": 401,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                },
+                                {
+                                    "id": "5e09a3d7-62c6-41e3-8989-5f2df4127d7a",
+                                    "name": "PERSISTENCE_CONFLICT (reintentos agotados, hu-0025) u otro conflicto de estado.",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "v1",
+                                                "currencies"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            },
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"code\": \"<string>\",\n  \"minorUnits\": \"<integer>\",\n  \"name\": \"<string>\",\n  \"dryRun\": false\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "status": "Conflict",
+                                    "code": 409,
+                                    "header": [
+                                        {
+                                            "key": "Content-Type",
+                                            "value": "application/json"
+                                        }
+                                    ],
+                                    "body": "{\n  \"statusCode\": \"<integer>\",\n  \"error\": \"<string>\",\n  \"message\": \"<string>\",\n  \"path\": \"<string>\",\n  \"timestamp\": \"<dateTime>\",\n  \"code\": \"IDEMPOTENCY_INPUT_MISMATCH\"\n}",
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "json"
+                                },
+                                {
+                                    "id": "35284a90-6ea5-4685-a0fe-367c2286a0de",
+                                    "name": "CURRENCY_ALREADY_REGISTERED o INVALID_CURRENCY_CODE.",
+                                    "originalRequest": {
+                                        "url": {
+                                            "path": [
+                                                "v1",
+                                                "currencies"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": []
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"code\": \"<string>\",\n  \"minorUnits\": \"<integer>\",\n  \"name\": \"<string>\",\n  \"dryRun\": false\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "status": "Unprocessable Entity (WebDAV) (RFC 4918)",
+                                    "code": 422,
+                                    "header": [],
+                                    "cookie": [],
+                                    "_postman_previewlanguage": "text"
+                                }
+                            ],
+                            "event": [],
+                            "protocolProfileBehavior": {
+                                "disableBodyPruning": true
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "event": [],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "/"
+        }
+    ],
+    "info": {
+        "_postman_id": "53cc5b17-cc70-45a8-a5b5-d2d6aecab701",
+        "name": "hu-0025 — Políticas transversales del command bus",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": {
+            "content": "Delta del contrato HTTP. Dos cambios transversales, sin endpoints nuevos:\n\n1. **`dryRun: boolean` en el body de TODAS las escrituras** (AC-2, AC-3, AC-4) —\n   modo preview: el comando se ejecuta completo dentro de la transacción y se\n   hace rollback, devolviendo el resultado que la ejecución real habría\n   producido. Ningún evento se persiste, ningún reactor se despacha. Default\n   `false` (sin cambio de comportamiento). El campo es metadata de transporte:\n   no entra al hash de idempotencia (`X-External-Ref` no interactúa con él).\n2. **`PERSISTENCE_CONFLICT` (409)** — nuevo código de error (AC-5): al agotar\n   los 3 intentos por deadlock (`40P01`) o serialization failure (`40001`),\n   toda escritura responde con este código estable en vez del error crudo del\n   motor (hoy eso burbujearía como 500 sin `code`). Es aditivo sobre la tabla\n   de códigos de RF-14.\n\nLa respuesta de las escrituras **no cambia de forma**: mismo\n`CommandAcceptedDto`, mismos headers (`X-Ledger-Stream-Position`,\n`Idempotency-Hit`), mismos status 201/200. Un preview exitoso devuelve el\n`CommandAcceptedDto` del resultado real (AC-4: mismo esquema de respuesta).\n\n**Operaciones modificadas (12) — mismo delta en cada una:** `initializeLedger`,\n`openAccount`, `renameAccount`, `closeAccount`, `recordTransaction`,\n`confirmTransaction`, `amendTransaction`, `annotateTransaction`,\n`voidTransaction`, `reverseTransaction`, `assertBalance`, `revokeAssertion`,\n`resolveDiscrepancy`, `registerCurrency`.\n\n**Operaciones que entran por primera vez al contrato (3, endpoints ya vivos en\ncódigo, hoy sin api.yaml ni flow):** `recordOpeningBalance`,\n`mergeTransfers`, `registerCurrency` (este último ya tenía flow).\n",
+            "type": "text/plain"
+        }
+    }
+}

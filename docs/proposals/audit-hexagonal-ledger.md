@@ -1,6 +1,6 @@
-# Auditoría de Arquitectura Hexagonal — `apps/ledger`
+# Auditoría de Arquitectura Hexagonal — `../../apps/ledger`
 
-**Alcance:** `apps/ledger/src/` (verificado también `libs/cqrs/src/` como kernel de apoyo)
+**Alcance:** `../../apps/ledger/src` (verificado también `../../libs/cqrs/src` como kernel de apoyo)
 **Fecha:** 2026-08-07 · **Rama:** `feat/core`
 **Score:** 26/36 → 36/36 (primera pasada) → 35/39 → **39/39** (segunda pasada aplicada)
 
@@ -217,7 +217,7 @@ Tres causas distintas, y ninguna es "se me pasó":
   `reconciliation.rebuild.spec.ts`, que colgaba de la raíz por lo mismo. Las cinco
   raíces de módulo quedan con su `.module.ts` y nada más.
 
-### [LOW] T-4 · Cuatro imports relativos `../../../` cruzando módulos
+### [LOW] T-4 · Cuatro imports relativos `../../..` cruzando módulos
 
 - **Dónde:** `ledger/application/initialize-ledger/initialize-ledger.handler.spec.ts:6`,
   `transactions/application/amend-transaction/amend-pending-transaction.handler.spec.ts:4`,
@@ -226,7 +226,7 @@ Tres causas distintas, y ninguna es "se me pasó":
   y los cuatro apuntan a los archivos de C-1 y C-2. El síntoma señala la causa.
 - **Fix:** usar `@ledger/*`. Desaparecen solos al resolver C-1 y C-2.
 - **✅ Resuelto — se cayó solo,** como estaba previsto: los cuatro apuntaban a
-  archivos que C-1 y C-2 movieron. No queda ningún `../../../` en el app.
+  archivos que C-1 y C-2 movieron. No queda ningún `../../..` en el app.
 
 ## Falsos positivos confirmados (no volver a reportarlos)
 
@@ -330,7 +330,7 @@ Swagger y devuelven las filas `snake_case` del read model. Ya está reconocido c
   - `apps/ledger/src/ledger/application/get-ledger-settings/get-ledger-settings.query.ts:3`
   - `apps/ledger/src/reference/application/list-currencies.query.ts:5`
 - **Regla rota:** *Dependencies point inward only* — `application` MUST NOT import
-  `infrastructure/*`. También `docs/rules.md` Artículo 1 en espíritu: "todo acceso a
+  `infrastructure/*`. También `../rules.md` Artículo 1 en espíritu: "todo acceso a
   infraestructura entra por puertos".
 - **Por qué duele:** las constantes `PROJ_ACCOUNTS`, `PROJ_TRANSACTIONS`,
   `PROJ_LEDGER_SETTINGS`… y los tipos `AccountTreeRow`, `LedgerSettingsRow`,
@@ -368,11 +368,11 @@ Swagger y devuelven las filas `snake_case` del read model. Ya está reconocido c
   `ledger`. `LedgerCoreModule` ya es el composition root real (`ledger-core.module.ts`)
   y sólo delega en este factory.
 - **Fix:** mover ambos factories fuera del módulo `ledger`, a una raíz neutral
-  (`apps/ledger/src/bootstrap/` o junto a `LedgerCoreModule`). Es un movimiento de
+  (`../../apps/ledger/src/bootstrap` o junto a `LedgerCoreModule`). Es un movimiento de
   archivo más el ajuste de imports; H-1 resuelto reduce además lo que el factory
   necesita conocer.
 - **✅ Resuelto.** `ledger-application.factory.ts` y `query-bus.factory.ts` (con sus
-  specs) movidos con `git mv` a `apps/ledger/src/bootstrap/`. `ledger/application/`
+  specs) movidos con `git mv` a `../../apps/ledger/src/bootstrap`. `ledger/application/`
   queda con lo que le pertenece: sus casos de uso, su repositorio y el registro de
   eventos. `createLedgerEventRegistry` se dejó en `ledger/application/` a propósito:
   no importa infraestructura, y moverlo no arreglaba nada (Simplicity Gate).
@@ -616,7 +616,7 @@ Swagger y devuelven las filas `snake_case` del read model. Ya está reconocido c
 
 ### [LOW] L-2 · El módulo `reference` no sigue el layout de los otros cuatro
 
-- **Dónde:** `apps/ledger/src/reference/application/` — sin subcarpeta por caso de
+- **Dónde:** `../../apps/ledger/src/reference/application` — sin subcarpeta por caso de
   uso; `list-currencies.query.ts` contiene la query, el tipo de fila **y** el handler
   en un archivo; `reference/infrastructure/adapters/http/currencies.controller.ts:23-40`
   define `RegisterCurrencyRequestDto` dentro del archivo del controller, mientras los
@@ -648,7 +648,7 @@ Swagger y devuelven las filas `snake_case` del read model. Ya está reconocido c
 
 ### [LOW] L-4 · Barrels prácticamente ausentes; los imports son deep paths
 
-- **Dónde:** 24 `index.ts` en todo `apps/ledger/src`, contra ~70 carpetas con
+- **Dónde:** 24 `index.ts` en todo `../../apps/ledger/src`, contra ~70 carpetas con
   contenido. Todos los imports usan la ruta completa
   (`@ledger/accounts/application/open-account/open-account.command`).
 - **Regla rota:** *Every folder with content ships an `index.ts`; import through the
@@ -656,10 +656,10 @@ Swagger y devuelven las filas `snake_case` del read model. Ya está reconocido c
 - **Nota:** es una desviación **consistente** en todo el proyecto y no compromete la
   dirección de dependencias — se reporta como convención a documentar, no como
   defecto. La ruta profunda además es legible con el alias `@ledger/*`.
-- **Fix:** decidir explícitamente y anotarlo en `docs/rules.md` o en el README del
+- **Fix:** decidir explícitamente y anotarlo en `../rules.md` o en el README del
   app. Si se adopta barrels, hacerlo por módulo y de una sola vez; si no, dejar
   constancia para que el criterio no se reabra en cada review.
-- **✅ Resuelto documentando, que era el fix.** `docs/rules.md` gana el **Artículo 13**
+- **✅ Resuelto documentando, que era el fix.** `../rules.md` gana el **Artículo 13**
   (constitución a 1.1.0): imports por ruta completa, con las cuatro excepciones donde
   el barrel sí aplica. La razón registrada es concreta y no estética: la ruta dice en
   qué capa y en qué caso de uso vive lo importado — que es lo que una revisión de
@@ -728,7 +728,7 @@ npx jest --config libs/cqrs/jest.config.ts --rootDir libs/cqrs
 
 Las 4 suites skipped exigen una Postgres viva y ya lo estaban antes. `eslint` deja
 sólo lo preexistente: los `no-console` de `tooling/rebuild.command.ts` (es un CLI) y
-tres `no-empty-function` en specs de `libs/cqrs`. Ninguno introducido aquí.
+tres `no-empty-function` en specs de `../../libs/cqrs`. Ninguno introducido aquí.
 
 ## Sigue abierto
 
@@ -738,7 +738,7 @@ de arquitectura:
 - **`AccountTreeView` (`?view=tree|flat`)** — se retiró del contrato porque el
   controller lo ignoraba. Si el árbol anidado se quiere de verdad, es una HU con su
   propio diseño (forma recursiva en OpenAPI incluida), no un fix.
-- **`strict: false` en `tsconfig.base.json`** — ya documentado en el propio archivo
+- **`strict: false` en `../../tsconfig.base.json`** — ya documentado en el propio archivo
   como cambio pendiente y deliberado.
 
 ## Fuera de alcance de esta skill

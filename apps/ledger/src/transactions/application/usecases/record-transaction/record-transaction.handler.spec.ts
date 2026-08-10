@@ -1,13 +1,13 @@
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
 import { IdGenerator } from '@cqrs/domain/ports';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { CurrencyCatalog } from '@ledger/shared/domain/value-objects';
 import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
 import { PostingValidator } from '@ledger/transactions/application/ports/posting-validator.port';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
 import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';
 import { UnbalancedTransactionException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { RecordTransactionCommand } from './record-transaction.command';
 import { RecordTransactionHandler } from './record-transaction.handler';
 

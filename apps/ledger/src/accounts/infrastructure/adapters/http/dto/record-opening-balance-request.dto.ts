@@ -1,5 +1,14 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsNotEmpty, IsString, Matches } from 'class-validator';
+import {
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
+import {  IsBoolean,
+  IsDateString,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+} from 'class-validator';
 
 /** Decimal string with an optional sign; scale is the currency's business. */
 const DECIMAL_AMOUNT = /^-?\d+(\.\d+)?$/;
@@ -30,4 +39,8 @@ export class RecordOpeningBalanceRequestDto {
   })
   @IsDateString()
   readonly date: string;
+  @ApiPropertyOptional({ default: false, description: 'Preview mode (hu-0025): execute the command fully inside the transaction and roll back, returning the result the real run would have produced.' })
+  @IsOptional()
+  @IsBoolean()
+  readonly dryRun?: boolean;
 }

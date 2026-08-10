@@ -1,12 +1,12 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Nullable } from '@shared';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import {
   PostingView,
   TransactionListItemView,
   TransactionView,
 } from '@ledger/transactions/application/views/transaction.view';
 import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 
 /** A posting as served by the `transaction_list` projection. */
 export class TransactionPostingDto implements PostingView {

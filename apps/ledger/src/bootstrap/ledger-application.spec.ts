@@ -1,28 +1,31 @@
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { CommandBus } from '@cqrs/application/command-bus/command-bus';
 import { MissingAuthContextException } from '@cqrs/application/command-bus/policies/missing-auth-context.exception';
+import { PersistenceConflictException } from '@cqrs/domain/exceptions/persistence-conflict.exception';
+import { TransientPersistenceException } from '@cqrs/domain/exceptions/transient-persistence.exception';
 import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
+import { InMemoryTransactionScope } from '@cqrs/infrastructure/adapters/transaction/in-memory-transaction.scope';
 import { Criteria } from '@shared';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { OpenAccountCommand } from '@ledger/accounts/application/usecases/open-account/open-account.command';
 import { NameCollisionException } from '@ledger/accounts/domain/account/exceptions/account.exception';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { InitializeLedgerCommand } from '@ledger/ledger/application/usecases/initialize-ledger/initialize-ledger.command';
 import { LedgerAlreadyInitializedException } from '@ledger/ledger/domain/settings/exceptions/ledger.exception';
 import { PROJ_LEDGER_SETTINGS } from '@ledger/ledger/infrastructure/projections/ledger-settings.schema';
-import { PROJ_CURRENCIES } from '@ledger/reference/infrastructure/projections/currencies.schema';
 import { RegisterCurrencyCommand } from '@ledger/reference/application/usecases/register-currency/register-currency.command';
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/persistence/read-model-currency-catalog';
+import { PROJ_CURRENCIES } from '@ledger/reference/infrastructure/projections/currencies.schema';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { CurrencyCode } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
-import { PROJ_BALANCES } from '@ledger/transactions/infrastructure/projections/account-balances.schema';
-import { PROJ_TRANSACTIONS } from '@ledger/transactions/infrastructure/projections/transaction-list.schema';
 import { ConfirmTransactionCommand } from '@ledger/transactions/application/usecases/confirm-transaction/confirm-transaction.command';
 import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
 import { ReverseConfirmedTransactionCommand } from '@ledger/transactions/application/usecases/reverse-transaction/reverse-confirmed-transaction.command';
 import { UnbalancedTransactionException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
+import { PROJ_BALANCES } from '@ledger/transactions/infrastructure/projections/account-balances.schema';
+import { PROJ_TRANSACTIONS } from '@ledger/transactions/infrastructure/projections/transaction-list.schema';
 import { createLedgerApplication } from './ledger-application.factory';
 
 const ctx = (externalRef: string | null = null): AuthContext => ({
@@ -335,5 +338,178 @@ describe('Ledger application (write side)', () => {
 
     expect(reversing.reverses_id).toBe(recorded.aggregateId);
     expect(balance.confirmed_amount).toBe('0');
+  });
+});
+
+describe('Dry-run preview (in-memory composition, hu-0025)', () => {
+  function dryRunSetup() {
+    const scope = new InMemoryTransactionScope();
+    const eventStore = new InMemoryEventStore(scope);
+    const readModel = new InMemoryReadModelStore(scope);
+    const app = createLedgerApplication({
+      eventStore,
+      readModel,
+      clock: new FixedClock(new Date('2026-07-22T12:00:00.000Z')),
+      idGenerator: new SequentialIdGenerator(),
+      catalog: new SeedCurrencyCatalog(),
+      retryWait: async () => undefined,
+    });
+
+    return { bus: app.commandBus, readModel, eventStore };
+  }
+
+  const dryRunCtx = (): AuthContext => ({ ...ctx(), dryRun: true });
+
+  it('previews a transaction without persisting events or projections (AC-2, AC-3)', async () => {
+    const { bus, readModel, eventStore } = dryRunSetup();
+    await bus.dispatch(new InitializeLedgerCommand('COP', 'America/Bogota'), ctx());
+    const { expenses, assets } = await openTwoAccounts(bus);
+    const command = new RecordTransactionCommand(
+      '2026-07-20',
+      'Netflix',
+      'Monthly subscription',
+      [
+        { accountId: expenses, amount: '31900', currency: 'COP' },
+        { accountId: assets, amount: '-31900', currency: 'COP' },
+      ],
+      TransactionStatus.PENDING,
+    );
+
+    const before = (await eventStore.readAll(0n, 100)).length;
+    const preview = await bus.dispatch(command, dryRunCtx());
+
+    expect(preview.aggregateId).toBeTruthy();
+    expect(preview.streamPosition).toBeGreaterThan(0n);
+    expect(await eventStore.readAll(0n, 100)).toHaveLength(before);
+    expect(
+      await readModel.query(PROJ_TRANSACTIONS, Criteria.none().equals('user_id', 'user-1')),
+    ).toEqual([]);
+  });
+
+  it('keeps a subsequent real run valid after a preview (AC-2)', async () => {
+    const { bus, readModel, eventStore } = dryRunSetup();
+    await bus.dispatch(new InitializeLedgerCommand('COP', 'America/Bogota'), ctx());
+    const { expenses, assets } = await openTwoAccounts(bus);
+    const command = new RecordTransactionCommand(
+      '2026-07-20',
+      'Netflix',
+      'Monthly subscription',
+      [
+        { accountId: expenses, amount: '31900', currency: 'COP' },
+        { accountId: assets, amount: '-31900', currency: 'COP' },
+      ],
+      TransactionStatus.PENDING,
+    );
+
+    await bus.dispatch(command, dryRunCtx());
+    const real = await bus.dispatch(command, ctx());
+
+    expect(real.aggregateId).toBeTruthy();
+    expect(await eventStore.readAll(0n, 100)).toHaveLength(6); // initialize + 2 system + 2 user + txn
+    const [row] = await readModel.query<{ derived_kind: string }>(
+      PROJ_TRANSACTIONS,
+      Criteria.none().equals('transaction_id', real.aggregateId),
+    );
+    expect(row.derived_kind).toBe('EXPENSE');
+  });
+
+  it('propagates domain failures during a preview without side effects (AC-2)', async () => {
+    const { bus, eventStore } = dryRunSetup();
+    await bus.dispatch(new InitializeLedgerCommand('COP', 'America/Bogota'), ctx());
+    const { expenses, assets } = await openTwoAccounts(bus);
+    const before = (await eventStore.readAll(0n, 100)).length;
+
+    await expect(
+      bus.dispatch(
+        new RecordTransactionCommand(
+          '2026-07-20',
+          null,
+          'Broken',
+          [
+            { accountId: expenses, amount: '31900', currency: 'COP' },
+            { accountId: assets, amount: '-31000', currency: 'COP' },
+          ],
+          TransactionStatus.PENDING,
+        ),
+        dryRunCtx(),
+      ),
+    ).rejects.toBeInstanceOf(UnbalancedTransactionException);
+
+    expect(await eventStore.readAll(0n, 100)).toHaveLength(before);
+  });
+});
+
+describe('Retry on transient failures (in-memory composition, hu-0025)', () => {
+  function retrySetup() {
+    const eventStore = new InMemoryEventStore();
+    const readModel = new InMemoryReadModelStore();
+    const app = createLedgerApplication({
+      eventStore,
+      readModel,
+      clock: new FixedClock(new Date('2026-07-22T12:00:00.000Z')),
+      idGenerator: new SequentialIdGenerator(),
+      catalog: new SeedCurrencyCatalog(),
+      retryWait: async () => undefined,
+    });
+
+    return { bus: app.commandBus, eventStore };
+  }
+
+  it('retries a transient append failure and succeeds (AC-5)', async () => {
+    const { bus, eventStore } = retrySetup();
+    await bus.dispatch(new InitializeLedgerCommand('COP', 'America/Bogota'), ctx());
+    const { expenses, assets } = await openTwoAccounts(bus);
+    const append = jest
+      .spyOn(eventStore, 'append')
+      .mockImplementationOnce(async () => { throw new TransientPersistenceException('deadlock'); })
+      .mockImplementationOnce(async () => { throw new TransientPersistenceException('deadlock'); });
+
+    const result = await bus.dispatch(
+      new RecordTransactionCommand(
+        '2026-07-20',
+        'Netflix',
+        'Sub',
+        [
+          { accountId: expenses, amount: '31900', currency: 'COP' },
+          { accountId: assets, amount: '-31900', currency: 'COP' },
+        ],
+        TransactionStatus.PENDING,
+      ),
+      ctx(),
+    );
+
+    expect(result.aggregateId).toBeTruthy();
+    expect(append).toHaveBeenCalledTimes(3);
+
+    append.mockRestore();
+  });
+
+  it('surfaces PERSISTENCE_CONFLICT once the retry budget is exhausted (AC-5)', async () => {
+    const { bus, eventStore } = retrySetup();
+    await bus.dispatch(new InitializeLedgerCommand('COP', 'America/Bogota'), ctx());
+    const { expenses, assets } = await openTwoAccounts(bus);
+    const append = jest
+      .spyOn(eventStore, 'append')
+      .mockImplementation(async () => { throw new TransientPersistenceException('deadlock'); });
+
+    await expect(
+      bus.dispatch(
+        new RecordTransactionCommand(
+          '2026-07-20',
+          'Netflix',
+          'Sub',
+          [
+            { accountId: expenses, amount: '31900', currency: 'COP' },
+            { accountId: assets, amount: '-31900', currency: 'COP' },
+          ],
+          TransactionStatus.PENDING,
+        ),
+        ctx(),
+      ),
+    ).rejects.toBeInstanceOf(PersistenceConflictException);
+
+    expect(append).toHaveBeenCalledTimes(3);
+
+    append.mockRestore();
   });
 });

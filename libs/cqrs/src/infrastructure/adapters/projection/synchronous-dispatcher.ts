@@ -20,7 +20,6 @@ export class SynchronousProjectionDispatcher extends ProjectionDispatcher {
     for (const event of events) {
       for (const projector of this.projectors) {
         if (!projector.handles(event.eventType)) continue;
-
         await projector.project(event, this.store);
       }
     }

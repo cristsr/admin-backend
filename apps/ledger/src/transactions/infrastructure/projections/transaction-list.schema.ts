@@ -1,11 +1,11 @@
 import { Nullable } from '@shared';
-import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
 import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import {
   PostingView,
   TransactionListItemView,
   TransactionView,
 } from '@ledger/transactions/application/views/transaction.view';
+import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
 
 /**
  * Physical shape of `proj_transactions` and `proj_postings`, declared next to

@@ -7,11 +7,11 @@ import { Criteria } from '@shared';
 import { AccountTreeProjector } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
 import { Money } from '@ledger/shared/domain/money';
 import { CurrencyCatalog, CurrencyCode } from '@ledger/shared/domain/value-objects';
+import { AccountBalancesProjector } from '@ledger/transactions/infrastructure/projections/account-balances.projector';
 import {
   BalanceRow,
   PROJ_BALANCES,
 } from '@ledger/transactions/infrastructure/projections/account-balances.schema';
-import { AccountBalancesProjector } from '@ledger/transactions/infrastructure/projections/account-balances.projector';
 import { TransactionListProjector } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
 import {
   BalanceDiscrepancy,

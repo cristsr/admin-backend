@@ -1,6 +1,6 @@
 import { Logger, Module, OnModuleInit } from '@nestjs/common';
-import { CurrenciesController } from '@ledger/reference/infrastructure/adapters/http/currencies.controller';
 import { CurrencyCatalogCache } from '@ledger/reference/application/ports/currency-catalog-cache.port';
+import { CurrenciesController } from '@ledger/reference/infrastructure/adapters/http/currencies.controller';
 
 /**
  * Reference data: the global currency catalog.

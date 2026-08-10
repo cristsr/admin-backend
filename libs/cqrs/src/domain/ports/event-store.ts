@@ -4,6 +4,17 @@ import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { StreamId } from '@cqrs/domain/event/stream-id.type';
 import { Nullable } from '@shared';
 
+/** Options for {@link EventStore.withTransaction}. */
+export type TransactionOptions = {
+  /**
+   * When true, the scope executes `work` and always rolls back, returning
+   * `work`'s result. Backs the dry-run preview (AC-2): the command runs fully
+   * inside the transaction — validations, aggregate invariants, event
+   * generation and synchronous projections — and only the commit is skipped.
+   */
+  readonly rollback?: boolean;
+};
+
 /**
  * Append-only event store (INV-12) — the ledger's source of truth. Its contract
  * is verified by one reusable suite that runs identically against the in-memory
@@ -47,7 +58,10 @@ export abstract class EventStore {
    * of them aborts the whole scope. Nesting is not supported — an inner call
    * joins the outer scope rather than opening a second transaction.
    */
-  abstract withTransaction<T>(work: () => Promise<T>): Promise<T>;
+  abstract withTransaction<T>(
+    work: () => Promise<T>,
+    options?: TransactionOptions,
+  ): Promise<T>;
 
   /** The anchor event of the command that used this `external_ref`, if any. */
   abstract findByExternalRef(

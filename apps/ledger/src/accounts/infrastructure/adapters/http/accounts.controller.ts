@@ -6,7 +6,6 @@ import { CommandResult } from '@cqrs/application/command-bus/command-result.type
 import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { QueryContext } from '@cqrs/application/query-bus/query-handler';
 import { Nullable } from '@shared';
-import { AccountView } from '@ledger/accounts/application/views/account.view';
 import { CloseAccountCommand } from '@ledger/accounts/application/usecases/close-account/close-account.command';
 import { GetAccountBalancesQuery } from '@ledger/accounts/application/usecases/get-account-balances/get-account-balances.query';
 import { GetAccountByIdQuery } from '@ledger/accounts/application/usecases/get-account-by-id/get-account-by-id.query';
@@ -14,6 +13,8 @@ import { GetAccountTreeQuery } from '@ledger/accounts/application/usecases/get-a
 import { OpenAccountCommand } from '@ledger/accounts/application/usecases/open-account/open-account.command';
 import { RecordOpeningBalanceCommand } from '@ledger/accounts/application/usecases/record-opening-balance/record-opening-balance.command';
 import { RenameAccountCommand } from '@ledger/accounts/application/usecases/rename-account/rename-account.command';
+import { AccountView } from '@ledger/accounts/application/views/account.view';
+import { BalanceView } from '@ledger/accounts/application/views/balance.view';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import {
   CommandAcceptedDto,
@@ -21,7 +22,6 @@ import {
   Context,
   ExternalRef,
 } from '@ledger/shared/infrastructure/adapters/http';
-import { BalanceView } from '@ledger/accounts/application/views/balance.view';
 import { AccountBalanceQueryDto } from './dto/account-balance-query.dto';
 import { AccountBalanceDto } from './dto/account-balance.dto';
 import { AccountDto } from './dto/account.dto';
@@ -56,7 +56,7 @@ export class AccountsController {
   ): Promise<CommandResult> {
     const command = new OpenAccountCommand(dto.name, dto.currencies, dto.openedOn, dto.isBankMirror);
 
-    return this.commandBus.dispatch(command, this.authContext(context, externalRef));
+    return this.commandBus.dispatch(command, this.authContext(context, externalRef, dto));
   }
 
   /**
@@ -107,7 +107,7 @@ export class AccountsController {
   ): Promise<CommandResult> {
     const command = new RenameAccountCommand(id, dto.newName);
 
-    return this.commandBus.dispatch(command, this.authContext(context, externalRef));
+    return this.commandBus.dispatch(command, this.authContext(context, externalRef, dto));
   }
 
   @Post(':id/opening-balance')
@@ -127,7 +127,7 @@ export class AccountsController {
   ): Promise<CommandResult> {
     const command = new RecordOpeningBalanceCommand(id, dto.amount, dto.currency, dto.date);
 
-    return this.commandBus.dispatch(command, this.authContext(context, externalRef));
+    return this.commandBus.dispatch(command, this.authContext(context, externalRef, dto));
   }
 
   @Post(':id/close')
@@ -142,12 +142,19 @@ export class AccountsController {
   ): Promise<CommandResult> {
     const command = new CloseAccountCommand(id, dto.closedOn);
 
-    return this.commandBus.dispatch(command, this.authContext(context, externalRef));
+    return this.commandBus.dispatch(command, this.authContext(context, externalRef, dto));
   }
 
-  /** Builds the write-side context: identity plus the optional idempotency key. */
-  private authContext(context: LedgerContext, externalRef: Nullable<string>): AuthContext {
-    return { userId: context.userId, clientId: context.clientId, externalRef };
+  /**
+   * Builds the write-side context: identity plus the optional idempotency key
+   * and the preview flag, which the body may carry (hu-0025, AC-4).
+   */
+  private authContext(
+    context: LedgerContext,
+    externalRef: Nullable<string>,
+    dto: { dryRun?: boolean },
+  ): AuthContext {
+    return { userId: context.userId, clientId: context.clientId, externalRef, dryRun: dto.dryRun };
   }
 
   /** Builds the read-side context: the owning user that partitions every read (INV-9). */

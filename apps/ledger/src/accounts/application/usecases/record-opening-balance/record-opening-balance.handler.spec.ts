@@ -3,11 +3,11 @@ import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model
 import { ReadModelSystemAccountLookup } from '@ledger/ledger/infrastructure/adapters/persistence/read-model-system-account-lookup';
 import { PROJ_LEDGER_SETTINGS } from '@ledger/ledger/infrastructure/projections/ledger-settings.schema';
 import { LedgerNotInitializedException } from '@ledger/shared/domain/errors/ledger.exception';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { RecordingCommandBus } from '@ledger/shared/testing';
 import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { RecordOpeningBalanceCommand } from './record-opening-balance.command';
 import { RecordOpeningBalanceHandler } from './record-opening-balance.handler';
 

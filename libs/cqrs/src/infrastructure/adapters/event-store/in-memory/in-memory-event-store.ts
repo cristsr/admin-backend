@@ -7,8 +7,9 @@ import {
   ConcurrencyConflictException,
   DuplicateExternalRefException,
 } from '@cqrs/domain/exceptions/event-store.exception';
-import { EventStore } from '@cqrs/domain/ports/event-store';
+import { EventStore, TransactionOptions } from '@cqrs/domain/ports/event-store';
 import { Nullable, canonicalJson, sha256Hex } from '@shared';
+import { InMemoryTransactionScope, SnapshotableStore } from '../../transaction/in-memory-transaction.scope';
 
 const GENESIS_HASH = '';
 
@@ -27,23 +28,60 @@ type Chained = { readonly hash: string; readonly chainInput: ChainHashInput };
  * exactly the race G-3 exists to close, mirrored here for the in-memory
  * adapter since PostgreSQL closes it with `pg_advisory_xact_lock`.
  */
-export class InMemoryEventStore extends EventStore {
+export class InMemoryEventStore extends EventStore implements SnapshotableStore {
   private readonly events: StoredEvent[] = [];
   private readonly chains = new Map<string, Chained>();
   private readonly userLocks = new Map<string, Promise<void>>();
   private nextPosition = 1n;
   private depth = 0;
 
+  constructor(private readonly scope?: InMemoryTransactionScope) {
+    super();
+    this.scope?.attach(this);
+  }
+
+  snapshot(): unknown {
+    return {
+      events: [...this.events],
+      chains: new Map(this.chains),
+      nextPosition: this.nextPosition,
+    };
+  }
+
+  restore(snapshot: unknown): void {
+    const state = snapshot as {
+      events: StoredEvent[];
+      chains: Map<string, Chained>;
+      nextPosition: bigint;
+    };
+
+    this.events.length = 0;
+    this.events.push(...state.events);
+    this.chains.clear();
+    for (const [id, chained] of state.chains) this.chains.set(id, chained);
+    this.nextPosition = state.nextPosition;
+  }
+
   /**
    * Runs `work` atomically: a failure rolls the store back to its state before
    * the scope opened, mirroring the PostgreSQL transaction so both adapters
-   * satisfy one contract.
+   * satisfy one contract. With `{ rollback: true }` (dry-run preview, AC-2) the
+   * successful path also rolls back, returning `work`'s result.
+   *
+   * When a shared {@link InMemoryTransactionScope} is present, the scope
+   * snapshots every attached store (event store + read model), so a rollback
+   * reverts the synchronous projections too (AC-3).
    *
    * The snapshot is a shallow copy of the event list — enough because
    * `StoredEvent` is never mutated in place, only appended.
    */
-  async withTransaction<T>(work: () => Promise<T>): Promise<T> {
+  async withTransaction<T>(
+    work: () => Promise<T>,
+    options?: TransactionOptions,
+  ): Promise<T> {
     if (this.depth > 0) return work(); // guard: an inner call joins the outer scope
+
+    if (this.scope) return this.scope.run(work, options);
 
     const snapshot = [...this.events];
     const chainsSnapshot = new Map(this.chains);
@@ -51,18 +89,25 @@ export class InMemoryEventStore extends EventStore {
     this.depth += 1;
 
     try {
-      return await work();
+      const result = await work();
+      if (options?.rollback) {
+        this.restoreTo(snapshot, chainsSnapshot, positionBefore);
+      }
+      return result;
     } catch (error) {
-      this.events.length = 0;
-      this.events.push(...snapshot);
-      this.chains.clear();
-      for (const [id, chained] of chainsSnapshot) this.chains.set(id, chained);
-      this.nextPosition = positionBefore;
-
+      this.restoreTo(snapshot, chainsSnapshot, positionBefore);
       throw error;
     } finally {
       this.depth -= 1;
     }
+  }
+
+  private restoreTo(
+    events: readonly StoredEvent[],
+    chains: ReadonlyMap<string, Chained>,
+    nextPosition: bigint,
+  ): void {
+    this.restore({ events: [...events], chains: new Map(chains), nextPosition });
   }
 
   async append(

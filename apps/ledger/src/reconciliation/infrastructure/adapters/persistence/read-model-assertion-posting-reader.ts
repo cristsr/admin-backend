@@ -7,9 +7,9 @@ import {
   TouchedAccount,
 } from '@ledger/reconciliation/domain/ports/assertion-posting-reader.port';
 import { Money } from '@ledger/shared/domain/money';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared/domain/value-objects';
 import { PROJ_POSTINGS, PostingRow } from '@ledger/transactions/infrastructure/projections/transaction-list.schema';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 
 /**
  * Reads an account's `CONFIRMED`+`PENDING` postings up to a cutoff from

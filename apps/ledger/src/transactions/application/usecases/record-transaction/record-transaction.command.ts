@@ -1,8 +1,8 @@
 import { Command } from '@cqrs/application/command-bus/command';
 import { Nullable } from '@shared';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
 import { PostingInput } from '@ledger/transactions/application/types/posting-input.type';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 
 /**
  * Records a transaction with explicit postings in PENDING or CONFIRMED state.

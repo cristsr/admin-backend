@@ -6,8 +6,8 @@ import { EvaluateAssertionHandler } from '@ledger/reconciliation/application/use
 import { AssertionPostingReader } from '@ledger/reconciliation/domain/ports/assertion-posting-reader.port';
 import { InMemoryAssertionPostingReader } from '@ledger/reconciliation/infrastructure/adapters/persistence/in-memory/in-memory-assertion-posting-reader';
 import { Currency, Money } from '@ledger/shared/domain/money';
-import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
+import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { ReevaluateAssertionsReactor } from './reevaluate-assertions.reactor';
 
 /** Records the last lookup call and returns pre-seeded assertion ids per account. */

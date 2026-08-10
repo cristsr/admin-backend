@@ -1,17 +1,17 @@
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { Nullable } from '@shared';
-import { ReadModelAccountConstraintsReader } from '@ledger/accounts/infrastructure/adapters/persistence/read-model-account-constraints-reader';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import {
   AccountClosedException,
   CurrencyNotAllowedException,
   SystemAccountProtectedException,
 } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { AccountNotFoundException } from '@ledger/accounts/domain/account/exceptions/account.exception';
+import { ReadModelAccountConstraintsReader } from '@ledger/accounts/infrastructure/adapters/persistence/read-model-account-constraints-reader';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
 import { aMoney } from '@ledger/shared/testing';
-import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
 import { AccountValidationService } from './account-validation.service';
 
 type AccountSeed = {

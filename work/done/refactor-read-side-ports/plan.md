@@ -49,7 +49,7 @@ Las 11 AC de `hu.md` están cubiertas.
 ## Desviaciones del pipeline SDD, declaradas
 
 Esta no es una historia de producto y el workspace no sigue `STORY_ID_PATTERN`
-(`hu-<number>`). Precedente: `work/active/audit-hexagonal-ledger.md`.
+(`hu-<number>`). Precedente: `../../../docs/proposals/audit-hexagonal-ledger.md`.
 
 - **Sin `/hu`, `/clarify`, `/scan`** — `hu.md` se escribió a mano (no hay historia de
   usuario que estructurar) y `context.md` es el relevamiento del read side ya hecho.

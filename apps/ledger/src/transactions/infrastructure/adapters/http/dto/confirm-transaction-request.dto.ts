@@ -1,6 +1,13 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsOptional, ValidateNested } from 'class-validator';
+import {  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsOptional,
+  ValidateNested,
+} from 'class-validator';
 import { PostingDto } from './posting.dto';
 
 /**
@@ -15,4 +22,8 @@ export class ConfirmTransactionRequestDto {
   @ValidateNested({ each: true })
   @Type(() => PostingDto)
   readonly postings?: PostingDto[];
+  @ApiPropertyOptional({ default: false, description: 'Preview mode (hu-0025): execute the command fully inside the transaction and roll back, returning the result the real run would have produced.' })
+  @IsOptional()
+  @IsBoolean()
+  readonly dryRun?: boolean;
 }

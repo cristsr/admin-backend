@@ -4,6 +4,7 @@ import {
   DuplicateExternalRefException,
   IdempotencyInputMismatchException,
 } from '@cqrs/domain/exceptions/event-store.exception';
+import { PersistenceConflictException } from '@cqrs/domain/exceptions/persistence-conflict.exception';
 import { DomainException, ExceptionFilter } from '@shared';
 import {
   AccountClosedException,
@@ -62,6 +63,7 @@ describe('Ledger error code → HTTP status contract', () => {
     [new ConcurrencyConflictException('conflict'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.CONCURRENCY_CONFLICT],
     [new DuplicateExternalRefException('duplicate'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.DUPLICATE_EXTERNAL_REF],
     [new IdempotencyInputMismatchException('mismatch'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.IDEMPOTENCY_INPUT_MISMATCH],
+    [new PersistenceConflictException('exhausted'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.PERSISTENCE_CONFLICT],
     [new AccountNotFoundException('no account'), HttpStatus.NOT_FOUND, LEDGER_ERROR_CODE.ACCOUNT_NOT_FOUND],
     [new TransactionNotFoundException('no transaction'), HttpStatus.NOT_FOUND, LEDGER_ERROR_CODE.TRANSACTION_NOT_FOUND],
     [new LedgerNotInitializedException('not initialized'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.LEDGER_NOT_INITIALIZED],

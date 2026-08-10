@@ -7,11 +7,11 @@ import { GetAccountBalancesQuery } from '@ledger/accounts/application/usecases/g
 import { GetAccountTreeQuery } from '@ledger/accounts/application/usecases/get-account-tree/get-account-tree.query';
 import { OpenAccountCommand } from '@ledger/accounts/application/usecases/open-account/open-account.command';
 import { createLedgerApplication } from '@ledger/bootstrap/ledger-application.factory';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, SequentialIdGenerator } from '@ledger/shared/testing';
 import { ListTransactionsQuery } from '@ledger/transactions/application/usecases/list-transactions/list-transactions.query';
 import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { createQueryBus } from './query-bus.factory';
 import { createQueryPorts } from './read-side-ports.factory';
 

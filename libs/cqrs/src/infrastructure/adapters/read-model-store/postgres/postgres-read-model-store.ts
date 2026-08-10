@@ -5,16 +5,30 @@ import {
   ReadModelStore,
 } from '@cqrs/application/projection/read-model-store';
 import { Criteria, Filter, FilterOperator } from '@shared';
-import { DataSource } from 'typeorm';
+import { DataSource, EntityManager } from 'typeorm';
+import { PostgresTransactionScope } from '../../transaction/postgres-transaction.scope';
 
 /**
  * PostgreSQL {@link ReadModelStore} implementation.
  * Projectors upsert denormalized rows; queries use Criteria or raw SQL.
+ *
+ * Since hu-0025 the store writes through the shared
+ * {@link PostgresTransactionScope} when a command transaction is open, so the
+ * synchronous projections join the command's unit of work — a dry-run rollback
+ * reverts them too (AC-2, AC-3).
  */
 @Injectable()
 export class PostgresReadModelStore extends ReadModelStore {
-  constructor(private readonly dataSource: DataSource) {
+  constructor(
+    private readonly dataSource: DataSource,
+    private readonly scope: PostgresTransactionScope,
+  ) {
     super();
+  }
+
+  /** Writes join the command's transaction when one is open (AC-2). */
+  private executor(): DataSource | EntityManager {
+    return this.scope.current() ?? this.dataSource;
   }
 
   async upsert(table: string, key: ReadModelKey, row: ReadModelRow): Promise<void> {
@@ -35,7 +49,7 @@ export class PostgresReadModelStore extends ReadModelStore {
       ${conflictClause}
     `;
 
-    await this.dataSource.query(sql, values);
+    await this.executor().query(sql, values);
   }
 
   async delete(table: string, key: ReadModelKey): Promise<void> {
@@ -44,7 +58,7 @@ export class PostgresReadModelStore extends ReadModelStore {
     const values = Object.values(key);
 
     const sql = `DELETE FROM ${table} WHERE ${conditions}`;
-    await this.dataSource.query(sql, values);
+    await this.executor().query(sql, values);
   }
 
   async query<TRow>(table: string, criteria: Criteria): Promise<TRow[]> {
@@ -72,7 +86,7 @@ export class PostgresReadModelStore extends ReadModelStore {
       : '';
 
     const sql = `SELECT * FROM ${table} ${whereClause} ${orderClause} ${limitClause}`;
-    return this.dataSource.query(sql, params);
+    return this.executor().query(sql, params);
   }
 
   async count(table: string, criteria: Criteria): Promise<number> {
@@ -93,7 +107,7 @@ export class PostgresReadModelStore extends ReadModelStore {
 
     // Ordering and pagination are deliberately dropped: the total is what
     // matches, not what one page shows.
-    const [row] = await this.dataSource.query(
+    const [row] = await this.executor().query(
       `SELECT COUNT(*) AS total FROM ${table} ${whereClause}`,
       params,
     );
@@ -103,14 +117,14 @@ export class PostgresReadModelStore extends ReadModelStore {
   }
 
   async truncate(table: string): Promise<void> {
-    await this.dataSource.query(`TRUNCATE TABLE ${table} CASCADE`);
+    await this.executor().query(`TRUNCATE TABLE ${table} CASCADE`);
   }
 
   /**
    * Convenience method for raw SQL queries (used by handlers).
    */
   async queryRaw<TRow>(sql: string, params?: unknown[]): Promise<TRow[]> {
-    return this.dataSource.query(sql, params || []);
+    return this.executor().query(sql, params || []);
   }
 
   /**

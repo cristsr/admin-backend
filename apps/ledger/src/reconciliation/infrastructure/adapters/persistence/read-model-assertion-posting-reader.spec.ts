@@ -1,10 +1,10 @@
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
 import { FilterOperator } from '@shared';
 import { Money } from '@ledger/shared/domain/money';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { PROJ_POSTINGS } from '@ledger/transactions/infrastructure/projections/transaction-list.schema';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { ReadModelAssertionPostingReader } from './read-model-assertion-posting-reader';
 
 describe('ReadModelAssertionPostingReader', () => {

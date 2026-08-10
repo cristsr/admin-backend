@@ -4,11 +4,11 @@ import { CommandResult } from '@cqrs/application/command-bus/command-result.type
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
 import { IdGenerator } from '@cqrs/domain/ports';
 import { EventStore } from '@cqrs/domain/ports/event-store';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
 import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';
 import { TransactionNotFoundException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
 import { LedgerTransaction } from '@ledger/transactions/domain/transaction/ledger-transaction.aggregate';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { ReverseConfirmedTransactionCommand } from './reverse-confirmed-transaction.command';
 
 /**

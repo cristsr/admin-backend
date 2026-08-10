@@ -1,5 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { AsyncLocalStorage } from 'node:async_hooks';
 import { AppendResult } from '@cqrs/domain/event/append-result.type';
 import { chainHashInput } from '@cqrs/domain/event/chain-hash-input.type';
 import { EventEnvelope } from '@cqrs/domain/event/event-envelope.type';
@@ -9,9 +8,11 @@ import {
   ConcurrencyConflictException,
   DuplicateExternalRefException,
 } from '@cqrs/domain/exceptions/event-store.exception';
-import { EventStore } from '@cqrs/domain/ports/event-store';
+import { TransientPersistenceException } from '@cqrs/domain/exceptions/transient-persistence.exception';
+import { EventStore, TransactionOptions } from '@cqrs/domain/ports/event-store';
 import { Nullable, canonicalJson, sha256Hex } from '@shared';
 import { DataSource, EntityManager, QueryFailedError } from 'typeorm';
+import { PostgresTransactionScope } from '../../transaction/postgres-transaction.scope';
 import { EventStoreRow, toStoredEvent } from './event-store.row.type';
 
 const UNIQUE_VIOLATION = '23505';
@@ -40,24 +41,48 @@ const SELECT_COLUMNS = `
  */
 @Injectable()
 export class PostgresEventStore extends EventStore {
-  /**
-   * Manager of the transaction currently in scope, if any. Kept in
-   * AsyncLocalStorage so `append` can join an open `withTransaction` without the
-   * caller — a domain handler — having to carry a database object around
-   * (rules Art. 1).
-   */
-  private readonly scope = new AsyncLocalStorage<EntityManager>();
-
-  constructor(private readonly dataSource: DataSource) {
+  constructor(
+    private readonly dataSource: DataSource,
+    /**
+     * Shared transaction carrier (also used by the read model store) so a
+     * command's synchronous projections join the same unit of work (AC-2).
+     */
+    private readonly scope: PostgresTransactionScope,
+  ) {
     super();
   }
 
-  async withTransaction<T>(work: () => Promise<T>): Promise<T> {
-    const running = this.scope.getStore();
+  async withTransaction<T>(
+    work: () => Promise<T>,
+    options?: TransactionOptions,
+  ): Promise<T> {
+    const running = this.scope.current();
 
     if (running) return work(); // guard: an inner call joins the outer scope
 
-    return this.dataSource.transaction((manager) => this.scope.run(manager, work));
+    if (!options?.rollback) {
+      return this.dataSource.transaction((manager) => this.scope.run(manager, work));
+    }
+
+    // Rollback mode: a manual query runner lets us execute the work and then
+    // roll back instead of committing (dry-run preview, AC-2). The advisory
+    // xact lock is released by the rollback; identity positions are burned,
+    // which is harmless for projection catch-up (`global_position > from`).
+    const runner = this.dataSource.createQueryRunner();
+
+    await runner.connect();
+    await runner.startTransaction();
+
+    try {
+      const result = await this.scope.run(runner.manager, work);
+      await runner.rollbackTransaction();
+      return result;
+    } catch (error) {
+      await runner.rollbackTransaction();
+      throw error;
+    } finally {
+      await runner.release();
+    }
   }
 
   async append(
@@ -72,7 +97,7 @@ export class PostgresEventStore extends EventStore {
     try {
       // Inside a `withTransaction` scope this joins it, so several streams commit
       // together; outside, it opens its own transaction exactly as before.
-      const inScope = this.scope.getStore();
+      const inScope = this.scope.current();
       const stored = inScope
         ? await this.insertAll(inScope, stream, expectedVersion, events)
         : await this.dataSource.transaction((manager) =>
@@ -207,6 +232,12 @@ export class PostgresEventStore extends EventStore {
     }
 
     const driverError = error.driverError as { code?: string; constraint?: string };
+
+    if (driverError?.code === '40P01' || driverError?.code === '40001') {
+      return new TransientPersistenceException(
+        `Transient PostgreSQL failure (${driverError.code})`,
+      );
+    }
 
     if (driverError?.code !== UNIQUE_VIOLATION) return error;
 

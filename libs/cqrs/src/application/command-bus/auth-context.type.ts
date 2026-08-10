@@ -18,4 +18,11 @@ export type AuthContext = {
    * by controllers do not need to change.
    */
   readonly externalRefHash?: Nullable<string>;
+  /**
+   * Preview mode (hu-0025): the write executes fully inside a transaction and
+   * rolls back, returning the result the real run would have produced.
+   * Transport metadata — carried on the context (like `externalRef`), never on
+   * the Command, so it stays out of the idempotency input hash by construction.
+   */
+  readonly dryRun?: boolean;
 };

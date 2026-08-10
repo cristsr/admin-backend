@@ -1,6 +1,6 @@
 import { Nullable } from '@shared';
-import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
 import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
+import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
 
 /** One posting as the API exposes it. Amounts stay exact decimal strings (INV-8). */
 export type PostingView = {

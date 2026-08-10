@@ -1,7 +1,7 @@
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
-import { AccountNameReader } from '@ledger/accounts/application/ports/account-name-reader.port';
 import { IdGenerator } from '@cqrs/domain/ports';
+import { AccountNameReader } from '@ledger/accounts/application/ports/account-name-reader.port';
 import { AccountRepository } from '@ledger/accounts/application/repositories/account.repository';
 import { AccountNameRegistry } from '@ledger/accounts/application/services/account-name.registry';
 import { NameCollisionException } from '@ledger/accounts/domain/account/exceptions/account.exception';

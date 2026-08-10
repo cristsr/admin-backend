@@ -138,4 +138,27 @@ describe('AccountsController', () => {
     expect(controller).toBeInstanceOf(AccountsController);
     expect(AccountsController.length).toBe(2);
   });
+
+  describe('dry-run preview (hu-0025, AC-4)', () => {
+    it('carries body.dryRun into the AuthContext of a write', async () => {
+      await controller.open(context, 'ref-1', {
+        type: AccountType.ASSETS,
+        name: 'Assets:Bank',
+        currencies: ['COP'],
+        openedOn: '2026-07-20',
+        isBankMirror: true,
+        dryRun: true,
+      });
+
+      const [, ctx] = commandBus.dispatch.mock.calls[0];
+      expect(ctx).toMatchObject({ dryRun: true });
+    });
+
+    it('leaves dryRun undefined when the body omits it', async () => {
+      await controller.rename(context, 'ref-1', 'acc-1', { newName: 'Assets:Other' });
+
+      const [, ctx] = commandBus.dispatch.mock.calls[0];
+      expect(ctx).toMatchObject({ dryRun: undefined });
+    });
+  });
 });

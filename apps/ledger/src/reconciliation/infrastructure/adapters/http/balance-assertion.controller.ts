@@ -17,21 +17,21 @@ import { CommandResult } from '@cqrs/application/command-bus/command-result.type
 import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { QueryContext } from '@cqrs/application/query-bus/query-handler';
 import { Nullable } from '@shared';
-import {
-  AssertionStatusView,
-} from '@ledger/reconciliation/application/views/assertion-status.view';
 import { AssertBalanceCommand } from '@ledger/reconciliation/application/usecases/assert-balance/assert-balance.command';
 import { GetAssertionStatusQuery } from '@ledger/reconciliation/application/usecases/get-assertion-status/get-assertion-status.query';
 import { ListAssertionsQuery } from '@ledger/reconciliation/application/usecases/list-assertions/list-assertions.query';
 import { ResolveDiscrepancyCommand } from '@ledger/reconciliation/application/usecases/resolve-discrepancy/resolve-discrepancy.command';
 import { RevokeAssertionCommand } from '@ledger/reconciliation/application/usecases/revoke-assertion/revoke-assertion.command';
+import {
+  AssertionStatusView,
+} from '@ledger/reconciliation/application/views/assertion-status.view';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import {
   CommandResultInterceptor,
   Context,
   ExternalRef,
 } from '@ledger/shared/infrastructure/adapters/http';
-import { AssertBalanceRequestDto, RevokeAssertionRequestDto } from './dto';
+import { AssertBalanceRequestDto, ResolveDiscrepancyRequestDto, RevokeAssertionRequestDto } from './dto';
 import { AssertionStatusDto } from './dto/assertion-status.dto';
 
 /**
@@ -68,6 +68,7 @@ export class BalanceAssertionController {
       ),
       context,
       externalRef,
+      body,
     );
   }
 
@@ -79,7 +80,7 @@ export class BalanceAssertionController {
     @Param('id') id: string,
     @Body() body: RevokeAssertionRequestDto,
   ): Promise<CommandResult> {
-    return this.dispatch(new RevokeAssertionCommand(id, body.reason), context, externalRef);
+    return this.dispatch(new RevokeAssertionCommand(id, body.reason), context, externalRef, body);
   }
 
   @Post(':id/resolve')
@@ -88,8 +89,9 @@ export class BalanceAssertionController {
     @Context() context: LedgerContext,
     @ExternalRef() externalRef: Nullable<string>,
     @Param('id') id: string,
+    @Body() body: ResolveDiscrepancyRequestDto,
   ): Promise<CommandResult> {
-    return this.dispatch(new ResolveDiscrepancyCommand(id), context, externalRef);
+    return this.dispatch(new ResolveDiscrepancyCommand(id), context, externalRef, body);
   }
 
   @Get(':id')
@@ -117,16 +119,21 @@ export class BalanceAssertionController {
     return { userId: context.userId };
   }
 
-  /** Dispatches a command with the write-side context assembled from the request. */
+  /**
+   * Dispatches a command with the write-side context assembled from the request
+   * (identity + idempotency key + the preview flag the body may carry, AC-4).
+   */
   private dispatch(
     command: Command,
     context: LedgerContext,
     externalRef: Nullable<string>,
+    dto: { dryRun?: boolean },
   ): Promise<CommandResult> {
     const ctx: AuthContext = {
       userId: context.userId,
       clientId: context.clientId,
       externalRef,
+      dryRun: dto.dryRun,
     };
 
     return this.commandBus.dispatch(command, ctx);

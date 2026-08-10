@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import 'reflect-metadata';
 import { ProjectionRegistry } from '@cqrs/application/tooling/projection-registry';
 import { PostgresEventChainReader } from '@cqrs/infrastructure/adapters/event-store/postgres/postgres-event-chain-reader';
@@ -5,11 +6,12 @@ import { PostgresEventStore } from '@cqrs/infrastructure/adapters/event-store/po
 import { InMemoryProjectionCheckpointRepository } from '@cqrs/infrastructure/adapters/projection/in-memory-projection-checkpoint.repository';
 import { ProjectionRebuilder } from '@cqrs/infrastructure/adapters/projection/projection-rebuilder';
 import { PostgresReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';
+import { PostgresTransactionScope } from '@cqrs/infrastructure/adapters/transaction/postgres-transaction.scope';
 import { DataSource } from 'typeorm';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { AccountTreeProjector } from '@ledger/accounts/infrastructure/projections/account-tree.projector';
-import { PROJ_LEDGER_SETTINGS } from '@ledger/ledger/infrastructure/projections/ledger-settings.schema';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { LedgerSettingsProjector } from '@ledger/ledger/infrastructure/projections/ledger-settings.projector';
+import { PROJ_LEDGER_SETTINGS } from '@ledger/ledger/infrastructure/projections/ledger-settings.schema';
 import { RECONCILIATION_PROJECTION } from '@ledger/reconciliation/infrastructure/adapters/events/reconciliation.pump';
 import {
   AdjustmentAuditProjector,
@@ -20,17 +22,17 @@ import {
   AssertionStatusProjector,
   PROJ_ASSERTIONS,
 } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
-import { PROJ_CURRENCIES } from '@ledger/reference/infrastructure/projections/currencies.schema';
 import { ReadModelCurrencyCatalog } from '@ledger/reference/infrastructure/adapters/persistence/read-model-currency-catalog';
 import { CurrenciesProjector } from '@ledger/reference/infrastructure/projections/currencies.projector';
+import { PROJ_CURRENCIES } from '@ledger/reference/infrastructure/projections/currencies.schema';
 import { ChainVerifier } from '@ledger/tooling/chain-verifier';
 import { ConsistencyVerifier } from '@ledger/tooling/consistency-verifier';
-import { PROJ_BALANCES } from '@ledger/transactions/infrastructure/projections/account-balances.schema';
-import { PROJ_PENDING_REVIEW } from '@ledger/transactions/infrastructure/projections/pending-review.schema';
-import { PROJ_POSTINGS, PROJ_TRANSACTIONS } from '@ledger/transactions/infrastructure/projections/transaction-list.schema';
 import { AccountBalancesProjector } from '@ledger/transactions/infrastructure/projections/account-balances.projector';
+import { PROJ_BALANCES } from '@ledger/transactions/infrastructure/projections/account-balances.schema';
 import { PendingReviewProjector } from '@ledger/transactions/infrastructure/projections/pending-review.projector';
+import { PROJ_PENDING_REVIEW } from '@ledger/transactions/infrastructure/projections/pending-review.schema';
 import { TransactionListProjector } from '@ledger/transactions/infrastructure/projections/transaction-list.projector';
+import { PROJ_POSTINGS, PROJ_TRANSACTIONS } from '@ledger/transactions/infrastructure/projections/transaction-list.schema';
 
 async function main(): Promise<void> {
   const args = process.argv.slice(2);
@@ -52,8 +54,11 @@ async function main(): Promise<void> {
   });
   await dataSource.initialize();
 
-  const eventStore = new PostgresEventStore(dataSource);
-  const readModel = new PostgresReadModelStore(dataSource);
+  // One shared transaction scope so writes and projections join the same
+  // unit of work (hu-0025).
+  const scope = new PostgresTransactionScope();
+  const eventStore = new PostgresEventStore(dataSource, scope);
+  const readModel = new PostgresReadModelStore(dataSource, scope);
 
   // Read the registered currencies rather than a fixed seed: a ledger holding
   // any currency beyond COP/USD would otherwise fail to resolve its own

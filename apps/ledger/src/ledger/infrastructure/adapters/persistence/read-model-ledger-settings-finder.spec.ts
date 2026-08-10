@@ -14,7 +14,7 @@ const row = {
 async function finderWith(userIds: readonly string[]): Promise<ReadModelLedgerSettingsFinder> {
   const store = new InMemoryReadModelStore();
 
-  for (const [index, userId] of userIds.entries()) {
+  for (const [, userId] of userIds.entries()) {
     await store.upsert(PROJ_LEDGER_SETTINGS, { user_id: userId }, { ...row, user_id: userId });
   }
 

@@ -5,8 +5,8 @@ import {
 } from '@cqrs/application/projection/read-model-store';
 import { Criteria } from '@shared';
 import {
-  AdjustmentAuditRecord,
   AdjustmentAuditReader,
+  AdjustmentAuditRecord,
 } from '@ledger/reconciliation/application/ports/adjustment-audit-reader.port';
 import { PROJ_ADJUSTMENT_AUDIT } from '@ledger/reconciliation/infrastructure/projections/adjustment-audit.projector';
 

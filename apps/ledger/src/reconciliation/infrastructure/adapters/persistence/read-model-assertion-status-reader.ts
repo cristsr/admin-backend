@@ -5,8 +5,8 @@ import {
 } from '@cqrs/application/projection/read-model-store';
 import { Criteria, Nullable } from '@shared';
 import {
-  AssertionStatusRecord,
   AssertionStatusReader,
+  AssertionStatusRecord,
 } from '@ledger/reconciliation/application/ports/assertion-status-reader.port';
 import { AssertionStatus } from '@ledger/reconciliation/domain/balance-assertion/enums/assertion-status.enum';
 import { PROJ_ASSERTIONS } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';

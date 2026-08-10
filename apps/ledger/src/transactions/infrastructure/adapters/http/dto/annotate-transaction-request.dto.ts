@@ -1,5 +1,13 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsArray, IsObject, IsOptional, IsString, IsUrl } from 'class-validator';
+import {
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
+import {  IsArray,
+  IsBoolean,
+  IsObject,
+  IsOptional,
+  IsString,
+  IsUrl,
+} from 'class-validator';
 
 /**
  * Body of `POST /transactions/{id}/annotate`. Non-economic changes, allowed in
@@ -32,4 +40,8 @@ export class AnnotateTransactionRequestDto {
   @IsOptional()
   @IsObject()
   readonly metadata?: Record<string, unknown>;
+  @ApiPropertyOptional({ default: false, description: 'Preview mode (hu-0025): execute the command fully inside the transaction and roll back, returning the result the real run would have produced.' })
+  @IsOptional()
+  @IsBoolean()
+  readonly dryRun?: boolean;
 }

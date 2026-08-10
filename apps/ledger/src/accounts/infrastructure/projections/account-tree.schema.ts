@@ -45,7 +45,6 @@ export type AccountRow = {
 
 /**
  * Maps a stored row to what goes over the wire.
- *
  * This is the seam that keeps a projection change from becoming a breaking API
  * change, which is why the cast from stored text to the application enum
  * (rules Art. 8) happens here, at the edge, and not in a use case.

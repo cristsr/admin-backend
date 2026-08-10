@@ -1,6 +1,6 @@
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
-import { LedgerNotInitializedException } from '@ledger/shared/domain/errors/ledger.exception';
 import { PROJ_LEDGER_SETTINGS } from '@ledger/ledger/infrastructure/projections/ledger-settings.schema';
+import { LedgerNotInitializedException } from '@ledger/shared/domain/errors/ledger.exception';
 import { ReadModelLedgerTimezoneReader } from './read-model-ledger-timezone-reader';
 
 async function readerWith(rows: readonly { user_id: string; timezone: string }[]): Promise<ReadModelLedgerTimezoneReader> {

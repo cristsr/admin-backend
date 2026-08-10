@@ -7,8 +7,8 @@ import {
 } from '@ledger/transactions/application/ports/pending-review-finder.port';
 import { PendingReviewView } from '@ledger/transactions/application/views/pending-review.view';
 import {
-  PendingReviewRow,
   PROJ_PENDING_REVIEW,
+  PendingReviewRow,
   toPendingReviewView,
 } from '@ledger/transactions/infrastructure/projections/pending-review.schema';
 

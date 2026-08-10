@@ -1,5 +1,4 @@
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
-import { Criteria } from '@shared';
 import {
   BalanceRow,
   PROJ_BALANCES,

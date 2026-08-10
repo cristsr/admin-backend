@@ -2,6 +2,7 @@ import { EventStore } from '@cqrs/domain/ports/event-store';
 import { PostgresEventChainReader } from '@cqrs/infrastructure/adapters/event-store/postgres/postgres-event-chain-reader';
 import { PostgresEventStore } from '@cqrs/infrastructure/adapters/event-store/postgres/postgres-event-store';
 import { CreateEventStore1790000000001 } from '@cqrs/infrastructure/adapters/migrations/1790000000001-CreateEventStore';
+import { PostgresTransactionScope } from '@cqrs/infrastructure/adapters/transaction/postgres-transaction.scope';
 import { describeEventChainReaderContract } from '@cqrs/infrastructure/testing/event-chain-reader.contract';
 import { describeEventStoreContract } from '@cqrs/infrastructure/testing/event-store.contract';
 import { DataSource } from 'typeorm';
@@ -33,7 +34,7 @@ if (runPgTests) {
     if (!dataSource?.isInitialized) await initialize();
     await dataSource.query('TRUNCATE event_store RESTART IDENTITY');
 
-    return new PostgresEventStore(dataSource);
+    return new PostgresEventStore(dataSource, new PostgresTransactionScope());
   };
 
   afterAll(async () => {

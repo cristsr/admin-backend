@@ -1,0 +1,173 @@
+// C4 delta — hu-0025: Políticas transversales del command bus (dry-run + retry).
+// Extiende admin.ledger.shared (landscape.c4 + shared.c4 + shared-kernel.c4).
+// create: dryRunPolicy, retryPolicy, transientPersistenceException, persistenceConflictException,
+//         retryCounter (port) + otelRetryCounter (adapter), 2 flows nuevos.
+// modify: commandBus (chain 3→5 policies), command-dispatch, map-domain-error.
+
+model {
+  extend admin.ledger.shared {
+
+    // --- Políticas nuevas (hu-0025, F-12/F-14/F-22) ---
+
+    dryRunPolicy = component 'DryRunPolicy' {
+      technology 'Application · CommandPolicy (chain)'
+      description 'Quinta política, la más interna. Si ctx.dryRun (body dryRun: true), ejecuta el handler completo dentro de EventStore.withTransaction(rollback=true): validaciones, invariantes, generación de eventos y proyecciones síncronas; al terminar hace rollback y devuelve el CommandResult que la ejecución real habría producido (F-12). Ningún evento se persiste (los reactors del §3.2 se alimentan del stream: nunca ven nada) y el IdGenerator es UUID v4, nada que quemar. Error durante el preview → rollback y propagación.'
+      metadata {
+        introducedIn 'hu-0025'
+      }
+    }
+
+    retryPolicy = component 'RetryPolicy' {
+      technology 'Application · CommandPolicy (chain)'
+      description 'Segunda política, envuelve a idempotencia + concurrencia + dry-run. CUANDO el adaptador de persistencia falla con TransientPersistenceException (40P01 deadlock / 40001 serialization), reintenta el comando completo — 3 intentos en total (original + 2 reintentos) con backoff exponencial con jitter (~10-40ms). SI se agotan, lanza PersistenceConflictException (PERSISTENCE_CONFLICT, 409). NUNCA captura ConcurrencyConflictException (AC-6: se propaga, la policy de concurrencia sigue reintentando una vez con reload) ni DuplicateExternalRefException (lo resuelve IdempotencyPolicy, AC-7). Cada reintento incrementa RetryCounter con commandType como atributo (AC-8).'
+      metadata {
+        introducedIn 'hu-0025'
+      }
+    }
+
+    // --- Excepciones nuevas (hu-0025) ---
+
+    transientPersistenceException = component 'TransientPersistenceException' {
+      technology 'Domain · Exception'
+      description 'Extiende DomainException (libs/cqrs). El adaptador PostgresEventStore.translate() traduce 40P01 deadlock_detected y 40001 serialization_failure a esta excepción (único lugar que ve el driver). Es el contrato entre el puerto y RetryPolicy — no sale al API: o se resuelve reintentando o se convierte en PERSISTENCE_CONFLICT.'
+      metadata {
+        introducedIn 'hu-0025'
+      }
+    }
+
+    persistenceConflictException = component 'PersistenceConflictException' {
+      technology 'Domain · Exception'
+      description 'Extiende DomainConflictException, code PERSISTENCE_CONFLICT (409, nuevo en LEDGER_ERROR_CODE). La lanza RetryPolicy al agotar los 3 intentos por fallo transitorio. Sustituye el QueryFailedError crudo de TypeORM que hoy llegaría al ExceptionFilter como 500 sin code.'
+      metadata {
+        introducedIn 'hu-0025'
+      }
+    }
+
+    // --- Política preexistente sin documentar en el modelo (origen a confirmar en /sync) ---
+
+    optimisticConcurrencyPolicy = component 'OptimisticConcurrencyPolicy' {
+      technology 'Application · CommandPolicy (chain)'
+      description 'Cuarta política. Bounds conflictos de concurrencia optimista (INV-7): reintenta una vez recargando el agregado contra el head fresco (MAX_RETRIES = 1) y luego propaga CONCURRENCY_CONFLICT. hu-0025 (AC-6) no lo toca: el conflicto de agregado nunca entra en la RetryPolicy nueva.'
+      metadata {
+        introducedIn 'hu-0012'
+      }
+    }
+
+    // --- Observabilidad de reintentos (hu-0025, AC-8) ---
+
+    retryCounter = component 'RetryCounter' {
+      technology 'Application · Port (abstract class)'
+      description 'Puerto mínimo de métricas para AC-8: increment(commandType: string). En el núcleo solo existe la firma; no hay acoplamiento a OTel (Artículo 1). Las otras métricas de RNF-12 siguen en backlog hu-0022.'
+      metadata {
+        introducedIn 'hu-0025'
+      }
+    }
+
+    otelRetryCounter = component 'OtelRetryCounter' {
+      technology 'Infrastructure · Adapter (@opentelemetry/api)'
+      description 'Implementa RetryCounter con un Counter OTel (meter default, atributo ledger.command.type). Se cablea en ledger-core.module.ts junto a las demás policies.'
+      metadata {
+        introducedIn 'hu-0025'
+      }
+    }
+
+    // --- Relaciones (hu-0025) ---
+
+    admin.ledger.shared.commandBus -> admin.ledger.shared.retryPolicy 'delega el chain de políticas (2ª de 5)'
+    admin.ledger.shared.commandBus -> admin.ledger.shared.dryRunPolicy 'delega el chain de políticas (5ª de 5)'
+
+    admin.ledger.shared.retryPolicy -> admin.ledger.shared.transientPersistenceException 'captura 40P01/40001 (reintenta)'
+    admin.ledger.shared.retryPolicy -> admin.ledger.shared.persistenceConflictException 'lanza al agotar los 3 intentos'
+    admin.ledger.shared.retryPolicy -> admin.ledger.shared.retryCounter 'incrementa por commandType (AC-8)'
+
+    admin.ledger.shared.postgresEventStore -> admin.ledger.shared.transientPersistenceException 'traduce 40P01/40001 en translate()'
+
+    admin.ledger.shared.otelRetryCounter -> admin.ledger.shared.retryCounter 'implements'
+  }
+
+  extend admin.ledger.shared.commandBus {
+    #delta-changed
+    metadata {
+      changedIn 'hu-0025'
+    }
+  }
+
+  extend admin.ledger.shared.idempotencyPolicy {
+    metadata {
+      changedIn 'hu-0025'
+    }
+  }
+
+  // Marcadores efímeros de revisión (los tags inline no son válidos en cuerpos de
+  // componente en la versión de LikeC4 instalada; se aplican vía extend).
+  extend admin.ledger.shared.dryRunPolicy { #delta-new }
+  extend admin.ledger.shared.retryPolicy { #delta-new }
+  extend admin.ledger.shared.transientPersistenceException { #delta-new }
+  extend admin.ledger.shared.persistenceConflictException { #delta-new }
+  extend admin.ledger.shared.retryCounter { #delta-new }
+  extend admin.ledger.shared.otelRetryCounter { #delta-new }
+}
+
+views 'Shared Kernel · Buses' {
+  view sharedKernelComponents of admin.ledger.shared {
+    title 'Componentes'
+    include admin.ledger.shared, admin.ledger.shared.*
+  }
+
+  // NOTA: shared_http_command_dispatch y shared_http_map_domain_error (vistas vivas
+  // en shared.c4) se modifican en el delta de /sync — no se re-declaran acá para
+  // no duplicarlas (limitación del validador). /sync aplica el title [CHANGED] y los
+  // pasos nuevos del chain (ver design.md).
+
+  // Modo preview: ejecutar todo y revertir (hu-0025, F-12)
+  dynamic view shared_http_dry_run {
+    title '[NEW] POST /api/v1/* con dryRun: true → preview sin efectos · trigger: rest'
+    description 'AC-2, AC-3, AC-4: con body.dryRun=true, DryRunPolicy ejecuta el handler completo dentro de EventStore.withTransaction(rollback=true). Los appends de eventos se unen al scope (append ya consulta el AsyncLocalStorage); las proyecciones síncronas escriben por el mismo scope (PostgresReadModelStore pasa a consultarlo); al resolver el work la transacción hace rollback y se devuelve el CommandResult que la ejecución real habría producido. Nada llega al stream → los reactors (ReevaluateAssertionsReactor, §3.2) no se disparan.'
+
+    admin.ledger.shared.commandBus -> admin.ledger.shared.dryRunPolicy 'ctx.dryRun → abre transacción rollback'
+    admin.ledger.shared.dryRunPolicy -> admin.ledger.shared.eventStore 'withTransaction(rollback=true)'
+    admin.ledger.shared.dryRunPolicy -> admin.ledger.shared.commandResultInterceptor 'CommandResult de la ejecución real (revertida)'
+    admin.ledger.shared.eventStore -> admin.ledger.shared.readModel 'upserts de proyecciones en el mismo scope (se revierten)'
+    admin.ledger.shared.projectionDispatcher -> admin.ledger.shared.readModel 'proyecta en el scope transaccional'
+
+    autoLayout TopBottom
+  }
+
+  // Reintento ante fallos transitorios del motor (hu-0025, F-14)
+  dynamic view shared_http_retry_deadlock {
+    title '[NEW] Fallo 40P01/40001 → reintento (3 intentos) o PERSISTENCE_CONFLICT · trigger: rest'
+    description 'AC-5, AC-6, AC-7, AC-8: PostgresEventStore.translate() convierte 40P01/40001 en TransientPersistenceException. RetryPolicy la captura y reintenta el comando completo (backoff exponencial con jitter, 3 intentos totales), incrementando RetryCounter con el tipo de comando. Al agotar, lanza PersistenceConflictException → PERSISTENCE_CONFLICT (409). ConcurrencyConflictException (AC-6) y DuplicateExternalRefException (AC-7) no se capturan: se resuelven en sus políticas.'
+
+    admin.ledger.shared.postgresEventStore -> admin.ledger.shared.transientPersistenceException 'traduce 40P01/40001'
+    admin.ledger.shared.retryPolicy -> admin.ledger.shared.transientPersistenceException 'captura → reintenta (3 intentos)'
+    admin.ledger.shared.retryPolicy -> admin.ledger.shared.retryCounter 'incrementa por commandType'
+    admin.ledger.shared.retryPolicy -> admin.ledger.shared.persistenceConflictException 'intentos agotados → 409 PERSISTENCE_CONFLICT'
+    admin.ledger.shared.persistenceConflictException -> admin.ledger.shared.exceptionFilter 'burbujea como DomainException'
+
+    autoLayout TopBottom
+  }
+}
+
+views 'Accounts' {
+  dynamic view recordOpeningBalance {
+    title '[NEW] Registro de saldo inicial · trigger: rest'
+    description 'AC-4 (hu-0025): AccountsController construye RecordOpeningBalanceCommand desde el body (amount, currency, date, dryRun) y lo despacha al CommandBus. El handler resuelve Equity:OpeningBalances de los settings (INV-13). Con dryRun: true, DryRunPolicy ejecuta completo y revierte; RetryPolicy reintenta 40P01/40001.'
+
+    admin.ledger.accounts.controller -> admin.ledger.shared.commandBus 'despacha RecordOpeningBalanceCommand'
+    admin.ledger.shared.commandBus -> admin.ledger.shared.dryRunPolicy 'si dryRun: true → ejecuta y revierte (AC-2/3)'
+
+    autoLayout TopBottom
+  }
+}
+
+views 'Transactions' {
+  dynamic view mergeTransfers {
+    title '[NEW] Fusión de patas de transferencia · trigger: rest'
+    description 'AC-4 (hu-0025): TransferController construye MergePendingTransfersCommand desde el body (pendingIds, dryRun) y lo despacha al CommandBus. Los appends corren dentro de EventStore.withTransaction (INV-7); en modo dry-run ese scope es el de DryRunPolicy y revierte.'
+
+    admin.ledger.transactions.transferController -> admin.ledger.shared.commandBus 'despacha MergePendingTransfersCommand'
+    admin.ledger.shared.commandBus -> admin.ledger.shared.dryRunPolicy 'si dryRun: true → ejecuta y revierte (AC-2/3)'
+
+    autoLayout TopBottom
+  }
+}

@@ -4,14 +4,40 @@ import {
   ReadModelStore,
 } from '@cqrs/application/projection/read-model-store';
 import { Criteria, Filter, FilterOperator, OrderType } from '@shared';
+import {
+  InMemoryTransactionScope,
+  SnapshotableStore,
+} from '../../transaction/in-memory-transaction.scope';
 
 /**
  * In-memory {@link ReadModelStore} for testing the full read side without a
  * database. Rows live in a per-table map keyed by their primary key;
  * queries evaluate the shared {@link Criteria} in process.
+ *
+ * Since hu-0025 it joins the shared {@link InMemoryTransactionScope} when one
+ * is provided, so a dry-run rollback reverts the synchronous projections too
+ * (AC-3). Rows are replaced wholesale on `upsert` (never mutated in place), so
+ * map copies are enough for the snapshot.
  */
-export class InMemoryReadModelStore extends ReadModelStore {
+export class InMemoryReadModelStore extends ReadModelStore implements SnapshotableStore {
   private readonly tables = new Map<string, Map<string, ReadModelRow>>();
+
+  constructor(private readonly scope?: InMemoryTransactionScope) {
+    super();
+    this.scope?.attach(this);
+  }
+
+  snapshot(): unknown {
+    const tables = new Map<string, Map<string, ReadModelRow>>();
+    for (const [name, rows] of this.tables) tables.set(name, new Map(rows));
+    return tables;
+  }
+
+  restore(snapshot: unknown): void {
+    const tables = snapshot as Map<string, Map<string, ReadModelRow>>;
+    this.tables.clear();
+    for (const [name, rows] of tables) this.tables.set(name, new Map(rows));
+  }
 
   async upsert(table: string, key: ReadModelKey, row: ReadModelRow): Promise<void> {
     this.tableOf(table).set(this.keyOf(key), row);

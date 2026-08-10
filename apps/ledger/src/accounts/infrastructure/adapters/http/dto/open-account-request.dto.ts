@@ -1,5 +1,8 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
+import { 
   ArrayNotEmpty,
   IsArray,
   IsBoolean,
@@ -45,4 +48,8 @@ export class OpenAccountRequestDto {
   @ApiProperty({ description: 'True when this account mirrors a real bank account or wallet.' })
   @IsBoolean()
   readonly isBankMirror: boolean;
+  @ApiPropertyOptional({ default: false, description: 'Preview mode (hu-0025): execute the command fully inside the transaction and roll back, returning the result the real run would have produced.' })
+  @IsOptional()
+  @IsBoolean()
+  readonly dryRun?: boolean;
 }

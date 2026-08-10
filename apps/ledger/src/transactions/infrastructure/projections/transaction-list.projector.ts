@@ -7,13 +7,13 @@ import {
   PROJ_ACCOUNTS,
 } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { AccountType } from '@ledger/shared/domain/value-objects';
+import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
+import { TransactionKindDeriver } from '@ledger/transactions/domain/derivation/transaction-kind.deriver';
+import { PostingPayload } from '@ledger/transactions/domain/posting/posting.serializer';
 import {
   PROJ_POSTINGS,
   PROJ_TRANSACTIONS,
 } from '@ledger/transactions/infrastructure/projections/transaction-list.schema';
-import { DerivedKind } from '@ledger/transactions/domain/derivation/derived-kind';
-import { TransactionKindDeriver } from '@ledger/transactions/domain/derivation/transaction-kind.deriver';
-import { PostingPayload } from '@ledger/transactions/domain/posting/posting.serializer';
 
 type TransactionRow = {
   readonly transaction_id: string;

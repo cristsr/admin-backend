@@ -2,6 +2,7 @@ import { CommandBus } from '@cqrs/application/command-bus/command-bus';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { AmendPendingTransactionCommand } from '@ledger/transactions/application/usecases/amend-transaction/amend-pending-transaction.command';
 import { AnnotateTransactionCommand } from '@ledger/transactions/application/usecases/annotate-transaction/annotate-transaction.command';
 import { ConfirmTransactionCommand } from '@ledger/transactions/application/usecases/confirm-transaction/confirm-transaction.command';
@@ -10,7 +11,6 @@ import { ListTransactionsQuery } from '@ledger/transactions/application/usecases
 import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
 import { ReverseConfirmedTransactionCommand } from '@ledger/transactions/application/usecases/reverse-transaction/reverse-confirmed-transaction.command';
 import { VoidPendingTransactionCommand } from '@ledger/transactions/application/usecases/void-transaction/void-pending-transaction.command';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { TransactionsController } from './transactions.controller';
 
 describe('TransactionsController', () => {

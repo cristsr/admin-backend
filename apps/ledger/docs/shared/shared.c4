@@ -77,10 +77,10 @@ model {
 
     idempotencyPolicy = component 'IdempotencyPolicy' {
       technology 'Application · CommandPolicy (chain)'
-      description 'Segunda política del command bus. Con externalRef presente busca el evento ancla por (user_id, external_ref); si existe replaya el CommandResult original sin ejecutar el handler. Desde hu-0024 compara el hash canónico de los inputs del command contra el external_ref_hash del ancla: coincide → replay; difiere → IDEMPOTENCY_INPUT_MISMATCH (409, AC-6).'
+      description 'Tercera política (tras RetryPolicy desde hu-0025). Con externalRef presente busca el evento ancla por (user_id, external_ref); si existe replaya el CommandResult original sin ejecutar el handler. Desde hu-0024 compara el hash canónico de los inputs del command contra el external_ref_hash del ancla: coincide → replay; difiere → IDEMPOTENCY_INPUT_MISMATCH (409, AC-6).'
       metadata {
         introducedIn 'hu-0012'
-        changedIn 'hu-0024'
+        changedIn 'hu-0024, hu-0025'
       }
     }
 
@@ -99,6 +99,64 @@ model {
       description 'Filter global registrado en main.ts: DomainException → ErrorResponseBody { statusCode, error, message, code, path, timestamp } con exception.status y exception.code verbatim; HttpException pasa tal cual; error no tipado → 500 sin code.'
       metadata {
         introducedIn 'hu-0011'
+      }
+    }
+
+    // --- Políticas transversales del command bus (hu-0025, F-12/F-14/F-22) ---
+
+    optimisticConcurrencyPolicy = component 'OptimisticConcurrencyPolicy' {
+      technology 'Application · CommandPolicy (chain)'
+      description 'Cuarta política. Bounds conflictos de concurrencia optimista (INV-7): reintenta una vez recargando el agregado contra el head fresco (MAX_RETRIES = 1) y luego propaga CONCURRENCY_CONFLICT. hu-0025 (AC-6) no lo toca: el conflicto de agregado nunca entra en la RetryPolicy nueva.'
+      metadata {
+        introducedIn 'hu-0012'
+      }
+    }
+
+    dryRunPolicy = component 'DryRunPolicy' {
+      technology 'Application · CommandPolicy (chain)'
+      description 'Quinta política, la más interna. Si ctx.dryRun (body dryRun: true), ejecuta el handler completo dentro de EventStore.withTransaction(rollback=true): validaciones, invariantes, generación de eventos y proyecciones síncronas; al terminar hace rollback y devuelve el CommandResult que la ejecución real habría producido (F-12). Ningún evento se persiste (los reactors del §3.2 se alimentan del stream: nunca ven nada) y el IdGenerator es UUID v4, nada que quemar. Error durante el preview → rollback y propagación.'
+      metadata {
+        introducedIn 'hu-0025'
+      }
+    }
+
+    retryPolicy = component 'RetryPolicy' {
+      technology 'Application · CommandPolicy (chain)'
+      description 'Segunda política, envuelve a idempotencia + concurrencia + dry-run. CUANDO el adaptador de persistencia falla con TransientPersistenceException (40P01 deadlock / 40001 serialization), reintenta el comando completo — 3 intentos en total (original + 2 reintentos) con backoff exponencial con jitter (~10-40ms). SI se agotan, lanza PersistenceConflictException (PERSISTENCE_CONFLICT, 409). NUNCA captura ConcurrencyConflictException (AC-6: se propaga, la policy de concurrencia sigue reintentando una vez con reload) ni DuplicateExternalRefException (lo resuelve IdempotencyPolicy, AC-7). Cada reintento incrementa RetryCounter con commandType como atributo (AC-8).'
+      metadata {
+        introducedIn 'hu-0025'
+      }
+    }
+
+    transientPersistenceException = component 'TransientPersistenceException' {
+      technology 'Domain · Exception'
+      description 'Extiende DomainException (libs/cqrs). El adaptador PostgresEventStore.translate() traduce 40P01 deadlock_detected y 40001 serialization_failure a esta excepción (único lugar que ve el driver). Es el contrato entre el puerto y RetryPolicy — no sale al API: o se resuelve reintentando o se convierte en PERSISTENCE_CONFLICT.'
+      metadata {
+        introducedIn 'hu-0025'
+      }
+    }
+
+    persistenceConflictException = component 'PersistenceConflictException' {
+      technology 'Domain · Exception'
+      description 'Extiende DomainConflictException, code PERSISTENCE_CONFLICT (409, nuevo en LEDGER_ERROR_CODE). La lanza RetryPolicy al agotar los 3 intentos por fallo transitorio. Sustituye el QueryFailedError crudo de TypeORM que hoy llegaría al ExceptionFilter como 500 sin code.'
+      metadata {
+        introducedIn 'hu-0025'
+      }
+    }
+
+    retryCounter = component 'RetryCounter' {
+      technology 'Application · Port (abstract class)'
+      description 'Puerto mínimo de métricas para AC-8: increment(commandType: string). En el núcleo solo existe la firma; no hay acoplamiento a OTel (Artículo 1). Las otras métricas de RNF-12 siguen en backlog hu-0022.'
+      metadata {
+        introducedIn 'hu-0025'
+      }
+    }
+
+    otelRetryCounter = component 'OtelRetryCounter' {
+      technology 'Infrastructure · Adapter (@opentelemetry/api)'
+      description 'Implementa RetryCounter con un Counter OTel (meter default, atributo ledger.command.type). Se cablea en ledger-core.module.ts junto a las demás policies.'
+      metadata {
+        introducedIn 'hu-0025'
       }
     }
 
@@ -137,11 +195,24 @@ model {
     admin.ledger.shared.commandBus -> admin.ledger.shared.exceptionFilter 'DomainException burbujea desde handlers/policies'
     admin.ledger.shared.queryBus -> admin.ledger.shared.exceptionFilter 'DomainException burbujea desde queries'
     admin.ledger.shared.exceptionFilter -> admin.ledger.shared.ledgerErrorCode 'expone exception.code verbatim (RF-14)'
+
+    // --- Relaciones de las políticas transversales (hu-0025) ---
+
+    admin.ledger.shared.commandBus -> admin.ledger.shared.retryPolicy 'delega el chain de políticas (2ª de 5)'
+    admin.ledger.shared.commandBus -> admin.ledger.shared.dryRunPolicy 'delega el chain de políticas (5ª de 5)'
+
+    admin.ledger.shared.retryPolicy -> admin.ledger.shared.transientPersistenceException 'captura 40P01/40001 (reintenta)'
+    admin.ledger.shared.retryPolicy -> admin.ledger.shared.persistenceConflictException 'lanza al agotar los 3 intentos'
+    admin.ledger.shared.retryPolicy -> admin.ledger.shared.retryCounter 'incrementa por commandType (AC-8)'
+
+    admin.ledger.shared.postgresEventStore -> admin.ledger.shared.transientPersistenceException 'traduce 40P01/40001 en translate()'
+
+    admin.ledger.shared.otelRetryCounter -> admin.ledger.shared.retryCounter 'implements'
   }
 
   extend admin.ledger.shared.commandBus {
     metadata {
-      changedIn 'hu-0024'
+      changedIn 'hu-0024, hu-0025'
     }
   }
 }
@@ -153,18 +224,51 @@ views 'Shared · HTTP adapter' {
     include admin.ledger.shared, admin.ledger.shared.*
   }
 
-  // Flujo de dispatch de un command via HTTP
+  // Flujo de dispatch de un command via HTTP — chain ampliado (hu-0025)
   dynamic view shared_http_command_dispatch {
-    title 'POST /api/v1/* → CommandBus · trigger: rest'
-    description 'AC-4, AC-5, AC-6: el controller construye un command desde headers (@Context, @ExternalRef) + body, lo despacha al CommandBus, y CommandResultInterceptor transforma el resultado en CommandAcceptedDto.'
+    title 'POST /api/v1/* → CommandBus (chain 3→5 policies) · trigger: rest'
+    description 'AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, AC-7, AC-8: el controller construye un command desde headers (@Context, @ExternalRef) + body y lo despacha al CommandBus. La cadena de policies pasa de 3 a 5: AuthenticatedContextPolicy → RetryPolicy → IdempotencyPolicy → OptimisticConcurrencyPolicy → DryRunPolicy. CommandResultInterceptor transforma el resultado en CommandAcceptedDto.'
 
     admin.ledger.shared.ledgerContextGuard -> admin.ledger.shared.ledgerContextResolver 'resolve context'
     admin.ledger.shared.ledgerContextResolver -> admin.ledger.shared.gatewayHeaderContextResolver 'reads x-user-id, x-client-id'
+
+    admin.ledger.shared.commandBus -> admin.ledger.shared.retryPolicy 'reintenta transitorios (AC-5)'
+    admin.ledger.shared.retryPolicy -> admin.ledger.shared.idempotencyPolicy 'delega (replay o 409, AC-7)'
+    admin.ledger.shared.idempotencyPolicy -> admin.ledger.shared.optimisticConcurrencyPolicy 'delega (conflicto propaga, AC-6)'
+    admin.ledger.shared.optimisticConcurrencyPolicy -> admin.ledger.shared.dryRunPolicy 'delega (rollback si dryRun, AC-2/3)'
 
     admin.ledger.shared.commandBus -> admin.ledger.shared.commandResultInterceptor 'returns CommandResult'
     admin.ledger.shared.commandResultInterceptor -> admin.ledger.shared.commandAcceptedDto 'maps to { id, streamPosition }'
 
     autoLayout LeftRight
+  }
+
+  // Modo preview: ejecutar todo y revertir (hu-0025, F-12)
+  dynamic view shared_http_dry_run {
+    title 'POST /api/v1/* con dryRun: true → preview sin efectos · trigger: rest'
+    description 'AC-2, AC-3, AC-4: con body.dryRun=true, DryRunPolicy ejecuta el handler completo dentro de EventStore.withTransaction(rollback=true). Los appends de eventos se unen al scope (append ya consulta el AsyncLocalStorage); las proyecciones síncronas escriben por el mismo scope (PostgresReadModelStore pasa a consultarlo); al resolver el work la transacción hace rollback y se devuelve el CommandResult que la ejecución real habría producido. Nada llega al stream → los reactors (ReevaluateAssertionsReactor, §3.2) no se disparan.'
+
+    admin.ledger.shared.commandBus -> admin.ledger.shared.dryRunPolicy 'ctx.dryRun → abre transacción rollback'
+    admin.ledger.shared.dryRunPolicy -> admin.ledger.shared.eventStore 'withTransaction(rollback=true)'
+    admin.ledger.shared.dryRunPolicy -> admin.ledger.shared.commandResultInterceptor 'CommandResult de la ejecución real (revertida)'
+    admin.ledger.shared.eventStore -> admin.ledger.shared.readModel 'upserts de proyecciones en el mismo scope (se revierten)'
+    admin.ledger.shared.projectionDispatcher -> admin.ledger.shared.readModel 'proyecta en el scope transaccional'
+
+    autoLayout TopBottom
+  }
+
+  // Reintento ante fallos transitorios del motor (hu-0025, F-14)
+  dynamic view shared_http_retry_deadlock {
+    title 'Fallo 40P01/40001 → reintento (3 intentos) o PERSISTENCE_CONFLICT · trigger: rest'
+    description 'AC-5, AC-6, AC-7, AC-8: PostgresEventStore.translate() convierte 40P01/40001 en TransientPersistenceException. RetryPolicy la captura y reintenta el comando completo (backoff exponencial con jitter, 3 intentos totales), incrementando RetryCounter con el tipo de comando. Al agotar, lanza PersistenceConflictException → PERSISTENCE_CONFLICT (409). ConcurrencyConflictException (AC-6) y DuplicateExternalRefException (AC-7) no se capturan: se resuelven en sus políticas.'
+
+    admin.ledger.shared.postgresEventStore -> admin.ledger.shared.transientPersistenceException 'traduce 40P01/40001'
+    admin.ledger.shared.retryPolicy -> admin.ledger.shared.transientPersistenceException 'captura → reintenta (3 intentos)'
+    admin.ledger.shared.retryPolicy -> admin.ledger.shared.retryCounter 'incrementa por commandType'
+    admin.ledger.shared.retryPolicy -> admin.ledger.shared.persistenceConflictException 'intentos agotados → 409 PERSISTENCE_CONFLICT'
+    admin.ledger.shared.persistenceConflictException -> admin.ledger.shared.exceptionFilter 'burbujea como DomainException'
+
+    autoLayout TopBottom
   }
 
   // Flujo de consulta via HTTP
@@ -204,12 +308,14 @@ views 'Shared · HTTP adapter' {
     autoLayout TopBottom
   }
 
-  // Mapeo de errores de dominio/puerto al cuerpo de error uniforme (RF-14, hu-0024)
+  // Mapeo de errores de dominio/puerto al cuerpo de error uniforme (RF-14, hu-0024, hu-0025)
   dynamic view shared_http_map_domain_error {
     title 'Fallo de dominio/puerto → ErrorResponseBody con code estable · trigger: rest'
-    description 'RF-14 + AC-6 de hu-0024: se suma IDEMPOTENCY_INPUT_MISMATCH (409) a la tabla congelada de códigos. Reparto por capa: el código nuevo es el contrato de IdempotencyPolicy y el único de los dos que el API HTTP emite; DUPLICATE_EXTERNAL_REF se queda como contrato del puerto EventStore ante la violación del índice único.'
+    description 'RF-14 + AC-6 de hu-0024 + AC-5 de hu-0025: se suma PERSISTENCE_CONFLICT (409) a la tabla congelada. TransientPersistenceException es transitoria (no llega al API): o se reintenta o se convierte en PERSISTENCE_CONFLICT. Reparto por capa: IDEMPOTENCY_INPUT_MISMATCH es el contrato de IdempotencyPolicy; CONCURRENCY_CONFLICT sigue propagándose al cliente como hoy (AC-6).'
 
+    admin.ledger.shared.retryPolicy -> admin.ledger.shared.persistenceConflictException 'throws PERSISTENCE_CONFLICT'
     admin.ledger.shared.idempotencyPolicy -> admin.ledger.shared.idempotencyInputMismatchException 'throws IDEMPOTENCY_INPUT_MISMATCH'
+    admin.ledger.shared.exceptionFilter -> admin.ledger.shared.ledgerErrorCode 'expone exception.code verbatim (RF-14)'
 
     autoLayout TopBottom
   }

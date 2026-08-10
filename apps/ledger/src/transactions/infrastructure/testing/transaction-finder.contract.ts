@@ -1,4 +1,4 @@
-import { TransactionFinder, TransactionFilter } from '@ledger/transactions/application/ports/transaction-finder.port';
+import { TransactionFilter, TransactionFinder } from '@ledger/transactions/application/ports/transaction-finder.port';
 import { PostingRow, TransactionRow } from '@ledger/transactions/infrastructure/projections/transaction-list.schema';
 
 /**

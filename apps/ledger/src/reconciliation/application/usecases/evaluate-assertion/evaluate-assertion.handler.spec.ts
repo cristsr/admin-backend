@@ -10,10 +10,10 @@ import { AssertionEvaluator } from '@ledger/reconciliation/domain/services/asser
 import { IntlDayBoundaryResolver } from '@ledger/reconciliation/domain/services/day-boundary.resolver';
 import { InMemoryAssertionPostingReader } from '@ledger/reconciliation/infrastructure/adapters/persistence/in-memory/in-memory-assertion-posting-reader';
 import { Money } from '@ledger/shared/domain/money';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, FixedSettingsReader, SequentialIdGenerator, aMoney } from '@ledger/shared/testing';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { EvaluateAssertionCommand } from './evaluate-assertion.command';
 import { EvaluateAssertionHandler } from './evaluate-assertion.handler';
 

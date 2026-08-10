@@ -1,5 +1,7 @@
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { EventStore } from '@cqrs/domain/ports/event-store';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { aMoney } from '@ledger/shared/testing';
 import { RecordingCommandBus } from '@ledger/shared/testing';
@@ -8,13 +10,11 @@ import { LedgerTransactionRepository } from '@ledger/transactions/application/re
 import { ConfirmTransactionCommand } from '@ledger/transactions/application/usecases/confirm-transaction/confirm-transaction.command';
 import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
 import { VoidPendingTransactionCommand } from '@ledger/transactions/application/usecases/void-transaction/void-pending-transaction.command';
+import { TransferPairRule } from '@ledger/transactions/domain/services/transfer-pair.rule';
 import {
   NotATransferPairException,
   PendingLegNotFoundException,
 } from '@ledger/transactions/domain/services/transfer.exception';
-import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
-import { TransferPairRule } from '@ledger/transactions/domain/services/transfer-pair.rule';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { MergePendingTransfersCommand } from './merge-pending-transfers.command';
 import { MergePendingTransfersHandler } from './merge-pending-transfers.handler';
 

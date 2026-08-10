@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { EnvelopeFactory } from '@cqrs/application/event/envelope.factory';
 import { EventRegistry } from '@cqrs/application/event/event-registry';

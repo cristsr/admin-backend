@@ -1,5 +1,6 @@
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { PostgresReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';
+import { PostgresTransactionScope } from '@cqrs/infrastructure/adapters/transaction/postgres-transaction.scope';
 import { DataSource } from 'typeorm';
 import { AdjustmentAuditEntry } from '@ledger/reconciliation/application/ports/adjustment-audit-reader.port';
 import { AssertionStatusRecord } from '@ledger/reconciliation/application/ports/assertion-status-reader.port';
@@ -50,7 +51,7 @@ if (runPgTests) {
       `TRUNCATE ${PROJ_ASSERTIONS}, ${PROJ_ADJUSTMENT_AUDIT}, ${PROJ_ADJUSTMENT_AUDIT_ENTRIES} CASCADE`,
     );
 
-    return new PostgresReadModelStore(dataSource);
+    return new PostgresReadModelStore(dataSource, new PostgresTransactionScope());
   };
 
   const assertionFixture = async (): Promise<AssertionStatusFixture> => {

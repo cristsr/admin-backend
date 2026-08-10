@@ -2,9 +2,9 @@ import { Projector } from '@cqrs/application/projection/projector';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
 import { Criteria, Nullable } from '@shared';
-import { PROJ_PENDING_REVIEW } from '@ledger/transactions/infrastructure/projections/pending-review.schema';
-import { PostingPayload } from '@ledger/transactions/domain/posting/posting.serializer';
 import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
+import { PostingPayload } from '@ledger/transactions/domain/posting/posting.serializer';
+import { PROJ_PENDING_REVIEW } from '@ledger/transactions/infrastructure/projections/pending-review.schema';
 
 type PendingReviewRow = {
   readonly transaction_id: string;

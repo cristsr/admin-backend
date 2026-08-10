@@ -10,10 +10,10 @@ import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { InMemoryEventStore } from '@cqrs/infrastructure/adapters/event-store/in-memory/in-memory-event-store';
 import { SynchronousProjectionDispatcher } from '@cqrs/infrastructure/adapters/projection/synchronous-dispatcher';
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
-import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { AccountValidationService } from '@ledger/accounts/application/services/account-validation.service';
-import { ReadModelAccountConstraintsReader } from '@ledger/accounts/infrastructure/adapters/persistence/read-model-account-constraints-reader';
 import { SystemAccountProtectedException } from '@ledger/accounts/domain/account/exceptions/account.exception';
+import { ReadModelAccountConstraintsReader } from '@ledger/accounts/infrastructure/adapters/persistence/read-model-account-constraints-reader';
+import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
 import { createLedgerEventRegistry } from '@ledger/bootstrap/ledger-event-registry.factory';
 import { createReconciliationEventRegistry } from '@ledger/reconciliation/application/factories/reconciliation-event-registry.factory';
 import { ReevaluateAssertionsReactor } from '@ledger/reconciliation/application/reactors/reevaluate-assertions.reactor';
@@ -35,6 +35,7 @@ import { StoreBackedAssertionLookup } from '@ledger/reconciliation/infrastructur
 import { AdjustmentAuditProjector } from '@ledger/reconciliation/infrastructure/projections/adjustment-audit.projector';
 import { AssertionStatusProjector } from '@ledger/reconciliation/infrastructure/projections/assertion-status.projector';
 import { Money } from '@ledger/shared/domain/money';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { CurrencyCatalog, CurrencyCode, LedgerDate } from '@ledger/shared/domain/value-objects';
 import { SeedCurrencyCatalog } from '@ledger/shared/infrastructure/adapters/currency/seed-currency-catalog';
 import { FixedClock, FixedSettingsReader, FixedSystemAccountLookup, SequentialIdGenerator, aMoney } from '@ledger/shared/testing';
@@ -42,7 +43,6 @@ import { LedgerTransactionRepository } from '@ledger/transactions/application/re
 import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
 import { RecordTransactionHandler } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.handler';
 import { ZeroSumBalanceRule } from '@ledger/transactions/domain/balance/zero-sum-balance-rule';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 
 /**
  * Test double for the write side of `transactions`: appends a `TransactionRecorded`

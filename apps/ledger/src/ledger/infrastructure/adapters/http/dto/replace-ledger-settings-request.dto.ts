@@ -1,5 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, Matches } from 'class-validator';
+import {
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
+import {  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+} from 'class-validator';
 
 /**
  * Full replacement of the ledger's presentation settings. Both fields are
@@ -23,4 +31,8 @@ export class ReplaceLedgerSettingsRequestDto {
   @IsString()
   @IsNotEmpty()
   readonly timezone: string;
+  @ApiPropertyOptional({ default: false, description: 'Preview mode (hu-0025): execute the command fully inside the transaction and roll back, returning the result the real run would have produced.' })
+  @IsOptional()
+  @IsBoolean()
+  readonly dryRun?: boolean;
 }

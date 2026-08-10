@@ -198,4 +198,12 @@ views 'Accounts' {
     admin.ledger.accounts.ledgerController -> admin.ledger.shared.queryBus 'ask(GetLedgerSettingsQuery, ctx)'
     admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'query proj_ledger_settings por userId'
   }
+
+  dynamic view recordOpeningBalance {
+    title 'Registrar saldo inicial · trigger REST'
+    description 'AC-4 (hu-0025): AccountsController construye RecordOpeningBalanceCommand desde el body (amount, currency, date, dryRun) y lo despacha al CommandBus. El handler resuelve Equity:OpeningBalances de los settings (INV-13). Con dryRun: true, DryRunPolicy ejecuta completo y revierte; RetryPolicy reintenta 40P01/40001.'
+    user -> admin.ledger.accounts.controller 'POST /accounts/{id}/opening-balance'
+    admin.ledger.accounts.controller -> admin.ledger.shared.commandBus 'despacha RecordOpeningBalanceCommand'
+    admin.ledger.shared.commandBus -> admin.ledger.shared.dryRunPolicy 'si dryRun: true → ejecuta y revierte (AC-2/3)'
+  }
 }

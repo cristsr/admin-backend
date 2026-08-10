@@ -14,8 +14,6 @@ import {
   Context,
   ExternalRef,
 } from '@ledger/shared/infrastructure/adapters/http';
-import { PendingReviewView } from '@ledger/transactions/application/views/pending-review.view';
-import { TransactionView } from '@ledger/transactions/application/views/transaction.view';
 import { PostingInput } from '@ledger/transactions/application/types/posting-input.type';
 import { AmendPendingTransactionCommand } from '@ledger/transactions/application/usecases/amend-transaction/amend-pending-transaction.command';
 import { AnnotateTransactionCommand } from '@ledger/transactions/application/usecases/annotate-transaction/annotate-transaction.command';
@@ -29,6 +27,8 @@ import {
 import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
 import { ReverseConfirmedTransactionCommand } from '@ledger/transactions/application/usecases/reverse-transaction/reverse-confirmed-transaction.command';
 import { VoidPendingTransactionCommand } from '@ledger/transactions/application/usecases/void-transaction/void-pending-transaction.command';
+import { PendingReviewView } from '@ledger/transactions/application/views/pending-review.view';
+import { TransactionView } from '@ledger/transactions/application/views/transaction.view';
 import { AmendTransactionRequestDto } from './dto/amend-transaction-request.dto';
 import { AnnotateTransactionRequestDto } from './dto/annotate-transaction-request.dto';
 import { ConfirmTransactionRequestDto } from './dto/confirm-transaction-request.dto';
@@ -80,7 +80,7 @@ export class TransactionsController {
       // over HTTP may post against a technical account (INV-13).
     );
 
-    return this.dispatch(command, context, externalRef);
+    return this.dispatch(command, context, externalRef, dto);
   }
 
   /** A page of the list, newest first, with the total the filters match. */
@@ -146,7 +146,7 @@ export class TransactionsController {
   ): Promise<CommandResult> {
     const command = new AmendPendingTransactionCommand(id, dto.date, this.toPostings(dto.postings));
 
-    return this.dispatch(command, context, externalRef);
+    return this.dispatch(command, context, externalRef, dto);
   }
 
   @Post(':id/annotate')
@@ -168,7 +168,7 @@ export class TransactionsController {
       this.toStringMetadata(dto.metadata),
     );
 
-    return this.dispatch(command, context, externalRef);
+    return this.dispatch(command, context, externalRef, dto);
   }
 
   @Post(':id/confirm')
@@ -181,7 +181,7 @@ export class TransactionsController {
     @Param('id') id: string,
     @Body() _dto: ConfirmTransactionRequestDto,
   ): Promise<CommandResult> {
-    return this.dispatch(new ConfirmTransactionCommand(id), context, externalRef);
+    return this.dispatch(new ConfirmTransactionCommand(id), context, externalRef, _dto);
   }
 
   @Post(':id/void')
@@ -194,7 +194,7 @@ export class TransactionsController {
     @Param('id') id: string,
     @Body() dto: VoidTransactionRequestDto,
   ): Promise<CommandResult> {
-    return this.dispatch(new VoidPendingTransactionCommand(id, dto.reason), context, externalRef);
+    return this.dispatch(new VoidPendingTransactionCommand(id, dto.reason), context, externalRef, dto);
   }
 
   @Post(':id/reverse')
@@ -206,19 +206,24 @@ export class TransactionsController {
     @Param('id') id: string,
     @Body() _dto: ReverseTransactionRequestDto,
   ): Promise<CommandResult> {
-    return this.dispatch(new ReverseConfirmedTransactionCommand(id), context, externalRef);
+    return this.dispatch(new ReverseConfirmedTransactionCommand(id), context, externalRef, _dto);
   }
 
-  /** Dispatches a command with the write-side context assembled from the request. */
+  /**
+   * Dispatches a command with the write-side context assembled from the request
+   * (identity + idempotency key + the preview flag the body may carry, AC-4).
+   */
   private dispatch(
     command: Command,
     context: LedgerContext,
     externalRef: Nullable<string>,
+    dto: { dryRun?: boolean },
   ): Promise<CommandResult> {
     const ctx: AuthContext = {
       userId: context.userId,
       clientId: context.clientId,
       externalRef,
+      dryRun: dto.dryRun,
     };
 
     return this.commandBus.dispatch(command, ctx);

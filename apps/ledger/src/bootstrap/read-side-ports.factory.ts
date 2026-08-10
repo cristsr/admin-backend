@@ -1,4 +1,5 @@
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
+import { DataSource } from 'typeorm';
 import { AccountBalanceFinder } from '@ledger/accounts/application/ports/account-balance-finder.port';
 import { AccountConstraintsReader } from '@ledger/accounts/application/ports/account-constraints-reader.port';
 import { AccountFactsReader } from '@ledger/accounts/application/ports/account-facts-reader.port';
@@ -20,7 +21,6 @@ import { TransactionFinder } from '@ledger/transactions/application/ports/transa
 import { PostgresTransactionFinder } from '@ledger/transactions/infrastructure/adapters/persistence/postgres-transaction-finder';
 import { ReadModelPendingReviewFinder } from '@ledger/transactions/infrastructure/adapters/persistence/read-model-pending-review-finder';
 import { ReadModelTransactionFinder } from '@ledger/transactions/infrastructure/adapters/persistence/read-model-transaction-finder';
-import { DataSource } from 'typeorm';
 
 /**
  * The read ports serving the API, handed to the query bus.

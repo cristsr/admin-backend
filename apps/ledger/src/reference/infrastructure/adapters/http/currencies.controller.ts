@@ -5,11 +5,11 @@ import { CommandBus } from '@cqrs/application/command-bus/command-bus';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { QueryBus } from '@cqrs/application/query-bus/query-bus';
 import { Nullable } from '@shared';
+import { ListCurrenciesQuery } from '@ledger/reference/application/usecases/list-currencies/list-currencies.query';
+import { RegisterCurrencyCommand } from '@ledger/reference/application/usecases/register-currency/register-currency.command';
 import {
   CurrencyView,
 } from '@ledger/reference/application/views/currency.view';
-import { ListCurrenciesQuery } from '@ledger/reference/application/usecases/list-currencies/list-currencies.query';
-import { RegisterCurrencyCommand } from '@ledger/reference/application/usecases/register-currency/register-currency.command';
 import { LedgerContext } from '@ledger/shared/domain/context/ledger-context';
 import {
   CommandAcceptedDto,
@@ -46,6 +46,7 @@ export class CurrenciesController {
       userId: context.userId,
       clientId: context.clientId,
       externalRef,
+      dryRun: dto.dryRun,
     };
 
     return this.commandBus.dispatch(

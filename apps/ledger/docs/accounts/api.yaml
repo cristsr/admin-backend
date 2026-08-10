@@ -318,9 +318,64 @@ paths:
               schema:
                 $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
 
+  /accounts/{id}/opening-balance:
+    post:
+      tags: [accounts]
+      operationId: recordOpeningBalance
+      summary: Record the balance an account already had at ledger initialization.
+      description: >
+        Endpoint vivo desde hu-0003, primero documentado en hu-0025 (gap de docs
+        del scan). El handler resuelve `Equity:OpeningBalances` de los settings
+        del usuario y estampa el origin: el request no puede nombrar cuentas de
+        sistema (INV-13). Acepta `dryRun` como todas las escrituras (AC-4).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '../shared/api.yaml#/components/parameters/ExternalRefHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecordOpeningBalanceRequest'
+      responses:
+        '201':
+          description: "Opening balance recorded (o preview revertido si `dryRun: true`)."
+          headers:
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandAccepted'
+        '200':
+          description: >
+            Replay idempotente: la misma `external_ref` con los **mismos** inputs.
+            No se emitieron eventos nuevos (hu-0024).
+        '401':
+          description: Sin contexto autenticado (RF-26).
+        '409':
+          description: >
+            `PERSISTENCE_CONFLICT` (reintentos agotados, hu-0025) u otro conflicto
+            de estado. `IDEMPOTENCY_INPUT_MISMATCH` — `external_ref` ya usada con
+            inputs distintos (hu-0024).
+          content:
+            application/json:
+              schema:
+                $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
+        '422':
+          description: LEDGER_NOT_INITIALIZED, ACCOUNT_NOT_FOUND o INVALID_MONEY.
+
 components:
   schemas:
     # --- Shared (copiado en cada spec de módulo para que sea autocontenido) ---
+    DryRun:
+      $ref: '../shared/api.yaml#/components/schemas/DryRun'
+
     CommandAccepted:
       type: object
       required: [id, streamPosition]
@@ -366,6 +421,8 @@ components:
         isBankMirror:
           type: boolean
           description: True when this account mirrors a real bank account or wallet.
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
 
     RenameAccountRequest:
       type: object
@@ -374,6 +431,8 @@ components:
         newName:
           type: string
           example: Assets:Bancolombia:Checking
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
 
     CloseAccountRequest:
       type: object
@@ -384,6 +443,28 @@ components:
           format: date
           example: "2026-07-20"
           description: Plain accounting date the account closes on (RNF-7).
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    RecordOpeningBalanceRequest:
+      type: object
+      required: [amount, currency, date]
+      properties:
+        amount:
+          type: string
+          example: "1500000.00"
+          description: Exact decimal string; scale is the currency's business (INV-8).
+        currency:
+          type: string
+          example: COP
+          description: ISO-4217 code.
+        date:
+          type: string
+          format: date
+          example: "2026-01-01"
+          description: Accounting date of the opening entry; on or after ledger initialization.
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
 
     AccountTreeView:
       type: string
@@ -462,6 +543,8 @@ components:
           type: string
           example: America/Bogota
           description: Timezone IANA usada para derivar límites de día (RNF-7).
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
 
     LedgerSettings:
       type: object

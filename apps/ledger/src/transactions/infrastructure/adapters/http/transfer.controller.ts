@@ -33,6 +33,7 @@ export class TransferController {
       userId: context.userId,
       clientId: context.clientId,
       externalRef,
+      dryRun: body.dryRun,
     };
 
     return this.commandBus.dispatch(new MergePendingTransfersCommand(body.pendingIds), ctx);

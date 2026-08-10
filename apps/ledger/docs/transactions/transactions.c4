@@ -237,4 +237,12 @@ views 'Transactions' {
     admin.ledger.transactions.controller -> admin.ledger.shared.queryBus 'ask(GetTransactionByIdQuery, ctx)'
     admin.ledger.shared.queryBus -> admin.ledger.shared.readModel 'query proj_transactions por userId + transactionId'
   }
+
+  dynamic view mergeTransfers {
+    title 'Fusionar patas de transferencia · trigger REST'
+    description 'AC-4 (hu-0025): TransferController construye MergePendingTransfersCommand desde el body (pendingIds, dryRun) y lo despacha al CommandBus. Los appends corren dentro de EventStore.withTransaction (INV-7); en modo dry-run ese scope es el de DryRunPolicy y revierte.'
+    user -> admin.ledger.transactions.transferController 'POST /transfers/merge'
+    admin.ledger.transactions.transferController -> admin.ledger.shared.commandBus 'despacha MergePendingTransfersCommand'
+    admin.ledger.shared.commandBus -> admin.ledger.shared.dryRunPolicy 'si dryRun: true → ejecuta y revierte (AC-2/3)'
+  }
 }

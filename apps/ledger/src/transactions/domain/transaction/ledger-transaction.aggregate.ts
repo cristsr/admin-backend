@@ -2,9 +2,10 @@ import { AggregateRoot } from '@cqrs/domain/aggregate/aggregate-root';
 import { DomainEvent } from '@cqrs/domain/aggregate/domain-event';
 import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { Nullable } from '@shared';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { LedgerDate, Payee } from '@ledger/shared/domain/value-objects';
 import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';
-import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
 import {
   TransactionAmended,
   TransactionAnnotated,
@@ -20,7 +21,6 @@ import {
   InvalidTransactionStateException,
 } from './exceptions/transaction.exception';
 import { TransactionAnnotations } from './transaction-annotations.type';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 
 /** Arguments to record a new transaction. */
 export type RecordTransactionArgs = {

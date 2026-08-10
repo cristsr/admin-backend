@@ -4,19 +4,19 @@ import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { EventStore } from '@cqrs/domain/ports/event-store';
 import { Nullable } from '@shared';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { AccountLookup } from '@ledger/transactions/application/ports/account-lookup.port';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
 import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
 import { VoidPendingTransactionCommand } from '@ledger/transactions/application/usecases/void-transaction/void-pending-transaction.command';
+import { TransferLeg, TransferPairRule } from '@ledger/transactions/domain/services/transfer-pair.rule';
 import {
   NotATransferPairException,
   PendingLegNotFoundException,
 } from '@ledger/transactions/domain/services/transfer.exception';
-import { TransferLeg, TransferPairRule } from '@ledger/transactions/domain/services/transfer-pair.rule';
 import { TransactionNotFoundException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
 import { LedgerTransaction } from '@ledger/transactions/domain/transaction/ledger-transaction.aggregate';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { MergePendingTransfersCommand } from './merge-pending-transfers.command';
 
 /** Account types whose postings represent movement of real money. */

@@ -205,6 +205,48 @@ y el catálogo de monedas se administra vía API en vez de estar sembrado en có
 
 ---
 
+## EP-6 — Mejoras del núcleo extraídas de Formance Ledger
+
+Post-v1. Plan detallado en [`work/ledger/EP-6-formance.md`](../work/ledger/EP-6-formance.md);
+análisis de origen en
+[`docs/proposals/formance-ledger-ideas.md`](./proposals/formance-ledger-ideas.md).
+
+A diferencia de EP-0…EP-4, esta épica no desglosa subtareas `EP-6.n`: cada historia produce su
+propio plan en `/design`. El criterio de agrupación es la **unidad de coherencia técnica** —
+van juntos los hallazgos que comparten una migración, un artefacto o una decisión de diseño.
+
+**Ola 1 — Integridad del write-side** (sin cambios de contrato, paralelizables entre sí)
+
+- [ ] **hu-0024** Integridad verificable del event store: serialización canónica, cadena de
+      hashes por usuario, `verify-chain`, hash de inputs de idempotencia (F-5, F-6, F-10).
+- [ ] **hu-0025** Políticas transversales del command bus: decoradores componibles, `dryRun`
+      por rollback, reintento ante deadlock (F-12, F-14, F-22).
+- [ ] **hu-0026** Fecha efectiva elegible en la reversa + `TRANSACTION_ALREADY_REVERSED` (F-13).
+
+**Ola 2 — Read model contable** (`hu-0027` habilita a las otras dos)
+
+- [ ] **hu-0027** Volúmenes `(input, output)` y doble fecha en `proj_postings` (F-1, F-3).
+- [ ] **hu-0028** Volúmenes efectivos post-commit y semántica del back-dating (F-2, F-4).
+      **Cierra la pregunta abierta #6** de la spec. La historia más cara del set.
+- [ ] **hu-0029** Saldos agregados por prefijo de la jerarquía (F-18).
+
+**Ola 3 — Contrato y plan de cuentas**
+
+- [ ] **hu-0030** Paginación por cursor con corte temporal + filtros compuestos (F-16, F-17).
+- [ ] **hu-0032** Metadata de cuenta y borrado por clave (F-19). Conviene antes de hu-0031.
+- [ ] **hu-0031** Plan de cuentas declarativo y versionado, con modo estricto/permisivo
+      (F-8, F-9).
+
+**Diferidos, no se implementan** (condición de disparo en la propuesta): export/import del log
+(F-7), separar *reference* de clave de idempotencia (F-11), endpoint bulk (F-15). F-21 y F-23
+son notas de diseño para §9.3, no historias.
+
+**Hecho cuando:** el event store es verificable criptográficamente, el saldo histórico por
+instante es consultable, las aserciones se evalúan por lectura, los listados paginan estable
+bajo escritura concurrente, y el plan de cuentas puede declararse y validarse.
+
+---
+
 ## Operabilidad (ex-EP-5, ya no es una épica)
 
 EP-5 se disolvió: no existe en la spec (§11 define 4 fases) y mezclaba tres cosas
@@ -233,7 +275,13 @@ entre sí ni dependencia con las fases de construcción.
 ## Secuencia y dependencias
 
 ```
-EP-0 ─► EP-1 ─► EP-2 ─► EP-3 ─► EP-4 (settings + monedas)
+EP-0 ─► EP-1 ─► EP-2 ─► EP-3 ─► EP-4 (settings + monedas) ─► EP-6 (mejoras Formance)
+
+EP-6 internamente:
+  Ola 1: hu-0024  hu-0025  hu-0026        (paralelizables)
+  Ola 2: hu-0027 ─┬─► hu-0028
+                  └─► hu-0029
+  Ola 3: hu-0030 ;  hu-0032 ─► hu-0031
 
 Operabilidad: sin dependencia de fase; en paralelo desde EP-2.
 ```

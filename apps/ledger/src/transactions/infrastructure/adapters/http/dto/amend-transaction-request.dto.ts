@@ -1,6 +1,15 @@
-import { ApiProperty } from '@nestjs/swagger';
+import {
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { ArrayMinSize, IsArray, IsDateString, ValidateNested } from 'class-validator';
+import {  ArrayMinSize,
+  IsArray,
+  IsBoolean,
+  IsDateString,
+  IsOptional,
+  ValidateNested,
+} from 'class-validator';
 import { PostingDto } from './posting.dto';
 
 /**
@@ -21,4 +30,8 @@ export class AmendTransactionRequestDto {
   @ApiProperty({ example: '2026-07-20', description: 'Plain accounting date.' })
   @IsDateString()
   readonly date!: string;
+  @ApiPropertyOptional({ default: false, description: 'Preview mode (hu-0025): execute the command fully inside the transaction and roll back, returning the result the real run would have produced.' })
+  @IsOptional()
+  @IsBoolean()
+  readonly dryRun?: boolean;
 }

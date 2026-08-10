@@ -1,0 +1,112 @@
+openapi: 3.1.0
+info:
+  title: Ledger — Reference API
+  version: "1.0.0"
+  description: >
+    Contrato canónico del módulo reference (apps/ledger). Creado por /sync en
+    hu-0025: el módulo no tenía api.yaml; el delta documentó su única escritura
+    (registerCurrency) y su lectura (listCurrencies, que ya vivía en el flow).
+tags:
+  - name: reference
+    description: Endpoints del catálogo de monedas expuestos por apps/ledger.
+
+paths:
+  /v1/currencies:
+    post:
+      tags: [reference]
+      operationId: registerCurrency
+      summary: Register a currency in the catalog.
+      description: >
+        Endpoint vivo (CurrenciesController), primero documentado en hu-0025 — el
+        módulo reference no tenía api.yaml. El catálogo es universal (RF-21): no
+        pertenece a un usuario. Acepta `dryRun` como todas las escrituras (AC-4).
+      parameters:
+        - $ref: '../shared/api.yaml#/components/parameters/ExternalRefHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterCurrencyRequest'
+      responses:
+        '201':
+          description: "Currency registered (o preview revertido si `dryRun: true`)."
+          headers:
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
+          content:
+            application/json:
+              schema:
+                $ref: '../shared/api.yaml#/components/schemas/CommandAcceptedDto'
+        '200':
+          description: >
+            Replay idempotente: la misma `external_ref` con los **mismos** inputs.
+            No se emitieron eventos nuevos (hu-0024).
+        '401':
+          description: Sin contexto autenticado (RF-26).
+        '409':
+          description: >
+            `PERSISTENCE_CONFLICT` (reintentos agotados, hu-0025) u otro conflicto
+            de estado. `IDEMPOTENCY_INPUT_MISMATCH` — `external_ref` ya usada con
+            inputs distintos (hu-0024).
+          content:
+            application/json:
+              schema:
+                $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
+        '422':
+          description: CURRENCY_ALREADY_REGISTERED o INVALID_CURRENCY_CODE.
+
+    get:
+      tags: [reference]
+      operationId: listCurrencies
+      summary: List the registered currencies.
+      responses:
+        '200':
+          description: Currencies of the catalog.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Currency'
+        '401':
+          description: Sin contexto autenticado (RF-26).
+
+components:
+  schemas:
+    DryRun:
+      $ref: '../shared/api.yaml#/components/schemas/DryRun'
+
+    RegisterCurrencyRequest:
+      type: object
+      required: [code, minorUnits, name]
+      properties:
+        code:
+          type: string
+          example: CLF
+          description: ISO-4217 code (3 uppercase letters).
+        minorUnits:
+          type: integer
+          minimum: 0
+          maximum: 4
+          example: 4
+          description: Decimal places (ISO-4217).
+        name:
+          type: string
+          example: Unidad de Fomento
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    Currency:
+      type: object
+      description: Fila de la proyección del catálogo de monedas.
+      properties:
+        code:
+          type: string
+          example: CLF
+        minor_units:
+          type: integer
+          example: 4
+        name:
+          type: string
+          example: Unidad de Fomento

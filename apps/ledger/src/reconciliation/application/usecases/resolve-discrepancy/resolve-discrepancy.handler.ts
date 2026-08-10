@@ -8,11 +8,11 @@ import { SystemAccountLookup } from '@ledger/ledger/application/ports/system-acc
 import { BalanceAssertionRepository } from '@ledger/reconciliation/application/repositories/balance-assertion.repository';
 import { AssertionNotFoundException, DiscrepancyNotResolvableException } from '@ledger/reconciliation/domain/balance-assertion/exceptions/balance-assertion.exception';
 import { AdjustmentFactory } from '@ledger/reconciliation/domain/services/adjustment.factory';
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { PostingOrigin } from '@ledger/shared/domain/value-objects/posting-origin';
 import { PostingInput } from '@ledger/transactions/application/types/posting-input.type';
 import { RecordTransactionCommand } from '@ledger/transactions/application/usecases/record-transaction/record-transaction.command';
-import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { ResolveDiscrepancyCommand } from './resolve-discrepancy.command';
 
 /**

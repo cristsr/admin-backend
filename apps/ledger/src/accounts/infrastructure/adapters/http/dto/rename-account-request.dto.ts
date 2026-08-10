@@ -1,5 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString } from 'class-validator';
+import {
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
+import {  IsBoolean,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 /** Body of `POST /accounts/{id}/rename`. */
 export class RenameAccountRequestDto {
@@ -7,4 +14,8 @@ export class RenameAccountRequestDto {
   @IsString()
   @IsNotEmpty()
   readonly newName: string;
+  @ApiPropertyOptional({ default: false, description: 'Preview mode (hu-0025): execute the command fully inside the transaction and roll back, returning the result the real run would have produced.' })
+  @IsOptional()
+  @IsBoolean()
+  readonly dryRun?: boolean;
 }

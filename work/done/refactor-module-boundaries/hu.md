@@ -11,7 +11,7 @@ adapter sea un cambio de una línea con efecto observable (Art. 1, Art. 10)
 > No es una historia de producto: es una refactorización interna sin cambio de contrato
 > HTTP. Ningún `api.yaml` de módulo cambia. Origen: tercera pasada de la auditoría
 > hexagonal (2026-08-08), score 30/39. Las dos pasadas previas están cerradas en
-> [`work/active/audit-hexagonal-ledger.md`](../audit-hexagonal-ledger.md).
+> [`../../../docs/proposals/audit-hexagonal-ledger.md`](../audit-hexagonal-ledger.md).
 
 ## Criterios de Aceptación
 

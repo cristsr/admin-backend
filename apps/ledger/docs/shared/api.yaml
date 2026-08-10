@@ -93,6 +93,17 @@ components:
       example: "true"
 
   schemas:
+    DryRun:
+      type: boolean
+      default: false
+      description: |
+        Modo preview (hu-0025, F-12): ejecuta el comando completo —validaciones,
+        invariantes del agregado, generación de eventos y proyecciones síncronas—
+        dentro de la transacción y hace rollback, devolviendo el resultado que la
+        ejecución real habría producido. No persiste eventos, no despacha reactors
+        (§3.2), no quema ids (UUID v4). Metadata de transporte: no entra al hash
+        de idempotencia. Aplicable en todas las operaciones de escritura (AC-4).
+
     CommandAcceptedDto:
       type: object
       description: |
@@ -147,6 +158,20 @@ components:
         Queda **obsoleta** la nota de hu-0012 que atribuía a `DUPLICATE_EXTERNAL_REF`
         el caso «mismo `external_ref` con un command distinto»: ese caso ahora es
         `IDEMPOTENCY_INPUT_MISMATCH`.
+
+        **Delta hu-0025 — un código nuevo.**
+
+        - `PERSISTENCE_CONFLICT` (409) es el contrato de `RetryPolicy`: al agotar
+          los 3 intentos por fallo transitorio del motor (deadlock `40P01` o
+          serialization `40001`), toda escritura responde con este código. Antes
+          de hu-0025 ese fallo llegaba al `ExceptionFilter` como `QueryFailedError`
+          no tipado → `500` sin `code`.
+        - `TransientPersistenceException` **no** se lista: es transitoria por
+          diseño, nunca llega al API (o se reintenta o se convierte en
+          `PERSISTENCE_CONFLICT`).
+        - `CONCURRENCY_CONFLICT` (409) sigue vigente sin cambios: el conflicto de
+          agregado nunca entra al reintento automático (AC-6) y sigue propagándose
+          al cliente como hoy.
       enum:
         - UNBALANCED_TRANSACTION
         - CURRENCY_NOT_ALLOWED
@@ -155,6 +180,7 @@ components:
         - NAME_COLLISION
         - SYSTEM_ACCOUNT_PROTECTED
         - CONCURRENCY_CONFLICT
+        - PERSISTENCE_CONFLICT             # 409 — NUEVO (hu-0025)
         - DUPLICATE_EXTERNAL_REF
         - IDEMPOTENCY_INPUT_MISMATCH
         - TRANSACTION_NOT_FOUND

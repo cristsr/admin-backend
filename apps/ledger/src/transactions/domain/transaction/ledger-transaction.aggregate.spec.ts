@@ -1,7 +1,8 @@
+import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
+import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { FixedClock, SequentialIdGenerator, aMoney } from '@ledger/shared/testing';
 import { ZeroSumBalanceRule } from '@ledger/transactions/domain/balance/zero-sum-balance-rule';
-import { PostingLine } from '@ledger/shared/domain/posting/posting-line';
 import { TransfersMerged } from './events';
 import {
   ImmutableTransactionException,
@@ -9,7 +10,6 @@ import {
   InvalidTransactionStateException,
 } from './exceptions/transaction.exception';
 import { LedgerTransaction, RecordTransactionArgs } from './ledger-transaction.aggregate';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 
 const balance = new ZeroSumBalanceRule();
 const idGen = new SequentialIdGenerator();

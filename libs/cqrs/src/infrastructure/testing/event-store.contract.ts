@@ -350,5 +350,33 @@ export function describeEventStoreContract(
         expect(await store.load(stream)).toHaveLength(1);
       });
     });
+
+    describe('withTransaction — rollback mode (hu-0025)', () => {
+      it('returns the work result and persists nothing when rollback: true', async () => {
+        const stream = streamFor('user-1', 'agg-1');
+
+        const result = await store.withTransaction(
+          async () => {
+            await store.append(stream, 0, [anEnvelope(stream, { sequence: 1 })]);
+            return 'done';
+          },
+          { rollback: true },
+        );
+
+        expect(result).toBe('done');
+        expect(await store.load(stream)).toEqual([]);
+        expect(await store.readAll(0n, 10)).toEqual([]);
+      });
+
+      it('commits normally when the rollback option is absent (unchanged contract)', async () => {
+        const stream = streamFor('user-1', 'agg-1');
+
+        await store.withTransaction(async () => {
+          await store.append(stream, 0, [anEnvelope(stream, { sequence: 1 })]);
+        });
+
+        expect(await store.load(stream)).toHaveLength(1);
+      });
+    });
   });
 }

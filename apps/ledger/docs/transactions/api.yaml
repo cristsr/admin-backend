@@ -417,9 +417,58 @@ paths:
               schema:
                 $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
 
+  /transfers/merge:
+    post:
+      tags: [transactions]
+      operationId: mergeTransfers
+      summary: Merge two pending transfer legs into a single transaction.
+      description: >
+        Endpoint vivo (TransferController), primero documentado en hu-0025 (gap
+        de docs del scan). Fusiona las dos patas pendientes de una transferencia
+        (INV-16). Acepta `dryRun` como todas las escrituras (AC-4).
+      parameters:
+        - $ref: '../shared/api.yaml#/components/parameters/ExternalRefHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MergeTransfersRequest'
+      responses:
+        '201':
+          description: "Transfers merged (o preview revertido si `dryRun: true`)."
+          headers:
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandAccepted'
+        '200':
+          description: >
+            Replay idempotente: la misma `external_ref` con los **mismos** inputs
+            (hu-0024). También la respuesta de un merge exitoso declarado `@HttpCode(OK)`.
+        '401':
+          description: Sin contexto autenticado (RF-26).
+        '409':
+          description: >
+            `PERSISTENCE_CONFLICT` (reintentos agotados, hu-0025) o
+            `INVALID_TRANSACTION_STATE` (pata no pendiente).
+          content:
+            application/json:
+              schema:
+                $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
+        '422':
+          description: NOT_A_TRANSFER_PAIR.
+        '404':
+          description: PENDING_LEG_NOT_FOUND.
+
 components:
   schemas:
     # --- Shared (copiado en cada spec de módulo para que sea autocontenido) ---
+    DryRun:
+      $ref: '../shared/api.yaml#/components/schemas/DryRun'
+
     CommandAccepted:
       type: object
       required: [id, streamPosition]
@@ -491,6 +540,8 @@ components:
             type: string
         metadata:
           type: object
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
 
     AmendTransactionRequest:
       type: object
@@ -505,6 +556,8 @@ components:
           format: date
           example: "2026-07-20"
           description: Plain accounting date (RNF-7).
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
 
     AnnotateTransactionRequest:
       type: object
@@ -524,6 +577,8 @@ components:
             type: string
         metadata:
           type: object
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
 
     ConfirmTransactionRequest:
       type: object
@@ -534,6 +589,8 @@ components:
             $ref: '#/components/schemas/Posting'
           minItems: 2
           description: Final postings; omit to confirm as-is.
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
 
     VoidTransactionRequest:
       type: object
@@ -542,6 +599,8 @@ components:
         reason:
           type: string
           example: Duplicated capture
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
 
     ReverseTransactionRequest:
       type: object
@@ -549,6 +608,23 @@ components:
         reason:
           type: string
           example: Refunded by the merchant
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    MergeTransfersRequest:
+      type: object
+      required: [pendingIds]
+      properties:
+        pendingIds:
+          type: array
+          items:
+            type: string
+            format: uuid
+          minItems: 2
+          maxItems: 2
+          description: Exactly the two pending transfer legs to merge (INV-16).
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
 
     TransactionPosting:
       type: object

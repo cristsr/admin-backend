@@ -1,5 +1,16 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsInt, IsNotEmpty, IsString, Matches, Max, Min } from 'class-validator';
+import {
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
+import {  IsBoolean,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  Min,
+} from 'class-validator';
 
 /** Body of a currency registration. */
 export class RegisterCurrencyRequestDto {
@@ -19,4 +30,8 @@ export class RegisterCurrencyRequestDto {
   @IsString()
   @IsNotEmpty()
   readonly name: string;
+  @ApiPropertyOptional({ default: false, description: 'Preview mode (hu-0025): execute the command fully inside the transaction and roll back, returning the result the real run would have produced.' })
+  @IsOptional()
+  @IsBoolean()
+  readonly dryRun?: boolean;
 }

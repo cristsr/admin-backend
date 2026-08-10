@@ -1,7 +1,7 @@
 import { InMemoryReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/in-memory/in-memory-read-model-store';
+import { NameCollisionException } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { ReadModelAccountNameReader } from '@ledger/accounts/infrastructure/adapters/persistence/read-model-account-name-reader';
 import { PROJ_ACCOUNTS } from '@ledger/accounts/infrastructure/projections/account-tree.schema';
-import { NameCollisionException } from '@ledger/accounts/domain/account/exceptions/account.exception';
 import { AccountName } from '@ledger/shared/domain/value-objects';
 import { AccountNameRegistry } from './account-name.registry';
 

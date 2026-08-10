@@ -1,8 +1,12 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
 import {
+  ApiProperty,
+  ApiPropertyOptional,
+} from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { 
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsDateString,
   IsIn,
   IsNotEmpty,
@@ -76,4 +80,8 @@ export class RecordTransactionRequestDto {
   @IsOptional()
   @IsObject()
   readonly metadata?: Record<string, unknown>;
+  @ApiPropertyOptional({ default: false, description: 'Preview mode (hu-0025): execute the command fully inside the transaction and roll back, returning the result the real run would have produced.' })
+  @IsOptional()
+  @IsBoolean()
+  readonly dryRun?: boolean;
 }

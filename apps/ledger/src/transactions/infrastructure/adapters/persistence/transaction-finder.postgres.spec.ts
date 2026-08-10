@@ -1,4 +1,5 @@
 import { PostgresReadModelStore } from '@cqrs/infrastructure/adapters/read-model-store/postgres/postgres-read-model-store';
+import { PostgresTransactionScope } from '@cqrs/infrastructure/adapters/transaction/postgres-transaction.scope';
 import { DataSource } from 'typeorm';
 import { PostingRow, TransactionRow } from '@ledger/transactions/infrastructure/projections/transaction-list.schema';
 import { TransactionFinderFixture, runTransactionFinderContract } from '@ledger/transactions/infrastructure/testing/transaction-finder.contract';
@@ -26,7 +27,7 @@ if (runPgTests) {
     });
 
     const fixture = async (): Promise<TransactionFinderFixture> => {
-      const store = new PostgresReadModelStore(dataSource);
+      const store = new PostgresReadModelStore(dataSource, new PostgresTransactionScope());
       await dataSource.query('TRUNCATE proj_transactions, proj_postings CASCADE');
 
       const seed = async (

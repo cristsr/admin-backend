@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 import { Projector } from '@cqrs/application/projection/projector';
 import { ReadModelStore } from '@cqrs/application/projection/read-model-store';
 import { StoredEvent } from '@cqrs/domain/event/stored-event.type';
