@@ -67,10 +67,11 @@ mensajes**, el **orden**, el **origen y destino** de cada uno, y el **texto** de
 Las discrepancias se reportan con archivo, vista y la diferencia concreta. Toda
 discrepancia hallada se corrige en el diagrama, nunca en el código.
 
-[NEEDS CLARIFICATION: ¿la verificación es un script reutilizable o un chequeo puntual que
-se descarta al terminar? Un script exige parsear LikeC4, que es trabajo real para algo que
-solo sirve una vez — pero un chequeo manual sobre 47 diagramas es propenso al mismo error
-que busca detectar.]
+La verificación se implementa como un script reutilizable (`tools/verify-c4-translations.ts`),
+no como un chequeo manual. El script extrae la secuencia de mensajes de cada `.c4` (recuperado
+de git) y de cada `flows/*.md` correspondiente, y reporta las diferencias en número, orden,
+origen/destino y texto. Tras la verificación el script se conserva en el repo como registro
+auditable de la comparación realizada.
 
 ### AC-2: El gate detecta código sin documentar
 
@@ -78,15 +79,15 @@ que busca detectar.]
 todo símbolo **documentable** de su raíz de código debe aparecer en algún bloque Mermaid de
 esa unidad.
 
-[NEEDS CLARIFICATION: ¿qué cuenta como «documentable»? Exigirlo de toda clase exportada
-llenaría el reporte de DTOs, VOs y excepciones. La frontera natural parece ser
-`*.handler.ts`, `*.controller.ts` y `*.projector.ts` — 43 símbolos hoy —, pero eso deja
-fuera puertos y agregados, que sí aparecen en los diagramas de componentes.]
+El gate considera «documentable» todo símbolo exportado desde archivos cuyo nombre coincide
+con `*.handler.ts`, `*.controller.ts` o `*.projector.ts`. Son 43 símbolos hoy. Puertos y
+agregados quedan fuera de esta verificación inversa: aparecen en el diagrama de componentes
+(C4 L3, `flowchart` del `README.md`), que es de granularidad más gruesa y se revisa
+manualmente en cada `/design`.
 
-[NEEDS CLARIFICATION: ¿esta dirección bloquea el merge o solo reporta? `spec-0033` la dejó
-fuera precisamente porque hoy dejaría el CI en rojo hasta cerrar todos los gaps. Si
-bloquea, hay que documentar lo que falte **dentro de este ítem**; si solo reporta, el gate
-se puede ignorar indefinidamente.]
+El gate **bloquea el merge** (sale con `process.exit(1)`), igual que la dirección forward
+actual. Los gaps que el gate detecte se documentan dentro de este ítem: cada símbolo
+faltante recibe su flujo o se justifica por escrito por qué no lo necesita.
 
 ### AC-3: Cada carpeta de código tiene una unidad de documentación identificable
 
@@ -98,10 +99,11 @@ de ser la única fuente de esa decisión.
 Tras el cambio, el mapa `UNITS` de `tools/validate-diagrams.ts` refleja fronteras
 declaradas en la documentación, no acomodos para que el gate pase.
 
-[NEEDS CLARIFICATION: ¿`src/ledger` merece unidad propia? Tiene agregado
-(`LedgerSettings`), 3 casos de uso y su propio controller — estructuralmente es un módulo
-como los otros 5, y solo está bajo `accounts` por una decisión de cercanía tomada cuando el
-código todavía vivía junto.]
+`src/ledger` recibe unidad de documentación propia: `apps/ledger/docs/ledger/` con su
+`README.md` (diagrama de componentes) y su `flows/`. Los tres flujos que hoy están en
+`docs/accounts/flows/` (`get-ledger-settings.md`, `initialize-ledger.md`,
+`replace-ledger-settings.md`) se migran a la nueva unidad. `src/config` y `src/tooling`
+permanecen bajo `docs/shared`, con la razón documentada en su `README.md`.
 
 ### AC-4: `libs/shared` deja de ser un comodín del gate
 
@@ -151,3 +153,58 @@ diferencia legítima que hay que distinguir de un error de traducción.
 
 AC-2 y AC-3 no tienen esa urgencia, pero **AC-2 conviene resolverlo antes de que entren
 casos de uso nuevos**: es el mecanismo que evita que se repita lo que ya pasó dos veces.
+
+## Resolución de Ambigüedades
+
+- **AC-1 · autónoma (media):** ¿Script reutilizable o chequeo puntual descartable? → **Script
+  reutilizable**, `tools/verify-c4-translations.ts`.
+  *Fundamento:* un chequeo manual de 47 diagramas replica exactamente el error que el ítem
+  busca eliminar. El script no necesita un parser LikeC4 completo — extrae secuencias de
+  mensajes con regex y las compara. Se conserva en el repo como registro auditable de la
+  verificación. *Fuente:* patrón del validador existente (`tools/validate-diagrams.ts`, nivel
+  3) + invariante del propio AC (nivel 5).
+
+- **AC-2 · consultada:** ¿Qué símbolos cuentan como «documentable»? → **Handlers,
+  controllers y projectors** (`*.handler.ts`, `*.controller.ts`, `*.projector.ts`).
+  *Por qué se consultó:* define la superficie de trabajo — incluir puertos y agregados
+  duplicaría el esfuerzo de documentación (categoría alcance). Son 43 símbolos hoy. Puertos y
+  agregados quedan cubiertos por el diagrama de componentes del `README.md`, que es de
+  granularidad más gruesa.
+
+- **AC-2 · consultada:** ¿La dirección inversa bloquea el merge o solo reporta? →
+  **Bloquea** (`process.exit(1)`), consistente con la dirección forward actual.
+  *Por qué se consultó:* define si este ítem debe cerrar todos los gaps de documentación o
+  solo señalarlos (categoría alcance). Bloquear obliga a documentar lo que falte dentro de
+  este ítem, que es su propósito.
+
+- **AC-3 · consultada:** ¿`src/ledger` merece unidad propia? → **Sí**, `apps/ledger/docs/ledger/`.
+  *Por qué se consultó:* crear una unidad nueva implica migrar 3 flujos desde
+  `docs/accounts/flows/`, crear `README.md` con diagrama de componentes, y modificar el mapa
+  `UNITS` del validador (categoría alcance). Estructuralmente `src/ledger` es un módulo
+  completo como los otros 5: tiene agregado (`LedgerSettings`), 3 casos de uso y controller
+  propio.
+
+- **AC-3 · autónoma (alta):** ¿Qué pasa con `src/config` y `src/tooling`? → Permanecen bajo
+  `docs/shared`, con la justificación documentada en su `README.md`.
+  *Fundamento:* no son módulos funcionales — `src/config` es bootstrap de Swagger y
+  `src/tooling` son verificadores CLI. El propio AC da esta opción como la segunda
+  alternativa. *Fuente:* invariante del propio AC (nivel 5).
+
+- **AC-4 · autónoma (media):** ¿`libs/shared` recibe unidad de documentación o conjunto
+  explícito de símbolos? → **Unidad de documentación propia** (`libs/shared/docs/`), con
+  `README.md` + diagrama de componentes (`flowchart`), igual que `libs/cqrs`.
+  *Fundamento:* el proposal `docs-as-code-mermaid.md` dice que «una lib compartida también es
+  una unidad»; `libs/cqrs` ya tiene `libs/cqrs/docs/` con sus flows. *Fuente:* precedente de
+  `libs/cqrs` (nivel 3).
+
+- **AC-5 · autónoma (alta):** ¿Cuáles son las clases de error a probar? → **3 clases:**
+  referencia rota en `sequenceDiagram`, referencia rota en `flowchart`, y símbolo de código
+  sin documentar (nueva). *Fuente:* el propio AC las enumera (nivel 5).
+
+- **AC-1 · autónoma (alta):** ¿Cómo se distinguen diferencias legítimas post-migración de
+  errores de traducción? → El script reporta **todas** las diferencias; el revisor humano
+  distingue las que son errores de traducción (se corrigen) de las que son cambios legítimos
+  posteriores (se anotan y se ignoran). *Fundamento:* la regla de negocio «La corrección de
+  un diagrama conserva la traducción 1:1» ya establece que solo se corrigen discrepancias
+  contra el original, no se enriquece el contenido. *Fuente:* invariantes del propio ítem
+  (nivel 5).

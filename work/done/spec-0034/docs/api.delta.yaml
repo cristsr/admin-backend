@@ -1,0 +1,10 @@
+openapi: 3.1.0
+info:
+  title: sm-0034 — Cerrar las validaciones pendientes de la documentación
+  version: 1.0.0
+  description: >
+    Este ítem no agrega ni modifica endpoints de API. Es un ítem de deuda técnica
+    que extiende el tooling de verificación de documentación (tools/validate-diagrams.ts)
+    y crea nuevas unidades de documentación (apps/ledger/docs/ledger/, libs/shared/docs/).
+tags: []
+paths: {}
