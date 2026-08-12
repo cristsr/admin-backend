@@ -4,10 +4,9 @@ module: shared
 trigger: rest
 entrypoint: GET /api/v1/*
 command: varies (GetAccountTreeQuery, ListTransactionsQuery, etc.)
-view: shared_http_query_dispatch
 invariants: [AC-1, AC-2, AC-3, AC-4, AC-5, AC-7, RNF-10, RF-26, INV-9]
 introduced_by: hu-0009
-last_modified_by: hu-0010
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -20,7 +19,19 @@ controller ensambla un `QueryContext { userId }` desde `@Context()` y construye 
 con parámetros de ruta/query, preguntando al `QueryBus`. La respuesta del proyector se
 devuelve sin transformar.
 
-**Diagrama:** dynamic view `shared_http_query_dispatch` en [`../shared.c4`](../../../apps/ledger/docs/shared/shared.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant G as LedgerContextGuard
+  participant CR as LedgerContextResolver
+  participant GH as GatewayHeaderContextResolver
+  participant QB as QueryBus
+
+  Client->>G: GET /api/v1/*
+  G->>CR: resolve context
+  CR->>GH: reads x-user-id
+  G->>QB: ask(query, ctx) — la respuesta se devuelve sin transformar
+```
 
 ## Reglas
 

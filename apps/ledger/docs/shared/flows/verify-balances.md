@@ -1,13 +1,12 @@
 ---
 use_case: verify-balances
-module: shared-kernel
+module: shared
 trigger: cli
 entrypoint: nx run ledger:verify-balances --userId <uuid>
 command: ConsistencyVerifier.verifyBalances(userId)
-view: shared_kernel_verify_balances
 invariants: [AC-5, AC-6, INV-8, INV-12]
 introduced_by: hu-0008
-last_modified_by: hu-0008
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -19,8 +18,17 @@ intermedias `proj_postings`), y compara con exactitud decimal los resultados
 contra `proj_balances`. Si una fila de `proj_balances` se corrompe, el
 verificador detecta y reporta la diferencia exacta.
 
-**Diagrama:** dynamic view `shared_kernel_verify_balances` en
-[`../shared-kernel.c4`](../../../apps/ledger/docs/shared-kernel/shared-kernel.c4).
+```mermaid
+sequenceDiagram
+  participant CV as ConsistencyVerifier
+  participant ES as EventStore
+  participant RM as ReadModelStore
+  participant R as BalanceVerificationReport
+
+  CV->>ES: readAll events
+  CV->>RM: query proj_balances
+  CV->>R: returns report — drift exacto por cuenta+moneda
+```
 
 ## Reglas
 

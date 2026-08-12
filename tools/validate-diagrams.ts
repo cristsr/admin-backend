@@ -19,7 +19,13 @@ const UNITS: Record<string, string[]> = {
   'apps/ledger/docs/accounts': ['apps/ledger/src/accounts', 'apps/ledger/src/ledger'],
   'apps/ledger/docs/reconciliation': ['apps/ledger/src/reconciliation'],
   'apps/ledger/docs/reference': ['apps/ledger/src/reference'],
-  'apps/ledger/docs/shared': ['apps/ledger/src/shared'],
+  // `shared` documents the cross-cutting ledger surface: the HTTP kernel (src/shared),
+  // the Swagger bootstrap (src/config) and the CLI verifiers (src/tooling).
+  'apps/ledger/docs/shared': [
+    'apps/ledger/src/shared',
+    'apps/ledger/src/config',
+    'apps/ledger/src/tooling',
+  ],
   'apps/ledger/docs/transactions': ['apps/ledger/src/transactions'],
   'libs/cqrs/docs': ['libs/cqrs/src'],
 };

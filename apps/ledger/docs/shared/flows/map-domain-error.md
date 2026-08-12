@@ -4,10 +4,9 @@ module: shared
 trigger: rest
 entrypoint: ALL /api/v1/*
 command: cualquiera (fallo de dominio o de puerto durante el dispatch)
-view: shared_http_map_domain_error
 invariants: [RF-14, AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, AC-7]
 introduced_by: hu-0011
-last_modified_by: hu-0026
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -34,7 +33,19 @@ propio, y el código viejo se queda con el resto de los estados no reversables. 
 nuevos en el diagrama: el código entra por el mismo camino del filter, como toda
 `DomainConflictException`.
 
-**Diagrama:** dynamic view `shared_http_map_domain_error` en [`../shared.c4`](../shared.c4).
+```mermaid
+sequenceDiagram
+  participant RP as RetryPolicy
+  participant PCE as PersistenceConflictException
+  participant IP as IdempotencyPolicy
+  participant IME as IdempotencyInputMismatchException
+  participant EF as ExceptionFilter
+  participant EC as LEDGER_ERROR_CODE
+
+  RP->>PCE: throws PERSISTENCE_CONFLICT
+  IP->>IME: throws IDEMPOTENCY_INPUT_MISMATCH
+  EF->>EC: expone exception.code verbatim (RF-14)
+```
 
 ## Reglas
 

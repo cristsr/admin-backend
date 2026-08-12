@@ -58,6 +58,93 @@ workspace's pre-existing `allow: ['@ledger/**']` — needed so each app can reac
 its own files through its alias — bypasses tag checks, so the rule does not bite
 on its own.
 
+## Components (C4 level 3)
+
+Nodes name the real class; the CI gate (`npm run docs:validate`) fails if any of them
+stops existing. Cylinders are tables, not classes.
+
+```mermaid
+flowchart TB
+  subgraph domain["Domain"]
+    AR("AggregateRoot")
+    DE("DomainEvent")
+    ES("EventStore")
+    CCE("ConcurrencyConflictException")
+    DRE("DuplicateExternalRefException")
+  end
+
+  subgraph application["Application"]
+    ESR("EventSourcedRepository")
+    EF("EnvelopeFactory")
+    REG("EventRegistry")
+    CB("CommandBus")
+    PCB("PolicyCommandBus")
+    CP("CommandPolicy")
+    QB("QueryBus")
+    ACP("AuthenticatedContextPolicy")
+    IP("IdempotencyPolicy")
+    OCP("OptimisticConcurrencyPolicy")
+    DRP("DryRunPolicy")
+    RP("RetryPolicy")
+    MAC("MissingAuthContextException")
+    RMS("ReadModelStore")
+    PROJ("Projector")
+    PD("ProjectionDispatcher")
+    PREG("ProjectionRegistry")
+    PR("ProjectionRebuilder")
+    RR("RebuildReport")
+    ECR("EventChainReader")
+  end
+
+  subgraph infrastructure["Infrastructure"]
+    IMES("InMemoryEventStore")
+    PES("PostgresEventStore")
+    SPD("SynchronousProjectionDispatcher")
+    PPD("PollingProjectionDispatcher")
+    IMRM("InMemoryReadModelStore")
+    PRMS("PostgresReadModelStore")
+    PPCR("PostgresProjectionCheckpointRepository")
+    EVT[("event_store")]
+    CKP[("projection_checkpoints")]
+  end
+
+  PCB --> CP
+  CP --> ACP
+  CP --> IP
+  CP --> OCP
+  CP --> DRP
+  CP --> RP
+  ACP --> MAC
+  CB --> PCB
+  ESR --> AR
+  ESR --> ES
+  ESR --> EF
+  ESR --> REG
+  AR --> DE
+  ES --> CCE
+  ES --> DRE
+  PES --> ES
+  IMES --> ES
+  PES --> EVT
+  ECR --> EVT
+  PD --> PROJ
+  SPD --> PD
+  PPD --> PD
+  PRMS --> RMS
+  IMRM --> RMS
+  PR --> PREG
+  PR --> RR
+  PR --> PPD
+  PPCR --> CKP
+```
+
+**Flows:** see [`docs/flows/`](./docs/flows/) — each carries its own inline
+`sequenceDiagram`.
+
+> The `PostgresReadModelStore` contract suite (`infrastructure/testing`) verifies the
+> upsert / delete / query / truncate semantics that both adapters must honour. It is a
+> test, not a runtime component, so it is named here rather than drawn as a node.
+
 ## Consumers
 
 `apps/ledger` via the `@cqrs/*` path alias. Adding a consumer means giving it

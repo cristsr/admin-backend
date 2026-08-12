@@ -2,16 +2,91 @@
 
 Propósito: adaptadores HTTP compartidos (guard, interceptor, decoradores de contexto,
 DTO de respuesta de escritura) + código de dominio transversal (Money, puertos de
-contexto). Es el glue que conecta NestJS con el núcleo hexagonal de `shared-kernel`.
+contexto). Es el glue que conecta NestJS con el núcleo hexagonal de
+[`libs/cqrs`](../../../../libs/cqrs/README.md).
+
+## Diagramas
+
+**Componentes (C4 Nivel 3).** Los nodos nombran la clase real; el gate de CI
+(`npm run docs:validate`) falla si alguno deja de existir.
+
+```mermaid
+flowchart TB
+  subgraph domain["Domain"]
+    EC("LEDGER_ERROR_CODE")
+  end
+
+  subgraph application["Application"]
+    LCR("LedgerContextResolver")
+  end
+
+  subgraph infrastructure["Infrastructure · HTTP kernel"]
+    SHM("SharedHttpModule")
+    LCG("LedgerContextGuard")
+    GHR("GatewayHeaderContextResolver")
+    CRI("CommandResultInterceptor")
+    CAD("CommandAcceptedDto")
+    ER("ExternalRef")
+    EF("ExceptionFilter")
+    BSD("buildSwaggerDocument")
+    MMS("maybeMountSwagger")
+    ORC("OtelRetryCounter")
+  end
+
+  subgraph policies["Políticas del chain (libs/cqrs)"]
+    ACP("AuthenticatedContextPolicy")
+    RP("RetryPolicy")
+    IP("IdempotencyPolicy")
+    OCP("OptimisticConcurrencyPolicy")
+    DRP("DryRunPolicy")
+    RC("RetryCounter")
+  end
+
+  subgraph exceptions["Excepciones transversales"]
+    TPE("TransientPersistenceException")
+    PCE("PersistenceConflictException")
+    IME("IdempotencyInputMismatchException")
+  end
+
+  subgraph kernel["Shared kernel (libs/cqrs)"]
+    CB("CommandBus")
+    QB("QueryBus")
+  end
+
+  SHM --> LCG
+  SHM --> CRI
+  SHM --> LCR
+  LCG --> LCR
+  LCR --> GHR
+  ER --> CB
+  CB --> ACP
+  ACP --> RP
+  RP --> IP
+  IP --> OCP
+  OCP --> DRP
+  RP --> RC
+  RC --> ORC
+  RP --> TPE
+  RP --> PCE
+  IP --> IME
+  CRI --> CAD
+  EF --> EC
+  BSD --> CB
+  BSD --> QB
+  MMS --> BSD
+```
 
 ## Casos de uso (flujos)
 
 | Flujo | Slug | Trigger | Entrypoint |
 |---|---|---|---|
-| Swagger Docs | `get-swagger-docs` | rest | `GET /api/docs` |
-| Command Dispatch | `command-dispatch` | rest | `POST /api/v1/*` |
-| Query Dispatch | `query-dispatch` | rest | `GET /api/v1/*` |
-| Map Domain Error | `map-domain-error` | rest | `ALL /api/v1/*` |
+| Swagger Docs | [`get-swagger-docs`](./flows/get-swagger-docs.md) | rest | `GET /api/docs` |
+| Command Dispatch | [`command-dispatch`](./flows/command-dispatch.md) | rest | `POST /api/v1/*` |
+| Query Dispatch | [`query-dispatch`](./flows/query-dispatch.md) | rest | `GET /api/v1/*` |
+| Map Domain Error | [`map-domain-error`](./flows/map-domain-error.md) | rest | `ALL /api/v1/*` |
+| Escritura idempotente | [`idempotent-write`](./flows/idempotent-write.md) | rest | `POST /api/v1/*` con `X-External-Ref` |
+| **Preview sin efectos** | [`dry-run-preview`](./flows/dry-run-preview.md) | rest | `POST /api/v1/*` con `dryRun: true` |
+| **Reintento transitorio** | [`retry-transient-failure`](./flows/retry-transient-failure.md) | rest | política transversal del `CommandBus` |
 
 ## Invariantes
 

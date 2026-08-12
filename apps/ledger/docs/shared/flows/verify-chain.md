@@ -1,13 +1,12 @@
 ---
 use_case: verify-chain
-module: shared-kernel
+module: shared
 trigger: cli
 entrypoint: nx run ledger:verify-chain [--userId <uuid>]
 command: ChainVerifier.verifyChain(userId?)
-view: shared_kernel_verify_chain
 invariants: [AC-1, AC-2, AC-3, AC-4, INV-9, INV-12]
 introduced_by: hu-0024
-last_modified_by: hu-0024
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -22,8 +21,20 @@ Verifica **dos cosas a la vez**: que la canonicalización siga produciendo el mi
 (porque recomputa desde los campos, no desde un canónico guardado) y que el encadenamiento
 esté intacto (porque arrastra el hash anterior).
 
-**Diagrama:** dynamic view `shared_kernel_verify_chain` en
-[`../shared-kernel.c4`](../shared-kernel.c4).
+```mermaid
+sequenceDiagram
+  participant CV as ChainVerifier
+  participant ECR as EventChainReader
+  participant CJ as canonicalJson
+  participant SH as sha256Hex
+  participant R as ChainVerificationReport
+
+  CV->>ECR: userIds() cuando no se pasó --userId
+  CV->>ECR: readChain(userId, fromPosition, limit)
+  CV->>CJ: forma canónica por evento
+  CJ->>SH: sha256(prev || canónica)
+  CV->>R: returns report → exit 0 | 1
+```
 
 ## Recorrido
 

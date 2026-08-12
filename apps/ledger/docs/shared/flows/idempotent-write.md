@@ -4,10 +4,9 @@ module: shared
 trigger: rest
 entrypoint: POST /api/v1/* (con X-External-Ref)
 command: varies (cualquier command con AuthContext.externalRef)
-view: shared_http_idempotent_write
 invariants: [AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, AC-7, INV-10, RF-11, RNF-9]
 introduced_by: hu-0012
-last_modified_by: hu-0024
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -24,7 +23,27 @@ borde HTTP solo transporta el valor y la semántica vive en el `CommandBus`, res
 reenviarla con datos distintos replayaba el resultado viejo y la operación nueva se perdía sin
 error ni traza. Ahora la política **compara los inputs** y rechaza el reuso con datos distintos.
 
-**Diagrama:** dynamic view `shared_http_idempotent_write` en [`../shared.c4`](../shared.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant ER as ExternalRef
+  participant CB as CommandBus
+  participant IP as IdempotencyPolicy
+  participant CJ as canonicalJson
+  participant SH as sha256Hex
+  participant MM as IdempotencyInputMismatchException
+  participant I as CommandResultInterceptor
+  participant D as CommandAcceptedDto
+
+  Client->>ER: POST /api/v1/* con X-External-Ref
+  ER->>CB: externalRef en AuthContext
+  CB->>IP: dispatch atraviesa el chain (ctx contextual)
+  IP->>CJ: canonicaliza los inputs del command
+  CJ->>SH: hash de la forma canónica
+  IP->>MM: inputs distintos → 409
+  IP->>I: inputs iguales → CommandResult del ancla
+  I->>D: 200 + Idempotency-Hit: true + X-Ledger-Stream-Position
+```
 
 ## Recorrido
 

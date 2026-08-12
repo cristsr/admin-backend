@@ -4,10 +4,9 @@ module: shared
 trigger: rest
 entrypoint: GET /api/docs
 command: N/A (SwaggerModule internal)
-view: shared_swagger_docs
 invariants: [AC-2, AC-3]
 introduced_by: hu-0009
-last_modified_by: hu-0009
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -22,7 +21,19 @@ El documento OpenAPI se construye con `buildSwaggerDocument()` desde decoradores
 `@nestjs/swagger` en controllers y DTOs, garantizando que el contrato publicado no diverge
 de la implementación.
 
-**Diagrama:** dynamic view `shared_swagger_docs` en [`../shared-kernel.c4`](../../../apps/ledger/docs/shared-kernel/shared-kernel.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant SB as buildSwaggerDocument
+  participant MS as maybeMountSwagger
+  participant CB as CommandBus
+  participant QB as QueryBus
+
+  MS->>SB: monta /api/docs si NODE_ENV !== "production"
+  SB->>CB: documents bus contract
+  SB->>QB: documents bus contract
+  Client->>MS: GET /api/docs (Swagger UI)
+```
 
 ## Reglas
 

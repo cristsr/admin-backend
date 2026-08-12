@@ -1,13 +1,12 @@
 ---
 use_case: rebuild-projection
-module: shared-kernel
+module: cqrs
 trigger: cli
 entrypoint: nx run ledger:rebuild --projection <name>
 command: ProjectionRebuilder.rebuild(projectionName)
-view: shared_kernel_rebuild_projection
 invariants: [AC-1, AC-2, AC-4, AC-6, INV-12]
 introduced_by: hu-0008
-last_modified_by: hu-0008
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -18,8 +17,19 @@ checkpoint, y re-ejecutando cada evento del stream a través de los mismos
 proyectores que el dispatch incremental original. El resultado es idéntico al
 que produjo el dispatch en vivo.
 
-**Diagrama:** dynamic view `shared_kernel_rebuild_projection` en
-[`../shared-kernel.c4`](../../../apps/ledger/docs/shared-kernel/shared-kernel.c4).
+```mermaid
+sequenceDiagram
+  participant PR as ProjectionRebuilder
+  participant REG as ProjectionRegistry
+  participant ES as EventStore
+  participant RM as ReadModelStore
+  participant PPD as PollingProjectionDispatcher
+
+  PR->>REG: resolve projectors + tables
+  PR->>RM: truncate(tables)
+  PR->>ES: readAll(0n, MAX)
+  PR->>PPD: catchUp() — reproduce el stream desde 0
+```
 
 ## Reglas
 

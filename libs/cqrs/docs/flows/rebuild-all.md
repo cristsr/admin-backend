@@ -1,13 +1,12 @@
 ---
 use_case: rebuild-all
-module: shared-kernel
+module: cqrs
 trigger: cli
 entrypoint: nx run ledger:rebuildAll
 command: ProjectionRebuilder.rebuildAll()
-view: shared_kernel_rebuild_all
 invariants: [AC-3, AC-6, INV-12]
 introduced_by: hu-0008
-last_modified_by: hu-0008
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -18,8 +17,15 @@ una, y devuelve un `RebuildReport` por cada una indicando éxito o fallo y el
 número de eventos aplicados. Cada checkpoint queda en la última posición del
 stream.
 
-**Diagrama:** dynamic view `shared_kernel_rebuild_all` en
-[`../shared-kernel.c4`](../../../apps/ledger/docs/shared-kernel/shared-kernel.c4).
+```mermaid
+sequenceDiagram
+  participant PR as ProjectionRebuilder
+  participant REG as ProjectionRegistry
+  participant RR as RebuildReport
+
+  PR->>REG: names() → iterate
+  PR->>RR: returns RebuildReport[]
+```
 
 ## Reglas
 

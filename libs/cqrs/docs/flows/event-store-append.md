@@ -1,13 +1,12 @@
 ---
 use_case: event-store-append
-module: shared-kernel
+module: cqrs
 trigger: domain-event
 entrypoint: EventStore.append(stream, expectedVersion, events)
 command: cualquiera (todo command que emita eventos pasa por acá)
-view: shared_kernel_event_store_batch_append
 invariants: [AC-1, AC-2, AC-3, AC-8, INV-7, INV-9, INV-12, RNF-2]
 introduced_by: hu-0007
-last_modified_by: hu-0024
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -22,8 +21,19 @@ La cadena vive entera en el adaptador `PostgresEventStore`: es defensa en profun
 que el trigger append-only, y el núcleo no sabe que existe. Ningún agregado, handler ni
 projector conoce el hash.
 
-**Diagrama:** dynamic view `shared_kernel_event_store_batch_append` en
-[`../shared-kernel.c4`](../shared-kernel.c4).
+```mermaid
+sequenceDiagram
+  participant PES as PostgresEventStore
+  participant ES as EventStore
+  participant CJ as canonicalJson
+  participant SH as sha256Hex
+
+  PES->>ES: pg_advisory_xact_lock(hashtext(user_id))
+  PES->>ES: SELECT hash … ORDER BY global_position DESC LIMIT 1
+  PES->>CJ: forma canónica del envelope
+  CJ->>SH: sha256(prev || canónica)
+  PES->>ES: INSERT multi-fila con hash + external_ref_hash
+```
 
 ## Recorrido
 
