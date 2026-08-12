@@ -33,12 +33,14 @@ sequenceDiagram
   actor Client
   participant C as TransactionsController
   participant QB as QueryBus
+  participant H as ListTransactionsHandler
   participant RM as ReadModelStore
 
   Client->>C: GET /transactions
   C->>QB: ask(ListTransactionsQuery, ctx)
-  QB->>RM: resuelve transaction_id por cuenta vía proj_postings
-  QB->>RM: query proj_transactions con Criteria + userId + oneOf + paginate
+  QB->>H: execute(query) — solo lectura (RNF-10)
+  H->>RM: resuelve transaction_id por cuenta vía proj_postings
+  H->>RM: query proj_transactions con Criteria + userId + oneOf + paginate
 ```
 
 ## Reglas

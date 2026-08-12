@@ -32,11 +32,13 @@ sequenceDiagram
   actor Client
   participant C as TransactionsController
   participant QB as QueryBus
+  participant H as GetTransactionByIdHandler
   participant RM as ReadModelStore
 
   Client->>C: GET /transactions/{id}
   C->>QB: ask(GetTransactionByIdQuery, ctx)
-  QB->>RM: query proj_transactions por userId + transactionId
+  QB->>H: execute(query) — solo lectura (RNF-10)
+  H->>RM: query proj_transactions por userId + transactionId
 ```
 
 ## Reglas

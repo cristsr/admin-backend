@@ -22,11 +22,13 @@ sequenceDiagram
   actor Client
   participant C as AccountsController
   participant QB as QueryBus
+  participant H as GetAccountByIdHandler
   participant RM as ReadModelStore
 
   Client->>C: GET /accounts/{id}
   C->>QB: ask(GetAccountByIdQuery, ctx)
-  QB->>RM: query proj_accounts por userId + accountId
+  QB->>H: execute(query) — solo lectura (RNF-10)
+  H->>RM: query proj_accounts por userId + accountId
 ```
 
 ## Reglas

@@ -27,12 +27,14 @@ sequenceDiagram
   actor Client
   participant C as AccountsController
   participant QB as QueryBus
+  participant H as GetAccountBalancesHandler
   participant RM as ReadModelStore
 
   Client->>C: GET /accounts/{id}/balance (?currency se ignora)
   C->>QB: ask(GetAccountBalancesQuery, ctx)
-  QB->>RM: query proj_accounts para owned IDs
-  QB->>RM: query proj_balances filtrado por owned
+  QB->>H: execute(query) — solo lectura (RNF-10)
+  H->>RM: query proj_accounts para owned IDs
+  H->>RM: query proj_balances filtrado por owned
 ```
 
 ## Reglas

@@ -30,6 +30,7 @@ sequenceDiagram
   participant SR as ReadModelAssertionStatusReader
   participant RM as ReadModelStore
   participant CB as CommandBus
+  participant EH as EvaluateAssertionHandler
   participant A as BalanceAssertion
 
   P->>R: on(TransactionVoided)
@@ -37,7 +38,8 @@ sequenceDiagram
   PR->>RM: query proj_postings por transaction_id
   R->>SR: nonRevokedOnAccountFrom(cuenta, fecha)
   R->>CB: dispatch(EvaluateAssertion) por aserción
-  CB->>A: evaluate() — silencioso si el veredicto no cambia
+  CB->>EH: handle(command)
+  EH->>A: evaluate() — silencioso si el veredicto no cambia
 ```
 
 ## Reglas
