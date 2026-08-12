@@ -1,5 +1,0 @@
-{
-  "name": "admin-back",
-  "title": "admin-back — modelo C4",
-  "exclude": ["**/node_modules/**", "**/dist/**", "**/coverage/**", "**/work/done/**"]
-}

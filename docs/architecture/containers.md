@@ -4,10 +4,11 @@
 > datos e integraciones externas. Generado por `/architecture` (bootstrap) y
 > actualizado quirúrgicamente por `/architecture` en modo Update, invocado
 > desde `/sync` cuando una historia toca arquitectura global.
-> Última actualización: 2026-07-23 (bootstrap inicial).
+> Última actualización: 2026-08-11 (spec-0033 — migración a Mermaid; se
+> incorporó `libs/cqrs`, ausente desde su extracción en julio).
 
 ```mermaid
-graph TB
+flowchart TB
   subgraph apps["Apps (Nx)"]
     finances["finances<br/>monolito NestJS<br/>congelado, pendiente de reemplazo<br/>(folds in: user, exchange)"]
     ledger["ledger<br/>NestJS, event sourcing + CQRS<br/>partida doble<br/>en desarrollo activo"]
@@ -15,6 +16,7 @@ graph TB
 
   subgraph libs["Libs compartidas"]
     shared["shared<br/>Money, Nullable&lt;T&gt;, DomainException,<br/>Criteria, PropertiesOnly"]
+    cqrs["cqrs<br/>event store, command/query bus,<br/>pipeline de proyecciones<br/>(extraída de ledger, 2026-07-27)"]
   end
 
   subgraph infra["Infraestructura"]
@@ -24,6 +26,8 @@ graph TB
 
   finances --> shared
   ledger --> shared
+  ledger --> cqrs
+  cqrs --> shared
 
   finances -- "DB: finances" --> pg
   ledger -- "DB: ledger<br/>(event store + read models)" --> pg
@@ -48,6 +52,18 @@ graph TB
   código: su `ledger-context.guard` asume que el `userId`/`clientId` ya llegó
   resuelto por la infraestructura externa (gateway/servicio de identidad) —
   ver RF-26/RF-12 de `especificacion-tecnica-ledger.md`.
-- No hay libs `core` pese a lo que menciona `CLAUDE.md` — al momento de este
-  bootstrap (2026-07-23) solo existe `libs/shared`. Si esto cambió, actualizar
-  esta nota y el diagrama.
+- **`libs/cqrs`** contiene la maquinaria de event sourcing y CQRS: event store
+  append-only, buses de comando y consulta, y el pipeline de proyecciones. Se
+  extrajo de `apps/ledger/src/shared-kernel` el 2026-07-27 y es deliberadamente
+  ignorante de qué se registra — conoce streams, envelopes y posiciones, nunca
+  cuentas ni dinero. Su documentación vive en
+  [`libs/cqrs/README.md`](../../libs/cqrs/README.md) y
+  [`libs/cqrs/docs/flows/`](../../libs/cqrs/docs/flows/).
+- No hay lib `core` pese a lo que menciona `CLAUDE.md`. Hoy existen
+  `libs/shared` y `libs/cqrs`.
+
+> **Nivel 3.** Los componentes internos de cada módulo no viven acá: cada uno
+> tiene su `flowchart` en el `README.md` de su unidad de documentación
+> (`apps/ledger/docs/<módulo>/`, `libs/cqrs/`), y cada caso de uso su
+> `sequenceDiagram` inline en `flows/`. Ver
+> [`docs/proposals/docs-as-code-mermaid.md`](../proposals/docs-as-code-mermaid.md).

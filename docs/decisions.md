@@ -8,6 +8,62 @@
 > entrada nueva que la referencia. Orden cronológico inverso (más reciente
 > primero).
 
+## spec-0033 — Migración de los diagramas de LikeC4 a Mermaid (2026-08-11)
+
+- **Se abandona LikeC4 y los diagramas pasan a Mermaid inline.** *Supersede la decisión de
+  hu-0019/2026-07-24 que adoptó el modelo único LikeC4* (ver
+  `docs/proposals/docs-as-code-likec4.md`, ahora marcada como superada). El motivo
+  decisivo: **los diagramas nunca se vieron** — en 3 semanas no se exportó un solo SVG, no
+  existió `docs/.likec4-export` ni ninguna carpeta `assets/`, y verlos exigía levantar
+  `likec4 start`. Documentación que necesita un dev server para consumirse, no se consume.
+  Mermaid renderiza nativo en GitHub, en el preview de VS Code y en un PR.
+
+- **El diagrama vive dentro del documento que lo explica.** Antes eran dos artefactos por
+  flujo (el `flows/*.md` con la semántica y la `dynamic view` con el dibujo, unidos por una
+  clave `view:`); ahora es uno solo. Se eliminan 7 archivos `.c4` (1553 líneas), la
+  dependencia `likec4` y ~120 líneas de instrucciones de delta en `/design` y `/sync`.
+
+- **El costo aceptado: repetición de nombres.** Sin modelo único, un componente que
+  participa en N flujos se nombra N veces. Lo que impide que eso derive en divergencia es
+  el gate de CI (`tools/validate-diagrams.ts`), que verifica que **todo identificador de
+  todo bloque Mermaid nombre un símbolo real del código**. La forma del nodo declara si
+  debe resolver: `X("Nombre")` sí, cilindro y `subgraph` no; en un `sequenceDiagram` se
+  verifica el nombre visible, no el alias.
+
+- **El gate es unidireccional a propósito** (diagrama → código). Verificar la dirección
+  inversa —que todo lo codificado esté documentado— exigiría definir qué símbolos son
+  documentables y hoy dejaría el CI en rojo. Queda como deuda explícita.
+
+- **Resolución de símbolos por regex, no por TypeScript Compiler API.** Medido sobre los
+  101 nombres declarados en los `.c4`: 91 resuelven con un regex sobre declaraciones
+  exportadas; los 10 restantes no nombraban símbolos (tablas, familias de excepciones, un
+  archivo de test) y se reclasificaron. Levantar el compilador entero para responder
+  «¿existe este nombre?» no pasa el Anti-Abstraction Gate.
+
+- **La documentación vive junto al código que describe.** Regla nueva, y la de mayor
+  alcance: si el código se mueve, su documentación se mueve en el mismo cambio. La
+  disparó un hallazgo — `apps/ledger/docs/shared-kernel/` llevaba dos semanas documentando
+  código extraído a `libs/cqrs` el 2026-07-27, en paralelo al `README.md` que la lib ya
+  tenía. **El modelo LikeC4 lo ocultaba activamente**: declaraba esos componentes bajo el
+  FQN `admin.ledger.shared.*`, afirmando una pertenencia que el árbol de archivos ya había
+  desmentido. Un modelo que puede contradecir al repo sin que nada lo detecte es el
+  argumento más fuerte a favor de este cambio. La documentación se movió a
+  `libs/cqrs/docs/`.
+
+- **El mapa unidad-de-doc → raíz-de-código es explícito, aunque casi todas sus filas sean
+  1:1.** Derivarlo por convención de nombre es exactamente lo que permitió que la carpeta
+  huérfana sobreviviera. Tres unidades mapean a más de una raíz, y en los tres casos el
+  mapa documenta una frontera real que estaba tácita: `accounts` → `src/accounts` +
+  `src/ledger` (aloja el ciclo de vida del ledger, decisión previa que su README ya
+  declaraba), y `shared` → `src/shared` + `src/config` + `src/tooling`.
+
+- **`API_CONTRACT_MODE: delta` no cambia.** El `api.yaml` canónico por módulo sí es un
+  artefacto acumulativo real, y esa mitad del mecanismo nunca dependió de LikeC4. Lo que
+  se retira es el delta/reconcile **de los diagramas**: `SYNC_MODE` pasa de `reconcile` a
+  `replace` y `/design` emite el `flows/*.md` completo.
+
+---
+
 ## hu-0026 — Fecha efectiva elegible en la reversa (2026-08-10)
 
 No hubo preguntas nuevas en esta fase: `/clarify` dejó el ítem sin ambigüedades y las

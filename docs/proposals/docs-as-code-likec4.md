@@ -1,6 +1,23 @@
 # Propuesta: documentación como código (LikeC4) + docs vivos por módulo
 
-> Estado: **propuesta** · Reemplaza el enfoque «un set de diagramas por historia»
+> ## ⚠ SUPERADA
+>
+> **Superada por [`docs-as-code-mermaid.md`](./docs-as-code-mermaid.md)** (spec-0033,
+> 2026-08-11). Se conserva como registro del enfoque vigente entre 2026-07-24 y esa
+> fecha; **no refleja el estado actual del repositorio.** No quedan archivos `.c4` vivos
+> ni la dependencia `likec4`.
+>
+> **Qué sobrevivió de esta propuesta:** la unidad de documentación = caso de uso (no la
+> HU), el `api.yaml` canónico por módulo con contrato incremental
+> (`API_CONTRACT_MODE: delta`), el frontmatter por flujo y la taxonomía de triggers.
+>
+> **Qué se abandonó:** el modelo único `.c4`, las `dynamic view`, el mecanismo de
+> delta/reconcile para diagramas y los marcadores de revisión `#delta-new`/`#delta-changed`.
+> El motivo, en una línea: **los diagramas nunca se vieron** — no se exportó un solo SVG y
+> verlos exigía levantar un dev server. El detalle está en la sección «Por qué se reemplaza
+> LikeC4» de la propuesta nueva.
+
+> Estado original: **propuesta** · Reemplaza el enfoque «un set de diagramas por historia»
 > por un modelo único LikeC4 + OpenAPI canónico por módulo, con `/design`
 > produciendo un **delta** acotado a la HU y `/sync` **reconciliándolo** contra
 > los docs vivos.

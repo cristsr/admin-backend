@@ -8,7 +8,7 @@
 > Última actualización: 2026-07-23 (bootstrap inicial).
 
 ```mermaid
-graph TB
+flowchart TB
   usuario["Usuario<br/>(persona con cuentas/transacciones<br/>financieras propias)"]
 
   subgraph sistema["admin-back"]
