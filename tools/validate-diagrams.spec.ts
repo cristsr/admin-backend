@@ -1,4 +1,12 @@
-import { collectSymbols, extractIdentifiers, validateFile, walk } from './validate-diagrams';
+import {
+  collectDocumentableSymbols,
+  collectDocumentedSymbols,
+  collectSymbols,
+  extractIdentifiers,
+  runReverseGate,
+  validateFile,
+  walk,
+} from './validate-diagrams';
 
 describe('walk', () => {
   // Units are migrated one at a time, so a declared doc root may not exist yet. Crashing
@@ -125,5 +133,169 @@ describe('validateFile', () => {
       { file: 'a.md', line: 3, name: 'GhostOne' },
       { file: 'a.md', line: 8, name: 'GhostTwo' },
     ]);
+  });
+});
+
+describe('collectDocumentableSymbols', () => {
+  it('indexes exports from *.handler.ts files', () => {
+    const sources = ['export class InitializeLedgerHandler {}'];
+    const fileNames = ['fake/handlers/initialize-ledger.handler.ts'];
+    const symbols = (collectDocumentableSymbols as any)(['fake/handlers'], {
+      sources,
+      fileNames,
+    });
+    expect(symbols).toContain('InitializeLedgerHandler');
+  });
+
+  it('indexes exports from *.controller.ts files', () => {
+    const sources = ['export class LedgerController {}'];
+    const fileNames = ['fake/ledger.controller.ts'];
+    const symbols = (collectDocumentableSymbols as any)(['fake'], { sources, fileNames });
+    expect(symbols).toContain('LedgerController');
+  });
+
+  it('indexes exports from *.projector.ts files', () => {
+    const sources = ['export class LedgerSettingsProjector {}'];
+    const fileNames = ['fake/ledger-settings.projector.ts'];
+    const symbols = (collectDocumentableSymbols as any)(['fake'], { sources, fileNames });
+    expect(symbols).toContain('LedgerSettingsProjector');
+  });
+
+  it('ignores exports from other file patterns (ports, aggregates, DTOs)', () => {
+    const sources = [
+      'export abstract class LedgerSettingsFinder {}',
+      'export class LedgerSettings {}',
+      'export class LedgerSettingsDto {}',
+    ];
+    const fileNames = [
+      'fake/ledger-settings-finder.port.ts',
+      'fake/ledger-settings.aggregate.ts',
+      'fake/ledger-settings.dto.ts',
+    ];
+    const symbols = (collectDocumentableSymbols as any)(['fake'], { sources, fileNames });
+    expect(symbols.size).toBe(0);
+  });
+
+  it('returns empty when no matching files exist', () => {
+    const symbols = (collectDocumentableSymbols as any)(['does/not/exist']);
+    expect(symbols.size).toBe(0);
+  });
+
+  it('skips .spec.ts files even when they match the pattern', () => {
+    const sources = ['export const mock = {};'];
+    const fileNames = ['fake/test.handler.spec.ts'];
+    const symbols = (collectDocumentableSymbols as any)(['fake'], { sources, fileNames });
+    expect(symbols.size).toBe(0);
+  });
+});
+
+describe('collectDocumentedSymbols', () => {
+  it('collects identifiers from mermaid blocks in .md files', () => {
+    const mdContent = [
+      '# Title',
+      '```mermaid',
+      'flowchart TB',
+      '  A("InitializeLedgerHandler")',
+      '```',
+      'prose',
+      '```mermaid',
+      'sequenceDiagram',
+      '  participant LC as LedgerController',
+      '```',
+    ].join('\n');
+    const symbols = (collectDocumentedSymbols as any)(['fake/docs'], {
+      sources: { 'fake/docs/flow.md': mdContent },
+    });
+    expect(symbols).toContain('InitializeLedgerHandler');
+    expect(symbols).toContain('LedgerController');
+  });
+
+  it('returns empty when no .md files contain mermaid blocks', () => {
+    const symbols = (collectDocumentedSymbols as any)(['fake/docs'], {
+      sources: { 'fake/docs/readme.md': '# Just prose, no diagram' },
+    });
+    expect(symbols.size).toBe(0);
+  });
+
+  it('returns empty for a directory that does not exist', () => {
+    const symbols = (collectDocumentedSymbols as any)(['does/not/exist']);
+    expect(symbols.size).toBe(0);
+  });
+});
+
+describe('runReverseGate', () => {
+  it('reports documentable symbols not referenced in any mermaid block', () => {
+    const docRoot = 'fake/docs/ledger';
+    const codeRoots = ['fake/src/ledger'];
+    const sharedRoots: string[] = [];
+
+    const codeSources = ['export class MissingHandler {}'];
+    const codeFileNames = ['fake/src/ledger/missing.handler.ts'];
+
+    const docSources = {
+      'fake/docs/ledger/flow.md': [
+        '# Flow',
+        '```mermaid',
+        'sequenceDiagram',
+        '  participant C as LedgerController',
+        '```',
+      ].join('\n'),
+    };
+
+    const findings = (runReverseGate as any)(docRoot, codeRoots, sharedRoots, {
+      codeSources,
+      codeFileNames,
+      docSources,
+    });
+
+    expect(findings).toEqual([
+      { file: docRoot, line: 0, name: 'MissingHandler' },
+    ]);
+  });
+
+  it('reports nothing when all documentable symbols are referenced', () => {
+    const docRoot = 'fake/docs/ledger';
+    const codeRoots = ['fake/src/ledger'];
+    const sharedRoots: string[] = [];
+
+    const codeSources = ['export class LedgerController {}'];
+    const codeFileNames = ['fake/src/ledger/ledger.controller.ts'];
+
+    const docSources = {
+      'fake/docs/ledger/flow.md': [
+        '# Flow',
+        '```mermaid',
+        'sequenceDiagram',
+        '  participant LC as LedgerController',
+        '```',
+      ].join('\n'),
+    };
+
+    const findings = (runReverseGate as any)(docRoot, codeRoots, sharedRoots, {
+      codeSources,
+      codeFileNames,
+      docSources,
+    });
+
+    expect(findings).toEqual([]);
+  });
+
+  it('reports nothing when the unit has no documentable symbols', () => {
+    const docRoot = 'fake/docs/shared';
+    const codeRoots = ['fake/src/shared'];
+    const sharedRoots: string[] = [];
+
+    const codeSources = ['export class DomainException {}'];
+    const codeFileNames = ['fake/src/shared/domain.exception.ts'];
+
+    const docSources = {};
+
+    const findings = (runReverseGate as any)(docRoot, codeRoots, sharedRoots, {
+      codeSources,
+      codeFileNames,
+      docSources,
+    });
+
+    expect(findings).toEqual([]);
   });
 });
