@@ -1,0 +1,292 @@
+{
+    "item": [
+        {
+            "name": "transactions",
+            "description": "",
+            "item": [
+                {
+                    "name": "{id}",
+                    "description": "",
+                    "item": [
+                        {
+                            "name": "reverse",
+                            "description": "",
+                            "item": [
+                                {
+                                    "id": "16b93b4a-32c5-4ad6-85d1-a90e07c4024d",
+                                    "name": "Reverse a confirmed transaction; returns the reversal id (§7.3).",
+                                    "request": {
+                                        "name": "Reverse a confirmed transaction; returns the reversal id (§7.3).",
+                                        "description": {
+                                            "content": "Crea una transacción de reversa (T2) con los postings invertidos y\n`metadata.reverses_id = {id}`; la original NO se muta.\n\n**`atEffectiveDate` (hu-0026) elige la fecha contable de T2:**\n\n- `true` (default) — T2 nace con la fecha de la original. Corrige el saldo\n  histórico; las aserciones de saldo posteriores a esa fecha se re-evalúan\n  automáticamente (RF-18).\n- `false` — T2 nace con la fecha de hoy (UTC). El saldo histórico queda\n  intacto y las aserciones anteriores a hoy no cambian de veredicto. Es la\n  práctica contable habitual cuando el período de la original ya fue\n  conciliado y cerrado.\n\nEl ledger **no** infiere si el período está cerrado: la elección es del\ncliente. Tampoco compara la fecha de hoy con la de la original — si la\noriginal está fechada a futuro, T2 puede quedar fechada antes que ella.\n\nEL `reason?` DEL BODY SE IGNORA: el controller no lo persiste, a diferencia\nde `void`. El campo se conserva en el contrato para no romper clientes\n(hu-0014, AC-2).\n",
+                                            "type": "text/plain"
+                                        },
+                                        "url": {
+                                            "path": [
+                                                "transactions",
+                                                ":id",
+                                                "reverse"
+                                            ],
+                                            "host": [
+                                                "{{baseUrl}}"
+                                            ],
+                                            "query": [],
+                                            "variable": [
+                                                {
+                                                    "type": "any",
+                                                    "value": "<uuid>",
+                                                    "key": "id",
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "(Required) ",
+                                                        "type": "text/plain"
+                                                    }
+                                                }
+                                            ]
+                                        },
+                                        "header": [
+                                            {
+                                                "key": "Content-Type",
+                                                "value": "application/json"
+                                            },
+                                            {
+                                                "key": "Accept",
+                                                "value": "application/json"
+                                            }
+                                        ],
+                                        "method": "POST",
+                                        "body": {
+                                            "mode": "raw",
+                                            "raw": "{\n  \"atEffectiveDate\": true,\n  \"reason\": \"<string>\",\n  \"dryRun\": {\n    \"value\": \"reference ../shared/api.yaml#/components/schemas/DryRun not found in the OpenAPI spec\"\n  }\n}",
+                                            "options": {
+                                                "raw": {
+                                                    "headerFamily": "json",
+                                                    "language": "json"
+                                                }
+                                            }
+                                        },
+                                        "auth": null
+                                    },
+                                    "response": [
+                                        {
+                                            "id": "d148eb6d-de20-42ea-be0d-b0e101da88b1",
+                                            "name": "Reversa emitida. El `id` del cuerpo es el de la TRANSACCIÓN DE REVERSA\n(T2), no el de la original. Sin cambios respecto de hu-0014.",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "transactions",
+                                                        ":id",
+                                                        "reverse"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": [
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "(Required) ",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "type": "any",
+                                                            "value": "<uuid>",
+                                                            "key": "id"
+                                                        }
+                                                    ]
+                                                },
+                                                "header": [
+                                                    {
+                                                        "key": "Content-Type",
+                                                        "value": "application/json"
+                                                    },
+                                                    {
+                                                        "key": "Accept",
+                                                        "value": "application/json"
+                                                    }
+                                                ],
+                                                "method": "POST",
+                                                "body": {
+                                                    "mode": "raw",
+                                                    "raw": "{\n  \"atEffectiveDate\": true,\n  \"reason\": \"<string>\",\n  \"dryRun\": {\n    \"value\": \"reference ../shared/api.yaml#/components/schemas/DryRun not found in the OpenAPI spec\"\n  }\n}",
+                                                    "options": {
+                                                        "raw": {
+                                                            "headerFamily": "json",
+                                                            "language": "json"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "status": "Created",
+                                            "code": 201,
+                                            "header": [
+                                                {
+                                                    "key": "Content-Type",
+                                                    "value": "application/json"
+                                                },
+                                                {
+                                                    "disabled": false,
+                                                    "description": {
+                                                        "content": "",
+                                                        "type": "text/plain"
+                                                    },
+                                                    "key": "X-Ledger-Stream-Position",
+                                                    "value": ""
+                                                }
+                                            ],
+                                            "body": "{\n  \"value\": \"reference ../shared/api.yaml#/components/schemas/CommandAccepted not found in the OpenAPI spec\"\n}",
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "json"
+                                        },
+                                        {
+                                            "id": "213cb262-8b29-4669-8ba9-5eab07904ba3",
+                                            "name": "TRANSACTION_NOT_FOUND.",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "transactions",
+                                                        ":id",
+                                                        "reverse"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": [
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "(Required) ",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "type": "any",
+                                                            "value": "<uuid>",
+                                                            "key": "id"
+                                                        }
+                                                    ]
+                                                },
+                                                "header": [
+                                                    {
+                                                        "key": "Content-Type",
+                                                        "value": "application/json"
+                                                    },
+                                                    {
+                                                        "key": "Accept",
+                                                        "value": "application/json"
+                                                    }
+                                                ],
+                                                "method": "POST",
+                                                "body": {
+                                                    "mode": "raw",
+                                                    "raw": "{\n  \"atEffectiveDate\": true,\n  \"reason\": \"<string>\",\n  \"dryRun\": {\n    \"value\": \"reference ../shared/api.yaml#/components/schemas/DryRun not found in the OpenAPI spec\"\n  }\n}",
+                                                    "options": {
+                                                        "raw": {
+                                                            "headerFamily": "json",
+                                                            "language": "json"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "status": "Not Found",
+                                            "code": 404,
+                                            "header": [
+                                                {
+                                                    "key": "Content-Type",
+                                                    "value": "application/json"
+                                                }
+                                            ],
+                                            "body": "{\n  \"value\": \"reference ../shared/api.yaml#/components/schemas/ErrorResponseBody not found in the OpenAPI spec\"\n}",
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "json"
+                                        },
+                                        {
+                                            "id": "4e8f63d4-1ff3-49eb-932f-0176affecf7c",
+                                            "name": "- `TRANSACTION_ALREADY_REVERSED` (**nuevo en hu-0026**) — la transacción\n  ya fue revertida. Antes este caso respondía\n  `INVALID_TRANSACTION_STATE`.\n- `INVALID_TRANSACTION_STATE` — la transacción no está CONFIRMED por\n  cualquier otro motivo (PENDING, VOIDED).\n- `IDEMPOTENCY_INPUT_MISMATCH` — la `external_ref` ya fue usada por este\n  usuario con inputs distintos (hu-0024). Desde hu-0026 eso incluye\n  reintentar con un `atEffectiveDate` distinto (AC-5).\n- `PERSISTENCE_CONFLICT` — reintentos agotados (hu-0025).",
+                                            "originalRequest": {
+                                                "url": {
+                                                    "path": [
+                                                        "transactions",
+                                                        ":id",
+                                                        "reverse"
+                                                    ],
+                                                    "host": [
+                                                        "{{baseUrl}}"
+                                                    ],
+                                                    "query": [],
+                                                    "variable": [
+                                                        {
+                                                            "disabled": false,
+                                                            "description": {
+                                                                "content": "(Required) ",
+                                                                "type": "text/plain"
+                                                            },
+                                                            "type": "any",
+                                                            "value": "<uuid>",
+                                                            "key": "id"
+                                                        }
+                                                    ]
+                                                },
+                                                "header": [
+                                                    {
+                                                        "key": "Content-Type",
+                                                        "value": "application/json"
+                                                    },
+                                                    {
+                                                        "key": "Accept",
+                                                        "value": "application/json"
+                                                    }
+                                                ],
+                                                "method": "POST",
+                                                "body": {
+                                                    "mode": "raw",
+                                                    "raw": "{\n  \"atEffectiveDate\": true,\n  \"reason\": \"<string>\",\n  \"dryRun\": {\n    \"value\": \"reference ../shared/api.yaml#/components/schemas/DryRun not found in the OpenAPI spec\"\n  }\n}",
+                                                    "options": {
+                                                        "raw": {
+                                                            "headerFamily": "json",
+                                                            "language": "json"
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                            "status": "Conflict",
+                                            "code": 409,
+                                            "header": [
+                                                {
+                                                    "key": "Content-Type",
+                                                    "value": "application/json"
+                                                }
+                                            ],
+                                            "body": "{\n  \"value\": \"reference ../shared/api.yaml#/components/schemas/ErrorResponseBody not found in the OpenAPI spec\"\n}",
+                                            "cookie": [],
+                                            "_postman_previewlanguage": "json"
+                                        }
+                                    ],
+                                    "event": [],
+                                    "protocolProfileBehavior": {
+                                        "disableBodyPruning": true
+                                    }
+                                }
+                            ]
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "event": [],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "/"
+        }
+    ],
+    "info": {
+        "_postman_id": "e0eae198-89ec-4023-bcea-bd1cadbd622e",
+        "name": "hu-0026 — Fecha efectiva elegible en la reversa",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+        "description": {
+            "content": "Delta del contrato HTTP. Sin endpoints nuevos: una operación modificada y un\ncódigo de error nuevo.\n\n1. **`atEffectiveDate: boolean` en el body de `POST /transactions/{id}/reverse`**\n   (AC-1, AC-4). Elige con qué fecha contable nace la transacción de reversa:\n   `true` (default) la fecha de la original — corrige el saldo histórico;\n   `false` la fecha de hoy (UTC) — deja el histórico intacto. El default\n   preserva el comportamiento vigente, así que el contrato sigue siendo\n   compatible con clientes que no conozcan el campo.\n\n   A diferencia de `dryRun`, este campo **sí** entra al hash de idempotencia:\n   es un input del comando, no metadata de transporte. Reintentar la misma\n   `X-External-Ref` con un `atEffectiveDate` distinto responde\n   `IDEMPOTENCY_INPUT_MISMATCH` (409) — AC-5.\n\n2. **`TRANSACTION_ALREADY_REVERSED` (409)** — nuevo código estable (AC-3).\n   Revertir dos veces la misma transacción ya se impedía, pero respondía\n   `INVALID_TRANSACTION_STATE`, indistinguible de cualquier otro estado\n   inválido. Ahora tiene su propio código. Es aditivo sobre la tabla de RF-14:\n   ningún código existente cambia de status. `INVALID_TRANSACTION_STATE` sigue\n   cubriendo el resto de los estados no reversables.\n\nLa respuesta **no cambia de forma**: mismo `201 CommandAccepted`, mismos\nheaders, mismo `id` de la transacción de reversa (T2).\n\n**Operaciones modificadas (1):** `reverseTransaction`.\n**Schemas modificados (2):** `ReverseTransactionRequest` (campo nuevo),\n`LedgerErrorCode` (código nuevo, tag `shared`).\n",
+            "type": "text/plain"
+        }
+    }
+}

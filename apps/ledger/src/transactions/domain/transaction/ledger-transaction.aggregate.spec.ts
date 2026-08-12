@@ -3,11 +3,12 @@ import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-sta
 import { LedgerDate } from '@ledger/shared/domain/value-objects';
 import { FixedClock, SequentialIdGenerator, aMoney } from '@ledger/shared/testing';
 import { ZeroSumBalanceRule } from '@ledger/transactions/domain/balance/zero-sum-balance-rule';
-import { TransfersMerged } from './events';
+import { TransactionRecorded, TransfersMerged } from './events';
 import {
   ImmutableTransactionException,
   InsufficientPostingsException,
   InvalidTransactionStateException,
+  TransactionAlreadyReversedException,
 } from './exceptions/transaction.exception';
 import { LedgerTransaction, RecordTransactionArgs } from './ledger-transaction.aggregate';
 
@@ -134,26 +135,74 @@ describe('LedgerTransaction', () => {
     expect(() => tx.void('nope')).toThrow(InvalidTransactionStateException);
   });
 
-  it('reverses a CONFIRMED transaction and returns an inverted plan', () => {
+  it('reverses at the original date when atEffectiveDate is true', () => {
+    const tx = LedgerTransaction.record(
+      recordArgs({ date: LedgerDate.of('2026-07-10'), initialStatus: TransactionStatus.CONFIRMED }),
+      balance,
+      idGen,
+    );
+    tx.pullChanges();
+
+    const plan = tx.reverse('rev-1', true, clock);
+
+    expect(plan.reversalId).toBe('rev-1');
+    expect(plan.sourceTransactionId).toBe(tx.id);
+    expect(plan.date.value).toBe('2026-07-10');
+    expect(plan.postings[0].amount.toDecimalString()).toBe('-31900');
+    expect(plan.postings[1].amount.toDecimalString()).toBe('31900');
+  });
+
+  it('reverses at today (UTC) when atEffectiveDate is false', () => {
+    const tx = LedgerTransaction.record(
+      recordArgs({ date: LedgerDate.of('2026-07-10'), initialStatus: TransactionStatus.CONFIRMED }),
+      balance,
+      idGen,
+    );
+    tx.pullChanges();
+
+    const plan = tx.reverse('rev-1', false, clock);
+
+    // clock está fijado en '2026-07-22T12:00:00.000Z' al tope del archivo.
+    expect(plan.date.value).toBe('2026-07-22');
+  });
+
+  it('does not reverse a PENDING transaction', () => {
+    const tx = LedgerTransaction.record(recordArgs(), balance, idGen);
+
+    expect(() => tx.reverse('rev-1', true, clock)).toThrow(InvalidTransactionStateException);
+  });
+
+  it('rejects a second reversal with the stable TRANSACTION_ALREADY_REVERSED code', () => {
     const tx = LedgerTransaction.record(
       recordArgs({ initialStatus: TransactionStatus.CONFIRMED }),
       balance,
       idGen,
     );
     tx.pullChanges();
+    tx.reverse('rev-1', true, clock);
 
-    const plan = tx.reverse('rev-1');
-
-    expect(plan.reversalId).toBe('rev-1');
-    expect(plan.sourceTransactionId).toBe(tx.id);
-    expect(plan.postings[0].amount.toDecimalString()).toBe('-31900');
-    expect(plan.postings[1].amount.toDecimalString()).toBe('31900');
+    expect(() => tx.reverse('rev-2', true, clock)).toThrow(TransactionAlreadyReversedException);
   });
 
-  it('does not reverse a PENDING transaction', () => {
-    const tx = LedgerTransaction.record(recordArgs(), balance, idGen);
+  it('builds the reversing transaction from the plan (fromReversalPlan)', () => {
+    const tx = LedgerTransaction.record(
+      recordArgs({ date: LedgerDate.of('2026-07-10'), initialStatus: TransactionStatus.CONFIRMED }),
+      balance,
+      idGen,
+    );
+    tx.pullChanges();
+    const plan = tx.reverse('rev-1', false, clock);
 
-    expect(() => tx.reverse('rev-1')).toThrow(InvalidTransactionStateException);
+    const reversing = LedgerTransaction.fromReversalPlan(plan, balance);
+    const [event] = reversing.pullChanges();
+
+    expect(reversing.id).toBe('rev-1');
+    expect(reversing.status).toBe(TransactionStatus.CONFIRMED);
+    expect(reversing.date.value).toBe('2026-07-22');
+    expect(reversing.postings).toEqual(plan.postings);
+    expect(event).toBeInstanceOf(TransactionRecorded);
+    expect((event as TransactionRecorded).props.metadata).toEqual({ reverses_id: tx.id });
+    expect((event as TransactionRecorded).props.description).toBe(`Reversal of ${tx.id}`);
   });
 
   it('records the merge fact on the resulting confirmed transfer', () => {

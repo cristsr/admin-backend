@@ -211,6 +211,7 @@ export function createLedgerApplication(deps: LedgerApplicationDeps): LedgerAppl
       idGenerator,
       dispatcher,
       eventStore,
+      clock,
     ),
   );
 

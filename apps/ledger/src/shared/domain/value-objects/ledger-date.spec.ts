@@ -1,7 +1,14 @@
+import { FixedClock } from '@ledger/shared/testing';
 import { LedgerDate } from './ledger-date';
 import { InvalidLedgerDateException } from './value-object.exception';
 
 describe('LedgerDate', () => {
+  it('builds today from a Clock, truncated to the calendar day in UTC', () => {
+    const clock = new FixedClock(new Date('2026-07-22T23:45:00.000Z'));
+
+    expect(LedgerDate.today(clock).value).toBe('2026-07-22');
+  });
+
   it('accepts a valid YYYY-MM-DD literal', () => {
     expect(LedgerDate.of('2026-07-22').value).toBe('2026-07-22');
   });

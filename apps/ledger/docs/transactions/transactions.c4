@@ -10,6 +10,9 @@ model {
       ledgerTransaction = component 'LedgerTransaction' {
         technology 'Domain · Aggregate'
         description 'record / amend / annotate / confirm / void / reverse. Event-sourced.'
+        metadata {
+          changedIn 'hu-0026'
+        }
       }
       transactionEvents = component 'Transaction Events' {
         technology 'Domain · Events'
@@ -39,6 +42,9 @@ model {
       }
       transactionException = component 'TransactionException' {
         technology 'Domain · Exceptions'
+        metadata {
+          changedIn 'hu-0026'
+        }
       }
 
       // --- Application ---
@@ -66,6 +72,9 @@ model {
       }
       reverseHandler = component 'ReverseConfirmedTransactionHandler' {
         technology 'Application · CommandHandler'
+        metadata {
+          changedIn 'hu-0026'
+        }
       }
       mergeTransfersHandler = component 'MergePendingTransfersHandler' {
         technology 'Application · CommandHandler'
@@ -75,6 +84,9 @@ model {
       controller = component 'TransactionsController' {
         technology 'Infrastructure · REST'
         description 'POST /transactions · GET /transactions · GET /transactions/{id} · amend · annotate · confirm · void · reverse'
+        metadata {
+          changedIn 'hu-0026'
+        }
       }
       transferPairRule = component 'TransferPairRule' {
         technology 'Domain · Policy'
@@ -193,8 +205,9 @@ views 'Transactions' {
     admin.ledger.transactions.controller -> admin.ledger.shared.commandBus 'dispatch(ReverseConfirmedTransactionCommand)'
     admin.ledger.shared.commandBus -> admin.ledger.transactions.reverseHandler 'handle'
     admin.ledger.transactions.reverseHandler -> admin.ledger.transactions.transactionRepository 'load(id)'
-    admin.ledger.transactions.reverseHandler -> admin.ledger.transactions.ledgerTransaction 'reverse(reversalId) — solo CONFIRMED; ReversalPlan'
+    admin.ledger.transactions.reverseHandler -> admin.ledger.transactions.ledgerTransaction 'reverse(reversalId, atEffectiveDate, clock) — solo CONFIRMED y no revertida; ReversalPlan con la fecha ya resuelta'
     admin.ledger.transactions.ledgerTransaction -> admin.ledger.transactions.transactionEvents 'raise(TransactionReversed)'
+    admin.ledger.transactions.reverseHandler -> admin.ledger.transactions.ledgerTransaction 'fromReversalPlan(plan) — T2 CONFIRMED con reverses_id'
     admin.ledger.transactions.reverseHandler -> admin.ledger.transactions.transactionRepository 'save(tx) + save(reversal)'
   }
 

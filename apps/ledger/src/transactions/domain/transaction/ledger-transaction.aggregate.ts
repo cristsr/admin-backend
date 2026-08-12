@@ -19,6 +19,7 @@ import {
   ImmutableTransactionException,
   InsufficientPostingsException,
   InvalidTransactionStateException,
+  TransactionAlreadyReversedException,
 } from './exceptions/transaction.exception';
 import { TransactionAnnotations } from './transaction-annotations.type';
 
@@ -160,11 +161,14 @@ export class LedgerTransaction extends AggregateRoot<string> {
   }
 
   /**
-   * Reverses a CONFIRMED transaction. Emits {@link TransactionReversed} here and
-   * returns a {@link ReversalPlan} the handler records as the linked reversing
+   * Reverses a CONFIRMED transaction. `atEffectiveDate` chooses T2's accounting
+   * date: `true` the original's date (corrects the historical balance), `false`
+   * today (leaves it intact) — hu-0026. Emits {@link TransactionReversed} here
+   * and returns a {@link ReversalPlan} the handler records via
+   * {@link LedgerTransaction.fromReversalPlan} as the linked reversing
    * transaction (metadata `reverses_id`).
    */
-  reverse(reversalId: string): ReversalPlan {
+  reverse(reversalId: string, atEffectiveDate: boolean, clock: Clock): ReversalPlan {
     if (this.txStatus !== TransactionStatus.CONFIRMED) {
       throw new InvalidTransactionStateException(
         `Only CONFIRMED transactions can be reversed; this one is ${this.txStatus}`,
@@ -172,7 +176,7 @@ export class LedgerTransaction extends AggregateRoot<string> {
     }
 
     if (this.reversed) {
-      throw new InvalidTransactionStateException('Transaction is already reversed');
+      throw new TransactionAlreadyReversedException(`Transaction "${this.id}" is already reversed`);
     }
 
     this.raise(new TransactionReversed(reversalId));
@@ -180,10 +184,32 @@ export class LedgerTransaction extends AggregateRoot<string> {
     return {
       reversalId,
       sourceTransactionId: this.id,
-      date: this.txDate,
+      date: atEffectiveDate ? this.txDate : LedgerDate.today(clock),
       postings: this.txPostings.map((posting) => posting.negated()),
       description: `Reversal of ${this.id}`,
     };
+  }
+
+  /**
+   * Builds the linked reversing transaction from a {@link ReversalPlan} — the
+   * contract {@link LedgerTransaction.reverse} returns. Always records CONFIRMED,
+   * with `metadata.reverses_id` pointing back to the source (hu-0026).
+   */
+  static fromReversalPlan(plan: ReversalPlan, balance: BalanceRule): LedgerTransaction {
+    return LedgerTransaction.record(
+      {
+        date: plan.date,
+        payee: null,
+        description: plan.description,
+        postings: plan.postings,
+        initialStatus: TransactionStatus.CONFIRMED,
+        invoiceUrl: null,
+        tags: [],
+        metadata: { reverses_id: plan.sourceTransactionId },
+      },
+      balance,
+      { next: () => plan.reversalId },
+    );
   }
 
   /**

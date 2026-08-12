@@ -5,7 +5,7 @@ trigger: rest
 entrypoint: POST /transactions/{id}/reverse
 command: ReverseConfirmedTransactionCommand
 view: reverseTransaction
-invariants: [AC-1, AC-2, AC-3, AC-4, AC-5, RNF-10, INV-6, INV-7, RF-14, RF-18]
+invariants: [AC-1, AC-3, AC-4, AC-5, INV-6, INV-7, RF-14, RF-18]
 introduced_by: hu-0014
 last_modified_by: hu-0026
 status: active
@@ -24,14 +24,7 @@ pasar por alto al integrar.
 
 **El `reason?` del body se ignora.** El controller no lo persiste: a diferencia de `void`,
 el motivo no queda registrado. El campo sigue en el DTO y en el contrato para no romper
-clientes, pero no tiene efecto.
-
-**Delta hu-0025 (AC-4):** el body acepta `dryRun: boolean` (default `false`) — ejecuta el
-comando completo (incluida la reversa dentro de su `withTransaction`, que en modo dry-run
-se une al scope de la política y revierte) y hace rollback, devolviendo el resultado real.
-Ver [`../../shared/flows/dry-run-preview.md`](../../shared/flows/dry-run-preview.md).
-*Nota de reconciliación: esta nota se agrega recién en hu-0026 — el flow doc no se había
-actualizado cuando hu-0025 cerró.*
+clientes, pero no tiene efecto. Gap conocido desde hu-0014; hu-0026 no lo cierra.
 
 **Delta hu-0026 — la fecha de T2 se elige, y la doble reversa tiene código propio.**
 
@@ -53,8 +46,6 @@ Ningún evento cambia de esquema: la elección es observable como el `date` del
 
 ## Reglas
 
-- **AC-2:** responde `201 CommandAcceptedDto` cuyo `id` es el de la transacción de reversa.
-- Solo en `CONFIRMED`. Una `PENDING` se anula con `void`, no se reversa.
 - **AC-1 · `atEffectiveDate: true` (default)** — T2 nace con la **fecha contable de la
   original**. Corrige el saldo histórico; las aserciones de saldo posteriores a esa fecha se
   re-evalúan automáticamente (RF-18).
@@ -77,9 +68,7 @@ Ningún evento cambia de esquema: la elección es observable como el `date` del
   transporte: entra al hash de `IdempotencyPolicy` (`canonicalJson({ userId, command })`) por
   construcción. El controller resuelve el default antes de construir el command, de modo que
   el mismo request produzca siempre el mismo hash.
-- **AC-4 (hu-0025):** `dryRun` sigue siendo metadata de transporte (va en el `AuthContext`),
-  fuera del hash de idempotencia.
-- **Idempotencia:** ver [`../../shared/flows/idempotent-write.md`](../../shared/flows/idempotent-write.md).
+- **`dryRun` sigue siendo transporte** (hu-0025): va en el `AuthContext`, fuera del hash.
 
 ## Errores
 
@@ -87,13 +76,12 @@ Ningún evento cambia de esquema: la elección es observable como el `date` del
 |---|---|---|---|
 | **NUEVO (hu-0026)** — la transacción ya fue revertida | `TransactionAlreadyReversedException` | `TRANSACTION_ALREADY_REVERSED` | 409 |
 | La transacción no está `CONFIRMED` por otro motivo (PENDING, VOIDED) | `InvalidTransactionStateException` | `INVALID_TRANSACTION_STATE` | 409 |
-| Misma `external_ref` con inputs distintos — incluye otro `atEffectiveDate` (AC-5, hu-0026) | `IdempotencyInputMismatchException` | `IDEMPOTENCY_INPUT_MISMATCH` | 409 |
-| **NUEVO (hu-0025)** — reintentos transitorios agotados | `PersistenceConflictException` | `PERSISTENCE_CONFLICT` | 409 |
+| Misma `external_ref` con inputs distintos — incluye otro `atEffectiveDate` (AC-5) | `IdempotencyInputMismatchException` | `IDEMPOTENCY_INPUT_MISMATCH` | 409 |
+| Reintentos transitorios agotados (hu-0025) | `PersistenceConflictException` | `PERSISTENCE_CONFLICT` | 409 |
 | Transacción inexistente para el usuario | `TransactionNotFoundException` | `TRANSACTION_NOT_FOUND` | 404 |
 
-> El reparto de `INVALID_TRANSACTION_STATE` es lo único que cambia respecto de hu-0014: hasta
-> hu-0026 ese código cubría también la doble reversa. Sigue vigente para el resto de los
-> estados no reversables.
+> El reparto de `INVALID_TRANSACTION_STATE` es lo único que cambia: hasta hu-0026 ese código
+> cubría también la doble reversa. Sigue vigente para el resto de los estados no reversables.
 
 ## Respuesta
 

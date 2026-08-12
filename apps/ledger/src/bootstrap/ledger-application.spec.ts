@@ -323,7 +323,7 @@ describe('Ledger application (write side)', () => {
     );
 
     const reversal = await bus.dispatch(
-      new ReverseConfirmedTransactionCommand(recorded.aggregateId),
+      new ReverseConfirmedTransactionCommand(recorded.aggregateId, true),
       ctx(),
     );
 

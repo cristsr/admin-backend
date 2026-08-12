@@ -102,8 +102,18 @@ describe('TransactionsController', () => {
 
     const [command] = commandBus.dispatch.mock.calls[0];
     expect(command).toBeInstanceOf(ReverseConfirmedTransactionCommand);
-    expect(command).toMatchObject({ transactionId: 'tx-6' });
+    expect(command).toMatchObject({ transactionId: 'tx-6', atEffectiveDate: true });
     expect(returned).toBe(reversal);
+  });
+
+  it('propagates atEffectiveDate: false when the client sends it explicitly', async () => {
+    const reversal: CommandResult = { aggregateId: 'tx-rev', streamPosition: 9n, idempotentReplay: false };
+    commandBus.dispatch.mockResolvedValue(reversal);
+
+    await controller.reverse(context, null, 'tx-7', { atEffectiveDate: false });
+
+    const [command] = commandBus.dispatch.mock.calls[0];
+    expect(command).toMatchObject({ transactionId: 'tx-7', atEffectiveDate: false });
   });
 
   it('forwards filters to ListTransactionsQuery, scoped to the context user', async () => {

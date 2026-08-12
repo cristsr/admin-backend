@@ -15,6 +15,7 @@ import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';
 import { ZeroSumBalanceRule } from '@ledger/transactions/domain/balance/zero-sum-balance-rule';
 import {
   ImmutableTransactionException,
+  TransactionAlreadyReversedException,
   TransactionNotFoundException,
 } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
 import { LedgerTransaction } from '@ledger/transactions/domain/transaction/ledger-transaction.aggregate';
@@ -44,49 +45,52 @@ function setup() {
     withTransaction: <T>(work: () => Promise<T>): Promise<T> => work(),
   } as unknown as EventStore;
 
+  const clock = new FixedClock(new Date('2026-07-22T10:00:00.000Z'));
+
   const handler = new ReverseConfirmedTransactionHandler(
     transactions,
     balance,
     idGenerator,
     dispatcher,
     eventStore,
+    clock,
   );
 
-  return { handler, transactions, dispatcher };
+  return { handler, transactions, dispatcher, clock };
 }
 
 function makeTransaction(id: string) {
+  const postings = [
+    { accountId: 'acc-1', amount: '50000', negated: () => ({ accountId: 'acc-1', amount: '-50000' }) },
+    { accountId: 'acc-2', amount: '-50000', negated: () => ({ accountId: 'acc-2', amount: '50000' }) },
+  ];
+
   return {
     id,
-    date: { value: '2026-07-20' },
-    postings: [
-      {
-        accountId: 'acc-1',
-        amount: '50000',
-        negated: () => ({ accountId: 'acc-1', amount: '-50000' }),
-      },
-      {
-        accountId: 'acc-2',
-        amount: '-50000',
-        negated: () => ({ accountId: 'acc-2', amount: '50000' }),
-      },
-    ],
-    reverse: jest.fn(),
+    date: LedgerDate.of('2026-07-20'),
+    postings,
+    reverse: jest.fn((reversalId: string, atEffectiveDate: boolean, clock: { now: () => Date }) => ({
+      reversalId,
+      sourceTransactionId: id,
+      date: atEffectiveDate ? LedgerDate.of('2026-07-20') : LedgerDate.of(clock.now().toISOString().slice(0, 10)),
+      postings: postings.map((p) => p.negated()),
+      description: `Reversal of ${id}`,
+    })),
   };
 }
 
 describe('ReverseConfirmedTransactionHandler', () => {
   it('should reverse a CONFIRMED transaction and return reversing id', async () => {
-    const { handler, transactions } = setup();
+    const { handler, transactions, clock } = setup();
     const tx = makeTransaction('tx-1');
     transactions.load.mockResolvedValue(tx as never);
     transactions.save.mockResolvedValue({ events: [], version: 2, lastPosition: 8n });
 
-    const result = await handler.execute(new ReverseConfirmedTransactionCommand('tx-1'), ctx);
+    const result = await handler.execute(new ReverseConfirmedTransactionCommand('tx-1', true), ctx);
 
     expect(result.aggregateId).toBe('rev-id-1');
     expect(result.idempotentReplay).toBe(false);
-    expect(tx.reverse).toHaveBeenCalledWith('rev-id-1');
+    expect(tx.reverse).toHaveBeenCalledWith('rev-id-1', true, clock);
     expect(transactions.save).toHaveBeenCalledTimes(2);
   });
 
@@ -95,7 +99,7 @@ describe('ReverseConfirmedTransactionHandler', () => {
     transactions.load.mockResolvedValue(null);
 
     await expect(
-      handler.execute(new ReverseConfirmedTransactionCommand('non-existent'), ctx),
+      handler.execute(new ReverseConfirmedTransactionCommand('non-existent', true), ctx),
     ).rejects.toBeInstanceOf(TransactionNotFoundException);
   });
 
@@ -108,7 +112,7 @@ describe('ReverseConfirmedTransactionHandler', () => {
     transactions.load.mockResolvedValue(tx as never);
 
     await expect(
-      handler.execute(new ReverseConfirmedTransactionCommand('tx-1'), ctx),
+      handler.execute(new ReverseConfirmedTransactionCommand('tx-1', true), ctx),
     ).rejects.toBeInstanceOf(ImmutableTransactionException);
   });
 
@@ -118,7 +122,7 @@ describe('ReverseConfirmedTransactionHandler', () => {
     transactions.load.mockResolvedValue(tx as never);
     transactions.save.mockResolvedValue({ events: [], version: 1, lastPosition: 1n });
 
-    await handler.execute(new ReverseConfirmedTransactionCommand('tx-1'), ctx);
+    await handler.execute(new ReverseConfirmedTransactionCommand('tx-1', true), ctx);
 
     expect(transactions.save).toHaveBeenNthCalledWith(1, expect.anything(), ctx);
     expect(transactions.save).toHaveBeenNthCalledWith(2, expect.anything(), {
@@ -136,10 +140,34 @@ describe('ReverseConfirmedTransactionHandler', () => {
       .mockRejectedValueOnce(new Error('reversing append failed'));
 
     await expect(
-      handler.execute(new ReverseConfirmedTransactionCommand('tx-1'), ctx),
+      handler.execute(new ReverseConfirmedTransactionCommand('tx-1', true), ctx),
     ).rejects.toThrow('reversing append failed');
 
     expect(dispatcher.dispatch).not.toHaveBeenCalled();
+  });
+
+  it('threads atEffectiveDate: false through to the aggregate', async () => {
+    const { handler, transactions, clock } = setup();
+    const tx = makeTransaction('tx-1');
+    transactions.load.mockResolvedValue(tx as never);
+    transactions.save.mockResolvedValue({ events: [], version: 2, lastPosition: 8n });
+
+    await handler.execute(new ReverseConfirmedTransactionCommand('tx-1', false), ctx);
+
+    expect(tx.reverse).toHaveBeenCalledWith('rev-id-1', false, clock);
+  });
+
+  it('propagates TRANSACTION_ALREADY_REVERSED when the aggregate rejects a second reversal', async () => {
+    const { handler, transactions } = setup();
+    const tx = makeTransaction('tx-1');
+    tx.reverse.mockImplementation(() => {
+      throw new TransactionAlreadyReversedException('already reversed');
+    });
+    transactions.load.mockResolvedValue(tx as never);
+
+    await expect(
+      handler.execute(new ReverseConfirmedTransactionCommand('tx-1', true), ctx),
+    ).rejects.toBeInstanceOf(TransactionAlreadyReversedException);
   });
 });
 
@@ -204,13 +232,14 @@ describe('ReverseConfirmedTransactionHandler (cross-stream atomicity)', () => {
       ids,
       { dispatch: jest.fn().mockResolvedValue(undefined) },
       eventStore,
+      new FixedClock(new Date('2026-07-22T10:00:00.000Z')),
     );
   });
 
   it('reverses the original and records the reversing transaction', async () => {
     const originalId = await recordConfirmed();
 
-    const result = await handler.execute(new ReverseConfirmedTransactionCommand(originalId), ctx);
+    const result = await handler.execute(new ReverseConfirmedTransactionCommand(originalId, true), ctx);
 
     const reversing = await transactions.load(ctx.userId, result.aggregateId);
     expect(reversing?.status).toBe(TransactionStatus.CONFIRMED);
@@ -240,7 +269,7 @@ describe('ReverseConfirmedTransactionHandler (cross-stream atomicity)', () => {
     });
 
     await expect(
-      handler.execute(new ReverseConfirmedTransactionCommand(originalId), ctx),
+      handler.execute(new ReverseConfirmedTransactionCommand(originalId, true), ctx),
     ).rejects.toThrow('reversing append failed');
 
     append.mockRestore();

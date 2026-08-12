@@ -1,0 +1,70 @@
+// C4 delta — hu-0026: Fecha efectiva elegible en la reversa.
+// Extiende admin.ledger.transactions (transactions.c4) y admin.ledger.shared (shared.c4).
+//
+// create: ningún componente nuevo. La historia cambia firmas y reparte un caso de
+//         error; no introduce clases, puertos ni adaptadores nuevos.
+// modify: ledgerTransaction (reverse() elige la fecha + factory fromReversalPlan),
+//         reverseHandler (usa el ReversalPlan, recibe Clock),
+//         controller (propaga atEffectiveDate),
+//         transactionException (TransactionAlreadyReversedException),
+//         shared.ledgerErrorCode (TRANSACTION_ALREADY_REVERSED).
+//
+// Flujos tocados — ambas dynamic views YA EXISTEN en los .c4 vivos, así que NO se
+// re-declaran acá: hacerlo duplicaría el viewId y rompería `likec4 validate`
+// (work/active/ no está excluido en likec4.config.json). /sync aplica sobre las
+// vistas vivas el prefijo [CHANGED] y los pasos nuevos, según design.md:
+//
+//   · transactions.c4 → dynamic view `reverseTransaction`
+//     paso a reescribir:
+//       reverseHandler -> ledgerTransaction
+//         'reverse(reversalId, atEffectiveDate, clock) — solo CONFIRMED y no revertida; ReversalPlan con la fecha ya resuelta'
+//     paso a agregar (después del anterior):
+//       reverseHandler -> ledgerTransaction
+//         'fromReversalPlan(plan) — T2 CONFIRMED con reverses_id'
+//
+//   · shared.c4 → dynamic view `shared_http_map_domain_error`
+//     sin pasos nuevos: el código nuevo entra por el mismo camino del filter.
+//     Solo se marca [CHANGED] por la fila nueva de la tabla congelada.
+
+model {
+
+  // --- Agregado: la elección de fecha vive acá (decisión consultada de /clarify) ---
+  extend admin.ledger.transactions.ledgerTransaction {
+    #delta-changed
+    metadata {
+      changedIn 'hu-0026'
+    }
+  }
+
+  // --- Handler: pasa a consumir el ReversalPlan en vez de reconstruir la reversa ---
+  extend admin.ledger.transactions.reverseHandler {
+    #delta-changed
+    metadata {
+      changedIn 'hu-0026'
+    }
+  }
+
+  // --- Adaptador REST: acepta atEffectiveDate y resuelve el default ---
+  extend admin.ledger.transactions.controller {
+    #delta-changed
+    metadata {
+      changedIn 'hu-0026'
+    }
+  }
+
+  // --- Excepciones del módulo: se suma TransactionAlreadyReversedException ---
+  extend admin.ledger.transactions.transactionException {
+    #delta-changed
+    metadata {
+      changedIn 'hu-0026'
+    }
+  }
+
+  // --- Catálogo RF-14: se suma TRANSACTION_ALREADY_REVERSED (409) ---
+  extend admin.ledger.shared.ledgerErrorCode {
+    #delta-changed
+    metadata {
+      changedIn 'hu-0026'
+    }
+  }
+}

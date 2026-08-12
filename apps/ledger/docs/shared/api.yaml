@@ -141,8 +141,9 @@ components:
         422 → UNBALANCED_TRANSACTION, CURRENCY_NOT_ALLOWED, ACCOUNT_CLOSED,
         LEDGER_NOT_INITIALIZED, INVALID_CURRENCY_CODE, INVALID_TIME_ZONE,
         INVALID_MONEY, CURRENCY_MISMATCH, MONEY_SCALE, INVALID_CURRENCY ·
-        409 → IMMUTABLE_TRANSACTION, NAME_COLLISION, SYSTEM_ACCOUNT_PROTECTED,
-        CONCURRENCY_CONFLICT, DUPLICATE_EXTERNAL_REF, IDEMPOTENCY_INPUT_MISMATCH ·
+        409 → IMMUTABLE_TRANSACTION, TRANSACTION_ALREADY_REVERSED, NAME_COLLISION,
+        SYSTEM_ACCOUNT_PROTECTED, CONCURRENCY_CONFLICT, DUPLICATE_EXTERNAL_REF,
+        IDEMPOTENCY_INPUT_MISMATCH ·
         404 → TRANSACTION_NOT_FOUND, ACCOUNT_NOT_FOUND.
 
         **Delta hu-0024 — un código nuevo, y un reparto por capa.**
@@ -172,11 +173,21 @@ components:
         - `CONCURRENCY_CONFLICT` (409) sigue vigente sin cambios: el conflicto de
           agregado nunca entra al reintento automático (AC-6) y sigue propagándose
           al cliente como hoy.
+
+        **Delta hu-0026 — un código nuevo.**
+
+        - `TRANSACTION_ALREADY_REVERSED` (409) es el contrato de
+          `LedgerTransaction.reverse()` cuando la transacción ya tiene una reversa
+          vinculada. Antes de hu-0026 ese caso emitía `INVALID_TRANSACTION_STATE`,
+          que el cliente no podía distinguir de «no está CONFIRMED». El código viejo
+          sigue vigente para todos los demás estados no reversables: es un reparto
+          de casos, no un reemplazo.
       enum:
         - UNBALANCED_TRANSACTION
         - CURRENCY_NOT_ALLOWED
         - ACCOUNT_CLOSED
         - IMMUTABLE_TRANSACTION
+        - TRANSACTION_ALREADY_REVERSED      # 409 — NUEVO (hu-0026)
         - NAME_COLLISION
         - SYSTEM_ACCOUNT_PROTECTED
         - CONCURRENCY_CONFLICT

@@ -165,6 +165,7 @@ model {
       description 'apps/ledger/src/shared/domain/errors/ledger-error-code.ts: única fuente de los strings de code que el API expone. Agregar un code es aditivo; cambiar el status de un code existente es breaking (nueva versión).'
       metadata {
         introducedIn 'hu-0011'
+        changedIn 'hu-0026'
       }
     }
 

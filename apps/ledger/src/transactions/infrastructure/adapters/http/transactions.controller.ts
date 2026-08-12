@@ -204,9 +204,11 @@ export class TransactionsController {
     @Context() context: LedgerContext,
     @ExternalRef() externalRef: Nullable<string>,
     @Param('id') id: string,
-    @Body() _dto: ReverseTransactionRequestDto,
+    @Body() dto: ReverseTransactionRequestDto,
   ): Promise<CommandResult> {
-    return this.dispatch(new ReverseConfirmedTransactionCommand(id), context, externalRef, _dto);
+    const command = new ReverseConfirmedTransactionCommand(id, dto.atEffectiveDate ?? true);
+
+    return this.dispatch(command, context, externalRef, dto);
   }
 
   /**

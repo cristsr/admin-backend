@@ -27,6 +27,7 @@ import {
 } from '@ledger/shared/domain/value-objects';
 import {
   ImmutableTransactionException,
+  TransactionAlreadyReversedException,
   TransactionNotFoundException,
   UnbalancedTransactionException,
 } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
@@ -58,6 +59,7 @@ describe('Ledger error code → HTTP status contract', () => {
     // is an unprocessable-entity (INV-3, posting to a closed account), not a conflict.
     [new AccountClosedException('closed'), HttpStatus.UNPROCESSABLE_ENTITY, LEDGER_ERROR_CODE.ACCOUNT_CLOSED],
     [new ImmutableTransactionException('immutable'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.IMMUTABLE_TRANSACTION],
+    [new TransactionAlreadyReversedException('already reversed'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.TRANSACTION_ALREADY_REVERSED],
     [new NameCollisionException('collision'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.NAME_COLLISION],
     [new SystemAccountProtectedException('protected'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.SYSTEM_ACCOUNT_PROTECTED],
     [new ConcurrencyConflictException('conflict'), HttpStatus.CONFLICT, LEDGER_ERROR_CODE.CONCURRENCY_CONFLICT],

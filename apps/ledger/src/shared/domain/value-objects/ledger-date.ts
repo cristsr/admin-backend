@@ -1,3 +1,4 @@
+import { Clock } from '@cqrs/domain/ports';
 import { InvalidLedgerDateException } from './value-object.exception';
 
 /** Strict `YYYY-MM-DD` shape; calendar validity is checked separately. */
@@ -21,6 +22,11 @@ export class LedgerDate {
     }
 
     return new LedgerDate(raw);
+  }
+
+  /** Today's calendar day, derived from `clock`. Always UTC (Artículo 8, sin excepción). */
+  static today(clock: Clock): LedgerDate {
+    return LedgerDate.of(clock.now().toISOString().slice(0, 10));
   }
 
   get value(): string {

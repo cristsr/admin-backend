@@ -2,9 +2,8 @@ import { AuthContext } from '@cqrs/application/command-bus/auth-context.type';
 import { CommandHandler } from '@cqrs/application/command-bus/command-handler';
 import { CommandResult } from '@cqrs/application/command-bus/command-result.type';
 import { ProjectionDispatcher } from '@cqrs/application/projection/projection-dispatcher';
-import { IdGenerator } from '@cqrs/domain/ports';
+import { Clock, IdGenerator } from '@cqrs/domain/ports';
 import { EventStore } from '@cqrs/domain/ports/event-store';
-import { TransactionStatus } from '@ledger/shared/domain/posting/transaction-status';
 import { LedgerTransactionRepository } from '@ledger/transactions/application/repositories/ledger-transaction.repository';
 import { BalanceRule } from '@ledger/transactions/domain/balance/balance-rule';
 import { TransactionNotFoundException } from '@ledger/transactions/domain/transaction/exceptions/transaction.exception';
@@ -14,9 +13,15 @@ import { ReverseConfirmedTransactionCommand } from './reverse-confirmed-transact
 /**
  * Reverses a confirmed transaction. Records the linked reversing transaction
  * (inverted postings, `reverses_id` metadata, CONFIRMED) and emits
- * {@link TransactionReversed} on the original — a single audited write path
- *. The original stream is the idempotency anchor; the reversing append
- * carries no external_ref (anchor-only stamping).
+ * {@link TransactionReversed} on the original — a single audited write path.
+ * The original stream is the idempotency anchor; the reversing append carries
+ * no external_ref (anchor-only stamping).
+ *
+ * `atEffectiveDate` (hu-0026) is resolved entirely by the aggregate: `reverse()`
+ * returns a `ReversalPlan` with the date already chosen, and
+ * `LedgerTransaction.fromReversalPlan` builds T2 from it — the handler only
+ * orchestrates, it never picks the date itself (single source of truth,
+ * `docs/rules.md` §Reglas de Negocio de hu-0026).
  *
  * The two appends land on different streams, so both run inside
  * `EventStore.withTransaction` (INV-7): a process dying between them would
@@ -32,6 +37,7 @@ export class ReverseConfirmedTransactionHandler extends CommandHandler<ReverseCo
     private readonly idGenerator: IdGenerator,
     private readonly dispatcher: ProjectionDispatcher,
     private readonly eventStore: EventStore,
+    private readonly clock: Clock,
   ) {
     super();
   }
@@ -46,23 +52,11 @@ export class ReverseConfirmedTransactionHandler extends CommandHandler<ReverseCo
       throw new TransactionNotFoundException(`Transaction "${command.transactionId}" not found`);
     }
 
-    const reversing = LedgerTransaction.record(
-      {
-        date: original.date,
-        payee: null,
-        description: `Reversal of ${original.id}`,
-        postings: original.postings.map((posting) => posting.negated()),
-        initialStatus: TransactionStatus.CONFIRMED,
-        invoiceUrl: null,
-        tags: [],
-        metadata: { reverses_id: original.id },
-      },
-      this.balance,
-      this.idGenerator,
-    );
-
-    // Guarded by the aggregate: only CONFIRMED transactions can be reversed.
-    original.reverse(reversing.id);
+    const reversalId = this.idGenerator.next();
+    // Guarded by the aggregate: only CONFIRMED, not-yet-reversed transactions
+    // reach this point; it resolves atEffectiveDate into the plan's date.
+    const plan = original.reverse(reversalId, command.atEffectiveDate, this.clock);
+    const reversing = LedgerTransaction.fromReversalPlan(plan, this.balance);
 
     const anchorless: AuthContext = { ...ctx, externalRef: null };
     const { originalResult, reversingResult } = await this.eventStore.withTransaction(async () => {

@@ -16,6 +16,15 @@ export class ReverseTransactionRequestDto {
   @IsOptional()
   @IsString()
   readonly reason?: string;
+
+  @ApiPropertyOptional({
+    default: true,
+    description: 'hu-0026: true (default) — T2 is dated at the original transaction, correcting the historical balance. false — T2 is dated today, leaving the historical balance intact.',
+  })
+  @IsOptional()
+  @IsBoolean()
+  readonly atEffectiveDate?: boolean;
+
   @ApiPropertyOptional({ default: false, description: 'Preview mode (hu-0025): execute the command fully inside the transaction and roll back, returning the result the real run would have produced.' })
   @IsOptional()
   @IsBoolean()

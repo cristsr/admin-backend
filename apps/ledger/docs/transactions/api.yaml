@@ -371,10 +371,29 @@ paths:
       summary: Reverse a confirmed transaction; returns the reversal id (§7.3).
       description: >
         Crea una transacción de reversa (T2) con los postings invertidos y
-        `metadata.reverses_id = {id}`; la original NO se muta. EL `reason?` DEL BODY SE
-        IGNORA: el controller declara `_dto` y despacha
-        `new ReverseConfirmedTransactionCommand(id)`, así que a diferencia de `void` el
-        motivo no se persiste. El campo se conserva en el contrato para no romper clientes
+        `metadata.reverses_id = {id}`; la original NO se muta.
+
+
+        **`atEffectiveDate` (hu-0026) elige la fecha contable de T2:**
+
+
+        - `true` (default) — T2 nace con la fecha de la original. Corrige el saldo
+          histórico; las aserciones de saldo posteriores a esa fecha se re-evalúan
+          automáticamente (RF-18).
+
+        - `false` — T2 nace con la fecha de hoy (UTC). El saldo histórico queda
+          intacto y las aserciones anteriores a hoy no cambian de veredicto. Es la
+          práctica contable habitual cuando el período de la original ya fue
+          conciliado y cerrado.
+
+
+        El ledger **no** infiere si el período está cerrado: la elección es del
+        cliente. Tampoco compara la fecha de hoy con la de la original — si la
+        original está fechada a futuro, T2 puede quedar fechada antes que ella.
+
+
+        EL `reason?` DEL BODY SE IGNORA: el controller no lo persiste, a diferencia
+        de `void`. El campo se conserva en el contrato para no romper clientes
         (hu-0014, AC-2).
       parameters:
         - name: id
@@ -393,8 +412,8 @@ paths:
       responses:
         '201':
           description: >
-            Reversa emitida. El `id` del cuerpo es el de la TRANSACCIÓN DE REVERSA (T2),
-            no el de la original.
+            Reversa emitida. El `id` del cuerpo es el de la TRANSACCIÓN DE REVERSA
+            (T2), no el de la original. Sin cambios respecto de hu-0014.
           headers:
             X-Ledger-Stream-Position:
               $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
@@ -408,10 +427,20 @@ paths:
           description: TRANSACTION_NOT_FOUND.
         '409':
           description: >
-            INVALID_TRANSACTION_STATE — la transacción no está CONFIRMED.
-            `IDEMPOTENCY_INPUT_MISMATCH` — la `external_ref` ya fue usada por este
-            usuario con inputs distintos (hu-0024). (El `200` de replay de esta
-            operación no está documentado — gap preexistente de hu-0014.)
+            - `TRANSACTION_ALREADY_REVERSED` (**nuevo en hu-0026**) — la transacción
+              ya fue revertida. Antes este caso respondía
+              `INVALID_TRANSACTION_STATE`.
+
+            - `INVALID_TRANSACTION_STATE` — la transacción no está CONFIRMED por
+              cualquier otro motivo (PENDING, VOIDED).
+
+            - `IDEMPOTENCY_INPUT_MISMATCH` — la `external_ref` ya fue usada por este
+              usuario con inputs distintos (hu-0024). Desde hu-0026 eso incluye
+              reintentar con un `atEffectiveDate` distinto (AC-5).
+
+            - `PERSISTENCE_CONFLICT` — reintentos agotados (hu-0025). (El `200` de
+              replay de esta operación no está documentado — gap preexistente de
+              hu-0014.)
           content:
             application/json:
               schema:
@@ -604,9 +633,26 @@ components:
 
     ReverseTransactionRequest:
       type: object
+      description: |
+        Body de `POST /transactions/{id}/reverse`. Todos los campos son
+        opcionales: un body vacío (`{}`) reversa con el comportamiento por defecto.
       properties:
+        atEffectiveDate:
+          type: boolean
+          default: true
+          description: |
+            **Nuevo en hu-0026 (AC-1, AC-4).** `true` (default): la reversa nace con
+            la fecha contable de la original y corrige el saldo histórico. `false`:
+            nace con la fecha de hoy (UTC) y deja el histórico intacto. Omitirlo
+            equivale a `true`, que es el comportamiento previo a hu-0026.
+
+            Entra al hash de idempotencia (AC-5): reintentar la misma
+            `X-External-Ref` con otro valor responde 409
+            `IDEMPOTENCY_INPUT_MISMATCH`.
+          example: false
         reason:
           type: string
+          description: Se acepta y se ignora — no se persiste (gap conocido de hu-0014).
           example: Refunded by the merchant
         dryRun:
           $ref: '#/components/schemas/DryRun'

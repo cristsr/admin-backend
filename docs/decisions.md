@@ -8,6 +8,27 @@
 > entrada nueva que la referencia. Orden cronológico inverso (más reciente
 > primero).
 
+## hu-0026 — Fecha efectiva elegible en la reversa (2026-08-10)
+
+No hubo preguntas nuevas en esta fase: `/clarify` dejó el ítem sin ambigüedades y las
+elecciones de implementación se resolvieron contra precedentes del repo. Las cuatro
+decisiones técnicas no triviales están documentadas con sus alternativas en
+[`docs/research.md`](../work/done/hu-0026/docs/research.md):
+
+- **Quién resuelve «hoy»:** el agregado, recibiendo el `Clock` — precedente `confirm(clock)`
+  en el mismo agregado; es la única opción que respeta «la fecha se decide en un solo lugar».
+- **Dónde vive la conversión instante → día:** `LedgerDate.today(clock)` en el value object —
+  un solo punto donde cambiar la semántica de «hoy» si el proyecto unifica la timezone (gap 2
+  de `context.md`).
+- **Cómo se construye la reversa:** factory de dominio `LedgerTransaction.fromReversalPlan(plan, balance)`
+  — hace que el `ReversalPlan` deje de ser código muerto, sin ensuciar `record()` con un id
+  opcional.
+- **`TransactionReversed` no cambia:** la elección es derivable del `date` de T2, así que no
+  se dispara el Artículo 9 (versionado de evento + upcaster). **Ningún evento cambia de
+  esquema en esta historia.**
+
+---
+
 ## hu-0025 — Políticas transversales del command bus (2026-08-10)
 
 - **AC-6 — retry-once de `OptimisticConcurrencyPolicy`:** se **mantiene** como hoy

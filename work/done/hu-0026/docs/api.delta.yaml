@@ -1,0 +1,176 @@
+openapi: 3.1.0
+info:
+  title: hu-0026 — Fecha efectiva elegible en la reversa
+  version: "1.0.0"
+  description: |
+    Delta del contrato HTTP. Sin endpoints nuevos: una operación modificada y un
+    código de error nuevo.
+
+    1. **`atEffectiveDate: boolean` en el body de `POST /transactions/{id}/reverse`**
+       (AC-1, AC-4). Elige con qué fecha contable nace la transacción de reversa:
+       `true` (default) la fecha de la original — corrige el saldo histórico;
+       `false` la fecha de hoy (UTC) — deja el histórico intacto. El default
+       preserva el comportamiento vigente, así que el contrato sigue siendo
+       compatible con clientes que no conozcan el campo.
+
+       A diferencia de `dryRun`, este campo **sí** entra al hash de idempotencia:
+       es un input del comando, no metadata de transporte. Reintentar la misma
+       `X-External-Ref` con un `atEffectiveDate` distinto responde
+       `IDEMPOTENCY_INPUT_MISMATCH` (409) — AC-5.
+
+    2. **`TRANSACTION_ALREADY_REVERSED` (409)** — nuevo código estable (AC-3).
+       Revertir dos veces la misma transacción ya se impedía, pero respondía
+       `INVALID_TRANSACTION_STATE`, indistinguible de cualquier otro estado
+       inválido. Ahora tiene su propio código. Es aditivo sobre la tabla de RF-14:
+       ningún código existente cambia de status. `INVALID_TRANSACTION_STATE` sigue
+       cubriendo el resto de los estados no reversables.
+
+    La respuesta **no cambia de forma**: mismo `201 CommandAccepted`, mismos
+    headers, mismo `id` de la transacción de reversa (T2).
+
+    **Operaciones modificadas (1):** `reverseTransaction`.
+    **Schemas modificados (2):** `ReverseTransactionRequest` (campo nuevo),
+    `LedgerErrorCode` (código nuevo, tag `shared`).
+
+tags:
+  - name: transactions
+    description: Escrituras de transacciones y transfers.
+  - name: shared
+    description: Componentes transversales del kernel HTTP del ledger.
+
+paths:
+  # ---------------------------------------------------------------------------
+  # Operación ya publicada (hu-0014). El requestBody apunta al mismo schema; el
+  # cambio de campo vive en components.schemas.ReverseTransactionRequest. Acá se
+  # reescribe la descripción de la operación y la del 409, que gana un código.
+  # /sync conserva verbatim el resto de la operación (parameters, 201, 401, 404).
+  # ---------------------------------------------------------------------------
+  /transactions/{id}/reverse:
+    post:
+      tags: [transactions]
+      operationId: reverseTransaction
+      summary: Reverse a confirmed transaction; returns the reversal id (§7.3).
+      description: |
+        Crea una transacción de reversa (T2) con los postings invertidos y
+        `metadata.reverses_id = {id}`; la original NO se muta.
+
+        **`atEffectiveDate` (hu-0026) elige la fecha contable de T2:**
+
+        - `true` (default) — T2 nace con la fecha de la original. Corrige el saldo
+          histórico; las aserciones de saldo posteriores a esa fecha se re-evalúan
+          automáticamente (RF-18).
+        - `false` — T2 nace con la fecha de hoy (UTC). El saldo histórico queda
+          intacto y las aserciones anteriores a hoy no cambian de veredicto. Es la
+          práctica contable habitual cuando el período de la original ya fue
+          conciliado y cerrado.
+
+        El ledger **no** infiere si el período está cerrado: la elección es del
+        cliente. Tampoco compara la fecha de hoy con la de la original — si la
+        original está fechada a futuro, T2 puede quedar fechada antes que ella.
+
+        EL `reason?` DEL BODY SE IGNORA: el controller no lo persiste, a diferencia
+        de `void`. El campo se conserva en el contrato para no romper clientes
+        (hu-0014, AC-2).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - $ref: '../shared/api.yaml#/components/parameters/ExternalRefHeader'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReverseTransactionRequest'
+      responses:
+        '201':
+          description: |
+            Reversa emitida. El `id` del cuerpo es el de la TRANSACCIÓN DE REVERSA
+            (T2), no el de la original. Sin cambios respecto de hu-0014.
+          headers:
+            X-Ledger-Stream-Position:
+              $ref: '../shared/api.yaml#/components/headers/LedgerStreamPosition'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommandAccepted'
+        '404':
+          description: TRANSACTION_NOT_FOUND.
+          content:
+            application/json:
+              schema:
+                $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
+        '409':
+          description: |
+            - `TRANSACTION_ALREADY_REVERSED` (**nuevo en hu-0026**) — la transacción
+              ya fue revertida. Antes este caso respondía
+              `INVALID_TRANSACTION_STATE`.
+            - `INVALID_TRANSACTION_STATE` — la transacción no está CONFIRMED por
+              cualquier otro motivo (PENDING, VOIDED).
+            - `IDEMPOTENCY_INPUT_MISMATCH` — la `external_ref` ya fue usada por este
+              usuario con inputs distintos (hu-0024). Desde hu-0026 eso incluye
+              reintentar con un `atEffectiveDate` distinto (AC-5).
+            - `PERSISTENCE_CONFLICT` — reintentos agotados (hu-0025).
+          content:
+            application/json:
+              schema:
+                $ref: '../shared/api.yaml#/components/schemas/ErrorResponseBody'
+
+components:
+  schemas:
+    # --- transactions ---
+
+    ReverseTransactionRequest:
+      type: object
+      description: |
+        Body de `POST /transactions/{id}/reverse`. Todos los campos son
+        opcionales: un body vacío (`{}`) reversa con el comportamiento por defecto.
+      properties:
+        atEffectiveDate:
+          type: boolean
+          default: true
+          description: |
+            **Nuevo en hu-0026 (AC-1, AC-4).** `true` (default): la reversa nace con
+            la fecha contable de la original y corrige el saldo histórico. `false`:
+            nace con la fecha de hoy (UTC) y deja el histórico intacto. Omitirlo
+            equivale a `true`, que es el comportamiento previo a hu-0026.
+
+            Entra al hash de idempotencia (AC-5): reintentar la misma
+            `X-External-Ref` con otro valor responde 409
+            `IDEMPOTENCY_INPUT_MISMATCH`.
+          example: false
+        reason:
+          type: string
+          description: Se acepta y se ignora — no se persiste (gap conocido de hu-0014).
+          example: Refunded by the merchant
+        dryRun:
+          $ref: '#/components/schemas/DryRun'
+
+    # --- shared: referenciados por la operación, sin cambios de forma ---
+
+    DryRun:
+      $ref: '../shared/api.yaml#/components/schemas/DryRun'
+
+    CommandAccepted:
+      $ref: '../shared/api.yaml#/components/schemas/CommandAccepted'
+
+    # ---------------------------------------------------------------------------
+    # Delta sobre el enum de códigos estables (tag `shared`). Es aditivo: ningún
+    # código existente cambia de status. /sync lo mergea en el api.yaml del módulo
+    # shared conservando el resto de la descripción verbatim.
+    # ---------------------------------------------------------------------------
+    LedgerErrorCode:
+      description: |
+        **Delta hu-0026 — un código nuevo.**
+
+        - `TRANSACTION_ALREADY_REVERSED` (409) es el contrato de
+          `LedgerTransaction.reverse()` cuando la transacción ya tiene una reversa
+          vinculada. Antes de hu-0026 ese caso emitía `INVALID_TRANSACTION_STATE`,
+          que el cliente no podía distinguir de «no está CONFIRMED». El código
+          viejo sigue vigente para todos los demás estados no reversables: es un
+          reparto de casos, no un reemplazo.
+        - Se suma a `LEDGER_ERROR_CODE` y a la tabla congelada de
+          `ledger-error-code-mapping.spec.ts` (RF-14, AC-5 de map-domain-error).

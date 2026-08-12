@@ -31,3 +31,12 @@ export class ImmutableTransactionException extends DomainConflictException {
 export class InvalidTransactionStateException extends DomainConflictException {
   readonly code: string = 'INVALID_TRANSACTION_STATE';
 }
+
+/**
+ * The transaction already has a linked reversal (Artículo 3: no second reversal
+ * allowed). Before hu-0026 this case fell into `InvalidTransactionStateException`;
+ * now it has its own code so the client can distinguish it from "not CONFIRMED".
+ */
+export class TransactionAlreadyReversedException extends DomainConflictException {
+  readonly code: string = 'TRANSACTION_ALREADY_REVERSED';
+}

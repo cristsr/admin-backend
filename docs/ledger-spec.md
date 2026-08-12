@@ -729,13 +729,22 @@ Dos POST /transactions independientes (salida en A, entrada en B) → PENDING
 ### 7.3 Flujo: corrección de una confirmada
 
 ```
-POST /transactions/{id}/reverse
-   → ReverseConfirmedTransaction
+POST /transactions/{id}/reverse { atEffectiveDate?: boolean }
+   → ReverseConfirmedTransaction(id, atEffectiveDate)
    → TransactionReversed(T1) + TransactionRecorded(T2 = reversa, metadata.reverses_id = T1)
    → [opcional] cliente registra T3 con los valores correctos
    → proyecciones netean T1 + T2; el stream conserva la historia completa
-   → aserciones posteriores a T1 se re-evalúan automáticamente (RF-18)
 ```
+
+**`atEffectiveDate` (hu-0026, default `true`) elige la fecha contable de T2:**
+
+- `true` — T2 nace con la fecha de T1. Corrige el saldo histórico; las aserciones de saldo
+  posteriores a esa fecha se re-evalúan automáticamente (RF-18).
+- `false` — T2 nace con la fecha de hoy. El saldo histórico queda intacto; las aserciones
+  anteriores a hoy no cambian de veredicto. Es la práctica contable habitual cuando el período
+  de T1 ya fue conciliado y cerrado.
+
+El ledger no infiere si el período está cerrado: la elección es enteramente del cliente.
 
 ### 7.4 Flujo: compra internacional con cargo provisional
 

@@ -7,7 +7,7 @@ command: cualquiera (fallo de dominio o de puerto durante el dispatch)
 view: shared_http_map_domain_error
 invariants: [RF-14, AC-1, AC-2, AC-3, AC-4, AC-5, AC-6, AC-7]
 introduced_by: hu-0011
-last_modified_by: hu-0024
+last_modified_by: hu-0026
 status: active
 ---
 
@@ -27,6 +27,13 @@ internos.
 reescribe la nota sobre `DUPLICATE_EXTERNAL_REF`, que atribuía a ese código un caso que ahora
 tiene el suyo propio.
 
+**Delta hu-0026:** se suma `TRANSACTION_ALREADY_REVERSED` (409) a la tabla congelada. Es
+aditivo — ningún código existente cambia de status — pero **reparte** un caso que hasta ahora
+cubría `INVALID_TRANSACTION_STATE`: la doble reversa de una confirmada pasa a tener código
+propio, y el código viejo se queda con el resto de los estados no reversables. Sin pasos
+nuevos en el diagrama: el código entra por el mismo camino del filter, como toda
+`DomainConflictException`.
+
 **Diagrama:** dynamic view `shared_http_map_domain_error` en [`../shared.c4`](../shared.c4).
 
 ## Reglas
@@ -40,6 +47,8 @@ tiene el suyo propio.
   `DuplicateExternalRefException`) extienden `DomainConflictException` — mismo filter,
   mismo camino. `IdempotencyInputMismatchException` (hu-0024) extiende la misma clase y
   entra por el mismo camino, aunque la lance una política y no el puerto.
+  `TransactionAlreadyReversedException` (hu-0026) también extiende `DomainConflictException`
+  y la lanza el agregado (`LedgerTransaction.reverse()`), no una política ni un puerto.
 - **AC-4:** `LEDGER_ERROR_CODE`
   (`apps/ledger/src/shared/domain/errors/ledger-error-code.ts`) es la fuente única de
   los strings. Agregar un code es aditivo; cambiar el status de un code existente es
@@ -47,7 +56,7 @@ tiene el suyo propio.
 - **AC-5:** el mapeo está congelado por un contract test tabular
   (`ledger-error-code-mapping.spec.ts`) que ejecuta cada excepción a través del filter
   y afirma `{ statusCode, code }`. Agregar un code obliga a agregar su fila — hu-0024
-  agrega la de `IDEMPOTENCY_INPUT_MISMATCH`.
+  agrega la de `IDEMPOTENCY_INPUT_MISMATCH`, hu-0026 la de `TRANSACTION_ALREADY_REVERSED`.
 - **AC-6:** un error no tipado → `500` sin `code` de dominio ni detalles internos.
 - **AC-7 — reescrita por hu-0024.** El *replay* idempotente (misma `external_ref`, **mismos
   inputs**) no es un error: lo resuelve EP-1 devolviendo el resultado original (200 downgrade +
@@ -61,12 +70,20 @@ tiene el suyo propio.
 
 ## Errores (tabla congelada RF-14)
 
-Solo se listan las filas que hu-0024 agrega o modifica; el resto de la tabla queda intacto.
+Solo se listan las filas que hu-0024 y hu-0026 agregan o modifican; el resto de la tabla
+queda intacto.
 
 | Condición | Excepción | code | HTTP |
 |---|---|---|---|
-| **NUEVO** — misma `external_ref` del usuario con inputs distintos (AC-6) | `IdempotencyInputMismatchException` | `IDEMPOTENCY_INPUT_MISMATCH` | 409 |
+| **NUEVO (hu-0024)** — misma `external_ref` del usuario con inputs distintos (AC-6) | `IdempotencyInputMismatchException` | `IDEMPOTENCY_INPUT_MISMATCH` | 409 |
 | Violación del índice único `(user_id, external_ref)` en el puerto — **no alcanzable vía command bus**, ver nota | `DuplicateExternalRefException` | `DUPLICATE_EXTERNAL_REF` | 409 |
+| **NUEVO (hu-0026)** — se intenta reversar una transacción que ya fue revertida | `TransactionAlreadyReversedException` | `TRANSACTION_ALREADY_REVERSED` | 409 |
+
+> **Nota sobre el reparto de hu-0026.** Antes de hu-0026, `INVALID_TRANSACTION_STATE` cubría
+> tanto «la transacción no está CONFIRMED» como «ya está revertida». La segunda es accionable
+> de otra forma (la corrección ya existe; se busca por `reverses_id`), así que gana su propio
+> código. `INVALID_TRANSACTION_STATE` sigue vigente para el resto de los estados no
+> reversables.
 
 > **Nota sobre los dos códigos de idempotencia (reescribe la nota de hu-0012).**
 > Los dos describen fallas distintas en capas distintas:
