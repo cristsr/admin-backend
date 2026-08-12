@@ -4,10 +4,9 @@ module: reconciliation
 trigger: rest
 entrypoint: GET /v1/balance-assertions/{id}
 command: GetAssertionStatusQuery
-view: getAssertionStatus
 invariants: [RNF-10, Artículo 5, Artículo 10]
 introduced_by: hu-0017
-last_modified_by: hu-0017
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -20,7 +19,19 @@ después de declarar la aserción.
 Query pura (RNF-10, Artículo 10): no toca el event store ni ejecuta lógica de dominio, solo
 lee la proyección a través de `AssertionStatusStore`.
 
-**Diagrama:** dynamic view `getAssertionStatus` en [`../reconciliation.c4`](../reconciliation.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as BalanceAssertionController
+  participant H as GetAssertionStatusHandler
+  participant SR as ReadModelAssertionStatusReader
+  participant RM as ReadModelStore
+
+  Client->>C: GET /v1/balance-assertions/{id}
+  C->>H: GetAssertionStatusQuery
+  H->>SR: byId(userId, id)
+  SR->>RM: query proj_assertions
+```
 
 ## Reglas
 

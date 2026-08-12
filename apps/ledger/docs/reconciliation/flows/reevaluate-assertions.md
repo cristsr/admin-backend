@@ -4,10 +4,9 @@ module: reconciliation
 trigger: domain-event
 entrypoint: TransactionRecorded | TransactionAmended | TransactionVoided
 command: EvaluateAssertion
-view: reevaluateAssertions
 invariants: [AC-1, AC-2, AC-3, AC-4, AC-5, RF-18, RNF-4, RNF-10]
 introduced_by: hu-0016
-last_modified_by: hu-0016
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -23,7 +22,23 @@ eventos ni proyecciones (§3.2, RNF-10, Artículo 10). Lo ejecuta `Reconciliatio
 después de proyectar cada evento, de modo que el lookup siempre lee un `assertion_status`
 al día.
 
-**Diagrama:** dynamic view `reevaluateAssertions` en [`../reconciliation.c4`](../reconciliation.c4).
+```mermaid
+sequenceDiagram
+  participant P as ReconciliationPump
+  participant R as ReevaluateAssertionsReactor
+  participant PR as AssertionPostingReader
+  participant SR as ReadModelAssertionStatusReader
+  participant RM as ReadModelStore
+  participant CB as CommandBus
+  participant A as BalanceAssertion
+
+  P->>R: on(TransactionVoided)
+  R->>PR: touchedByTransaction(txnId)
+  PR->>RM: query proj_postings por transaction_id
+  R->>SR: nonRevokedOnAccountFrom(cuenta, fecha)
+  R->>CB: dispatch(EvaluateAssertion) por aserción
+  CB->>A: evaluate() — silencioso si el veredicto no cambia
+```
 
 ## Reglas
 

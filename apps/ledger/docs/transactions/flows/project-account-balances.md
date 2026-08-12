@@ -4,10 +4,9 @@ module: transactions
 trigger: domain-event
 entrypoint: SynchronousProjectionDispatcher.dispatch(StoredEvent) — after transaction_list
 command: N/A (projector reactivo)
-view: projectAccountBalances
 invariants: [AC-3, AC-4, INV-5, RNF-5]
 introduced_by: hu-0006
-last_modified_by: hu-0006
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -18,7 +17,17 @@ pendientes por cuenta y moneda, recomputando desde `proj_postings`. Debe ejecuta
 **después** de `TransactionListProjector` en el orden del dispatcher, porque consume
 los postings que este último escribe.
 
-**Diagrama:** dynamic view `projectAccountBalances` en [`../transactions.c4`](../transactions.c4).
+```mermaid
+sequenceDiagram
+  participant PD as ProjectionDispatcher
+  participant P as AccountBalancesProjector
+  participant RM as ReadModelStore
+
+  PD->>P: dispatch(StoredEvent)
+  P->>RM: query proj_postings
+  P->>RM: recompute confirmed + pending por cuenta/moneda
+  P->>RM: upsert proj_balances
+```
 
 ## Reglas
 

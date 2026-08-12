@@ -1,7 +1,8 @@
 # Módulo: reconciliation (apps/ledger)
 
-> C4 Nivel 3 · documentación viva. El modelo estructural y los flujos se derivan de
-> [`reconciliation.c4`](./reconciliation.c4) (LikeC4). Este README es el arc42-lite del módulo.
+> C4 Nivel 3 · documentación viva. El diagrama de componentes vive acá; cada flujo lleva
+> su diagrama de secuencia inline en [`flows/`](./flows/). Este README es el arc42-lite
+> del módulo.
 
 ## Propósito
 
@@ -16,8 +17,75 @@ como directiva de primera clase por la misma razón.
 
 ## Diagramas
 
-- **Componentes (C4 L3):** vista `reconciliationComponents` en `reconciliation.c4`.
-- **Flujos (dynamic views):** ver [`flows/`](./flows/).
+**Componentes (C4 Nivel 3).** Los nodos nombran la clase real; el gate de CI
+(`npm run docs:validate`) falla si alguno deja de existir.
+
+```mermaid
+flowchart TB
+  subgraph domain["Domain"]
+    BA("BalanceAssertion")
+  end
+
+  subgraph application["Application"]
+    AH("AssertBalanceHandler")
+    RH("RevokeAssertionHandler")
+    RDH("ResolveDiscrepancyHandler")
+    GSH("GetAssertionStatusHandler")
+    LAH("ListAssertionsHandler")
+    APR("AssertionPostingReader")
+    RR("ReevaluateAssertionsReactor")
+  end
+
+  subgraph infrastructure["Infrastructure"]
+    BAC("BalanceAssertionController")
+    ASP("AssertionStatusProjector")
+    AAP("AdjustmentAuditProjector")
+    RP("ReconciliationPump")
+    RMSR("ReadModelAssertionStatusReader")
+    RMPR("ReadModelAssertionPostingReader")
+    RMAR("ReadModelAdjustmentAuditReader")
+    PA[("proj_assertions")]
+    PAA[("proj_adjustment_audit")]
+    PC[("projection_checkpoints")]
+  end
+
+  subgraph kernel["Shared kernel (libs/cqrs)"]
+    CB("CommandBus")
+    ES("EventStore")
+    RM("ReadModelStore")
+    PCR("PostgresProjectionCheckpointRepository")
+  end
+
+  BAC --> AH
+  BAC --> RH
+  BAC --> RDH
+  BAC --> GSH
+  BAC --> LAH
+  AH --> BA
+  RH --> BA
+  RDH --> BA
+  RDH --> CB
+  AH --> ES
+  RP --> ES
+  RP --> ASP
+  RP --> AAP
+  RP --> RR
+  RP --> PCR
+  RR --> APR
+  RR --> CB
+  GSH --> RMSR
+  LAH --> RMSR
+  APR --> RMPR
+  ASP --> RM
+  AAP --> RM
+  RMSR --> RM
+  RMAR --> RM
+  RM --> PA
+  RM --> PAA
+  PCR --> PC
+```
+
+- **Flujos:** ver [`flows/`](./flows/) — cada uno lleva su `sequenceDiagram` inline.
 - **Contrato REST:** [`api.yaml`](./api.yaml) (OpenAPI 3.1, documento vivo).
 
 ## Casos de uso (flujos)

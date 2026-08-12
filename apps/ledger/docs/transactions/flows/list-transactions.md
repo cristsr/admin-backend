@@ -4,10 +4,9 @@ module: transactions
 trigger: rest
 entrypoint: GET /transactions
 command: ListTransactionsQuery
-view: listTransactions
 invariants: [AC-6, AC-8, RNF-10, INV-9]
 introduced_by: hu-0003
-last_modified_by: hu-0014
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -24,7 +23,23 @@ status: active
 cliente detecta el fin de la colección cuando recibe menos filas que el `limit` pedido
 (hu-0014, AC-3).
 
-**Diagrama:** dynamic view `listTransactions` en [`../transactions.c4`](../transactions.c4).
+El filtro por cuenta resuelve primero los `transaction_id` desde `proj_postings` y los
+aplica dentro del criteria (`oneOf`) **antes** de paginar; aplicarlo después ocultaba
+coincidencias más allá de la primera página (hu-0014). La respuesta es un array crudo de
+filas, no una página con total.
+
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as TransactionsController
+  participant QB as QueryBus
+  participant RM as ReadModelStore
+
+  Client->>C: GET /transactions
+  C->>QB: ask(ListTransactionsQuery, ctx)
+  QB->>RM: resuelve transaction_id por cuenta vía proj_postings
+  QB->>RM: query proj_transactions con Criteria + userId + oneOf + paginate
+```
 
 ## Reglas
 

@@ -4,10 +4,9 @@ module: reconciliation
 trigger: rest
 entrypoint: POST /v1/balance-assertions/{id}/resolve
 command: ResolveDiscrepancyCommand
-view: resolveDiscrepancy
 invariants: [RF-20, INV-1, INV-10, Artículo 2, Artículo 12]
 introduced_by: hu-0017
-last_modified_by: hu-0017
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -22,7 +21,21 @@ el handler despacha `RecordTransaction` por el `CommandBus` en vez de escribir l
 (Artículo 10). El dinero sin explicación queda acumulado y visible por cuenta en
 `adjustment_audit`, no escondido en un cuadre.
 
-**Diagrama:** dynamic view `resolveDiscrepancy` en [`../reconciliation.c4`](../reconciliation.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as BalanceAssertionController
+  participant H as ResolveDiscrepancyHandler
+  participant CB as CommandBus
+  participant A as BalanceAssertion
+  participant ES as EventStore
+
+  Client->>C: POST /v1/balance-assertions/{id}/resolve
+  C->>H: ResolveDiscrepancyCommand + AuthContext
+  H->>CB: dispatch(RecordTransaction) contra Equity:Adjustments
+  H->>A: resolve(adjustmentTxnId)
+  H->>ES: append(DiscrepancyResolved)
+```
 
 ## Reglas
 

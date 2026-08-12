@@ -1,7 +1,8 @@
 # Módulo: transactions (apps/ledger)
 
-> C4 Nivel 3 · documentación viva. El modelo estructural y los flujos se derivan de
-> [`transactions.c4`](./transactions.c4) (LikeC4). Este README es el arc42-lite del módulo.
+> C4 Nivel 3 · documentación viva. El diagrama de componentes vive acá; cada flujo lleva
+> su diagrama de secuencia inline en [`flows/`](./flows/). Este README es el arc42-lite
+> del módulo.
 
 ## Propósito
 
@@ -15,8 +16,99 @@ en la versión 0.8 de la spec (§4.2). Este módulo valida el par que el cliente
 
 ## Diagramas
 
-- **Componentes (C4 L3):** vista `transactionsComponents` en `transactions.c4`.
-- **Flujos (dynamic views):** ver [`flows/`](./flows/). Renderizados a SVG en `assets/` por CI.
+**Componentes (C4 Nivel 3).** Los nodos nombran la clase real; el gate de CI
+(`npm run docs:validate`) falla si alguno deja de existir.
+
+```mermaid
+flowchart TB
+  subgraph domain["Domain"]
+    LT("LedgerTransaction")
+    BR("BalanceRule")
+    TPR("TransferPairRule")
+    subgraph events["Transaction events"]
+      TR("TransactionRecorded")
+      TA("TransactionAmended")
+      TAN("TransactionAnnotated")
+      TC2("TransactionConfirmed")
+      TV("TransactionVoided")
+      TRV("TransactionReversed")
+      TM("TransfersMerged")
+    end
+    subgraph exceptions["Transaction exceptions"]
+      TNF("TransactionNotFoundException")
+      TAR("TransactionAlreadyReversedException")
+      ITS("InvalidTransactionStateException")
+      UBT("UnbalancedTransactionException")
+      IPE("InsufficientPostingsException")
+      IMT("ImmutableTransactionException")
+    end
+  end
+
+  subgraph application["Application"]
+    REPO("LedgerTransactionRepository")
+    TPL("toPostingLines")
+    RH("RecordTransactionHandler")
+    AH("AmendPendingTransactionHandler")
+    ANH("AnnotateTransactionHandler")
+    CH("ConfirmTransactionHandler")
+    VH("VoidPendingTransactionHandler")
+    RVH("ReverseConfirmedTransactionHandler")
+    MH("MergePendingTransfersHandler")
+    KD("TransactionKindDeriver")
+  end
+
+  subgraph infrastructure["Infrastructure"]
+    TCT("TransactionsController")
+    TFC("TransferController")
+    LP("TransactionListProjector")
+    BP("AccountBalancesProjector")
+    PS("PostingSerializer")
+    RMAL("ReadModelAccountLookup")
+    PT[("proj_transactions")]
+    PP[("proj_postings")]
+    PB[("proj_balances")]
+  end
+
+  subgraph kernel["Shared kernel (libs/cqrs)"]
+    CB("CommandBus")
+    QB("QueryBus")
+    ES("EventStore")
+    RM("ReadModelStore")
+    PD("ProjectionDispatcher")
+  end
+
+  TCT --> CB
+  TCT --> QB
+  TFC --> CB
+  CB --> RH
+  CB --> AH
+  CB --> ANH
+  CB --> CH
+  CB --> VH
+  CB --> RVH
+  CB --> MH
+  RH --> TPL
+  RH --> LT
+  MH --> TPR
+  LT --> BR
+  LT --> events
+  LT --> exceptions
+  RH --> REPO
+  REPO --> ES
+  REPO --> PS
+  PD --> LP
+  PD --> BP
+  LP --> KD
+  LP --> RM
+  BP --> RM
+  RMAL --> RM
+  RM --> PT
+  RM --> PP
+  RM --> PB
+```
+
+**Flujos:** ver [`flows/`](./flows/) — cada uno lleva su `sequenceDiagram` inline,
+renderizado nativo en GitHub y en el preview de VS Code.
 
 ## Casos de uso (flujos)
 
@@ -30,6 +122,7 @@ en la versión 0.8 de la spec (§4.2). Este módulo valida el par que el cliente
 | Reversar (confirmada) | rest | `POST /transactions/{id}/reverse` | [reverse-transaction](./flows/reverse-transaction.md) |
 | Listar transacciones | rest | `GET /transactions` | [list-transactions](./flows/list-transactions.md) |
 | Consultar transacción | rest | `GET /transactions/{id}` | [get-transaction](./flows/get-transaction.md) |
+| **Fusionar patas de transferencia** | rest | `POST /transfers/merge` | [merge-transfers](./flows/merge-transfers.md) |
 | **Proyectar transaction_list** | **domain-event** | `SynchronousProjectionDispatcher` → `TransactionListProjector` | [project-transaction-list](./flows/project-transaction-list.md) |
 | **Proyectar account_balances** | **domain-event** | `SynchronousProjectionDispatcher` → `AccountBalancesProjector` | [project-account-balances](./flows/project-account-balances.md) |
 

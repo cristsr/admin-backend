@@ -4,10 +4,9 @@ module: transactions
 trigger: rest
 entrypoint: POST /transactions/{id}/reverse
 command: ReverseConfirmedTransactionCommand
-view: reverseTransaction
 invariants: [AC-1, AC-2, AC-3, AC-4, AC-5, RNF-10, INV-6, INV-7, RF-14, RF-18]
 introduced_by: hu-0014
-last_modified_by: hu-0026
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -49,7 +48,24 @@ actualizado cuando hu-0025 cerró.*
 Ningún evento cambia de esquema: la elección es observable como el `date` del
 `TransactionRecorded` de T2, al que `TransactionReversed.reversalId` apunta.
 
-**Diagrama:** dynamic view `reverseTransaction` en [`../transactions.c4`](../transactions.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as TransactionsController
+  participant CB as CommandBus
+  participant H as ReverseConfirmedTransactionHandler
+  participant R as LedgerTransactionRepository
+  participant T as LedgerTransaction
+
+  Client->>C: POST /transactions/{id}/reverse
+  C->>CB: dispatch(ReverseConfirmedTransactionCommand)
+  CB->>H: handle
+  H->>R: load(id)
+  H->>T: reverse(reversalId, atEffectiveDate, clock) — solo CONFIRMED y no revertida
+  T->>T: raise(TransactionReversed)
+  H->>T: fromReversalPlan(plan) — T2 CONFIRMED con reverses_id
+  H->>R: save(tx) + save(reversal)
+```
 
 ## Reglas
 

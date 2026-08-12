@@ -4,10 +4,9 @@ module: reconciliation
 trigger: rest
 entrypoint: GET /v1/balance-assertions?accountId=
 command: ListAssertionsQuery
-view: listAssertions
 invariants: [RNF-10, Artículo 5, Artículo 10]
 introduced_by: hu-0017
-last_modified_by: hu-0017
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -18,7 +17,19 @@ incluidas las revocadas. Sirve la vista de «cómo viene conciliando esta cuenta
 
 Query pura sobre `proj_assertions`, acotada por `user_id` y `account_id`.
 
-**Diagrama:** dynamic view `listAssertions` en [`../reconciliation.c4`](../reconciliation.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as BalanceAssertionController
+  participant H as ListAssertionsHandler
+  participant SR as ReadModelAssertionStatusReader
+  participant RM as ReadModelStore
+
+  Client->>C: GET /v1/balance-assertions?accountId=
+  C->>H: ListAssertionsQuery
+  H->>SR: listByAccount(userId, accountId)
+  SR->>RM: query proj_assertions
+```
 
 ## Reglas
 

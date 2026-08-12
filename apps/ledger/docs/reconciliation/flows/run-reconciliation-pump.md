@@ -4,10 +4,9 @@ module: reconciliation
 trigger: cron
 entrypoint: ReconciliationPump.pump() — @Interval
 command: EvaluateAssertion (vía el reactor)
-view: runReconciliationPump
 invariants: [AC-1, AC-8, RNF-4, RNF-5, RNF-10, RNF-12, Artículo 10]
 introduced_by: hu-0015
-last_modified_by: hu-0015
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -29,7 +28,24 @@ Antes de esta historia el pump existía pero **no lo invocaba nadie**: estaba re
 como provider y su checkpoint vivía en una propiedad en memoria. Esta historia lo cablea a
 un disparador periódico y le da un checkpoint persistente.
 
-**Diagrama:** dynamic view `runReconciliationPump` en [`../reconciliation.c4`](../reconciliation.c4).
+```mermaid
+sequenceDiagram
+  participant P as ReconciliationPump
+  participant CR as PostgresProjectionCheckpointRepository
+  participant ES as EventStore
+  participant SP as AssertionStatusProjector
+  participant AP as AdjustmentAuditProjector
+  participant R as ReevaluateAssertionsReactor
+  participant CB as CommandBus
+
+  P->>CR: lastPosition(reconciliation)
+  P->>ES: readAll(from, 100)
+  P->>SP: project
+  P->>AP: project
+  P->>R: on(event)
+  R->>CB: dispatch(EvaluateAssertion)
+  P->>CR: advance(globalPosition)
+```
 
 ## Reglas
 

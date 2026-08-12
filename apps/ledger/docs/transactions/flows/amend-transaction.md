@@ -4,10 +4,9 @@ module: transactions
 trigger: rest
 entrypoint: POST /transactions/{id}/amend
 command: AmendPendingTransactionCommand
-view: amendTransaction
 invariants: [AC-2, AC-6, INV-1, INV-6, RNF-10]
 introduced_by: hu-0014
-last_modified_by: hu-0014
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -26,7 +25,25 @@ representación en el dominio. El DTO los declara requeridos y omitir cualquiera
 > lo que producía un `422` desconcertante sobre una fecha vacía (`"" is not a YYYY-MM-DD
 > date`). Se alineó el DTO con lo que el dominio soporta.
 
-**Diagrama:** dynamic view `amendTransaction` en [`../transactions.c4`](../transactions.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as TransactionsController
+  participant CB as CommandBus
+  participant H as AmendPendingTransactionHandler
+  participant R as LedgerTransactionRepository
+  participant T as LedgerTransaction
+  participant BR as BalanceRule
+
+  Client->>C: POST /transactions/{id}/amend
+  C->>CB: dispatch(AmendPendingTransactionCommand)
+  CB->>H: handle
+  H->>R: load(id)
+  H->>T: amend(postings, date) — solo PENDING (INV-6)
+  T->>BR: ensureBalanced()
+  T->>T: raise(TransactionAmended)
+  H->>R: save(tx)
+```
 
 ## Reglas
 

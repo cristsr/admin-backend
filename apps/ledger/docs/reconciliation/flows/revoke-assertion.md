@@ -4,10 +4,9 @@ module: reconciliation
 trigger: rest
 entrypoint: POST /v1/balance-assertions/{id}/revoke
 command: RevokeAssertionCommand
-view: revokeAssertion
 invariants: [RF-19, INV-10]
 introduced_by: hu-0017
-last_modified_by: hu-0017
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -22,7 +21,19 @@ para siempre, incluso tras un rebuild completo de proyecciones: el filtro vive e
 `AssertionStatusStore.nonRevokedOnAccountFrom`, del lado de la lectura, así que ningún
 disparador que se agregue en el futuro puede resucitarla por accidente.
 
-**Diagrama:** dynamic view `revokeAssertion` en [`../reconciliation.c4`](../reconciliation.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as BalanceAssertionController
+  participant H as RevokeAssertionHandler
+  participant A as BalanceAssertion
+  participant ES as EventStore
+
+  Client->>C: POST /v1/balance-assertions/{id}/revoke
+  C->>H: RevokeAssertionCommand + AuthContext
+  H->>A: revoke(reason) — terminal
+  H->>ES: append(AssertionRevoked)
+```
 
 ## Reglas
 

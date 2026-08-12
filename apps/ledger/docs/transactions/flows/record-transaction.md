@@ -4,10 +4,9 @@ module: transactions
 trigger: rest
 entrypoint: POST /transactions
 command: RecordTransactionCommand
-view: recordTransaction
 invariants: [INV-1, INV-2, INV-11]
 introduced_by: hu-0003
-last_modified_by: hu-0003
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -17,7 +16,28 @@ Crea un asiento contable (PENDING o CONFIRMED). El `RecordTransactionHandler` ar
 `PostingLine` con la `PostingFactory` y construye el agregado vía `LedgerTransaction.record(...)`,
 que exige el balanceo a cero por moneda antes de emitir `TransactionRecorded`.
 
-**Diagrama:** dynamic view `recordTransaction` en [`../transactions.c4`](../transactions.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as TransactionsController
+  participant CB as CommandBus
+  participant H as RecordTransactionHandler
+  participant PF as toPostingLines
+  participant T as LedgerTransaction
+  participant BR as BalanceRule
+  participant R as LedgerTransactionRepository
+  participant ES as EventStore
+
+  Client->>C: POST /transactions (RecordTransactionRequestDto)
+  C->>CB: dispatch(RecordTransactionCommand)
+  CB->>H: handle
+  H->>PF: build(postings)
+  H->>T: record(...) — INV-2
+  T->>BR: ensureBalanced() — INV-1 / INV-11
+  T->>T: raise(TransactionRecorded)
+  H->>R: save(tx)
+  R->>ES: append(TransactionRecorded)
+```
 
 ## Reglas
 

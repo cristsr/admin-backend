@@ -4,10 +4,9 @@ module: transactions
 trigger: rest
 entrypoint: POST /transactions/{id}/void
 command: VoidPendingTransactionCommand
-view: voidTransaction
 invariants: [AC-2, AC-6, RNF-10]
 introduced_by: hu-0014
-last_modified_by: hu-0014
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -21,7 +20,23 @@ y el stream es inmutable.
 A diferencia de `confirm` y `reverse`, acá el body **sí** se transporta: `reason` es
 requerido y viaja al command.
 
-**Diagrama:** dynamic view `voidTransaction` en [`../transactions.c4`](../transactions.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as TransactionsController
+  participant CB as CommandBus
+  participant H as VoidPendingTransactionHandler
+  participant R as LedgerTransactionRepository
+  participant T as LedgerTransaction
+
+  Client->>C: POST /transactions/{id}/void
+  C->>CB: dispatch(VoidPendingTransactionCommand)
+  CB->>H: handle
+  H->>R: load(id)
+  H->>T: void(reason) — solo PENDING
+  T->>T: raise(TransactionVoided)
+  H->>R: save(tx)
+```
 
 ## Reglas
 

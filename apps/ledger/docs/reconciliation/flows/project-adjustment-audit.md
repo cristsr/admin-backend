@@ -4,10 +4,9 @@ module: reconciliation
 trigger: domain-event
 entrypoint: DiscrepancyResolved
 command: —
-view: projectAdjustmentAudit
 invariants: [AC-0, AC-1, AC-7, AC-8, RNF-4, RNF-5, RNF-10]
 introduced_by: hu-0015
-last_modified_by: hu-0015
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -26,7 +25,17 @@ proyecciones. Ambas se registran como una sola entrada del `ProjectionRegistry`
 (`reconciliation`) para compartir checkpoint y garantizar ese orden también durante un
 rebuild.
 
-**Diagrama:** dynamic view `projectAdjustmentAudit` en [`../reconciliation.c4`](../reconciliation.c4).
+```mermaid
+sequenceDiagram
+  participant P as ReconciliationPump
+  participant AP as AdjustmentAuditProjector
+  participant RM as ReadModelStore
+
+  P->>AP: project(DiscrepancyResolved, store)
+  AP->>RM: query proj_assertions (difference, cuenta)
+  AP->>RM: upsert proj_adjustment_audit_entries
+  AP->>RM: upsert proj_adjustment_audit (recalculado)
+```
 
 ## Reglas
 

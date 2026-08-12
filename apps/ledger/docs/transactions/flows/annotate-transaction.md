@@ -4,10 +4,9 @@ module: transactions
 trigger: rest
 entrypoint: POST /transactions/{id}/annotate
 command: AnnotateTransactionCommand
-view: annotateTransaction
 invariants: [AC-2, RNF-10]
 introduced_by: hu-0014
-last_modified_by: hu-0014
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -41,7 +40,23 @@ interesa y reenviar el objeto completo.
 Es una decisión de contrato deliberada (`hu-0014`): el opcional del DTO expresa "podés no
 mandarlo", no "se preserva".
 
-**Diagrama:** dynamic view `annotateTransaction` en [`../transactions.c4`](../transactions.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as TransactionsController
+  participant CB as CommandBus
+  participant H as AnnotateTransactionHandler
+  participant R as LedgerTransactionRepository
+  participant T as LedgerTransaction
+
+  Client->>C: POST /transactions/{id}/annotate
+  C->>CB: dispatch(AnnotateTransactionCommand)
+  CB->>H: handle
+  H->>R: load(id)
+  H->>T: annotate(...) — cualquier estado salvo VOIDED
+  T->>T: raise(TransactionAnnotated)
+  H->>R: save(tx)
+```
 
 ## Reglas
 

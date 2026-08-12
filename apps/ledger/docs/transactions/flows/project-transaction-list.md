@@ -4,10 +4,9 @@ module: transactions
 trigger: domain-event
 entrypoint: SynchronousProjectionDispatcher.dispatch(StoredEvent)
 command: N/A (projector reactivo)
-view: projectTransactionList
 invariants: [AC-1, AC-2, AC-4, INV-5, RNF-5]
 introduced_by: hu-0006
-last_modified_by: hu-0006
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -18,7 +17,18 @@ El `TransactionListProjector` mantiene dos tablas del read model: `proj_transact
 asiento). Reacciona a cinco eventos del ciclo de vida de `LedgerTransaction` y deriva
 `derived_kind` desde `account_tree` usando `TransactionKindDeriver`.
 
-**Diagrama:** dynamic view `projectTransactionList` en [`../transactions.c4`](../transactions.c4).
+```mermaid
+sequenceDiagram
+  participant PD as ProjectionDispatcher
+  participant P as TransactionListProjector
+  participant RM as ReadModelStore
+  participant KD as TransactionKindDeriver
+
+  PD->>P: dispatch(StoredEvent)
+  P->>RM: query account_tree para deriveKind
+  P->>KD: derive(accountTypes)
+  P->>RM: upsert proj_transactions + proj_postings
+```
 
 ## Reglas
 

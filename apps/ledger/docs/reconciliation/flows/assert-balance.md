@@ -4,10 +4,9 @@ module: reconciliation
 trigger: rest
 entrypoint: POST /v1/balance-assertions
 command: AssertBalanceCommand
-view: assertBalance
 invariants: [RF-17, INV-10, RNF-9, Artículo 5]
 introduced_by: hu-0017
-last_modified_by: hu-0017
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -21,7 +20,19 @@ El corte puede ser el cierre del día (sin `occurredAt`) o un instante intradía
 distinción gobierna toda la semántica temporal de §2.4 y no se puede cambiar después: una
 aserción es inmutable — se revoca y se rehace.
 
-**Diagrama:** dynamic view `assertBalance` en [`../reconciliation.c4`](../reconciliation.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as BalanceAssertionController
+  participant H as AssertBalanceHandler
+  participant A as BalanceAssertion
+  participant ES as EventStore
+
+  Client->>C: POST /v1/balance-assertions (AssertBalanceRequest)
+  C->>H: AssertBalanceCommand + AuthContext
+  H->>A: assert() — moneda vs cuenta
+  H->>ES: append(BalanceAsserted)
+```
 
 ## Reglas
 

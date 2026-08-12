@@ -4,10 +4,9 @@ module: transactions
 trigger: rest
 entrypoint: GET /transactions/{id}
 command: GetTransactionByIdQuery
-view: getTransaction
 invariants: [AC-3, RNF-10, INV-9]
 introduced_by: hu-0014
-last_modified_by: hu-0014
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -24,7 +23,21 @@ las líneas debe listarlas aparte.
 que `GET /accounts/{id}` (`hu-0013`). `TRANSACTION_NOT_FOUND` existe en el catálogo pero lo
 emiten los handlers de escritura al cargar una transacción inexistente, no esta lectura.
 
-**Diagrama:** dynamic view `getTransaction` en [`../transactions.c4`](../transactions.c4).
+Devuelve la fila cruda de `proj_transactions` **sin** los postings (viven en
+`proj_postings` y esta ruta no los cruza). Una transacción inexistente responde `200` con
+cuerpo `null`, no `404` (hu-0014, AC-3).
+
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as TransactionsController
+  participant QB as QueryBus
+  participant RM as ReadModelStore
+
+  Client->>C: GET /transactions/{id}
+  C->>QB: ask(GetTransactionByIdQuery, ctx)
+  QB->>RM: query proj_transactions por userId + transactionId
+```
 
 ## Reglas
 

@@ -4,10 +4,9 @@ module: reconciliation
 trigger: domain-event
 entrypoint: BalanceAsserted | BalanceAssertionEvaluated | AssertionRevoked | DiscrepancyResolved
 command: —
-view: projectAssertionStatus
 invariants: [AC-0, AC-1, AC-7, AC-8, RNF-5, RNF-10, Artículo 1, Artículo 10]
 introduced_by: hu-0015
-last_modified_by: hu-0015
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -25,7 +24,19 @@ provistas. Por eso el orden importa y por eso los eventos posteriores nunca corr
 una fila inexistente: el agregado garantiza que `BalanceAsserted` es siempre el primero de
 su stream.
 
-**Diagrama:** dynamic view `projectAssertionStatus` en [`../reconciliation.c4`](../reconciliation.c4).
+```mermaid
+sequenceDiagram
+  participant P as ReconciliationPump
+  participant ES as EventStore
+  participant SP as AssertionStatusProjector
+  participant RM as ReadModelStore
+  participant CR as PostgresProjectionCheckpointRepository
+
+  P->>ES: readAll(checkpoint, 100)
+  P->>SP: project(event, store)
+  SP->>RM: upsert proj_assertions
+  P->>CR: advance(globalPosition)
+```
 
 ## Reglas
 
