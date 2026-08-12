@@ -5,6 +5,17 @@ DTO de respuesta de escritura) + código de dominio transversal (Money, puertos 
 contexto). Es el glue que conecta NestJS con el núcleo hexagonal de
 [`libs/cqrs`](../../../../libs/cqrs/README.md).
 
+Esta unidad documenta tres raíces de código:
+
+- **`apps/ledger/src/shared`** — el kernel HTTP del ledger (guard, interceptor, decoradores
+  de contexto, DTO de respuesta de escritura) y el dominio compartido (`Money`, `LedgerContext`).
+- **`apps/ledger/src/config`** — el bootstrap de Swagger (`buildSwaggerDocument`,
+  `maybeMountSwagger`). Vive acá en vez de en su propia unidad porque es configuración de
+  infraestructura sin casos de uso propios.
+- **`apps/ledger/src/tooling`** — los verificadores CLI (`ChainVerifier`,
+  `ConsistencyVerifier`). Están acá por la misma razón: son tooling de build, no módulos
+  de negocio.
+
 ## Diagramas
 
 **Componentes (C4 Nivel 3).** Los nodos nombran la clase real; el gate de CI
