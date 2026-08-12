@@ -4,10 +4,9 @@ module: accounts
 trigger: rest
 entrypoint: GET /accounts
 command: GetAccountTreeQuery
-view: listAccounts
 invariants: [AC-7, AC-8, RNF-10, INV-9]
 introduced_by: hu-0003
-last_modified_by: hu-0013
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -22,7 +21,20 @@ es **siempre plana**. El shaping jerárquico está pendiente — ver el `TODO(re
 `account-tree-view.ts`. El cliente puede reconstruir la jerarquía desde el nombre
 (`Assets:Bancolombia:Savings`), que codifica la ruta completa.
 
-**Diagrama:** dynamic view `listAccounts` en [`../accounts.c4`](../accounts.c4).
+El parámetro `?view=tree|flat` se valida pero se ignora: la respuesta es siempre la lista
+plana ordenada por nombre (hu-0013, AC-4).
+
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as AccountsController
+  participant QB as QueryBus
+  participant RM as ReadModelStore
+
+  Client->>C: GET /accounts (?view se ignora)
+  C->>QB: ask(GetAccountTreeQuery, ctx)
+  QB->>RM: query proj_accounts por userId, order name ASC
+```
 
 ## Reglas
 

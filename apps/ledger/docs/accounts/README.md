@@ -1,8 +1,8 @@
 # Módulo: accounts (apps/ledger)
 
-> C4 Nivel 3 · documentación viva. El modelo estructural y los diagramas de flujo
-> se derivan de [`accounts.c4`](./accounts.c4) (LikeC4). Este README es el
-> arc42-lite del módulo: propósito, invariantes y lenguaje ubicuo.
+> C4 Nivel 3 · documentación viva. El diagrama de componentes vive acá; cada flujo lleva
+> su diagrama de secuencia inline en [`flows/`](./flows/). Este README es el arc42-lite
+> del módulo: propósito, invariantes y lenguaje ubicuo.
 
 ## Propósito
 
@@ -16,11 +16,82 @@ aparición de las cuentas técnicas de sistema.
 
 ## Diagramas
 
-- **Componentes (C4 L3):** vista `accountsComponents` en `accounts.c4`.
-- **Flujos (dynamic views):** una vista por caso de uso — ver [`flows/`](./flows/).
-  Renderizadas a SVG en `assets/` por CI (`likec4 export`).
+**Componentes (C4 Nivel 3).** Los nodos nombran la clase real; el gate de CI
+(`npm run docs:validate`) falla si alguno deja de existir.
 
-Para previsualizar localmente: extensión LikeC4 de VS Code, o `npx likec4 start`.
+```mermaid
+flowchart TB
+  subgraph domain["Domain"]
+    ACC("Account")
+    subgraph events["Account events"]
+      AO("AccountOpened")
+      AR("AccountRenamed")
+      ACL("AccountClosed")
+    end
+    subgraph exceptions["Account exceptions"]
+      ANF("AccountNotFoundException")
+      ACE("AccountClosedException")
+      AAC("AccountAlreadyClosedException")
+      CNA("CurrencyNotAllowedException")
+      ICD("InvalidCloseDateException")
+      NCE("NameCollisionException")
+      RAC("RealAccountCurrencyException")
+      SAP("SystemAccountProtectedException")
+    end
+  end
+
+  subgraph application["Application"]
+    REPO("AccountRepository")
+    AVS("AccountValidationService")
+    OH("OpenAccountHandler")
+    RH("RenameAccountHandler")
+    CH("CloseAccountHandler")
+    IH("InitializeLedgerHandler")
+    OSH("OpenSystemAccountHandler")
+    ROB("RecordOpeningBalanceHandler")
+    AFR("AccountFactsReader")
+  end
+
+  subgraph infrastructure["Infrastructure"]
+    AC("AccountsController")
+    LC("LedgerController")
+    ATP("AccountTreeProjector")
+    ANR("AccountNameRegistry")
+    PA[("proj_accounts")]
+  end
+
+  subgraph kernel["Shared kernel (libs/cqrs)"]
+    CB("CommandBus")
+    QB("QueryBus")
+    ES("EventStore")
+  end
+
+  AC --> CB
+  AC --> QB
+  LC --> CB
+  LC --> QB
+  CB --> OH
+  CB --> RH
+  CB --> CH
+  CB --> IH
+  CB --> OSH
+  CB --> ROB
+  OH --> REPO
+  RH --> REPO
+  CH --> REPO
+  OSH --> REPO
+  IH --> CB
+  AVS --> ACC
+  REPO --> ACC
+  REPO --> ES
+  ACC --> events
+  ACC --> exceptions
+  ATP --> PA
+  AFR --> PA
+```
+
+**Flujos:** ver [`flows/`](./flows/) — cada uno lleva su `sequenceDiagram` inline,
+renderizado nativo en GitHub y en el preview de VS Code.
 
 ## Casos de uso (flujos)
 
@@ -32,6 +103,7 @@ Para previsualizar localmente: extensión LikeC4 de VS Code, o `npx likec4 start
 | Abrir cuenta | rest | `POST /accounts` | [open-account](./flows/open-account.md) |
 | Renombrar cuenta | rest | `POST /accounts/{id}/rename` | [rename-account](./flows/rename-account.md) |
 | Cerrar cuenta | rest | `POST /accounts/{id}/close` | [close-account](./flows/close-account.md) |
+| **Registrar saldo inicial** | rest | `POST /accounts/{id}/opening-balance` | [record-opening-balance](./flows/record-opening-balance.md) |
 | Listar cuentas (lista plana) | rest | `GET /accounts` | [list-accounts](./flows/list-accounts.md) |
 | Consultar cuenta | rest | `GET /accounts/{id}` | [get-account-by-id](./flows/get-account-by-id.md) |
 | Consultar saldos | rest | `GET /accounts/{id}/balance` | [get-account-balances](./flows/get-account-balances.md) |

@@ -4,10 +4,9 @@ module: reference
 trigger: rest
 entrypoint: POST /v1/currencies
 command: RegisterCurrencyCommand
-view: registerCurrency
 invariants: [RF-21, RF-11, RF-26, INV-8, RNF-4, principio #5]
 introduced_by: hu-0019
-last_modified_by: hu-0019
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -20,7 +19,23 @@ El command corre contra el stream global del catálogo, no contra el del usuario
 registra: la precisión de una moneda es universal. El `client_id` del llamante igual viaja
 en el envelope para auditoría (RF-12).
 
-**Diagrama:** dynamic view `registerCurrency` en [`../reference.c4`](../reference.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as CurrenciesController
+  participant CB as CommandBus
+  participant H as RegisterCurrencyHandler
+  participant A as CurrencyCatalogAggregate
+  participant ES as EventStore
+  participant Cache as ReadModelCurrencyCatalog
+
+  Client->>C: POST /v1/currencies (RegisterCurrencyRequestDto)
+  C->>CB: dispatch(RegisterCurrencyCommand)
+  CB->>H: handle
+  H->>A: register() — rango 0..4, conflicto de precisión
+  H->>ES: append(CurrencyRegistered)
+  H->>Cache: refresh() — el próximo resolve ve la moneda
+```
 
 ## Reglas
 

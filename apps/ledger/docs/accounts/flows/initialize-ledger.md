@@ -4,10 +4,9 @@ module: accounts
 trigger: rest
 entrypoint: POST /ledger/initialize
 command: InitializeLedgerCommand
-view: initializeLedger
 invariants: [AC-1, RNF-10, INV-7, INV-13]
 introduced_by: hu-0013
-last_modified_by: refactor-module-boundaries
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -21,7 +20,29 @@ Lo sirve `LedgerController` —no `AccountsController`— porque es ciclo de vid
 ledger, no de una cuenta. Vive bajo el módulo `accounts` por cercanía: el efecto observable
 de inicializar es la aparición de las cuentas de sistema.
 
-**Diagrama:** dynamic view `initializeLedger` en [`../accounts.c4`](../accounts.c4).
+Las cuentas entran por el `CommandBus` como `OpenSystemAccountCommand`: el agregado
+`Account` pertenece a este módulo y no se construye desde otro. Los tres appends comparten
+un único `withTransaction` (INV-7) y el dispatch de proyecciones queda fuera del scope.
+
+```mermaid
+sequenceDiagram
+  actor Client
+  participant LC as LedgerController
+  participant CB as CommandBus
+  participant IH as InitializeLedgerHandler
+  participant OH as OpenSystemAccountHandler
+  participant R as AccountRepository
+  participant ES as EventStore
+
+  Client->>LC: POST /ledger/initialize (InitializeLedgerRequestDto)
+  LC->>CB: dispatch(InitializeLedgerCommand)
+  CB->>IH: handle — abre withTransaction
+  IH->>CB: dispatch(OpenSystemAccountCommand: Equity:OpeningBalances)
+  CB->>OH: handle
+  OH->>R: save — append(AccountOpened)
+  IH->>CB: dispatch(OpenSystemAccountCommand: Equity:Adjustments)
+  IH->>ES: append(LedgerInitialized) con los dos accountId
+```
 
 ## Qué cambió en `refactor-module-boundaries`
 

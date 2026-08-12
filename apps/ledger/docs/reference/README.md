@@ -1,7 +1,8 @@
 # Módulo: reference (apps/ledger)
 
-> C4 Nivel 3 · documentación viva. El modelo estructural y los flujos se derivan de
-> [`reference.c4`](./reference.c4) (LikeC4). Este README es el arc42-lite del módulo.
+> C4 Nivel 3 · documentación viva. El diagrama de componentes vive acá; cada flujo lleva
+> su diagrama de secuencia inline en [`flows/`](./flows/). Este README es el arc42-lite
+> del módulo.
 
 ## Propósito
 
@@ -13,8 +14,48 @@ exigía recompilar y deployar.
 
 ## Diagramas
 
-- **Componentes (C4 L3):** vista `referenceComponents` en `reference.c4`.
-- **Flujos:** ver [`flows/`](./flows/).
+**Componentes (C4 Nivel 3).** Los nodos nombran la clase real; el gate de CI
+(`npm run docs:validate`) falla si alguno deja de existir.
+
+```mermaid
+flowchart TB
+  subgraph domain["Domain"]
+    CCA("CurrencyCatalogAggregate")
+  end
+
+  subgraph application["Application"]
+    RCH("RegisterCurrencyHandler")
+    LCH("ListCurrenciesHandler")
+  end
+
+  subgraph infrastructure["Infrastructure"]
+    CC("CurrenciesController")
+    CP("CurrenciesProjector")
+    RMCC("ReadModelCurrencyCatalog")
+  end
+
+  subgraph kernel["Shared kernel (libs/cqrs)"]
+    CB("CommandBus")
+    QB("QueryBus")
+    ES("EventStore")
+    RM("ReadModelStore")
+    PC[("proj_currencies")]
+  end
+
+  CC --> CB
+  CC --> QB
+  CB --> RCH
+  QB --> LCH
+  RCH --> CCA
+  RCH --> ES
+  RCH --> RMCC
+  CP --> RM
+  RMCC --> RM
+  LCH --> RM
+  RM --> PC
+```
+
+**Flujos:** ver [`flows/`](./flows/) — cada uno lleva su `sequenceDiagram` inline.
 
 ## Casos de uso (flujos)
 

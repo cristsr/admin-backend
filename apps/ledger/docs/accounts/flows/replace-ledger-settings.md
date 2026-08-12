@@ -4,10 +4,9 @@ module: accounts
 trigger: rest
 entrypoint: PUT /v1/ledger/settings
 command: ReplaceLedgerSettingsCommand
-view: replaceLedgerSettings
 invariants: [RF-2, RF-11, RF-26, RNF-7, RNF-9, §3.5]
 introduced_by: hu-0018
-last_modified_by: hu-0018
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -23,7 +22,17 @@ saldo (§2.4): cambiarla cambia contra qué corte se evalúan las conciliaciones
 moneda de presentación, en cambio, no altera ningún monto ya registrado — es un parámetro
 de lectura (§2.7, principio de diseño #5).
 
-**Diagrama:** dynamic view `replaceLedgerSettings` en [`../accounts.c4`](../accounts.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant LC as LedgerController
+  participant CB as CommandBus
+  participant ES as EventStore
+
+  Client->>LC: PUT /ledger/settings (ReplaceLedgerSettingsRequestDto)
+  LC->>CB: dispatch(ReplaceLedgerSettingsCommand)
+  CB->>ES: append(PresentationCurrencyChanged + TimezoneChanged) — un solo append
+```
 
 ## Reglas
 

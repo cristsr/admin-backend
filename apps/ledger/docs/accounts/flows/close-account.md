@@ -4,10 +4,9 @@ module: accounts
 trigger: rest
 entrypoint: POST /accounts/{id}/close
 command: CloseAccountCommand
-view: closeAccount
 invariants: [INV-13]
 introduced_by: hu-0003
-last_modified_by: hu-0003
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -17,7 +16,25 @@ Marca una cuenta como cerrada a partir de una fecha. Transición de ciclo de vid
 event-sourced. El `CloseAccountHandler` rehidrata el agregado, aplica `close(closedOn)`
 y persiste `AccountClosed`.
 
-**Diagrama:** dynamic view `closeAccount` en [`../accounts.c4`](../accounts.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as AccountsController
+  participant CB as CommandBus
+  participant H as CloseAccountHandler
+  participant R as AccountRepository
+  participant A as Account
+  participant ES as EventStore
+
+  Client->>C: POST /accounts/{id}/close (CloseAccountRequestDto)
+  C->>CB: dispatch(CloseAccountCommand)
+  CB->>H: handle
+  H->>R: load(id)
+  H->>A: close(closedOn) — INV-13
+  A->>A: raise(AccountClosed)
+  H->>R: save(account)
+  R->>ES: append(AccountClosed)
+```
 
 ## Reglas
 

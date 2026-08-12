@@ -4,10 +4,9 @@ module: accounts
 trigger: rest
 entrypoint: POST /accounts
 command: OpenAccountCommand
-view: openAccount
 invariants: [AC-2, AC-3]
 introduced_by: hu-0003
-last_modified_by: hu-0013
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -25,7 +24,24 @@ moneda antes de emitir `AccountOpened`. El evento se persiste en el `EventStore`
 `OpenAccountRequestDto` se validan como forma pero **no se transportan**, así que un `type`
 que contradiga el prefijo del nombre se ignora en silencio (hu-0013, AC-3).
 
-**Diagrama:** dynamic view `openAccount` en [`../accounts.c4`](../accounts.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as AccountsController
+  participant CB as CommandBus
+  participant H as OpenAccountHandler
+  participant A as Account
+  participant R as AccountRepository
+  participant ES as EventStore
+
+  Client->>C: POST /accounts (OpenAccountRequestDto)
+  C->>CB: dispatch(OpenAccountCommand)
+  CB->>H: handle
+  H->>A: Account.open(id, name, currencies, openedOn) — valida AC-2
+  A->>A: raise(AccountOpened)
+  H->>R: save(account)
+  R->>ES: append(AccountOpened)
+```
 
 ## Reglas
 

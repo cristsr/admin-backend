@@ -4,10 +4,9 @@ module: accounts
 trigger: rest
 entrypoint: GET /accounts/{id}
 command: GetAccountByIdQuery
-view: getAccountById
 invariants: [AC-4, RNF-10, INV-9]
 introduced_by: hu-0013
-last_modified_by: hu-0013
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -15,7 +14,20 @@ status: active
 
 Devuelve un único nodo de `proj_accounts`, acotado al usuario del contexto.
 
-**Diagrama:** dynamic view `getAccountById` en [`../accounts.c4`](../accounts.c4).
+Una cuenta inexistente devuelve `200` con cuerpo `null`, no `404`: el handler retorna
+`row ?? null` y ninguna capa lo traduce a excepción (hu-0013, AC-4).
+
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as AccountsController
+  participant QB as QueryBus
+  participant RM as ReadModelStore
+
+  Client->>C: GET /accounts/{id}
+  C->>QB: ask(GetAccountByIdQuery, ctx)
+  QB->>RM: query proj_accounts por userId + accountId
+```
 
 ## Reglas
 

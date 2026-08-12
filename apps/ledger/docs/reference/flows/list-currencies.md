@@ -4,10 +4,9 @@ module: reference
 trigger: rest
 entrypoint: GET /v1/currencies
 command: ListCurrenciesQuery
-view: listCurrencies
 invariants: [RNF-10, Artículo 10]
 introduced_by: hu-0019
-last_modified_by: hu-0019
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -19,7 +18,19 @@ poblar el selector de moneda al abrir una cuenta o registrar una transacción.
 Query pura sobre `proj_currencies` (RNF-10, Artículo 10). **No filtra por usuario**: el
 catálogo es global, y es la única consulta del ledger que no se acota por `user_id`.
 
-**Diagrama:** dynamic view `listCurrencies` en [`../reference.c4`](../reference.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as CurrenciesController
+  participant QB as QueryBus
+  participant H as ListCurrenciesHandler
+  participant RM as ReadModelStore
+
+  Client->>C: GET /v1/currencies
+  C->>QB: ask(ListCurrenciesQuery)
+  QB->>H: handle
+  H->>RM: query proj_currencies
+```
 
 ## Reglas
 

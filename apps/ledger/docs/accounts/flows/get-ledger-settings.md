@@ -4,10 +4,9 @@ module: accounts
 trigger: rest
 entrypoint: GET /ledger/settings
 command: GetLedgerSettingsQuery
-view: getLedgerSettings
 invariants: [AC-2, RNF-10, INV-9]
 introduced_by: hu-0013
-last_modified_by: hu-0013
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -17,7 +16,20 @@ Lectura pura de la proyección de settings: moneda de presentación y timezone d
 Las mutaciones (`ChangePresentationCurrency`, `ChangeTimezone`) pertenecen a EP-4.1 y
 **no** están expuestas por esta ruta.
 
-**Diagrama:** dynamic view `getLedgerSettings` en [`../accounts.c4`](../accounts.c4).
+Lectura pura de la proyección de settings. Devuelve la fila cruda (snake_case), no un
+`LedgerSettingsDto` (hu-0013, AC-10).
+
+```mermaid
+sequenceDiagram
+  actor Client
+  participant LC as LedgerController
+  participant QB as QueryBus
+  participant RM as ReadModelStore
+
+  Client->>LC: GET /ledger/settings
+  LC->>QB: ask(GetLedgerSettingsQuery, ctx)
+  QB->>RM: query proj_ledger_settings por userId
+```
 
 ## Reglas
 

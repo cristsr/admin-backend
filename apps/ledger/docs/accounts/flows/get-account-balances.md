@@ -4,10 +4,9 @@ module: accounts
 trigger: rest
 entrypoint: GET /accounts/{id}/balance
 command: GetAccountBalancesQuery
-view: getAccountBalances
 invariants: [AC-7, AC-8, RNF-10, INV-9]
 introduced_by: hu-0003
-last_modified_by: hu-0013
+last_modified_by: spec-0033
 status: active
 ---
 
@@ -23,7 +22,18 @@ El balance **nunca se escribe** (INV-5): es exclusivamente proyección.
 controller lo recibe como `_query` y no lo transporta: la respuesta siempre trae todas las
 monedas de la cuenta. Filtrar por moneda queda del lado del cliente (hu-0013, AC-5).
 
-**Diagrama:** dynamic view `getAccountBalances` en [`../accounts.c4`](../accounts.c4).
+```mermaid
+sequenceDiagram
+  actor Client
+  participant C as AccountsController
+  participant QB as QueryBus
+  participant RM as ReadModelStore
+
+  Client->>C: GET /accounts/{id}/balance (?currency se ignora)
+  C->>QB: ask(GetAccountBalancesQuery, ctx)
+  QB->>RM: query proj_accounts para owned IDs
+  QB->>RM: query proj_balances filtrado por owned
+```
 
 ## Reglas
 
