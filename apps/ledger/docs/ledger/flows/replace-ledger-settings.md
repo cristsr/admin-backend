@@ -1,12 +1,12 @@
 ---
 use_case: replace-ledger-settings
-module: accounts
+module: ledger
 trigger: rest
 entrypoint: PUT /v1/ledger/settings
 command: ReplaceLedgerSettingsCommand
 invariants: [RF-2, RF-11, RF-26, RNF-7, RNF-9, §3.5]
 introduced_by: hu-0018
-last_modified_by: spec-0033
+last_modified_by: spec-0034
 status: active
 ---
 

@@ -1,12 +1,12 @@
 ---
 use_case: get-ledger-settings
-module: accounts
+module: ledger
 trigger: rest
 entrypoint: GET /ledger/settings
 command: GetLedgerSettingsQuery
 invariants: [AC-2, RNF-10, INV-9]
 introduced_by: hu-0013
-last_modified_by: spec-0033
+last_modified_by: spec-0034
 status: active
 ---
 

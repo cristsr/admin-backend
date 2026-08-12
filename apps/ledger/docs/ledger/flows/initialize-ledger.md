@@ -1,12 +1,12 @@
 ---
 use_case: initialize-ledger
-module: accounts
+module: ledger
 trigger: rest
 entrypoint: POST /ledger/initialize
 command: InitializeLedgerCommand
 invariants: [AC-1, RNF-10, INV-7, INV-13]
 introduced_by: hu-0013
-last_modified_by: spec-0033
+last_modified_by: spec-0034
 status: active
 ---
 
@@ -17,8 +17,8 @@ timezone, y crea las cuentas técnicas de sistema (`Equity:OpeningBalances`,
 `Equity:Adjustments`) que el resto de los flujos asume existentes.
 
 Lo sirve `LedgerController` —no `AccountsController`— porque es ciclo de vida a nivel
-ledger, no de una cuenta. Vive bajo el módulo `accounts` por cercanía: el efecto observable
-de inicializar es la aparición de las cuentas de sistema.
+ledger, no de una cuenta. El efecto observable de inicializar es la aparición de las
+cuentas de sistema.
 
 Las cuentas entran por el `CommandBus` como `OpenSystemAccountCommand`: el agregado
 `Account` pertenece a este módulo y no se construye desde otro. Los tres appends comparten

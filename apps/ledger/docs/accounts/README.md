@@ -10,10 +10,6 @@ Gestiona el ciclo de vida de las cuentas contables del ledger: apertura, renombr
 cierre y las lecturas del árbol de cuentas y sus saldos. Es un módulo event-sourced:
 cada transición de estado emite un evento de dominio persistido en el `EventStore`.
 
-Aloja además el **ciclo de vida a nivel ledger** (`LedgerController`): inicialización y
-lectura de settings. Vive acá por cercanía — el efecto observable de inicializar es la
-aparición de las cuentas técnicas de sistema.
-
 ## Diagramas
 
 **Componentes (C4 Nivel 3).** Los nodos nombran la clase real; el gate de CI
@@ -46,7 +42,6 @@ flowchart TB
     OH("OpenAccountHandler")
     RH("RenameAccountHandler")
     CH("CloseAccountHandler")
-    IH("InitializeLedgerHandler")
     OSH("OpenSystemAccountHandler")
     ROB("RecordOpeningBalanceHandler")
     AFR("AccountFactsReader")
@@ -54,7 +49,6 @@ flowchart TB
 
   subgraph infrastructure["Infrastructure"]
     AC("AccountsController")
-    LC("LedgerController")
     ATP("AccountTreeProjector")
     ANR("AccountNameRegistry")
     PA[("proj_accounts")]
@@ -68,19 +62,15 @@ flowchart TB
 
   AC --> CB
   AC --> QB
-  LC --> CB
-  LC --> QB
   CB --> OH
   CB --> RH
   CB --> CH
-  CB --> IH
   CB --> OSH
   CB --> ROB
   OH --> REPO
   RH --> REPO
   CH --> REPO
   OSH --> REPO
-  IH --> CB
   AVS --> ACC
   REPO --> ACC
   REPO --> ES
@@ -97,9 +87,6 @@ renderizado nativo en GitHub y en el preview de VS Code.
 
 | Caso de uso | Trigger | Entrypoint | Doc |
 |---|---|---|---|
-| Inicializar ledger | rest | `POST /ledger/initialize` | [initialize-ledger](./flows/initialize-ledger.md) |
-| Leer settings del ledger | rest | `GET /ledger/settings` | [get-ledger-settings](./flows/get-ledger-settings.md) |
-| Reemplazar settings del ledger | rest | `PUT /ledger/settings` | [replace-ledger-settings](./flows/replace-ledger-settings.md) |
 | Abrir cuenta | rest | `POST /accounts` | [open-account](./flows/open-account.md) |
 | Renombrar cuenta | rest | `POST /accounts/{id}/rename` | [rename-account](./flows/rename-account.md) |
 | Cerrar cuenta | rest | `POST /accounts/{id}/close` | [close-account](./flows/close-account.md) |
