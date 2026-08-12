@@ -28,7 +28,7 @@
 
 ---
 
-### Tarea 0: Commitear lo pendiente y crear la rama
+### Tarea 0 [X]: Commitear lo pendiente y crear la rama
 
 **Step 1: Verificar el estado actual**
 
@@ -67,7 +67,7 @@ Esperado: rama nueva y activa, partiendo de `feat/core` con todo commiteado.
 
 ---
 
-### Tarea 1: Test del validador de diagramas (rojo)
+### Tarea 1 [X]: Test del validador de diagramas (rojo)
 
 **Archivos:**
 - Crear: `tools/validate-diagrams.spec.ts`
@@ -185,7 +185,7 @@ Esperado: FAIL — `Cannot find module './validate-diagrams'`.
 
 ---
 
-### Tarea 2: Implementación del validador (verde)
+### Tarea 2 [X]: Implementación del validador (verde)
 
 **Archivos:**
 - Crear: `tools/validate-diagrams.ts`
@@ -344,7 +344,7 @@ unidades, así que no hay nada que resolver. Confirma que no explota con el árb
 
 ---
 
-### Tarea 3: Cablear el gate al script npm y al CI
+### Tarea 3 [X]: Cablear el gate al script npm y al CI
 
 **Archivos:**
 - Modificar: `package.json:16-18`
@@ -377,7 +377,7 @@ el comando de validación.
 
 ---
 
-### Tarea 4: Migrar el módulo `accounts` [P]
+### Tarea 4 [X]: Migrar el módulo `accounts` [P]
 
 **Archivos:**
 - Modificar: los 9 `apps/ledger/docs/accounts/flows/*.md`
@@ -426,7 +426,7 @@ ls apps/ledger/docs/accounts/flows/ | wc -l   # esperado: 10
 
 ---
 
-### Tarea 5: Migrar el módulo `transactions` [P]
+### Tarea 5 [X]: Migrar el módulo `transactions` [P]
 
 Mismo procedimiento que la Tarea 4.
 
@@ -458,7 +458,7 @@ Esperado: PASS.
 
 ---
 
-### Tarea 6: Migrar el módulo `reconciliation` [P]
+### Tarea 6 [X]: Migrar el módulo `reconciliation` [P]
 
 **Archivos:**
 - Modificar: los 9 `apps/ledger/docs/reconciliation/flows/*.md`
@@ -477,7 +477,7 @@ Esperado: PASS.
 
 ---
 
-### Tarea 7: Migrar el módulo `reference` [P]
+### Tarea 7 [X]: Migrar el módulo `reference` [P]
 
 **Archivos:**
 - Modificar: los 2 `apps/ledger/docs/reference/flows/*.md`
@@ -495,7 +495,7 @@ Esperado: PASS.
 
 ---
 
-### Tarea 8: Migrar el módulo `shared` (2 flows nuevos + absorciones)
+### Tarea 8 [X]: Migrar el módulo `shared` (2 flows nuevos + absorciones)
 
 > **No paralelizable.** Absorbe contenido de `shared-kernel/`, que la Tarea 9 elimina.
 > Debe completarse antes.
@@ -538,7 +538,7 @@ Esperado: PASS.
 
 ---
 
-### Tarea 9: Mudar la documentación de `shared-kernel` a `libs/cqrs`
+### Tarea 9 [X]: Mudar la documentación de `shared-kernel` a `libs/cqrs`
 
 > **Corrección de frontera (AC-2).** `shared-kernel` no es un módulo del ledger: su código
 > se extrajo a `libs/cqrs` el 2026-07-27 y la carpeta de docs quedó huérfana. Ver
@@ -589,7 +589,7 @@ Esperado: PASS. Total de flows en el repo: **44**.
 
 ---
 
-### Tarea 10: Reconciliar el nivel L1+L2
+### Tarea 10 [X]: Reconciliar el nivel L1+L2
 
 **Archivos:**
 - Modificar: `docs/architecture/context.md`
@@ -628,7 +628,7 @@ containers), pero la validación debe seguir en verde.
 
 ---
 
-### Tarea 11: Purgar LikeC4 del repositorio
+### Tarea 11 [X]: Purgar LikeC4 del repositorio
 
 **Archivos:**
 - Modificar: `package.json` (dependencia + lockfile)
@@ -665,7 +665,7 @@ Esperado: **10**. Se congelan tal cual: son el registro de historias cerradas y
 
 ---
 
-### Tarea 12: Actualizar el profile del proyecto
+### Tarea 12 [X]: Actualizar el profile del proyecto
 
 **Archivos:**
 - Modificar: `.agents/profile.md` (secciones 7, 8 y 10)
@@ -687,7 +687,7 @@ sección 8 a la propuesta nueva (Tarea 14).
 
 ---
 
-### Tarea 13: Actualizar las skills SDD
+### Tarea 13 [X]: Actualizar las skills SDD
 
 > **Fuera del repositorio.** `~/.agents/` está expuesto por symlink en `~/.claude/skills/`.
 > No entra en el commit y se versiona por separado.
@@ -722,7 +722,7 @@ declaran `.agents/profile.md` y `~/.agents/sdd-profile.template.md`.
 
 ---
 
-### Tarea 14: Publicar la propuesta y registrar la decisión
+### Tarea 14 [X]: Publicar la propuesta y registrar la decisión
 
 **Archivos:**
 - Crear: `docs/proposals/docs-as-code-mermaid.md`
@@ -755,7 +755,7 @@ identificadores).
 
 ---
 
-### Tarea 15: Gates finales
+### Tarea 15 [X]: Gates finales
 
 **Step 1: Suite completa**
 
